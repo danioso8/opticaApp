@@ -30,6 +30,8 @@ services:
         value: .onrender.com
       - key: BUSINESS_PHONE
         value: "300 123 4567"
+      - key: WEBSITE_URL
+        value: https://oceano-optico.onrender.com
       - key: APPOINTMENT_SLOT_DURATION
         value: 30
       - key: MAX_DAILY_APPOINTMENTS
