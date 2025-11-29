@@ -1,10 +1,48 @@
+# Environment variables
 .env
+.env.local
+.env.production
+
+# Python
 *.pyc
 __pycache__/
+*.pyo
+*.pyd
+.Python
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+pip-log.txt
+
+# Django
 db.sqlite3
+db.sqlite3-journal
 media/
 staticfiles/
 *.log
-venv/
+local_settings.py
+
+# IDEs
+.vscode/
+.idea/
 *.swp
+*.swo
+*~
 .DS_Store
+
+# Virtual Environment
+venv/
+env/
+ENV/
+.venv
+
+# WhatsApp Bot
+whatsapp-bot/node_modules/
+whatsapp-bot/auth_info/
+whatsapp-bot/package-lock.json
+
+# Backups
+*.bak
+*.backup

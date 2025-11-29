@@ -1,0 +1,38 @@
+databases:
+  - name: oceano-optico-db
+    databaseName: oceano_optico
+    user: oceano_admin
+    plan: free
+    region: oregon
+
+services:
+  - type: web
+    name: oceano-optico
+    runtime: python
+    plan: free
+    region: oregon
+    branch: main
+    buildCommand: "./build.sh"
+    startCommand: "daphne -b 0.0.0.0 -p $PORT config.asgi:application"
+    healthCheckPath: /
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.7.9
+      - key: DEBUG
+        value: false
+      - key: SECRET_KEY
+        generateValue: true
+      - key: DATABASE_URL
+        fromDatabase:
+          name: oceano-optico-db
+          property: connectionString
+      - key: ALLOWED_HOSTS
+        value: .onrender.com
+      - key: BUSINESS_PHONE
+        value: "300 123 4567"
+      - key: APPOINTMENT_SLOT_DURATION
+        value: 30
+      - key: MAX_DAILY_APPOINTMENTS
+        value: 20
+      - key: ADVANCE_BOOKING_DAYS
+        value: 30
