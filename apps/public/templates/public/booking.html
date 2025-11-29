@@ -1,0 +1,356 @@
+{% extends 'public/base.html' %}
+
+{% block title %}Agendar Cita - OCEANO OPTICO{% endblock %}
+
+{% block content %}
+<section class="min-h-screen py-20 bg-gradient-to-br from-blue-50 to-purple-50">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-12">
+            <h1 class="text-4xl md:text-5xl font-bold text-gray-800 mb-4">
+                <i class="fas fa-calendar-plus text-blue-600 mr-3"></i>Agendar Cita
+            </h1>
+            <p class="text-xl text-gray-600">Reserva tu examen visual en simples pasos</p>
+        </div>
+        
+        {% if system_closed %}
+        <!-- Sistema Cerrado -->
+        <div class="bg-white rounded-2xl shadow-xl p-12 text-center">
+            <div class="inline-block bg-yellow-100 p-6 rounded-full mb-6">
+                <i class="fas fa-exclamation-triangle text-yellow-600 text-5xl"></i>
+            </div>
+            <h2 class="text-3xl font-bold text-gray-800 mb-4">Sistema Temporalmente Cerrado</h2>
+            <p class="text-lg text-gray-600 mb-8">
+                El sistema de agendamiento no está disponible en este momento.
+                Por favor, contáctanos directamente para programar tu cita.
+            </p>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-lg mx-auto">
+                <a href="tel:+573001234567" class="bg-green-600 hover:bg-green-700 text-white px-8 py-4 rounded-lg font-semibold transition">
+                    <i class="fas fa-phone mr-2"></i>Llamar Ahora
+                </a>
+                <a href="https://wa.me/573001234567" target="_blank" class="bg-emerald-600 hover:bg-emerald-700 text-white px-8 py-4 rounded-lg font-semibold transition">
+                    <i class="fab fa-whatsapp mr-2"></i>WhatsApp
+                </a>
+            </div>
+            
+            <div class="mt-8">
+                <a href="{% url 'public:home' %}" class="text-blue-600 hover:text-blue-800 font-medium">
+                    <i class="fas fa-arrow-left mr-2"></i>Volver al inicio
+                </a>
+            </div>
+        </div>
+        {% else %}
+        <!-- Formulario de Agendamiento -->
+        <div class="bg-white rounded-2xl shadow-xl overflow-hidden">
+            <!-- Progress Steps -->
+            <div class="bg-gradient-to-r from-blue-600 to-purple-600 p-6">
+                <div class="flex justify-between items-center">
+                    <div class="flex-1 text-center">
+                        <div id="step1-indicator" class="inline-block bg-white text-blue-600 w-10 h-10 rounded-full flex items-center justify-center font-bold mb-2 transition">
+                            1
+                        </div>
+                        <p class="text-white text-sm font-medium">Seleccionar Fecha</p>
+                    </div>
+                    <div class="flex-1 border-t-2 border-white border-dashed mx-2"></div>
+                    <div class="flex-1 text-center">
+                        <div id="step2-indicator" class="inline-block bg-white bg-opacity-30 text-white w-10 h-10 rounded-full flex items-center justify-center font-bold mb-2 transition">
+                            2
+                        </div>
+                        <p class="text-white text-opacity-70 text-sm font-medium">Seleccionar Hora</p>
+                    </div>
+                    <div class="flex-1 border-t-2 border-white border-dashed mx-2"></div>
+                    <div class="flex-1 text-center">
+                        <div id="step3-indicator" class="inline-block bg-white bg-opacity-30 text-white w-10 h-10 rounded-full flex items-center justify-center font-bold mb-2 transition">
+                            3
+                        </div>
+                        <p class="text-white text-opacity-70 text-sm font-medium">Tus Datos</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Form Content -->
+            <div class="p-8">
+                <form id="bookingForm" method="POST" action="/api/book/">
+                    {% csrf_token %}
+                    
+                    <!-- Step 1: Seleccionar Fecha -->
+                    <div id="step1" class="step-content">
+                        <h3 class="text-2xl font-bold text-gray-800 mb-6">Selecciona una Fecha</h3>
+                        {% if available_dates %}
+                        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                            {% for date in available_dates|slice:":16" %}
+                            <button type="button" onclick="selectDate('{{ date|date:"Y-m-d" }}')" 
+                                    class="date-option border-2 border-gray-200 rounded-lg p-4 hover:border-blue-500 hover:bg-blue-50 transition text-center">
+                                <div class="text-xs text-gray-500 uppercase">{{ date|date:"D" }}</div>
+                                <div class="text-2xl font-bold text-gray-800">{{ date|date:"d" }}</div>
+                                <div class="text-sm text-gray-600">{{ date|date:"M" }}</div>
+                            </button>
+                            {% endfor %}
+                        </div>
+                        {% else %}
+                        <div class="text-center py-12 text-gray-500">
+                            <i class="fas fa-calendar-times text-5xl mb-4"></i>
+                            <p class="text-lg">No hay fechas disponibles en este momento</p>
+                            <p class="text-sm mt-2">Por favor, contáctanos directamente</p>
+                        </div>
+                        {% endif %}
+                        <input type="hidden" id="selectedDate" name="appointment_date" required>
+                        <button type="button" onclick="nextStep(2)" disabled id="btnStep1" 
+                                class="w-full bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 rounded-lg font-semibold text-lg transition disabled:bg-gray-300 disabled:cursor-not-allowed">
+                            Continuar
+                            <i class="fas fa-arrow-right ml-2"></i>
+                        </button>
+                    </div>
+                    
+                    <!-- Step 2: Seleccionar Hora -->
+                    <div id="step2" class="step-content hidden">
+                        <div class="flex justify-between items-center mb-6">
+                            <h3 class="text-2xl font-bold text-gray-800">Selecciona una Hora</h3>
+                            <button type="button" onclick="prevStep(1)" class="text-blue-600 hover:text-blue-800 font-medium">
+                                <i class="fas fa-arrow-left mr-2"></i>Volver
+                            </button>
+                        </div>
+                        <div id="slotsContainer" class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                            <!-- Los slots se cargarán dinámicamente -->
+                        </div>
+                        <input type="hidden" id="selectedTime" name="appointment_time" required>
+                        <button type="button" onclick="nextStep(3)" disabled id="btnStep2" 
+                                class="w-full bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 rounded-lg font-semibold text-lg transition disabled:bg-gray-300 disabled:cursor-not-allowed">
+                            Continuar
+                            <i class="fas fa-arrow-right ml-2"></i>
+                        </button>
+                    </div>
+                    
+                    <!-- Step 3: Datos Personales -->
+                    <div id="step3" class="step-content hidden">
+                        <div class="flex justify-between items-center mb-6">
+                            <h3 class="text-2xl font-bold text-gray-800">Completa tus Datos</h3>
+                            <button type="button" onclick="prevStep(2)" class="text-blue-600 hover:text-blue-800 font-medium">
+                                <i class="fas fa-arrow-left mr-2"></i>Volver
+                            </button>
+                        </div>
+                        
+                        <div class="space-y-6 mb-6">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">
+                                    Nombre Completo <span class="text-red-500">*</span>
+                                </label>
+                                <input type="text" name="full_name" required 
+                                       class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                       placeholder="Ej: Juan Pérez">
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">
+                                    Teléfono <span class="text-red-500">*</span>
+                                </label>
+                                <input type="tel" name="phone_number" required 
+                                       class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                       placeholder="Ej: +57 300 123 4567">
+                            </div>
+                            
+                            <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                                <div class="flex items-start">
+                                    <i class="fas fa-info-circle text-blue-600 mt-1 mr-3"></i>
+                                    <div class="text-sm text-gray-700">
+                                        <p class="font-semibold mb-1">Resumen de tu cita:</p>
+                                        <p>📅 Fecha: <span id="summaryDate" class="font-semibold"></span></p>
+                                        <p>🕐 Hora: <span id="summaryTime" class="font-semibold"></span></p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <button type="submit" id="btnSubmit"
+                                class="w-full bg-green-600 hover:bg-green-700 text-white px-8 py-4 rounded-lg font-semibold text-lg transition">
+                            <i class="fas fa-check-circle mr-2"></i>Confirmar Cita
+                        </button>
+                    </div>
+                </form>
+                
+                <!-- Success Message -->
+                <div id="successMessage" class="hidden text-center py-12">
+                    <div class="inline-block bg-green-100 p-6 rounded-full mb-6">
+                        <i class="fas fa-check-circle text-green-600 text-5xl"></i>
+                    </div>
+                    <h2 class="text-3xl font-bold text-gray-800 mb-4">¡Cita Agendada con Éxito!</h2>
+                    <p class="text-lg text-gray-600 mb-8">
+                        Tu cita ha sido confirmada. Recibirás más información próximamente.
+                    </p>
+                    <div class="space-y-3">
+                        <a href="{% url 'public:booking' %}" class="block bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 rounded-lg font-semibold transition">
+                            <i class="fas fa-calendar-plus mr-2"></i>Agendar Otra Cita
+                        </a>
+                        <a href="{% url 'public:home' %}" class="block text-blue-600 hover:text-blue-800 font-medium">
+                            <i class="fas fa-home mr-2"></i>Volver al Inicio
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+let currentStep = 1;
+let selectedDate = null;
+let selectedTime = null;
+
+console.log('Booking page loaded');
+console.log('Available dates count:', document.querySelectorAll('.date-option').length);
+
+function nextStep(step) {
+    document.getElementById(`step${currentStep}`).classList.add('hidden');
+    document.getElementById(`step${step}`).classList.remove('hidden');
+    
+    // Update indicators
+    document.getElementById(`step${currentStep}-indicator`).classList.remove('bg-white', 'text-blue-600');
+    document.getElementById(`step${currentStep}-indicator`).classList.add('bg-white', 'bg-opacity-30', 'text-white');
+    
+    document.getElementById(`step${step}-indicator`).classList.remove('bg-white', 'bg-opacity-30', 'text-white');
+    document.getElementById(`step${step}-indicator`).classList.add('bg-white', 'text-blue-600');
+    
+    currentStep = step;
+    
+    if (step === 2 && selectedDate) {
+        loadAvailableSlots(selectedDate);
+    }
+    
+    if (step === 3) {
+        updateSummary();
+    }
+}
+
+function prevStep(step) {
+    nextStep(step);
+}
+
+function selectDate(date) {
+    selectedDate = date;
+    document.getElementById('selectedDate').value = date;
+    
+    // Update UI
+    document.querySelectorAll('.date-option').forEach(el => {
+        el.classList.remove('border-blue-500', 'bg-blue-50');
+    });
+    event.target.closest('.date-option').classList.add('border-blue-500', 'bg-blue-50');
+    
+    // Enable next button
+    document.getElementById('btnStep1').disabled = false;
+}
+
+function loadAvailableSlots(date) {
+    const container = document.getElementById('slotsContainer');
+    container.innerHTML = '<div class="col-span-4 text-center py-8"><i class="fas fa-spinner fa-spin text-3xl text-blue-600"></i></div>';
+    
+    fetch(`/api/available-slots/?date=${date}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.slots && data.slots.length > 0) {
+                const availableSlots = data.slots.filter(slot => slot.available);
+                
+                if (availableSlots.length > 0) {
+                    container.innerHTML = availableSlots.map(slot => {
+                        const timeStr = typeof slot.time === 'string' ? slot.time : slot.time;
+                        return `
+                            <button type="button" onclick="selectTime('${timeStr}')" 
+                                    class="time-option border-2 border-green-200 bg-green-50 rounded-lg p-4 hover:border-blue-500 hover:bg-blue-50 transition text-center">
+                                <div class="text-lg font-bold text-gray-800">
+                                    <i class="far fa-clock text-green-600 mr-1"></i>${timeStr}
+                                </div>
+                                <div class="text-xs text-green-600 font-medium mt-1">Disponible</div>
+                            </button>
+                        `;
+                    }).join('');
+                } else {
+                    container.innerHTML = `
+                        <div class="col-span-4 text-center py-8 text-gray-500">
+                            <i class="fas fa-calendar-times text-4xl mb-3"></i>
+                            <p class="text-lg">No hay horarios disponibles para esta fecha</p>
+                            <p class="text-sm mt-2">Todos los horarios están ocupados</p>
+                        </div>
+                    `;
+                }
+            } else {
+                container.innerHTML = `
+                    <div class="col-span-4 text-center py-8 text-gray-500">
+                        <i class="fas fa-calendar-times text-4xl mb-3"></i>
+                        <p>No hay horarios de atención para esta fecha</p>
+                    </div>
+                `;
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            container.innerHTML = `
+                <div class="col-span-4 text-center py-8 text-red-600">
+                    <i class="fas fa-exclamation-triangle text-4xl mb-3"></i>
+                    <p>Error al cargar los horarios</p>
+                </div>
+            `;
+        });
+}
+
+function selectTime(time) {
+    selectedTime = time;
+    document.getElementById('selectedTime').value = time;
+    
+    // Update UI
+    document.querySelectorAll('.time-option').forEach(el => {
+        el.classList.remove('border-blue-500', 'bg-blue-50');
+    });
+    event.target.closest('.time-option').classList.add('border-blue-500', 'bg-blue-50');
+    
+    // Enable next button
+    document.getElementById('btnStep2').disabled = false;
+}
+
+function updateSummary() {
+    document.getElementById('summaryDate').textContent = new Date(selectedDate).toLocaleDateString('es-ES', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+    });
+    document.getElementById('summaryTime').textContent = selectedTime;
+}
+
+document.getElementById('bookingForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const submitBtn = document.getElementById('btnSubmit');
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Procesando...';
+    
+    const formData = new FormData(this);
+    
+    fetch('/api/book/', {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': '{{ csrf_token }}'
+        },
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success || data.id) {
+            document.getElementById('step3').classList.add('hidden');
+            document.getElementById('successMessage').classList.remove('hidden');
+        } else {
+            alert('Error: ' + (data.message || 'No se pudo agendar la cita'));
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = '<i class="fas fa-check-circle mr-2"></i>Confirmar Cita';
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error al procesar la solicitud');
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = '<i class="fas fa-check-circle mr-2"></i>Confirmar Cita';
+    });
+});
+</script>
+{% endblock %}

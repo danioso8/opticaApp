@@ -1,0 +1,279 @@
+{% extends 'dashboard/base.html' %}
+
+{% block title %}Citas de Hoy{% endblock %}
+
+{% block page_title %}
+    <i class="fas fa-calendar-day mr-2"></i>Citas de Hoy
+{% endblock %}
+{% block page_subtitle %}{{ today|date:"l, d \d\e F \d\e Y" }}{% endblock %}
+
+{% block content %}
+<!-- Estadísticas del Día -->
+<div class="grid grid-cols-1 md:grid-cols-5 gap-4 mb-6">
+    <div class="bg-white rounded-lg shadow p-4">
+        <p class="text-sm text-gray-600">Total</p>
+        <p class="text-2xl font-bold text-gray-800">{{ stats.today.total }}</p>
+    </div>
+    
+    <div class="bg-yellow-50 rounded-lg shadow p-4">
+        <p class="text-sm text-yellow-700">Pendientes</p>
+        <p class="text-2xl font-bold text-yellow-800">{{ stats.today.pending }}</p>
+    </div>
+    
+    <div class="bg-blue-50 rounded-lg shadow p-4">
+        <p class="text-sm text-blue-700">Confirmadas</p>
+        <p class="text-2xl font-bold text-blue-800">{{ stats.today.confirmed }}</p>
+    </div>
+    
+    <div class="bg-green-50 rounded-lg shadow p-4">
+        <p class="text-sm text-green-700">Completadas</p>
+        <p class="text-2xl font-bold text-green-800">{{ stats.today.completed }}</p>
+    </div>
+    
+    <div class="bg-red-50 rounded-lg shadow p-4">
+        <p class="text-sm text-red-700">Canceladas</p>
+        <p class="text-2xl font-bold text-red-800">{{ stats.today.cancelled }}</p>
+    </div>
+</div>
+
+<!-- Lista de Citas -->
+<div class="bg-white rounded-lg shadow">
+    <div class="px-6 py-4 border-b border-gray-200">
+        <h3 class="text-lg font-semibold text-gray-800">
+            Listado de Citas
+        </h3>
+    </div>
+    
+    {% if appointments %}
+    <div class="divide-y divide-gray-200" id="appointments-list">
+        {% for appointment in appointments %}
+        <div class="p-6 hover:bg-gray-50 transition" data-appointment-id="{{ appointment.id }}">
+            <div class="flex items-center justify-between">
+                <div class="flex-1">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0 w-16 h-16 bg-indigo-100 rounded-full flex items-center justify-center">
+                            <i class="fas fa-user text-indigo-600 text-xl"></i>
+                        </div>
+                        
+                        <div class="ml-4 flex-1">
+                            <h4 class="text-lg font-semibold text-gray-800">{{ appointment.full_name }}</h4>
+                            <div class="mt-1 flex items-center space-x-4 text-sm text-gray-600">
+                                <span>
+                                    <i class="fas fa-phone mr-1"></i>{{ appointment.phone_number }}
+                                </span>
+                                <span>
+                                    <i class="fas fa-clock mr-1"></i>{{ appointment.appointment_time|time:"H:i" }}
+                                </span>
+                                {% if appointment.patient %}
+                                <span>
+                                    <i class="fas fa-user-check mr-1 text-green-600"></i>Paciente registrado
+                                </span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="flex items-center space-x-3">
+                    <!-- Estado -->
+                    <select onchange="changeStatus({{ appointment.id }}, this.value)" 
+                            class="px-4 py-2 rounded-lg font-semibold text-sm
+                            {% if appointment.status == 'pending' %}bg-yellow-100 text-yellow-800
+                            {% elif appointment.status == 'confirmed' %}bg-blue-100 text-blue-800
+                            {% elif appointment.status == 'completed' %}bg-green-100 text-green-800
+                            {% elif appointment.status == 'cancelled' %}bg-red-100 text-red-800
+                            {% else %}bg-gray-100 text-gray-800{% endif %}">
+                        <option value="pending" {% if appointment.status == 'pending' %}selected{% endif %}>Pendiente</option>
+                        <option value="confirmed" {% if appointment.status == 'confirmed' %}selected{% endif %}>Confirmada</option>
+                        <option value="completed" {% if appointment.status == 'completed' %}selected{% endif %}>Completada</option>
+                        <option value="cancelled" {% if appointment.status == 'cancelled' %}selected{% endif %}>Cancelada</option>
+                        <option value="no_show" {% if appointment.status == 'no_show' %}selected{% endif %}>No asistió</option>
+                    </select>
+                    
+                    <!-- Botón Ver Detalle -->
+                    <a href="{% url 'dashboard:appointment_detail' appointment.id %}" 
+                       class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition">
+                        <i class="fas fa-eye mr-1"></i>Ver
+                    </a>
+                </div>
+            </div>
+            
+            {% if appointment.notes %}
+            <div class="mt-3 ml-20 p-3 bg-gray-50 rounded-lg">
+                <p class="text-sm text-gray-700">
+                    <i class="fas fa-sticky-note mr-1"></i>
+                    <strong>Notas:</strong> {{ appointment.notes }}
+                </p>
+            </div>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="p-12 text-center text-gray-500">
+        <i class="fas fa-calendar-times text-6xl mb-4"></i>
+        <p class="text-xl">No hay citas para hoy</p>
+        <p class="mt-2">Las nuevas citas aparecerán aquí automáticamente</p>
+    </div>
+    {% endif %}
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// WebSocket Connection
+let appointmentsSocket = null;
+
+function connectWebSocket() {
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const wsUrl = `${protocol}//${window.location.host}/ws/appointments/`;
+    
+    appointmentsSocket = new WebSocket(wsUrl);
+    
+    appointmentsSocket.onopen = function(e) {
+        console.log('✅ WebSocket conectado');
+        showNotification('Conexión en tiempo real establecida', 'success');
+    };
+    
+    appointmentsSocket.onmessage = function(e) {
+        const data = JSON.parse(e.data);
+        console.log('📩 Mensaje recibido:', data);
+        
+        switch(data.type) {
+            case 'new_appointment':
+                handleNewAppointment(data);
+                break;
+            case 'appointment_updated':
+                handleAppointmentUpdated(data);
+                break;
+            case 'system_toggled':
+                handleSystemToggled(data);
+                break;
+            case 'connection_established':
+                console.log(data.message);
+                break;
+        }
+    };
+    
+    appointmentsSocket.onclose = function(e) {
+        console.log('❌ WebSocket desconectado');
+        showNotification('Conexión perdida. Reintentando...', 'warning');
+        
+        // Reconectar después de 3 segundos
+        setTimeout(function() {
+            connectWebSocket();
+        }, 3000);
+    };
+    
+    appointmentsSocket.onerror = function(error) {
+        console.error('❌ Error WebSocket:', error);
+    };
+}
+
+function handleNewAppointment(data) {
+    showNotification(data.message, 'success');
+    playNotificationSound();
+    
+    // Recargar la página para mostrar la nueva cita
+    setTimeout(() => {
+        location.reload();
+    }, 1500);
+}
+
+function handleAppointmentUpdated(data) {
+    showNotification(data.message, 'info');
+    
+    // Actualizar la UI sin recargar
+    const appointmentElement = document.querySelector(`[data-appointment-id="${data.appointment.id}"]`);
+    if (appointmentElement) {
+        // Puedes actualizar el elemento específico aquí
+    }
+}
+
+function handleSystemToggled(data) {
+    const message = data.is_open ? 
+        '🟢 Sistema abierto - Se pueden agendar citas' : 
+        '🔴 Sistema cerrado - No se aceptan nuevas citas';
+    showNotification(message, data.is_open ? 'success' : 'warning');
+}
+
+function playNotificationSound() {
+    // Usar un beep del sistema
+    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    const oscillator = audioContext.createOscillator();
+    const gainNode = audioContext.createGain();
+    
+    oscillator.connect(gainNode);
+    gainNode.connect(audioContext.destination);
+    
+    oscillator.frequency.value = 800;
+    oscillator.type = 'sine';
+    
+    gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
+    
+    oscillator.start(audioContext.currentTime);
+    oscillator.stop(audioContext.currentTime + 0.5);
+}
+
+// Conectar al cargar la página
+document.addEventListener('DOMContentLoaded', function() {
+    connectWebSocket();
+});
+
+// Cerrar conexión al salir
+window.addEventListener('beforeunload', function() {
+    if (appointmentsSocket) {
+        appointmentsSocket.close();
+    }
+});
+
+<script>
+function changeStatus(appointmentId, newStatus) {
+    const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+    
+    fetch(`/appointments/${appointmentId}/change-status/`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'X-CSRFToken': csrftoken
+        },
+        body: `status=${newStatus}`
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showNotification(data.message, 'success');
+            // Actualizar colores del select
+            setTimeout(() => location.reload(), 1000);
+        } else {
+            showNotification(data.message, 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showNotification('Error al cambiar el estado', 'error');
+    });
+}
+
+function showNotification(message, type) {
+    const notification = document.createElement('div');
+    notification.className = `fixed top-4 right-4 px-6 py-4 rounded-lg shadow-lg z-50 ${
+        type === 'success' ? 'bg-green-500' : 'bg-red-500'
+    } text-white`;
+    notification.textContent = message;
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+        notification.remove();
+    }, 3000);
+}
+
+// Auto-refresh cada 30 segundos (temporal hasta implementar WebSockets)
+setInterval(() => {
+    console.log('Verificando nuevas citas...');
+    // location.reload(); // Descomenta para auto-refresh
+}, 30000);
+</script>
+{% endblock %}

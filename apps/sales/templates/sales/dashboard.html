@@ -1,0 +1,511 @@
+{% extends 'dashboard/base.html' %}
+
+{% block title %}Panel de Ventas{% endblock %}
+
+{% block page_title %}
+    <i class="fas fa-chart-line mr-2"></i>Panel de Ventas
+{% endblock %}
+{% block page_subtitle %}Análisis y estadísticas de ventas en tiempo real{% endblock %}
+
+{% block extra_css %}
+<style>
+    .chart-container {
+        position: relative;
+        height: 300px;
+    }
+    .stat-card {
+        transition: transform 0.2s;
+    }
+    .stat-card:hover {
+        transform: translateY(-5px);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Filtros de Período -->
+<div class="bg-white rounded-lg shadow-md p-4 mb-6">
+    <div class="flex items-center justify-between flex-wrap gap-4">
+        <div class="flex items-center space-x-2">
+            <i class="fas fa-filter text-gray-600"></i>
+            <span class="font-semibold text-gray-700">Período:</span>
+        </div>
+        <div class="flex space-x-2">
+            <a href="?period=today" class="px-4 py-2 rounded-lg {% if period == 'today' %}bg-indigo-600 text-white{% else %}bg-gray-200 text-gray-700 hover:bg-gray-300{% endif %} transition">
+                Hoy
+            </a>
+            <a href="?period=week" class="px-4 py-2 rounded-lg {% if period == 'week' %}bg-indigo-600 text-white{% else %}bg-gray-200 text-gray-700 hover:bg-gray-300{% endif %} transition">
+                Semana
+            </a>
+            <a href="?period=month" class="px-4 py-2 rounded-lg {% if period == 'month' %}bg-indigo-600 text-white{% else %}bg-gray-200 text-gray-700 hover:bg-gray-300{% endif %} transition">
+                Mes
+            </a>
+            <a href="?period=year" class="px-4 py-2 rounded-lg {% if period == 'year' %}bg-indigo-600 text-white{% else %}bg-gray-200 text-gray-700 hover:bg-gray-300{% endif %} transition">
+                Año
+            </a>
+        </div>
+        <a href="{% url 'sales:new_sale' %}" class="px-6 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition">
+            <i class="fas fa-plus mr-2"></i>Nueva Venta
+        </a>
+    </div>
+</div>
+
+<!-- Tarjetas de Estadísticas -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+    <!-- Ingresos Totales -->
+    <div class="stat-card bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-lg shadow-lg p-6 text-white">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-emerald-100 text-sm font-medium">Ingresos Totales</p>
+                <h3 class="text-4xl font-bold mt-2">${{ total_revenue|floatformat:0 }}</h3>
+            </div>
+            <div class="bg-white bg-opacity-20 rounded-full p-4">
+                <i class="fas fa-dollar-sign text-3xl"></i>
+            </div>
+        </div>
+        <div class="mt-4 text-emerald-100 text-sm">
+            <i class="fas fa-calendar mr-1"></i>
+            {% if period == 'today' %}Hoy
+            {% elif period == 'week' %}Última semana
+            {% elif period == 'month' %}Este mes
+            {% else %}Este año{% endif %}
+        </div>
+    </div>
+    
+    <!-- Total de Ventas -->
+    <div class="stat-card bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg shadow-lg p-6 text-white">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-blue-100 text-sm font-medium">Total de Ventas</p>
+                <h3 class="text-4xl font-bold mt-2">{{ total_sales }}</h3>
+            </div>
+            <div class="bg-white bg-opacity-20 rounded-full p-4">
+                <i class="fas fa-shopping-cart text-3xl"></i>
+            </div>
+        </div>
+        <div class="mt-4 text-blue-100 text-sm">
+            <i class="fas fa-shopping-bag mr-1"></i>
+            Transacciones completadas
+        </div>
+    </div>
+    
+    <!-- Venta Promedio -->
+    <div class="stat-card bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg shadow-lg p-6 text-white">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-purple-100 text-sm font-medium">Venta Promedio</p>
+                <h3 class="text-4xl font-bold mt-2">${{ avg_sale|floatformat:0 }}</h3>
+            </div>
+            <div class="bg-white bg-opacity-20 rounded-full p-4">
+                <i class="fas fa-chart-line text-3xl"></i>
+            </div>
+        </div>
+        <div class="mt-4 text-purple-100 text-sm">
+            <i class="fas fa-calculator mr-1"></i>
+            Ticket promedio
+        </div>
+    </div>
+    
+    <!-- Productos en Stock Bajo -->
+    <div class="stat-card bg-gradient-to-br from-orange-500 to-orange-600 rounded-lg shadow-lg p-6 text-white">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-orange-100 text-sm font-medium">Productos Bajo Stock</p>
+                <h3 class="text-4xl font-bold mt-2">{{ low_stock_products.count }}</h3>
+            </div>
+            <div class="bg-white bg-opacity-20 rounded-full p-4">
+                <i class="fas fa-exclamation-triangle text-3xl"></i>
+            </div>
+        </div>
+        <div class="mt-4 text-orange-100 text-sm">
+            <i class="fas fa-boxes mr-1"></i>
+            Requieren reabastecimiento
+        </div>
+    </div>
+</div>
+
+<!-- Gráficos -->
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+    <!-- Gráfico de Ventas Diarias -->
+    <div class="bg-white rounded-lg shadow-md p-6">
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="text-lg font-semibold text-gray-800">
+                <i class="fas fa-chart-area mr-2 text-indigo-600"></i>
+                Ventas de los Últimos 30 Días
+            </h3>
+            <div class="flex space-x-2">
+                <button onclick="toggleChartType('dailyChart', 'line')" class="p-2 rounded hover:bg-gray-100">
+                    <i class="fas fa-chart-line text-gray-600"></i>
+                </button>
+                <button onclick="toggleChartType('dailyChart', 'bar')" class="p-2 rounded hover:bg-gray-100">
+                    <i class="fas fa-chart-bar text-gray-600"></i>
+                </button>
+            </div>
+        </div>
+        <div class="chart-container">
+            <canvas id="dailyChart"></canvas>
+        </div>
+    </div>
+    
+    <!-- Gráfico de Ventas Mensuales -->
+    <div class="bg-white rounded-lg shadow-md p-6">
+        <h3 class="text-lg font-semibold text-gray-800 mb-4">
+            <i class="fas fa-calendar-alt mr-2 text-indigo-600"></i>
+            Ventas Mensuales del Año
+        </h3>
+        <div class="chart-container">
+            <canvas id="monthlyChart"></canvas>
+        </div>
+    </div>
+    
+    <!-- Gráfico de Métodos de Pago -->
+    <div class="bg-white rounded-lg shadow-md p-6">
+        <h3 class="text-lg font-semibold text-gray-800 mb-4">
+            <i class="fas fa-credit-card mr-2 text-indigo-600"></i>
+            Métodos de Pago
+        </h3>
+        <div class="chart-container">
+            <canvas id="paymentChart"></canvas>
+        </div>
+    </div>
+    
+    <!-- Productos Más Vendidos -->
+    <div class="bg-white rounded-lg shadow-md p-6">
+        <h3 class="text-lg font-semibold text-gray-800 mb-4">
+            <i class="fas fa-star mr-2 text-indigo-600"></i>
+            Top 10 Productos
+        </h3>
+        <div class="chart-container">
+            <canvas id="productsChart"></canvas>
+        </div>
+    </div>
+</div>
+
+<!-- Tablas de Datos -->
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <!-- Últimas Ventas -->
+    <div class="bg-white rounded-lg shadow-md p-6">
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="text-lg font-semibold text-gray-800">
+                <i class="fas fa-history mr-2 text-indigo-600"></i>
+                Últimas Ventas
+            </h3>
+        </div>
+        
+        {% if recent_sales %}
+        <div class="overflow-x-auto">
+            <table class="min-w-full">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">N° Venta</th>
+                        <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Cliente</th>
+                        <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Total</th>
+                        <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Fecha</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-200">
+                    {% for sale in recent_sales %}
+                    <tr class="hover:bg-gray-50">
+                        <td class="px-4 py-3 text-sm">
+                            <a href="{% url 'sales:sale_detail' sale.id %}" class="text-indigo-600 hover:text-indigo-800 font-medium">
+                                {{ sale.sale_number }}
+                            </a>
+                        </td>
+                        <td class="px-4 py-3 text-sm text-gray-800">{{ sale.get_customer_display }}</td>
+                        <td class="px-4 py-3 text-sm font-semibold text-emerald-600">${{ sale.total|floatformat:0 }}</td>
+                        <td class="px-4 py-3 text-sm text-gray-600">{{ sale.created_at|date:"d/m/Y H:i" }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="text-center py-8 text-gray-500">
+            <i class="fas fa-receipt text-4xl mb-3"></i>
+            <p>No hay ventas registradas</p>
+        </div>
+        {% endif %}
+    </div>
+    
+    <!-- Productos con Stock Bajo -->
+    <div class="bg-white rounded-lg shadow-md p-6">
+        <h3 class="text-lg font-semibold text-gray-800 mb-4">
+            <i class="fas fa-box-open mr-2 text-orange-600"></i>
+            Productos con Stock Bajo
+        </h3>
+        
+        {% if low_stock_products %}
+        <div class="space-y-3">
+            {% for product in low_stock_products %}
+            <div class="flex items-center justify-between p-3 bg-orange-50 rounded-lg border border-orange-200">
+                <div>
+                    <p class="font-semibold text-gray-800">{{ product.name }}</p>
+                    <p class="text-sm text-gray-600">SKU: {{ product.sku }}</p>
+                </div>
+                <div class="text-right">
+                    <p class="text-2xl font-bold text-orange-600">{{ product.stock }}</p>
+                    <p class="text-xs text-gray-600">Mín: {{ product.min_stock }}</p>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="text-center py-8 text-gray-500">
+            <i class="fas fa-check-circle text-4xl mb-3 text-green-500"></i>
+            <p>Todos los productos tienen stock suficiente</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+<script>
+// Configuración global de Chart.js
+Chart.defaults.font.family = 'system-ui, -apple-system, sans-serif';
+Chart.defaults.color = '#6B7280';
+
+let dailyChartInstance = null;
+let monthlyChartInstance = null;
+let paymentChartInstance = null;
+let productsChartInstance = null;
+
+// Función para cambiar tipo de gráfico
+function toggleChartType(chartId, type) {
+    if (chartId === 'dailyChart' && dailyChartInstance) {
+        dailyChartInstance.config.type = type;
+        dailyChartInstance.update();
+    }
+}
+
+// Cargar datos y crear gráficos
+document.addEventListener('DOMContentLoaded', function() {
+    // Gráfico de ventas diarias
+    fetch('{% url "sales:daily_stats_api" %}')
+        .then(response => response.json())
+        .then(data => {
+            const ctx = document.getElementById('dailyChart').getContext('2d');
+            dailyChartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: data.data.map(d => d.label),
+                    datasets: [{
+                        label: 'Ingresos ($)',
+                        data: data.data.map(d => d.total),
+                        borderColor: '#10B981',
+                        backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                        borderWidth: 3,
+                        fill: true,
+                        tension: 0.4,
+                        pointRadius: 4,
+                        pointHoverRadius: 6,
+                        pointBackgroundColor: '#10B981',
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                            padding: 12,
+                            titleFont: { size: 14 },
+                            bodyFont: { size: 13 },
+                            callbacks: {
+                                label: function(context) {
+                                    return 'Ingresos: $' + context.parsed.y.toLocaleString();
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) {
+                                    return '$' + value.toLocaleString();
+                                }
+                            },
+                            grid: {
+                                color: 'rgba(0, 0, 0, 0.05)'
+                            }
+                        },
+                        x: {
+                            grid: {
+                                display: false
+                            }
+                        }
+                    }
+                }
+            });
+        });
+    
+    // Gráfico de ventas mensuales
+    fetch('{% url "sales:monthly_stats_api" %}')
+        .then(response => response.json())
+        .then(data => {
+            const ctx = document.getElementById('monthlyChart').getContext('2d');
+            monthlyChartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: data.data.map(d => d.month),
+                    datasets: [{
+                        label: 'Ingresos ($)',
+                        data: data.data.map(d => d.total),
+                        backgroundColor: 'rgba(99, 102, 241, 0.8)',
+                        borderColor: '#6366F1',
+                        borderWidth: 2,
+                        borderRadius: 8,
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                            padding: 12,
+                            callbacks: {
+                                label: function(context) {
+                                    return 'Ingresos: $' + context.parsed.y.toLocaleString();
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) {
+                                    return '$' + value.toLocaleString();
+                                }
+                            },
+                            grid: {
+                                color: 'rgba(0, 0, 0, 0.05)'
+                            }
+                        },
+                        x: {
+                            grid: {
+                                display: false
+                            }
+                        }
+                    }
+                }
+            });
+        });
+    
+    // Gráfico de métodos de pago
+    const paymentData = {{ payment_methods_json|safe }};
+    if (paymentData && paymentData.length > 0) {
+        const ctx = document.getElementById('paymentChart').getContext('2d');
+        
+        const paymentLabels = {
+            'cash': 'Efectivo',
+            'card': 'Tarjeta',
+            'transfer': 'Transferencia',
+            'mixed': 'Mixto'
+        };
+        
+        paymentChartInstance = new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: paymentData.map(d => paymentLabels[d.payment_method] || d.payment_method),
+                datasets: [{
+                    data: paymentData.map(d => d.total),
+                    backgroundColor: [
+                        'rgba(16, 185, 129, 0.8)',
+                        'rgba(59, 130, 246, 0.8)',
+                        'rgba(168, 85, 247, 0.8)',
+                        'rgba(251, 146, 60, 0.8)',
+                    ],
+                    borderColor: '#fff',
+                    borderWidth: 3,
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            padding: 15,
+                            font: { size: 12 }
+                        }
+                    },
+                    tooltip: {
+                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                        padding: 12,
+                        callbacks: {
+                            label: function(context) {
+                                const value = context.parsed;
+                                const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                const percentage = ((value / total) * 100).toFixed(1);
+                                return context.label + ': $' + value.toLocaleString() + ' (' + percentage + '%)';
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+    
+    // Gráfico de productos más vendidos
+    fetch('{% url "sales:top_products_api" %}?period={{ period }}')
+        .then(response => response.json())
+        .then(data => {
+            const ctx = document.getElementById('productsChart').getContext('2d');
+            productsChartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: data.data.map(d => d.product__name),
+                    datasets: [{
+                        label: 'Cantidad Vendida',
+                        data: data.data.map(d => d.quantity),
+                        backgroundColor: 'rgba(251, 146, 60, 0.8)',
+                        borderColor: '#FB923C',
+                        borderWidth: 2,
+                        borderRadius: 8,
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                            padding: 12,
+                        }
+                    },
+                    scales: {
+                        x: {
+                            beginAtZero: true,
+                            grid: {
+                                color: 'rgba(0, 0, 0, 0.05)'
+                            }
+                        },
+                        y: {
+                            grid: {
+                                display: false
+                            }
+                        }
+                    }
+                }
+            });
+        });
+});
+</script>
+{% endblock %}

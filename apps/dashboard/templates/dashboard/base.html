@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Dashboard{% endblock %} - Óptica</title>
+    
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'dashboard/css/custom.css' %}">
+    
+    {% block extra_css %}{% endblock %}
+</head>
+<body class="bg-gray-100">
+    
+    {% if user.is_authenticated %}
+    <!-- Sidebar -->
+    <div class="flex h-screen">
+        <!-- Sidebar -->
+        <aside class="w-64 bg-indigo-900 text-white flex-shrink-0">
+            <div class="p-4">
+                <h1 class="text-2xl font-bold">
+                    <i class="fas fa-glasses mr-2"></i>OCEANO OPTICO
+                </h1>
+                <p class="text-indigo-300 text-sm">Panel Administrativo</p>
+            </div>
+            
+            <nav class="mt-6">
+                <a href="{% url 'dashboard:home' %}" class="flex items-center px-4 py-3 hover:bg-indigo-800 {% if request.resolver_match.url_name == 'home' %}bg-indigo-800{% endif %}">
+                    <i class="fas fa-home mr-3"></i>
+                    <span>Dashboard</span>
+                </a>
+                 <a href="{% url 'sales:dashboard' %}" class="flex items-center px-4 py-3 hover:bg-indigo-800 {% if 'sales' in request.path %}bg-indigo-800{% endif %}">
+                    <i class="fas fa-chart-line mr-3"></i>
+                    <span>Panel de Ventas</span>
+                </a>
+                
+                <a href="{% url 'dashboard:appointments_list' %}" class="flex items-center px-4 py-3 hover:bg-indigo-800 {% if 'appointments' in request.path %}bg-indigo-800{% endif %}">
+                    <i class="fas fa-calendar-check mr-3"></i>
+                    <span>Gestión de Citas</span>
+                </a>
+                
+               
+                
+                <a href="{% url 'dashboard:calendar' %}" class="flex items-center px-4 py-3 hover:bg-indigo-800 {% if 'calendar' in request.path %}bg-indigo-800{% endif %}">
+                    <i class="fas fa-calendar mr-3"></i>
+                    <span>Calendario</span>
+                </a>
+                
+                <a href="{% url 'dashboard:patients_list' %}" class="flex items-center px-4 py-3 hover:bg-indigo-800 {% if 'patients' in request.path %}bg-indigo-800{% endif %}">
+                    <i class="fas fa-users mr-3"></i>
+                    <span>Pacientes</span>
+                </a>
+                
+                <a href="{% url 'dashboard:configuration' %}" class="flex items-center px-4 py-3 hover:bg-indigo-800 {% if 'configuration' in request.path %}bg-indigo-800{% endif %}">
+                    <i class="fas fa-cog mr-3"></i>
+                    <span>Configuración</span>
+                </a>
+            </nav>
+            
+            <div class="absolute bottom-0 w-64 p-4 bg-indigo-950">
+                <div class="flex items-center">
+                    <div class="w-10 h-10 bg-indigo-700 rounded-full flex items-center justify-center">
+                        <i class="fas fa-user"></i>
+                    </div>
+                    <div class="ml-3">
+                        <p class="font-semibold">{{ user.username }}</p>
+                        <a href="{% url 'dashboard:logout' %}" class="text-sm text-indigo-300 hover:text-white">
+                            <i class="fas fa-sign-out-alt mr-1"></i>Salir
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </aside>
+        
+        <!-- Main Content -->
+        <div class="flex-1 flex flex-col overflow-hidden">
+            <!-- Top Bar -->
+            <header class="bg-white shadow-sm">
+                <div class="flex items-center justify-between px-6 py-4">
+                    <div>
+                        <h2 class="text-2xl font-bold text-gray-800">
+                            {% block page_title %}Dashboard{% endblock %}
+                        </h2>
+                        <p class="text-sm text-gray-600">
+                            {% block page_subtitle %}Resumen general del sistema{% endblock %}
+                        </p>
+                    </div>
+                    
+                    <div class="flex items-center space-x-4">
+                        <!-- Toggle Sistema -->
+                        <div class="flex items-center">
+                            <span class="mr-2 text-sm font-medium text-gray-700">Sistema:</span>
+                            <button onclick="toggleSystem()" id="system-toggle" class="relative inline-flex items-center h-6 rounded-full w-11 focus:outline-none">
+                                <span class="sr-only">Toggle Sistema</span>
+                                <span id="toggle-bg" class="inline-block w-11 h-6 bg-gray-300 rounded-full transition"></span>
+                                <span id="toggle-dot" class="absolute left-0 inline-block w-6 h-6 bg-white rounded-full shadow transform transition"></span>
+                            </button>
+                            <span id="system-status" class="ml-2 text-sm font-medium"></span>
+                        </div>
+                        
+                        <!-- Fecha actual -->
+                        <div class="text-sm text-gray-600">
+                            <i class="fas fa-calendar mr-1"></i>
+                            {{ today|date:"d/m/Y" }}
+                        </div>
+                    </div>
+                </div>
+            </header>
+            
+            <!-- Messages -->
+            {% if messages %}
+            <div class="px-6 py-3">
+                {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} p-4 rounded-lg mb-2 {% if message.tags == 'error' %}bg-red-100 text-red-700{% elif message.tags == 'success' %}bg-green-100 text-green-700{% else %}bg-blue-100 text-blue-700{% endif %}">
+                    {{ message }}
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+            
+            <!-- Page Content -->
+            <main class="flex-1 overflow-x-hidden overflow-y-auto bg-gray-100 p-6">
+                {% block content %}
+                {% endblock %}
+            </main>
+        </div>
+    </div>
+    
+    {% else %}
+    <!-- Login Page (sin sidebar) -->
+    {% block login_content %}
+    {% endblock %}
+    {% endif %}
+    
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    
+    {% load static %}
+    <script src="{% static 'dashboard/js/main.js' %}"></script>
+    
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

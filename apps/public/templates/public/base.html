@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Óptica{% endblock %}</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+        }
+        .hero-pattern {
+            background-color: #3b82f6;
+            background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+        }
+    </style>
+    
+    {% block extra_head %}{% endblock %}
+</head>
+<body class="bg-gray-50">
+    <!-- Header/Navigation -->
+    <nav class="bg-white shadow-md fixed w-full top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center">
+                    <a href="{% url 'public:home' %}" class="flex items-center">
+                        <i class="fas fa-glasses text-blue-600 text-3xl mr-3"></i>
+                        <span class="text-2xl font-bold text-gray-800">OCEANO OPTICO</span>
+                    </a>
+                </div>
+                
+                <div class="hidden md:flex space-x-8">
+                    <a href="{% url 'public:home' %}" class="text-gray-700 hover:text-blue-600 font-medium transition">
+                        Inicio
+                    </a>
+                    <a href="{% url 'public:booking' %}" class="text-gray-700 hover:text-blue-600 font-medium transition">
+                        Agendar Cita
+                    </a>
+                    <a href="{% url 'public:shop' %}" class="text-gray-700 hover:text-blue-600 font-medium transition">
+                        Tienda
+                    </a>
+                    <a href="#servicios" class="text-gray-700 hover:text-blue-600 font-medium transition">
+                        Servicios
+                    </a>
+                    <a href="#contacto" class="text-gray-700 hover:text-blue-600 font-medium transition">
+                        Contacto
+                    </a>
+                </div>
+                
+                <div class="flex items-center space-x-4">
+                    <a href="/dashboard/login/" class="hidden md:block text-gray-700 hover:text-blue-600 font-medium transition">
+                        <i class="fas fa-sign-in-alt mr-2"></i>Iniciar Sesión
+                    </a>
+                    <a href="{% url 'public:booking' %}" class="hidden md:block bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-full font-medium transition">
+                        <i class="fas fa-calendar-plus mr-2"></i>Reservar
+                    </a>
+                    <button class="md:hidden text-gray-700" onclick="toggleMobileMenu()">
+                        <i class="fas fa-bars text-2xl"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Mobile Menu -->
+        <div id="mobileMenu" class="hidden md:hidden bg-white border-t">
+            <div class="px-4 py-3 space-y-3">
+                <a href="{% url 'public:home' %}" class="block text-gray-700 hover:text-blue-600 font-medium">
+                    Inicio
+                </a>
+                <a href="{% url 'public:booking' %}" class="block text-gray-700 hover:text-blue-600 font-medium">
+                    Agendar Cita
+                </a>
+                <a href="{% url 'public:shop' %}" class="block text-gray-700 hover:text-blue-600 font-medium">
+                    Tienda
+                </a>
+                <a href="#servicios" class="block text-gray-700 hover:text-blue-600 font-medium">
+                    Servicios
+                </a>
+                <a href="#contacto" class="block text-gray-700 hover:text-blue-600 font-medium">
+                    Contacto
+                </a>
+                <a href="/dashboard/login/" class="block text-blue-600 hover:text-blue-800 font-medium border-t pt-3">
+                    <i class="fas fa-sign-in-alt mr-2"></i>Iniciar Sesión
+                </a>
+            </div>
+        </div>
+    </nav>
+    
+    <!-- Content -->
+    <main class="pt-16">
+        {% block content %}{% endblock %}
+    </main>
+    
+    <!-- Footer -->
+    <footer class="bg-gray-900 text-white mt-20">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+                <div>
+                    <div class="flex items-center mb-4">
+                        <i class="fas fa-glasses text-blue-400 text-2xl mr-2"></i>
+                        <span class="text-xl font-bold">OCEANO OPTICO</span>
+                    </div>
+                    <p class="text-gray-400 text-sm">
+                        Cuidamos tu salud visual con tecnología de última generación y atención personalizada.
+                    </p>
+                </div>
+                
+                <div>
+                    <h3 class="text-lg font-semibold mb-4">Enlaces</h3>
+                    <ul class="space-y-2 text-gray-400 text-sm">
+                        <li><a href="{% url 'public:home' %}" class="hover:text-white transition">Inicio</a></li>
+                        <li><a href="{% url 'public:booking' %}" class="hover:text-white transition">Agendar Cita</a></li>
+                        <li><a href="{% url 'public:shop' %}" class="hover:text-white transition">Tienda</a></li>
+                        <li><a href="#servicios" class="hover:text-white transition">Servicios</a></li>
+                    </ul>
+                </div>
+                
+                <div>
+                    <h3 class="text-lg font-semibold mb-4">Servicios</h3>
+                    <ul class="space-y-2 text-gray-400 text-sm">
+                        <li>Exámenes Visuales</li>
+                        <li>Monturas y Lentes</li>
+                        <li>Lentes de Contacto</li>
+                        <li>Asesoría Especializada</li>
+                    </ul>
+                </div>
+                
+                <div>
+                    <h3 class="text-lg font-semibold mb-4">Contacto</h3>
+                    <ul class="space-y-2 text-gray-400 text-sm">
+                        <li><i class="fas fa-phone mr-2"></i>+57 300 123 4567</li>
+                        <li><i class="fas fa-envelope mr-2"></i>info@optica.com</li>
+                        <li><i class="fas fa-map-marker-alt mr-2"></i>Bogotá, Colombia</li>
+                        <li class="flex space-x-4 mt-4">
+                            <a href="#" class="text-gray-400 hover:text-white transition"><i class="fab fa-facebook text-xl"></i></a>
+                            <a href="#" class="text-gray-400 hover:text-white transition"><i class="fab fa-instagram text-xl"></i></a>
+                            <a href="#" class="text-gray-400 hover:text-white transition"><i class="fab fa-whatsapp text-xl"></i></a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="border-t border-gray-800 mt-8 pt-8 text-center text-gray-400 text-sm">
+                <p>&copy; 2025 OCEANO OPTICO. Todos los derechos reservados.</p>
+            </div>
+        </div>
+    </footer>
+    
+    <script>
+        function toggleMobileMenu() {
+            const menu = document.getElementById('mobileMenu');
+            menu.classList.toggle('hidden');
+        }
+    </script>
+    
+    {% block extra_scripts %}{% endblock %}
+</body>
+</html>

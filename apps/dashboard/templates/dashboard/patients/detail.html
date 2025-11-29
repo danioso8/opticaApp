@@ -1,0 +1,284 @@
+{% extends 'dashboard/base.html' %}
+{% load static %}
+
+{% block title %}{{ patient.full_name }} - Dashboard{% endblock %}
+
+{% block content %}
+<div class="mb-6">
+    <a href="{% url 'dashboard:patients_list' %}" class="text-blue-600 hover:text-blue-800 text-sm">
+        <i class="fas fa-arrow-left mr-2"></i>Volver a pacientes
+    </a>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <!-- Información del Paciente -->
+    <div class="lg:col-span-1 space-y-6">
+        <!-- Datos Principales -->
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <div class="text-center mb-6">
+                <div class="inline-block h-24 w-24 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white text-3xl font-bold mb-3">
+                    {{ patient.full_name|first|upper }}
+                </div>
+                <h1 class="text-2xl font-bold text-gray-800">{{ patient.full_name }}</h1>
+                <p class="text-gray-600">{{ patient.identification }}</p>
+                <span class="inline-block mt-2 px-3 py-1 bg-green-100 text-green-800 text-sm font-semibold rounded-full">
+                    <i class="fas fa-check-circle mr-1"></i>Activo
+                </span>
+            </div>
+
+            <div class="space-y-3">
+                <div class="flex items-center justify-between py-2 border-b border-gray-100">
+                    <span class="text-sm text-gray-500">
+                        <i class="fas fa-birthday-cake w-5 text-purple-600"></i> Edad
+                    </span>
+                    <span class="font-semibold text-gray-900">{{ patient.age }} años</span>
+                </div>
+
+                <div class="flex items-center justify-between py-2 border-b border-gray-100">
+                    <span class="text-sm text-gray-500">
+                        <i class="fas fa-calendar w-5 text-blue-600"></i> Nacimiento
+                    </span>
+                    <span class="font-semibold text-gray-900">{{ patient.date_of_birth|date:"d/m/Y" }}</span>
+                </div>
+
+                <div class="flex items-center justify-between py-2 border-b border-gray-100">
+                    <span class="text-sm text-gray-500">
+                        <i class="fas fa-phone w-5 text-green-600"></i> Teléfono
+                    </span>
+                    <span class="font-semibold text-gray-900">{{ patient.phone_number }}</span>
+                </div>
+
+                {% if patient.email %}
+                <div class="flex items-center justify-between py-2 border-b border-gray-100">
+                    <span class="text-sm text-gray-500">
+                        <i class="fas fa-envelope w-5 text-red-600"></i> Email
+                    </span>
+                    <span class="font-semibold text-gray-900 text-sm">{{ patient.email }}</span>
+                </div>
+                {% endif %}
+
+                {% if patient.address %}
+                <div class="py-2 border-b border-gray-100">
+                    <span class="text-sm text-gray-500 block mb-1">
+                        <i class="fas fa-map-marker-alt w-5 text-orange-600"></i> Dirección
+                    </span>
+                    <span class="font-semibold text-gray-900 text-sm">{{ patient.address }}</span>
+                </div>
+                {% endif %}
+
+                <div class="flex items-center justify-between py-2">
+                    <span class="text-sm text-gray-500">
+                        <i class="fas fa-clock w-5 text-gray-600"></i> Registrado
+                    </span>
+                    <span class="font-semibold text-gray-900 text-sm">{{ patient.created_at|date:"d/m/Y" }}</span>
+                </div>
+            </div>
+
+            <!-- Acciones Rápidas -->
+            <div class="mt-6 pt-6 border-t border-gray-200 space-y-2">
+                <a href="tel:{{ patient.phone_number }}" class="block w-full text-center px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors">
+                    <i class="fas fa-phone mr-2"></i>Llamar
+                </a>
+                <a href="https://wa.me/{{ patient.phone_number|cut:'+' }}" target="_blank" class="block w-full text-center px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg transition-colors">
+                    <i class="fab fa-whatsapp mr-2"></i>WhatsApp
+                </a>
+                {% if patient.email %}
+                <a href="mailto:{{ patient.email }}" class="block w-full text-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors">
+                    <i class="fas fa-envelope mr-2"></i>Enviar Email
+                </a>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Notas Médicas -->
+        {% if patient.medical_notes %}
+        <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-6">
+            <h3 class="font-bold text-gray-800 mb-3">
+                <i class="fas fa-exclamation-triangle text-yellow-600 mr-2"></i>Notas Médicas
+            </h3>
+            <p class="text-sm text-gray-700">{{ patient.medical_notes|linebreaks }}</p>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Historial y Detalles -->
+    <div class="lg:col-span-2 space-y-6">
+        <!-- Estadísticas -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div class="bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg p-4 text-white">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm opacity-90">Total Citas</p>
+                        <p class="text-3xl font-bold">{{ appointments.count }}</p>
+                    </div>
+                    <i class="fas fa-calendar-check text-3xl opacity-80"></i>
+                </div>
+            </div>
+
+            <div class="bg-gradient-to-br from-green-500 to-green-600 rounded-lg p-4 text-white">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm opacity-90">Completadas</p>
+                        <p class="text-3xl font-bold">{{ appointments|length }}</p>
+                    </div>
+                    <i class="fas fa-check-double text-3xl opacity-80"></i>
+                </div>
+            </div>
+
+            <div class="bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg p-4 text-white">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm opacity-90">Exámenes</p>
+                        <p class="text-3xl font-bold">0</p>
+                    </div>
+                    <i class="fas fa-eye text-3xl opacity-80"></i>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tabs de Navegación -->
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+            <div class="border-b border-gray-200">
+                <nav class="flex -mb-px">
+                    <button onclick="showTab('appointments')" id="tab-appointments" class="tab-button active px-6 py-3 border-b-2 border-blue-600 text-blue-600 font-medium">
+                        <i class="fas fa-calendar-alt mr-2"></i>Citas
+                    </button>
+                    <button onclick="showTab('history')" id="tab-history" class="tab-button px-6 py-3 border-b-2 border-transparent text-gray-500 hover:text-gray-700 font-medium">
+                        <i class="fas fa-file-medical mr-2"></i>Historia Clínica
+                    </button>
+                    <button onclick="showTab('exams')" id="tab-exams" class="tab-button px-6 py-3 border-b-2 border-transparent text-gray-500 hover:text-gray-700 font-medium">
+                        <i class="fas fa-eye mr-2"></i>Exámenes Visuales
+                    </button>
+                </nav>
+            </div>
+
+            <!-- Contenido de Tabs -->
+            <div class="p-6">
+                <!-- Tab: Citas -->
+                <div id="content-appointments" class="tab-content">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-lg font-bold text-gray-800">Historial de Citas</h3>
+                        <button onclick="newAppointment()" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors text-sm">
+                            <i class="fas fa-plus mr-2"></i>Nueva Cita
+                        </button>
+                    </div>
+
+                    {% if appointments %}
+                    <div class="space-y-3">
+                        {% for appointment in appointments %}
+                        <div class="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors">
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <div class="flex items-center mb-2">
+                                        <span class="px-2 py-1 inline-flex text-xs font-semibold rounded-full
+                                            {% if appointment.status == 'pending' %}bg-yellow-100 text-yellow-800
+                                            {% elif appointment.status == 'confirmed' %}bg-blue-100 text-blue-800
+                                            {% elif appointment.status == 'completed' %}bg-green-100 text-green-800
+                                            {% elif appointment.status == 'cancelled' %}bg-red-100 text-red-800
+                                            {% else %}bg-gray-100 text-gray-800{% endif %}">
+                                            {{ appointment.get_status_display }}
+                                        </span>
+                                    </div>
+                                    <p class="font-semibold text-gray-900">
+                                        <i class="fas fa-calendar mr-2 text-blue-600"></i>{{ appointment.appointment_date|date:"d/m/Y" }}
+                                        <i class="fas fa-clock ml-3 mr-2 text-orange-600"></i>{{ appointment.appointment_time|time:"H:i" }}
+                                    </p>
+                                    {% if appointment.notes %}
+                                    <p class="text-sm text-gray-600 mt-2">{{ appointment.notes }}</p>
+                                    {% endif %}
+                                    {% if appointment.attended_by %}
+                                    <p class="text-xs text-gray-500 mt-2">
+                                        <i class="fas fa-user-md mr-1"></i>Atendido por: {{ appointment.attended_by.username }}
+                                    </p>
+                                    {% endif %}
+                                </div>
+                                <a href="{% url 'dashboard:appointment_detail' appointment.id %}" class="text-blue-600 hover:text-blue-800">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="text-center py-12">
+                        <i class="fas fa-calendar-times text-gray-400 text-5xl mb-4"></i>
+                        <p class="text-gray-600 mb-4">No hay citas registradas</p>
+                        <button onclick="newAppointment()" class="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors">
+                            <i class="fas fa-plus mr-2"></i>Agendar Primera Cita
+                        </button>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- Tab: Historia Clínica -->
+                <div id="content-history" class="tab-content hidden">
+                    <h3 class="text-lg font-bold text-gray-800 mb-4">Historia Clínica</h3>
+                    <div class="text-center py-12">
+                        <i class="fas fa-file-medical text-gray-400 text-5xl mb-4"></i>
+                        <p class="text-gray-600 mb-2">Módulo en desarrollo</p>
+                        <p class="text-sm text-gray-500">Próximamente podrás gestionar la historia clínica completa</p>
+                    </div>
+                </div>
+
+                <!-- Tab: Exámenes Visuales -->
+                <div id="content-exams" class="tab-content hidden">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-lg font-bold text-gray-800">Exámenes Visuales</h3>
+                        <button onclick="newExam()" class="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors text-sm">
+                            <i class="fas fa-plus mr-2"></i>Nuevo Examen
+                        </button>
+                    </div>
+                    <div class="text-center py-12">
+                        <i class="fas fa-eye text-gray-400 text-5xl mb-4"></i>
+                        <p class="text-gray-600 mb-2">No hay exámenes visuales registrados</p>
+                        <p class="text-sm text-gray-500 mb-4">Los exámenes visuales incluirán: agudeza visual, refracción, tonometría, etc.</p>
+                        <button onclick="newExam()" class="px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors">
+                            <i class="fas fa-plus mr-2"></i>Registrar Primer Examen
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function showTab(tabName) {
+    // Ocultar todos los contenidos
+    document.querySelectorAll('.tab-content').forEach(content => {
+        content.classList.add('hidden');
+    });
+    
+    // Remover clase active de todos los botones
+    document.querySelectorAll('.tab-button').forEach(button => {
+        button.classList.remove('active', 'border-blue-600', 'text-blue-600');
+        button.classList.add('border-transparent', 'text-gray-500');
+    });
+    
+    // Mostrar contenido seleccionado
+    document.getElementById(`content-${tabName}`).classList.remove('hidden');
+    
+    // Activar botón seleccionado
+    const activeButton = document.getElementById(`tab-${tabName}`);
+    activeButton.classList.add('active', 'border-blue-600', 'text-blue-600');
+    activeButton.classList.remove('border-transparent', 'text-gray-500');
+}
+
+function newAppointment() {
+    alert('Redirigiendo al sistema de agendamiento...\n\nEsta funcionalidad se implementará próximamente.');
+}
+
+function newExam() {
+    alert('Módulo de Exámenes Visuales en desarrollo.\n\nIncluirá campos para: agudeza visual, refracción objetiva y subjetiva, pruebas binoculares, tonometría, examen de segmento anterior, fondo de ojo, etc.');
+}
+</script>
+
+<style>
+.tab-button {
+    transition: all 0.2s;
+}
+.tab-button:hover {
+    background-color: rgba(0, 0, 0, 0.02);
+}
+</style>
+{% endblock %}

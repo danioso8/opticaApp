@@ -1,0 +1,288 @@
+{% extends 'dashboard/base.html' %}
+{% load static %}
+
+{% block title %}Calendario de Citas - Dashboard{% endblock %}
+
+{% block content %}
+<div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+    <div class="flex justify-between items-center mb-6">
+        <h1 class="text-2xl font-bold text-gray-800">
+            <i class="fas fa-calendar-alt mr-2"></i>Calendario de Citas
+        </h1>
+        <div class="flex items-center space-x-4">
+            <button onclick="previousMonth()" class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors">
+                <i class="fas fa-chevron-left"></i>
+            </button>
+            <h2 class="text-xl font-semibold text-gray-700" id="currentMonth">
+                {{ month|date:"F Y" }}
+            </h2>
+            <button onclick="nextMonth()" class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors">
+                <i class="fas fa-chevron-right"></i>
+            </button>
+            <button onclick="goToToday()" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors">
+                <i class="fas fa-calendar-day mr-2"></i>Hoy
+            </button>
+        </div>
+    </div>
+
+    <!-- Calendario -->
+    <div class="calendar-container">
+        <div class="grid grid-cols-7 gap-2 mb-2">
+            <div class="text-center font-semibold text-gray-600 py-2">Lun</div>
+            <div class="text-center font-semibold text-gray-600 py-2">Mar</div>
+            <div class="text-center font-semibold text-gray-600 py-2">Mié</div>
+            <div class="text-center font-semibold text-gray-600 py-2">Jue</div>
+            <div class="text-center font-semibold text-gray-600 py-2">Vie</div>
+            <div class="text-center font-semibold text-gray-600 py-2">Sáb</div>
+            <div class="text-center font-semibold text-gray-600 py-2">Dom</div>
+        </div>
+
+        <div id="calendarGrid" class="grid grid-cols-7 gap-2">
+            <!-- Los días se generarán dinámicamente con JavaScript -->
+        </div>
+    </div>
+
+    <!-- Leyenda -->
+    <div class="mt-6 pt-6 border-t border-gray-200">
+        <h3 class="text-sm font-semibold text-gray-700 mb-3">Leyenda</h3>
+        <div class="flex flex-wrap gap-4">
+            <div class="flex items-center">
+                <div class="w-4 h-4 bg-blue-100 border-2 border-blue-500 rounded mr-2"></div>
+                <span class="text-sm text-gray-600">Día actual</span>
+            </div>
+            <div class="flex items-center">
+                <div class="w-4 h-4 bg-green-100 rounded mr-2"></div>
+                <span class="text-sm text-gray-600">Con citas</span>
+            </div>
+            <div class="flex items-center">
+                <div class="w-4 h-4 bg-gray-100 rounded mr-2"></div>
+                <span class="text-sm text-gray-600">Sin citas</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Detalles del Día -->
+<div id="dayModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
+    <div class="bg-white rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-[80vh] overflow-y-auto">
+        <div class="p-6">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-bold text-gray-800" id="modalTitle">Citas del Día</h3>
+                <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            <div id="modalContent">
+                <!-- Contenido dinámico -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let currentYear = {{ year }};
+let currentMonth = {{ month }};
+const today = new Date('{{ today|date:"Y-m-d" }}');
+
+const monthNames = [
+    'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+    'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
+];
+
+// Cargar datos de citas del mes actual
+let appointmentsData = {{ appointments|safe }};
+
+function renderCalendar() {
+    const grid = document.getElementById('calendarGrid');
+    grid.innerHTML = '';
+    
+    // Calcular el primer día del mes y cuántos días tiene
+    const firstDay = new Date(currentYear, currentMonth - 1, 1);
+    const lastDay = new Date(currentYear, currentMonth, 0);
+    const daysInMonth = lastDay.getDate();
+    
+    // Ajustar para que la semana empiece en Lunes (0 = Domingo -> 6, 1 = Lunes -> 0)
+    let firstDayOfWeek = firstDay.getDay();
+    firstDayOfWeek = firstDayOfWeek === 0 ? 6 : firstDayOfWeek - 1;
+    
+    // Actualizar título del mes
+    document.getElementById('currentMonth').textContent = `${monthNames[currentMonth - 1]} ${currentYear}`;
+    
+    // Días vacíos antes del primer día
+    for (let i = 0; i < firstDayOfWeek; i++) {
+        const emptyDay = document.createElement('div');
+        emptyDay.className = 'calendar-day-empty p-2 h-24';
+        grid.appendChild(emptyDay);
+    }
+    
+    // Días del mes
+    for (let day = 1; day <= daysInMonth; day++) {
+        const date = new Date(currentYear, currentMonth - 1, day);
+        const dateString = date.toISOString().split('T')[0];
+        const appointmentCount = getAppointmentCount(dateString);
+        const isToday = isSameDay(date, today);
+        
+        const dayDiv = document.createElement('div');
+        dayDiv.className = `calendar-day p-2 h-24 border rounded-lg cursor-pointer transition-all ${
+            isToday ? 'bg-blue-50 border-blue-500 border-2' : 
+            appointmentCount > 0 ? 'bg-green-50 border-green-200 hover:bg-green-100' : 
+            'bg-gray-50 border-gray-200 hover:bg-gray-100'
+        }`;
+        
+        dayDiv.onclick = () => showDayDetails(dateString, day);
+        
+        dayDiv.innerHTML = `
+            <div class="flex justify-between items-start">
+                <span class="font-semibold ${isToday ? 'text-blue-700' : 'text-gray-700'}">${day}</span>
+                ${appointmentCount > 0 ? `
+                    <span class="bg-green-500 text-white text-xs px-2 py-1 rounded-full">
+                        ${appointmentCount}
+                    </span>
+                ` : ''}
+            </div>
+            ${appointmentCount > 0 ? `
+                <div class="mt-2">
+                    <div class="text-xs text-gray-600">
+                        <i class="fas fa-clock mr-1"></i>${appointmentCount} ${appointmentCount === 1 ? 'cita' : 'citas'}
+                    </div>
+                </div>
+            ` : ''}
+        `;
+        
+        grid.appendChild(dayDiv);
+    }
+}
+
+function getAppointmentCount(dateString) {
+    // Convertir la fecha al formato usado en el diccionario de Python
+    return appointmentsData[dateString] || 0;
+}
+
+function isSameDay(date1, date2) {
+    return date1.getDate() === date2.getDate() &&
+           date1.getMonth() === date2.getMonth() &&
+           date1.getFullYear() === date2.getFullYear();
+}
+
+function previousMonth() {
+    currentMonth--;
+    if (currentMonth < 1) {
+        currentMonth = 12;
+        currentYear--;
+    }
+    loadMonthData();
+}
+
+function nextMonth() {
+    currentMonth++;
+    if (currentMonth > 12) {
+        currentMonth = 1;
+        currentYear++;
+    }
+    loadMonthData();
+}
+
+function goToToday() {
+    currentYear = today.getFullYear();
+    currentMonth = today.getMonth() + 1;
+    loadMonthData();
+}
+
+function loadMonthData() {
+    // Cargar datos del mes desde el servidor
+    fetch(`{% url 'dashboard:calendar' %}?year=${currentYear}&month=${currentMonth}`)
+        .then(response => response.text())
+        .then(html => {
+            // Parsear el HTML para extraer los datos de citas
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(html, 'text/html');
+            
+            // Aquí se extraerían los datos, por ahora recargamos la página
+            window.location.href = `{% url 'dashboard:calendar' %}?year=${currentYear}&month=${currentMonth}`;
+        })
+        .catch(error => {
+            console.error('Error al cargar datos:', error);
+        });
+}
+
+function showDayDetails(dateString, day) {
+    const appointmentCount = getAppointmentCount(dateString);
+    
+    const modal = document.getElementById('dayModal');
+    const modalTitle = document.getElementById('modalTitle');
+    const modalContent = document.getElementById('modalContent');
+    
+    const [year, month, dayNum] = dateString.split('-');
+    modalTitle.textContent = `Citas del ${day} de ${monthNames[currentMonth - 1]} ${currentYear}`;
+    
+    if (appointmentCount > 0) {
+        // Cargar las citas del día
+        fetch(`{% url 'dashboard:appointments_list' %}?date=${dateString}`)
+            .then(response => response.text())
+            .then(html => {
+                modalContent.innerHTML = `
+                    <div class="space-y-3">
+                        <p class="text-sm text-gray-600">
+                            <i class="fas fa-calendar-check text-green-500 mr-2"></i>
+                            ${appointmentCount} ${appointmentCount === 1 ? 'cita agendada' : 'citas agendadas'} para este día
+                        </p>
+                        <div class="flex gap-3">
+                            <a href="{% url 'dashboard:appointments_list' %}?date=${dateString}" 
+                               class="flex-1 text-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors">
+                                <i class="fas fa-list mr-2"></i>Ver Todas las Citas
+                            </a>
+                            <button onclick="closeModal()" 
+                                    class="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg transition-colors">
+                                Cerrar
+                            </button>
+                        </div>
+                    </div>
+                `;
+                modal.classList.remove('hidden');
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                modalContent.innerHTML = `
+                    <p class="text-red-600">Error al cargar las citas</p>
+                `;
+                modal.classList.remove('hidden');
+            });
+    } else {
+        modalContent.innerHTML = `
+            <div class="text-center py-8">
+                <i class="fas fa-calendar-times text-gray-400 text-4xl mb-4"></i>
+                <p class="text-gray-600 mb-4">No hay citas agendadas para este día</p>
+                <button onclick="closeModal()" 
+                        class="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg transition-colors">
+                    Cerrar
+                </button>
+            </div>
+        `;
+        modal.classList.remove('hidden');
+    }
+}
+
+function closeModal() {
+    document.getElementById('dayModal').classList.add('hidden');
+}
+
+// Renderizar el calendario al cargar
+renderCalendar();
+
+// Cerrar modal al hacer click fuera de él
+document.getElementById('dayModal').addEventListener('click', function(e) {
+    if (e.target === this) {
+        closeModal();
+    }
+});
+</script>
+
+<style>
+.calendar-day {
+    min-height: 96px;
+}
+.calendar-day-empty {
+    min-height: 96px;
+}
+</style>
+{% endblock %}

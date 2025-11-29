@@ -1,0 +1,66 @@
+from channels.layers import get_channel_layer
+from asgiref.sync import async_to_sync
+
+
+def notify_new_appointment(appointment):
+    """
+    Envía notificación de nueva cita a todos los clientes conectados
+    """
+    channel_layer = get_channel_layer()
+    
+    appointment_data = {
+        'id': appointment.id,
+        'full_name': appointment.full_name,
+        'phone_number': appointment.phone_number,
+        'appointment_date': str(appointment.appointment_date),
+        'appointment_time': str(appointment.appointment_time),
+        'status': appointment.status,
+    }
+    
+    async_to_sync(channel_layer.group_send)(
+        'appointments',
+        {
+            'type': 'new_appointment',
+            'appointment': appointment_data,
+            'message': f'Nueva cita agendada: {appointment.full_name}'
+        }
+    )
+
+
+def notify_appointment_updated(appointment):
+    """
+    Envía notificación de cita actualizada
+    """
+    channel_layer = get_channel_layer()
+    
+    appointment_data = {
+        'id': appointment.id,
+        'full_name': appointment.full_name,
+        'status': appointment.status,
+        'status_display': appointment.get_status_display(),
+    }
+    
+    async_to_sync(channel_layer.group_send)(
+        'appointments',
+        {
+            'type': 'appointment_updated',
+            'appointment': appointment_data,
+            'message': f'Cita actualizada: {appointment.full_name} - {appointment.get_status_display()}'
+        }
+    )
+
+
+def notify_system_toggled(is_open):
+    """
+    Envía notificación de cambio en estado del sistema
+    """
+    channel_layer = get_channel_layer()
+    
+    async_to_sync(channel_layer.group_send)(
+        'appointments',
+        {
+            'type': 'system_toggled',
+            'is_open': is_open,
+            'message': f'Sistema {"abierto" if is_open else "cerrado"}'
+        }
+    )

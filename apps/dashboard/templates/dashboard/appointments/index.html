@@ -1,0 +1,403 @@
+{% extends 'dashboard/base.html' %}
+{% load static %}
+
+{% block title %}Gestión de Citas - Dashboard{% endblock %}
+
+{% block content %}
+<div class="bg-white rounded-lg shadow-sm border border-gray-200">
+    <!-- Tabs Navigation -->
+    <div class="border-b border-gray-200">
+        <nav class="flex -mb-px">
+            <button onclick="showTab('today')" id="tab-today" class="tab-button active flex-1 px-6 py-4 border-b-2 border-blue-600 text-blue-600 font-semibold hover:bg-gray-50 transition">
+                <i class="fas fa-calendar-day mr-2"></i>Citas de Hoy
+            </button>
+            <button onclick="showTab('all')" id="tab-all" class="tab-button flex-1 px-6 py-4 border-b-2 border-transparent text-gray-500 font-semibold hover:bg-gray-50 hover:text-gray-700 transition">
+                <i class="fas fa-calendar-alt mr-2"></i>Todas las Citas
+            </button>
+        </nav>
+    </div>
+
+    <!-- Tab Content: Citas de Hoy -->
+    <div id="content-today" class="tab-content">
+        <div class="p-6">
+            <!-- Título y Fecha -->
+            <div class="mb-6">
+                <h2 class="text-2xl font-bold text-gray-800">{{ today|date:"l, d \d\e F \d\e Y" }}</h2>
+                <p class="text-gray-600">Vista en tiempo real de las citas del día</p>
+            </div>
+
+            <!-- Estadísticas del Día -->
+            <div class="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
+                <div class="bg-gradient-to-br from-gray-50 to-gray-100 rounded-lg shadow-sm p-4 border border-gray-200">
+                    <p class="text-sm text-gray-600 font-medium">Total</p>
+                    <p class="text-3xl font-bold text-gray-800 mt-1" id="stat-total">{{ stats.today.total }}</p>
+                </div>
+                
+                <div class="bg-gradient-to-br from-yellow-50 to-yellow-100 rounded-lg shadow-sm p-4 border border-yellow-200">
+                    <p class="text-sm text-yellow-700 font-medium">Pendientes</p>
+                    <p class="text-3xl font-bold text-yellow-800 mt-1" id="stat-pending">{{ stats.today.pending }}</p>
+                </div>
+                
+                <div class="bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg shadow-sm p-4 border border-blue-200">
+                    <p class="text-sm text-blue-700 font-medium">Confirmadas</p>
+                    <p class="text-3xl font-bold text-blue-800 mt-1" id="stat-confirmed">{{ stats.today.confirmed }}</p>
+                </div>
+                
+                <div class="bg-gradient-to-br from-green-50 to-green-100 rounded-lg shadow-sm p-4 border border-green-200">
+                    <p class="text-sm text-green-700 font-medium">Completadas</p>
+                    <p class="text-3xl font-bold text-green-800 mt-1" id="stat-completed">{{ stats.today.completed }}</p>
+                </div>
+                
+                <div class="bg-gradient-to-br from-red-50 to-red-100 rounded-lg shadow-sm p-4 border border-red-200">
+                    <p class="text-sm text-red-700 font-medium">Canceladas</p>
+                    <p class="text-3xl font-bold text-red-800 mt-1" id="stat-cancelled">{{ stats.today.cancelled }}</p>
+                </div>
+            </div>
+
+            <!-- Lista de Citas del Día -->
+            <div class="space-y-4" id="today-appointments-list">
+                {% for appointment in today_appointments %}
+                <div class="border border-gray-200 rounded-lg p-5 hover:shadow-md transition" data-appointment-id="{{ appointment.id }}">
+                    <div class="flex items-start justify-between">
+                        <div class="flex items-start flex-1">
+                            <div class="flex-shrink-0">
+                                <div class="w-14 h-14 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center text-white font-bold text-lg">
+                                    {{ appointment.full_name|first|upper }}
+                                </div>
+                            </div>
+                            
+                            <div class="ml-4 flex-1">
+                                <h4 class="text-lg font-bold text-gray-800">{{ appointment.full_name }}</h4>
+                                <div class="mt-2 flex flex-wrap items-center gap-4 text-sm text-gray-600">
+                                    <span class="flex items-center">
+                                        <i class="fas fa-phone text-green-600 mr-2"></i>{{ appointment.phone_number }}
+                                    </span>
+                                    <span class="flex items-center">
+                                        <i class="fas fa-clock text-orange-600 mr-2"></i>{{ appointment.appointment_time|time:"H:i" }}
+                                    </span>
+                                    {% if appointment.patient %}
+                                    <span class="flex items-center text-green-600 font-medium">
+                                        <i class="fas fa-user-check mr-2"></i>Paciente registrado
+                                    </span>
+                                    {% endif %}
+                                </div>
+                                
+                                {% if appointment.notes %}
+                                <div class="mt-2 text-sm text-gray-600 bg-gray-50 p-2 rounded">
+                                    <i class="fas fa-comment-alt mr-1"></i>{{ appointment.notes }}
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="flex items-center gap-3 ml-4">
+                            <!-- Selector de Estado -->
+                            <select onchange="changeStatus({{ appointment.id }}, this.value)" 
+                                    class="status-select px-4 py-2 rounded-lg font-semibold text-sm border-2 cursor-pointer transition
+                                    {% if appointment.status == 'pending' %}bg-yellow-50 text-yellow-800 border-yellow-300 hover:bg-yellow-100
+                                    {% elif appointment.status == 'confirmed' %}bg-blue-50 text-blue-800 border-blue-300 hover:bg-blue-100
+                                    {% elif appointment.status == 'completed' %}bg-green-50 text-green-800 border-green-300 hover:bg-green-100
+                                    {% elif appointment.status == 'cancelled' %}bg-red-50 text-red-800 border-red-300 hover:bg-red-100
+                                    {% else %}bg-gray-50 text-gray-800 border-gray-300 hover:bg-gray-100{% endif %}">
+                                <option value="pending" {% if appointment.status == 'pending' %}selected{% endif %}>⏱️ Pendiente</option>
+                                <option value="confirmed" {% if appointment.status == 'confirmed' %}selected{% endif %}>✓ Confirmada</option>
+                                <option value="completed" {% if appointment.status == 'completed' %}selected{% endif %}>✓✓ Completada</option>
+                                <option value="cancelled" {% if appointment.status == 'cancelled' %}selected{% endif %}>✕ Cancelada</option>
+                                <option value="no_show" {% if appointment.status == 'no_show' %}selected{% endif %}>👤 No asistió</option>
+                            </select>
+                            
+                            <!-- Botón Ver Detalle -->
+                            <a href="{% url 'dashboard:appointment_detail' appointment.id %}" 
+                               class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium">
+                                <i class="fas fa-eye mr-1"></i>Ver
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="text-center py-16">
+                    <i class="fas fa-calendar-check text-gray-300 text-6xl mb-4"></i>
+                    <p class="text-gray-500 text-lg">No hay citas programadas para hoy</p>
+                    <p class="text-gray-400 text-sm mt-2">Las citas aparecerán aquí en tiempo real</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Tab Content: Todas las Citas -->
+    <div id="content-all" class="tab-content hidden">
+        <div class="p-6">
+            <!-- Filtros -->
+            <div class="bg-gray-50 rounded-lg p-4 mb-6 border border-gray-200">
+                <form method="GET" action="{% url 'dashboard:appointments_list' %}" class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Buscar</label>
+                        <input type="text" name="search" value="{{ request.GET.search }}" 
+                               placeholder="Nombre o teléfono..." 
+                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Estado</label>
+                        <select name="status" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                            <option value="">Todos los estados</option>
+                            {% for value, label in status_choices %}
+                            <option value="{{ value }}" {% if request.GET.status == value %}selected{% endif %}>{{ label }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Fecha</label>
+                        <input type="date" name="date" value="{{ request.GET.date }}" 
+                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    
+                    <div class="flex items-end gap-2">
+                        <button type="submit" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition font-medium">
+                            <i class="fas fa-search mr-2"></i>Filtrar
+                        </button>
+                        <a href="{% url 'dashboard:appointments_list' %}" class="bg-gray-300 hover:bg-gray-400 text-gray-700 px-4 py-2 rounded-lg transition">
+                            <i class="fas fa-times"></i>
+                        </a>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Tabla de Citas -->
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Paciente</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Teléfono</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fecha y Hora</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estado</th>
+                            <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        {% for appointment in all_appointments %}
+                        <tr class="hover:bg-gray-50 transition">
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="flex items-center">
+                                    <div class="flex-shrink-0 h-10 w-10 bg-gradient-to-br from-blue-400 to-blue-600 rounded-full flex items-center justify-center text-white font-bold">
+                                        {{ appointment.full_name|first|upper }}
+                                    </div>
+                                    <div class="ml-4">
+                                        <div class="text-sm font-medium text-gray-900">{{ appointment.full_name }}</div>
+                                        {% if appointment.patient %}
+                                        <div class="text-xs text-green-600">
+                                            <i class="fas fa-user-check"></i> Registrado
+                                        </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                                <i class="fas fa-phone text-green-600 mr-1"></i>{{ appointment.phone_number }}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="text-sm text-gray-900">
+                                    <i class="fas fa-calendar mr-1 text-blue-600"></i>{{ appointment.appointment_date|date:"d/m/Y" }}
+                                    {% if appointment.is_today %}
+                                    <span class="ml-2 px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded-full font-semibold">HOY</span>
+                                    {% endif %}
+                                </div>
+                                <div class="text-xs text-gray-500">
+                                    <i class="fas fa-clock mr-1 text-orange-600"></i>{{ appointment.appointment_time|time:"H:i" }}
+                                </div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full
+                                    {% if appointment.status == 'pending' %}bg-yellow-100 text-yellow-800
+                                    {% elif appointment.status == 'confirmed' %}bg-blue-100 text-blue-800
+                                    {% elif appointment.status == 'completed' %}bg-green-100 text-green-800
+                                    {% elif appointment.status == 'cancelled' %}bg-red-100 text-red-800
+                                    {% else %}bg-gray-100 text-gray-800{% endif %}">
+                                    {{ appointment.get_status_display }}
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-center text-sm font-medium">
+                                <a href="{% url 'dashboard:appointment_detail' appointment.id %}" class="text-blue-600 hover:text-blue-900">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                {% if appointment.patient %}
+                                <a href="{% url 'dashboard:patient_detail' appointment.patient.id %}" class="ml-3 text-green-600 hover:text-green-900">
+                                    <i class="fas fa-user"></i>
+                                </a>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="5" class="px-6 py-12 text-center text-gray-500">
+                                <i class="fas fa-inbox text-4xl mb-3"></i>
+                                <p>No se encontraron citas</p>
+                                {% if request.GET.search or request.GET.status or request.GET.date %}
+                                <p class="text-sm mt-2">
+                                    <a href="{% url 'dashboard:appointments_list' %}" class="text-blue-600 hover:text-blue-800">
+                                        Limpiar filtros
+                                    </a>
+                                </p>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            {% if all_appointments %}
+            <div class="mt-4 text-sm text-gray-600 px-6">
+                Total de citas: <span class="font-semibold">{{ all_appointments.count }}</span>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- WebSocket y Scripts -->
+<script>
+let ws = null;
+
+// Función para cambiar tabs
+function showTab(tabName) {
+    // Ocultar todos los contenidos
+    document.querySelectorAll('.tab-content').forEach(content => {
+        content.classList.add('hidden');
+    });
+    
+    // Remover clase active de todos los botones
+    document.querySelectorAll('.tab-button').forEach(button => {
+        button.classList.remove('active', 'border-blue-600', 'text-blue-600');
+        button.classList.add('border-transparent', 'text-gray-500');
+    });
+    
+    // Mostrar contenido seleccionado
+    document.getElementById(`content-${tabName}`).classList.remove('hidden');
+    
+    // Activar botón seleccionado
+    const activeButton = document.getElementById(`tab-${tabName}`);
+    activeButton.classList.add('active', 'border-blue-600', 'text-blue-600');
+    activeButton.classList.remove('border-transparent', 'text-gray-500');
+
+    // Si cambiamos al tab "all", recargar la página con los filtros
+    if (tabName === 'all') {
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.toString()) {
+            // Ya hay filtros en la URL
+        }
+    }
+}
+
+// Función para cambiar estado con AJAX
+function changeStatus(appointmentId, newStatus) {
+    const csrfToken = '{{ csrf_token }}';
+    
+    fetch(`/dashboard/appointments/${appointmentId}/change-status/`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'X-CSRFToken': csrfToken
+        },
+        body: `status=${newStatus}`
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Actualizar el color del select
+            const select = document.querySelector(`[data-appointment-id="${appointmentId}"] select`);
+            if (select) {
+                // Remover todas las clases de color
+                select.className = select.className.replace(/bg-\w+-\d+/g, '').replace(/text-\w+-\d+/g, '').replace(/border-\w+-\d+/g, '');
+                
+                // Agregar nuevas clases según el estado
+                if (newStatus === 'pending') {
+                    select.classList.add('bg-yellow-50', 'text-yellow-800', 'border-yellow-300');
+                } else if (newStatus === 'confirmed') {
+                    select.classList.add('bg-blue-50', 'text-blue-800', 'border-blue-300');
+                } else if (newStatus === 'completed') {
+                    select.classList.add('bg-green-50', 'text-green-800', 'border-green-300');
+                } else if (newStatus === 'cancelled') {
+                    select.classList.add('bg-red-50', 'text-red-800', 'border-red-300');
+                } else {
+                    select.classList.add('bg-gray-50', 'text-gray-800', 'border-gray-300');
+                }
+            }
+            
+            // Mostrar notificación de éxito
+            showNotification('Estado actualizado correctamente', 'success');
+        } else {
+            showNotification('Error al actualizar el estado', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showNotification('Error al actualizar el estado', 'error');
+    });
+}
+
+// Función para mostrar notificaciones
+function showNotification(message, type) {
+    const notification = document.createElement('div');
+    notification.className = `fixed top-4 right-4 px-6 py-3 rounded-lg shadow-lg z-50 ${
+        type === 'success' ? 'bg-green-500' : 'bg-red-500'
+    } text-white font-medium`;
+    notification.textContent = message;
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+        notification.remove();
+    }, 3000);
+}
+
+// Conectar WebSocket para actualizaciones en tiempo real
+function connectWebSocket() {
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const wsUrl = `${protocol}//${window.location.host}/ws/appointments/`;
+    
+    ws = new WebSocket(wsUrl);
+    
+    ws.onopen = () => {
+        console.log('WebSocket conectado');
+    };
+    
+    ws.onmessage = (event) => {
+        const data = JSON.parse(event.data);
+        
+        if (data.type === 'new_appointment' || data.type === 'appointment_updated') {
+            // Recargar solo si estamos en el tab de hoy
+            const todayTab = document.getElementById('content-today');
+            if (!todayTab.classList.contains('hidden')) {
+                location.reload();
+            }
+        }
+    };
+    
+    ws.onerror = (error) => {
+        console.error('WebSocket error:', error);
+    };
+    
+    ws.onclose = () => {
+        console.log('WebSocket desconectado, reconectando en 5 segundos...');
+        setTimeout(connectWebSocket, 5000);
+    };
+}
+
+// Inicializar WebSocket al cargar la página
+document.addEventListener('DOMContentLoaded', () => {
+    connectWebSocket();
+});
+</script>
+
+<style>
+.tab-button {
+    transition: all 0.2s;
+}
+.status-select {
+    transition: all 0.2s;
+}
+</style>
+{% endblock %}

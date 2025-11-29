@@ -1,0 +1,98 @@
+{% extends 'public/base.html' %}
+
+{% block title %}Tienda - OCEANO OPTICO{% endblock %}
+
+{% block content %}
+<section class="min-h-screen py-20">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-16">
+            <h1 class="text-4xl md:text-5xl font-bold text-gray-800 mb-4">
+                <i class="fas fa-shopping-bag text-blue-600 mr-3"></i>Nuestra Tienda
+            </h1>
+            <p class="text-xl text-gray-600">Monturas y lentes de alta calidad</p>
+        </div>
+        
+        <!-- Coming Soon -->
+        <div class="max-w-2xl mx-auto text-center bg-white rounded-2xl shadow-xl p-12">
+            <div class="inline-block bg-blue-100 p-8 rounded-full mb-6">
+                <i class="fas fa-store text-blue-600 text-6xl"></i>
+            </div>
+            <h2 class="text-3xl font-bold text-gray-800 mb-4">Próximamente</h2>
+            <p class="text-lg text-gray-600 mb-8">
+                Estamos preparando nuestro catálogo online de monturas y lentes.
+                Mientras tanto, te invitamos a visitarnos en nuestra tienda física
+                o agendar una cita para recibir asesoría personalizada.
+            </p>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <a href="{% url 'public:booking' %}" class="bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 rounded-lg font-semibold transition">
+                    <i class="fas fa-calendar-plus mr-2"></i>Agendar Cita
+                </a>
+                <a href="https://wa.me/573001234567" target="_blank" class="bg-green-600 hover:bg-green-700 text-white px-8 py-4 rounded-lg font-semibold transition">
+                    <i class="fab fa-whatsapp mr-2"></i>Consultar por WhatsApp
+                </a>
+            </div>
+        </div>
+        
+        <!-- Categorías de Productos -->
+        <div class="mt-20">
+            <h3 class="text-2xl font-bold text-gray-800 text-center mb-12">Nuestros Productos</h3>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div class="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-2xl transition">
+                    <div class="h-48 bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center">
+                        <i class="fas fa-glasses text-white text-6xl"></i>
+                    </div>
+                    <div class="p-6">
+                        <h4 class="text-xl font-bold text-gray-800 mb-2">Monturas Oftálmicas</h4>
+                        <p class="text-gray-600 mb-4">Amplia variedad de monturas de las mejores marcas, con estilos para todos los gustos.</p>
+                        <ul class="text-sm text-gray-600 space-y-2">
+                            <li><i class="fas fa-check text-green-600 mr-2"></i>Marcas premium</li>
+                            <li><i class="fas fa-check text-green-600 mr-2"></i>Diseños modernos</li>
+                            <li><i class="fas fa-check text-green-600 mr-2"></i>Garantía incluida</li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <div class="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-2xl transition">
+                    <div class="h-48 bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center">
+                        <i class="fas fa-sun text-white text-6xl"></i>
+                    </div>
+                    <div class="p-6">
+                        <h4 class="text-xl font-bold text-gray-800 mb-2">Lentes de Sol</h4>
+                        <p class="text-gray-600 mb-4">Protección UV total con estilo. Gafas de sol originales con certificación de calidad.</p>
+                        <ul class="text-sm text-gray-600 space-y-2">
+                            <li><i class="fas fa-check text-green-600 mr-2"></i>Protección UV400</li>
+                            <li><i class="fas fa-check text-green-600 mr-2"></i>Marcas reconocidas</li>
+                            <li><i class="fas fa-check text-green-600 mr-2"></i>Estilos variados</li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <div class="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-2xl transition">
+                    <div class="h-48 bg-gradient-to-br from-purple-400 to-purple-600 flex items-center justify-center">
+                        <i class="fas fa-circle text-white text-6xl"></i>
+                    </div>
+                    <div class="p-6">
+                        <h4 class="text-xl font-bold text-gray-800 mb-2">Lentes de Contacto</h4>
+                        <p class="text-gray-600 mb-4">Lentes de contacto blandos, rígidos y especializados con adaptación profesional.</p>
+                        <ul class="text-sm text-gray-600 space-y-2">
+                            <li><i class="fas fa-check text-green-600 mr-2"></i>Adaptación incluida</li>
+                            <li><i class="fas fa-check text-green-600 mr-2"></i>Seguimiento profesional</li>
+                            <li><i class="fas fa-check text-green-600 mr-2"></i>Todas las marcas</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- CTA -->
+        <div class="mt-20 text-center bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl p-12 text-white">
+            <h3 class="text-3xl font-bold mb-4">¿Necesitas Asesoría?</h3>
+            <p class="text-xl mb-8">Nuestros especialistas te ayudarán a encontrar la mejor opción para ti</p>
+            <a href="{% url 'public:booking' %}" class="inline-block bg-white text-blue-600 hover:bg-blue-50 px-12 py-4 rounded-full font-semibold text-lg transition shadow-lg">
+                <i class="fas fa-calendar-check mr-2"></i>Agendar Cita
+            </a>
+        </div>
+    </div>
+</section>
+{% endblock %}

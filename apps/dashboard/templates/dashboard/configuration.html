@@ -1,0 +1,615 @@
+{% extends 'dashboard/base.html' %}
+
+{% block title %}Configuración{% endblock %}
+
+{% block page_title %}Configuración del Sistema{% endblock %}
+{% block page_subtitle %}Gestiona horarios, fechas bloqueadas y configuración general{% endblock %}
+
+{% block content %}
+{% csrf_token %}
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <!-- Configuración General -->
+    <div class="bg-white rounded-lg shadow p-6">
+        <h3 class="text-lg font-semibold text-gray-800 mb-4">
+            <i class="fas fa-cog mr-2 text-indigo-600"></i>
+            Configuración General
+        </h3>
+        
+        <div class="space-y-4">
+            <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                <div>
+                    <p class="font-semibold text-gray-800">Sistema de Agendamiento</p>
+                    <p class="text-sm text-gray-600">
+                        Estado: 
+                        <span class="font-semibold {% if config.is_open %}text-green-600{% else %}text-red-600{% endif %}">
+                            {% if config.is_open %}Abierto{% else %}Cerrado{% endif %}
+                        </span>
+                    </p>
+                </div>
+                <button onclick="toggleSystem()" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition">
+                    {% if config.is_open %}
+                    <i class="fas fa-lock mr-1"></i>Cerrar
+                    {% else %}
+                    <i class="fas fa-lock-open mr-1"></i>Abrir
+                    {% endif %}
+                </button>
+            </div>
+            
+            <div class="p-4 bg-gray-50 rounded-lg">
+                <p class="font-semibold text-gray-800 mb-2">Duración de Citas</p>
+                <p class="text-2xl font-bold text-indigo-600">{{ config.slot_duration }} minutos</p>
+            </div>
+            
+            <div class="p-4 bg-gray-50 rounded-lg">
+                <p class="font-semibold text-gray-800 mb-2">Máximo de Citas Diarias</p>
+                <p class="text-2xl font-bold text-indigo-600">{{ config.max_daily_appointments }}</p>
+            </div>
+            
+            <div class="p-4 bg-gray-50 rounded-lg">
+                <p class="font-semibold text-gray-800 mb-2">Días de Anticipación</p>
+                <p class="text-2xl font-bold text-indigo-600">{{ config.advance_booking_days }} días</p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Horarios de Atención -->
+    <div class="bg-white rounded-lg shadow p-6">
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="text-lg font-semibold text-gray-800">
+                <i class="fas fa-clock mr-2 text-indigo-600"></i>
+                Horarios de Atención
+            </h3>
+            <button onclick="showWorkingHoursModal()" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition text-sm">
+                <i class="fas fa-plus mr-1"></i>Agregar Horario
+            </button>
+        </div>
+        
+        <div class="space-y-3">
+            {% if working_hours %}
+                {% for wh in working_hours %}
+                <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition">
+                    <div class="flex items-center">
+                        <div class="w-10 h-10 bg-indigo-100 rounded-full flex items-center justify-center mr-3">
+                            <i class="fas fa-calendar-day text-indigo-600"></i>
+                        </div>
+                        <div>
+                            <p class="font-semibold text-gray-800">{{ wh.get_day_of_week_display }}</p>
+                            <p class="text-sm text-gray-600">
+                                {{ wh.start_time|time:"H:i" }} - {{ wh.end_time|time:"H:i" }}
+                            </p>
+                        </div>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <button onclick="toggleWorkingHour({{ wh.id }})" class="p-2 rounded hover:bg-gray-200">
+                            <i class="fas fa-{% if wh.is_active %}toggle-on text-green-600{% else %}toggle-off text-gray-400{% endif %} text-xl"></i>
+                        </button>
+                        <button onclick="deleteWorkingHour({{ wh.id }})" class="p-2 text-red-600 hover:bg-red-50 rounded">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="text-center py-8 text-gray-500">
+                    <i class="fas fa-clock text-4xl mb-3"></i>
+                    <p>No hay horarios configurados</p>
+                    <p class="text-sm mt-2">Agrega horarios para habilitar el agendamiento</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Horarios Específicos por Fecha -->
+<div class="mt-6 bg-white rounded-lg shadow p-6">
+    <div class="flex items-center justify-between mb-4">
+        <h3 class="text-lg font-semibold text-gray-800">
+            <i class="fas fa-calendar-plus mr-2 text-emerald-600"></i>
+            Horarios Específicos por Fecha
+        </h3>
+        <button onclick="showSpecificDateModal()" class="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition">
+            <i class="fas fa-plus mr-1"></i>Agregar Fecha Específica
+        </button>
+    </div>
+    
+    {% if specific_schedules %}
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {% for schedule in specific_schedules %}
+        <div class="p-4 border-l-4 border-emerald-500 bg-emerald-50 rounded-lg hover:bg-emerald-100 transition">
+            <div class="flex items-start justify-between">
+                <div class="flex-1">
+                    <p class="font-semibold text-gray-800">{{ schedule.date|date:"l, d M Y" }}</p>
+                    <p class="text-sm text-gray-600 mt-1">
+                        <i class="far fa-clock mr-1"></i>
+                        {{ schedule.start_time|time:"H:i" }} - {{ schedule.end_time|time:"H:i" }}
+                    </p>
+                    {% if schedule.notes %}
+                    <p class="text-xs text-gray-500 mt-1">{{ schedule.notes }}</p>
+                    {% endif %}
+                </div>
+                <div class="flex items-center space-x-2 ml-2">
+                    <button onclick="toggleSpecificSchedule({{ schedule.id }})" class="p-2 rounded hover:bg-emerald-200">
+                        <i class="fas fa-{% if schedule.is_active %}toggle-on text-emerald-600{% else %}toggle-off text-gray-400{% endif %} text-xl"></i>
+                    </button>
+                    <button onclick="deleteSpecificSchedule({{ schedule.id }})" class="p-2 text-red-600 hover:bg-red-100 rounded">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="text-center py-8 text-gray-500">
+        <i class="fas fa-calendar-times text-4xl mb-3"></i>
+        <p>No hay fechas específicas configuradas</p>
+        <p class="text-sm mt-2">Agrega fechas específicas con horarios para habilitar el agendamiento</p>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Fechas Bloqueadas -->
+<div class="mt-6 bg-white rounded-lg shadow p-6">
+    <div class="flex items-center justify-between mb-4">
+        <h3 class="text-lg font-semibold text-gray-800">
+            <i class="fas fa-ban mr-2 text-red-600"></i>
+            Fechas Bloqueadas
+        </h3>
+        <button onclick="showBlockDateModal()" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition">
+            <i class="fas fa-plus mr-1"></i>Bloquear Fecha
+        </button>
+    </div>
+    
+    {% if blocked_dates %}
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {% for bd in blocked_dates %}
+        <div class="p-4 border-l-4 border-red-500 bg-red-50 rounded-lg">
+            <div class="flex items-start justify-between">
+                <div>
+                    <p class="font-semibold text-gray-800">{{ bd.date|date:"d/m/Y" }}</p>
+                    <p class="text-sm text-gray-600 mt-1">{{ bd.reason }}</p>
+                </div>
+                <button class="text-red-600 hover:text-red-800">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="text-center py-8 text-gray-500">
+        <i class="fas fa-calendar-check text-4xl mb-3"></i>
+        <p>No hay fechas bloqueadas</p>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Modal para Agregar Horario -->
+<div id="working-hours-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div class="bg-white rounded-lg p-8 max-w-md w-full">
+        <h3 class="text-xl font-semibold text-gray-800 mb-4">
+            <i class="fas fa-clock mr-2 text-indigo-600"></i>
+            Agregar Horario de Atención
+        </h3>
+        
+        <form id="working-hours-form" onsubmit="saveWorkingHour(event)">
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 mb-2">Día de la semana</label>
+                <select 
+                    name="day_of_week" 
+                    required
+                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500"
+                >
+                    <option value="">Selecciona un día</option>
+                    <option value="0">Lunes</option>
+                    <option value="1">Martes</option>
+                    <option value="2">Miércoles</option>
+                    <option value="3">Jueves</option>
+                    <option value="4">Viernes</option>
+                    <option value="5">Sábado</option>
+                    <option value="6">Domingo</option>
+                </select>
+            </div>
+            
+            <div class="grid grid-cols-2 gap-4 mb-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Hora inicio</label>
+                    <input 
+                        type="time" 
+                        name="start_time" 
+                        required
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500"
+                    >
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Hora fin</label>
+                    <input 
+                        type="time" 
+                        name="end_time" 
+                        required
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500"
+                    >
+                </div>
+            </div>
+            
+            <div class="mb-6">
+                <label class="flex items-center">
+                    <input 
+                        type="checkbox" 
+                        name="is_active" 
+                        checked
+                        class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                    >
+                    <span class="ml-2 text-sm text-gray-700">Activar horario inmediatamente</span>
+                </label>
+            </div>
+            
+            <div class="flex justify-end space-x-3">
+                <button 
+                    type="button" 
+                    onclick="hideWorkingHoursModal()" 
+                    class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition"
+                >
+                    Cancelar
+                </button>
+                <button 
+                    type="submit" 
+                    class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition"
+                >
+                    <i class="fas fa-save mr-1"></i>Guardar
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Modal para Agregar Horario Específico -->
+<div id="specific-date-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div class="bg-white rounded-lg p-8 max-w-md w-full">
+        <h3 class="text-xl font-semibold text-gray-800 mb-4">
+            <i class="fas fa-calendar-plus mr-2 text-emerald-600"></i>
+            Agregar Horario Específico
+        </h3>
+        
+        <form id="specific-date-form" onsubmit="addSpecificSchedule(event)">
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 mb-2">Fecha</label>
+                <input 
+                    type="date" 
+                    name="date" 
+                    required
+                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-emerald-500 focus:border-emerald-500"
+                >
+            </div>
+            
+            <div class="grid grid-cols-2 gap-4 mb-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Hora Inicio</label>
+                    <input 
+                        type="time" 
+                        name="start_time" 
+                        required
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-emerald-500 focus:border-emerald-500"
+                    >
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Hora Fin</label>
+                    <input 
+                        type="time" 
+                        name="end_time" 
+                        required
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-emerald-500 focus:border-emerald-500"
+                    >
+                </div>
+            </div>
+            
+            <div class="mb-6">
+                <label class="block text-sm font-medium text-gray-700 mb-2">Notas (Opcional)</label>
+                <textarea 
+                    name="notes" 
+                    rows="2"
+                    placeholder="Ej: Horario especial por festivo"
+                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-emerald-500 focus:border-emerald-500"
+                ></textarea>
+            </div>
+            
+            <div class="flex justify-end space-x-3">
+                <button 
+                    type="button" 
+                    onclick="hideSpecificDateModal()" 
+                    class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition"
+                >
+                    Cancelar
+                </button>
+                <button 
+                    type="submit" 
+                    class="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition"
+                >
+                    <i class="fas fa-save mr-1"></i>
+                    Guardar
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Modal para Bloquear Fecha -->
+<div id="block-date-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div class="bg-white rounded-lg p-8 max-w-md w-full">
+        <h3 class="text-xl font-semibold text-gray-800 mb-4">Bloquear Fecha</h3>
+        
+        <form id="block-date-form" onsubmit="blockDate(event)">
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 mb-2">Fecha</label>
+                <input 
+                    type="date" 
+                    name="date" 
+                    required
+                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500"
+                >
+            </div>
+            
+            <div class="mb-6">
+                <label class="block text-sm font-medium text-gray-700 mb-2">Motivo</label>
+                <input 
+                    type="text" 
+                    name="reason" 
+                    placeholder="Ej: Festivo, Vacaciones"
+                    required
+                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500"
+                >
+            </div>
+            
+            <div class="flex justify-end space-x-3">
+                <button 
+                    type="button" 
+                    onclick="hideBlockDateModal()" 
+                    class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition"
+                >
+                    Cancelar
+                </button>
+                <button 
+                    type="submit" 
+                    class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition"
+                >
+                    Bloquear
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Función auxiliar para obtener el token CSRF
+function getCsrfToken() {
+    const token = document.querySelector('[name=csrfmiddlewaretoken]');
+    return token ? token.value : '';
+}
+
+// ==================== HORARIOS DE ATENCIÓN ====================
+function showWorkingHoursModal() {
+    document.getElementById('working-hours-modal').classList.remove('hidden');
+}
+
+function hideWorkingHoursModal() {
+    document.getElementById('working-hours-modal').classList.add('hidden');
+    document.getElementById('working-hours-form').reset();
+}
+
+function saveWorkingHour(event) {
+    event.preventDefault();
+    
+    const form = event.target;
+    const formData = new FormData(form);
+    const csrftoken = getCsrfToken();
+    
+    fetch('{% url "dashboard:add_working_hour" %}', {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': csrftoken
+        },
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('Horario agregado exitosamente');
+            location.reload();
+        } else {
+            alert(data.message || 'Error al agregar horario');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error al guardar el horario');
+    });
+}
+
+function toggleWorkingHour(id) {
+    const csrftoken = getCsrfToken();
+    
+    fetch(`{% url "dashboard:toggle_working_hour" 0 %}`.replace('0', id), {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': csrftoken,
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            location.reload();
+        } else {
+            alert(data.message || 'Error al cambiar estado');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error al cambiar el estado del horario');
+    });
+}
+
+function deleteWorkingHour(id) {
+    if (!confirm('¿Estás seguro de eliminar este horario?')) return;
+    
+    const csrftoken = getCsrfToken();
+    
+    fetch(`{% url "dashboard:delete_working_hour" 0 %}`.replace('0', id), {
+        method: 'DELETE',
+        headers: {
+            'X-CSRFToken': csrftoken,
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('Horario eliminado');
+            location.reload();
+        } else {
+            alert(data.message || 'Error al eliminar horario');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error al eliminar el horario');
+    });
+}
+
+// ==================== HORARIOS ESPECÍFICOS ====================
+function showSpecificDateModal() {
+    document.getElementById('specific-date-modal').classList.remove('hidden');
+}
+
+function hideSpecificDateModal() {
+    document.getElementById('specific-date-modal').classList.add('hidden');
+    document.getElementById('specific-date-form').reset();
+}
+
+function addSpecificSchedule(event) {
+    event.preventDefault();
+    
+    const form = event.target;
+    const formData = new FormData(form);
+    const csrftoken = getCsrfToken();
+    
+    fetch('{% url "dashboard:add_specific_schedule" %}', {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': csrftoken
+        },
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('Horario específico agregado exitosamente');
+            hideSpecificDateModal();
+            setTimeout(() => location.reload(), 500);
+        } else {
+            alert(data.message || 'Error al agregar el horario');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error al agregar el horario');
+    });
+}
+
+function toggleSpecificSchedule(scheduleId) {
+    const csrftoken = getCsrfToken();
+    
+    fetch(`/dashboard/configuration/specific-schedule/${scheduleId}/toggle/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': csrftoken,
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            setTimeout(() => location.reload(), 300);
+        } else {
+            alert(data.message || 'Error al actualizar el horario');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error al actualizar el horario');
+    });
+}
+
+function deleteSpecificSchedule(scheduleId) {
+    if (!confirm('¿Estás seguro de eliminar este horario específico?')) {
+        return;
+    }
+    
+    const csrftoken = getCsrfToken();
+    
+    fetch(`/dashboard/configuration/specific-schedule/${scheduleId}/delete/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': csrftoken,
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('Horario eliminado exitosamente');
+            setTimeout(() => location.reload(), 500);
+        } else {
+            alert(data.message || 'Error al eliminar el horario');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error al eliminar el horario');
+    });
+}
+
+// ==================== FECHAS BLOQUEADAS ====================
+function showBlockDateModal() {
+    document.getElementById('block-date-modal').classList.remove('hidden');
+}
+
+function hideBlockDateModal() {
+    document.getElementById('block-date-modal').classList.add('hidden');
+    document.getElementById('block-date-form').reset();
+}
+
+function blockDate(event) {
+    event.preventDefault();
+    
+    const form = event.target;
+    const formData = new FormData(form);
+    const csrftoken = getCsrfToken();
+    
+    fetch('{% url "dashboard:block_date" %}', {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': csrftoken
+        },
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('Fecha bloqueada exitosamente');
+            hideBlockDateModal();
+            setTimeout(() => location.reload(), 500);
+        } else {
+            alert(data.message || 'Error al bloquear la fecha');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error al bloquear la fecha');
+    });
+}
+</script>
+{% endblock %}
