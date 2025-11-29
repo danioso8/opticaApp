@@ -2,6 +2,7 @@
 .env
 .env.local
 .env.production
+.env.render
 
 # Python
 *.pyc
