@@ -14,15 +14,45 @@
     {% load static %}
     <link rel="stylesheet" href="{% static 'dashboard/css/custom.css' %}">
     
+    <style>
+        /* Animación suave para el sidebar móvil */
+        .sidebar-mobile {
+            transition: transform 0.3s ease-in-out;
+        }
+        @media (max-width: 768px) {
+            .sidebar-hidden {
+                transform: translateX(-100%);
+            }
+        }
+    </style>
+    
     {% block extra_css %}{% endblock %}
 </head>
 <body class="bg-gray-100">
     
     {% if user.is_authenticated %}
+    <!-- Mobile Header -->
+    <div class="md:hidden fixed top-0 left-0 right-0 bg-indigo-900 text-white z-50 shadow-lg">
+        <div class="flex items-center justify-between p-4">
+            <button onclick="toggleSidebar()" class="text-white focus:outline-none">
+                <i class="fas fa-bars text-2xl"></i>
+            </button>
+            <h1 class="text-lg font-bold">
+                <i class="fas fa-glasses mr-2"></i>OCEANO OPTICO
+            </h1>
+            <a href="{% url 'dashboard:logout' %}" class="text-white">
+                <i class="fas fa-sign-out-alt text-xl"></i>
+            </a>
+        </div>
+    </div>
+
+    <!-- Overlay para móvil -->
+    <div id="sidebar-overlay" class="fixed inset-0 bg-black bg-opacity-50 z-40 hidden md:hidden" onclick="toggleSidebar()"></div>
+    
     <!-- Sidebar -->
-    <div class="flex h-screen">
+    <div class="flex h-screen pt-16 md:pt-0">
         <!-- Sidebar -->
-        <aside class="w-64 bg-indigo-900 text-white flex-shrink-0">
+        <aside id="sidebar" class="sidebar-mobile sidebar-hidden md:sidebar-mobile md:translate-x-0 fixed md:relative w-64 bg-indigo-900 text-white flex-shrink-0 h-full z-40 overflow-y-auto">
             <div class="p-4">
                 <h1 class="text-2xl font-bold">
                     <i class="fas fa-glasses mr-2"></i>OCEANO OPTICO
@@ -81,31 +111,31 @@
         <!-- Main Content -->
         <div class="flex-1 flex flex-col overflow-hidden">
             <!-- Top Bar -->
-            <header class="bg-white shadow-sm">
-                <div class="flex items-center justify-between px-6 py-4">
+            <header class="bg-white shadow-sm hidden md:block">
+                <div class="flex flex-col md:flex-row items-start md:items-center justify-between px-4 md:px-6 py-4 gap-3">
                     <div>
-                        <h2 class="text-2xl font-bold text-gray-800">
+                        <h2 class="text-xl md:text-2xl font-bold text-gray-800">
                             {% block page_title %}Dashboard{% endblock %}
                         </h2>
-                        <p class="text-sm text-gray-600">
+                        <p class="text-xs md:text-sm text-gray-600">
                             {% block page_subtitle %}Resumen general del sistema{% endblock %}
                         </p>
                     </div>
                     
-                    <div class="flex items-center space-x-4">
+                    <div class="flex flex-wrap items-center gap-3">
                         <!-- Toggle Sistema -->
                         <div class="flex items-center">
-                            <span class="mr-2 text-sm font-medium text-gray-700">Sistema:</span>
+                            <span class="mr-2 text-xs md:text-sm font-medium text-gray-700 hidden sm:inline">Sistema:</span>
                             <button onclick="toggleSystem()" id="system-toggle" class="relative inline-flex items-center h-6 rounded-full w-11 focus:outline-none">
                                 <span class="sr-only">Toggle Sistema</span>
                                 <span id="toggle-bg" class="inline-block w-11 h-6 bg-gray-300 rounded-full transition"></span>
                                 <span id="toggle-dot" class="absolute left-0 inline-block w-6 h-6 bg-white rounded-full shadow transform transition"></span>
                             </button>
-                            <span id="system-status" class="ml-2 text-sm font-medium"></span>
+                            <span id="system-status" class="ml-2 text-xs md:text-sm font-medium"></span>
                         </div>
                         
                         <!-- Fecha actual -->
-                        <div class="text-sm text-gray-600">
+                        <div class="text-xs md:text-sm text-gray-600 hidden sm:block">
                             <i class="fas fa-calendar mr-1"></i>
                             {{ today|date:"d/m/Y" }}
                         </div>
@@ -125,7 +155,7 @@
             {% endif %}
             
             <!-- Page Content -->
-            <main class="flex-1 overflow-x-hidden overflow-y-auto bg-gray-100 p-6">
+            <main class="flex-1 overflow-x-hidden overflow-y-auto bg-gray-100 p-3 md:p-6">
                 {% block content %}
                 {% endblock %}
             </main>
@@ -143,6 +173,26 @@
     
     {% load static %}
     <script src="{% static 'dashboard/js/main.js' %}"></script>
+    
+    <script>
+        // Toggle sidebar en móvil
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('sidebar-overlay');
+            
+            sidebar.classList.toggle('sidebar-hidden');
+            overlay.classList.toggle('hidden');
+        }
+        
+        // Cerrar sidebar al hacer click en un enlace (solo en móvil)
+        document.querySelectorAll('#sidebar a').forEach(link => {
+            link.addEventListener('click', function() {
+                if (window.innerWidth < 768) {
+                    toggleSidebar();
+                }
+            });
+        });
+    </script>
     
     {% block extra_js %}{% endblock %}
 </body>

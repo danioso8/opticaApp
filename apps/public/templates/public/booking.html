@@ -3,38 +3,38 @@
 {% block title %}Agendar Cita - OCEANO OPTICO{% endblock %}
 
 {% block content %}
-<section class="min-h-screen py-20 bg-gradient-to-br from-blue-50 to-purple-50">
+<section class="min-h-screen py-12 md:py-20 bg-gradient-to-br from-blue-50 to-purple-50">
     <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="text-center mb-12">
-            <h1 class="text-4xl md:text-5xl font-bold text-gray-800 mb-4">
-                <i class="fas fa-calendar-plus text-blue-600 mr-3"></i>Agendar Cita
+        <div class="text-center mb-8 md:mb-12">
+            <h1 class="text-3xl md:text-4xl lg:text-5xl font-bold text-gray-800 mb-3 md:mb-4">
+                <i class="fas fa-calendar-plus text-blue-600 mr-2 md:mr-3"></i>Agendar Cita
             </h1>
-            <p class="text-xl text-gray-600">Reserva tu examen visual en simples pasos</p>
+            <p class="text-base md:text-xl text-gray-600">Reserva tu examen visual en simples pasos</p>
         </div>
         
         {% if system_closed %}
         <!-- Sistema Cerrado -->
-        <div class="bg-white rounded-2xl shadow-xl p-12 text-center">
-            <div class="inline-block bg-yellow-100 p-6 rounded-full mb-6">
-                <i class="fas fa-exclamation-triangle text-yellow-600 text-5xl"></i>
+        <div class="bg-white rounded-2xl shadow-xl p-6 md:p-12 text-center">
+            <div class="inline-block bg-yellow-100 p-4 md:p-6 rounded-full mb-4 md:mb-6">
+                <i class="fas fa-exclamation-triangle text-yellow-600 text-3xl md:text-5xl"></i>
             </div>
-            <h2 class="text-3xl font-bold text-gray-800 mb-4">Sistema Temporalmente Cerrado</h2>
-            <p class="text-lg text-gray-600 mb-8">
+            <h2 class="text-2xl md:text-3xl font-bold text-gray-800 mb-3 md:mb-4">Sistema Temporalmente Cerrado</h2>
+            <p class="text-base md:text-lg text-gray-600 mb-6 md:mb-8">
                 El sistema de agendamiento no está disponible en este momento.
                 Por favor, contáctanos directamente para programar tu cita.
             </p>
             
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-lg mx-auto">
-                <a href="tel:+573001234567" class="bg-green-600 hover:bg-green-700 text-white px-8 py-4 rounded-lg font-semibold transition">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4 max-w-lg mx-auto">
+                <a href="tel:+573001234567" class="bg-green-600 hover:bg-green-700 text-white px-6 md:px-8 py-3 md:py-4 rounded-lg font-semibold transition">
                     <i class="fas fa-phone mr-2"></i>Llamar Ahora
                 </a>
-                <a href="https://wa.me/573001234567" target="_blank" class="bg-emerald-600 hover:bg-emerald-700 text-white px-8 py-4 rounded-lg font-semibold transition">
+                <a href="https://wa.me/573001234567" target="_blank" class="bg-emerald-600 hover:bg-emerald-700 text-white px-6 md:px-8 py-3 md:py-4 rounded-lg font-semibold transition">
                     <i class="fab fa-whatsapp mr-2"></i>WhatsApp
                 </a>
             </div>
             
-            <div class="mt-8">
-                <a href="{% url 'public:home' %}" class="text-blue-600 hover:text-blue-800 font-medium">
+            <div class="mt-6 md:mt-8">
+                <a href="{% url 'public:home' %}" class="text-blue-600 hover:text-blue-800 font-medium text-sm md:text-base">
                     <i class="fas fa-arrow-left mr-2"></i>Volver al inicio
                 </a>
             </div>
@@ -43,41 +43,44 @@
         <!-- Formulario de Agendamiento -->
         <div class="bg-white rounded-2xl shadow-xl overflow-hidden">
             <!-- Progress Steps -->
-            <div class="bg-gradient-to-r from-blue-600 to-purple-600 p-6">
+            <div class="bg-gradient-to-r from-blue-600 to-purple-600 p-4 md:p-6">
                 <div class="flex justify-between items-center">
                     <div class="flex-1 text-center">
-                        <div id="step1-indicator" class="inline-block bg-white text-blue-600 w-10 h-10 rounded-full flex items-center justify-center font-bold mb-2 transition">
+                        <div id="step1-indicator" class="inline-block bg-white text-blue-600 w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center font-bold mb-1 md:mb-2 transition text-sm md:text-base">
                             1
                         </div>
-                        <p class="text-white text-sm font-medium">Seleccionar Fecha</p>
+                        <p class="text-white text-xs md:text-sm font-medium hidden sm:block">Seleccionar Fecha</p>
+                        <p class="text-white text-xs font-medium sm:hidden">Fecha</p>
                     </div>
-                    <div class="flex-1 border-t-2 border-white border-dashed mx-2"></div>
+                    <div class="flex-1 border-t-2 border-white border-dashed mx-1 md:mx-2"></div>
                     <div class="flex-1 text-center">
-                        <div id="step2-indicator" class="inline-block bg-white bg-opacity-30 text-white w-10 h-10 rounded-full flex items-center justify-center font-bold mb-2 transition">
+                        <div id="step2-indicator" class="inline-block bg-white bg-opacity-30 text-white w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center font-bold mb-1 md:mb-2 transition text-sm md:text-base">
                             2
                         </div>
-                        <p class="text-white text-opacity-70 text-sm font-medium">Seleccionar Hora</p>
+                        <p class="text-white text-opacity-70 text-xs md:text-sm font-medium hidden sm:block">Seleccionar Hora</p>
+                        <p class="text-white text-opacity-70 text-xs font-medium sm:hidden">Hora</p>
                     </div>
-                    <div class="flex-1 border-t-2 border-white border-dashed mx-2"></div>
+                    <div class="flex-1 border-t-2 border-white border-dashed mx-1 md:mx-2"></div>
                     <div class="flex-1 text-center">
-                        <div id="step3-indicator" class="inline-block bg-white bg-opacity-30 text-white w-10 h-10 rounded-full flex items-center justify-center font-bold mb-2 transition">
+                        <div id="step3-indicator" class="inline-block bg-white bg-opacity-30 text-white w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center font-bold mb-1 md:mb-2 transition text-sm md:text-base">
                             3
                         </div>
-                        <p class="text-white text-opacity-70 text-sm font-medium">Tus Datos</p>
+                        <p class="text-white text-opacity-70 text-xs md:text-sm font-medium hidden sm:block">Tus Datos</p>
+                        <p class="text-white text-opacity-70 text-xs font-medium sm:hidden">Datos</p>
                     </div>
                 </div>
             </div>
             
             <!-- Form Content -->
-            <div class="p-8">
+            <div class="p-4 md:p-8">
                 <form id="bookingForm" method="POST" action="/api/book/">
                     {% csrf_token %}
                     
                     <!-- Step 1: Seleccionar Fecha -->
                     <div id="step1" class="step-content">
-                        <h3 class="text-2xl font-bold text-gray-800 mb-6">Selecciona una Fecha</h3>
+                        <h3 class="text-xl md:text-2xl font-bold text-gray-800 mb-4 md:mb-6">Selecciona una Fecha</h3>
                         {% if available_dates %}
-                        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 md:gap-4 mb-4 md:mb-6">
                             {% for date in available_dates|slice:":16" %}
                             <button type="button" onclick="selectDate('{{ date|date:"Y-m-d" }}')" 
                                     class="date-option border-2 border-gray-200 rounded-lg p-4 hover:border-blue-500 hover:bg-blue-50 transition text-center">

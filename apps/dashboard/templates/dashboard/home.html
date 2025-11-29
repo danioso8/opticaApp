@@ -7,103 +7,103 @@
 
 {% block content %}
 <!-- Tarjetas de Estadísticas -->
-<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-6 md:mb-8">
     <!-- Ventas Diarias -->
-    <div class="bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-lg shadow-lg p-6 text-white">
+    <div class="bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-lg shadow-lg p-4 md:p-6 text-white">
         <div class="flex items-center justify-between">
             <div>
-                <p class="text-emerald-100 text-sm font-medium">Ventas Hoy</p>
-                <h3 class="text-3xl font-bold mt-2">${{ stats.sales.today_revenue|floatformat:0 }}</h3>
+                <p class="text-emerald-100 text-xs md:text-sm font-medium">Ventas Hoy</p>
+                <h3 class="text-2xl md:text-3xl font-bold mt-1 md:mt-2">${{ stats.sales.today_revenue|floatformat:0 }}</h3>
             </div>
-            <div class="bg-white bg-opacity-20 rounded-full p-4">
-                <i class="fas fa-dollar-sign text-2xl"></i>
+            <div class="bg-white bg-opacity-20 rounded-full p-3 md:p-4">
+                <i class="fas fa-dollar-sign text-xl md:text-2xl"></i>
             </div>
         </div>
-        <div class="mt-4 flex items-center text-sm text-emerald-100">
+        <div class="mt-3 md:mt-4 flex items-center text-xs md:text-sm text-emerald-100">
             <i class="fas fa-shopping-bag mr-1"></i>
-            <span class="font-medium">{{ stats.sales.today_count }} ventas realizadas</span>
+            <span class="font-medium">{{ stats.sales.today_count }} ventas</span>
         </div>
     </div>
     
     <!-- Citas Hoy -->
-    <div class="bg-white rounded-lg shadow-md p-6">
+    <div class="bg-white rounded-lg shadow-md p-4 md:p-6">
         <div class="flex items-center justify-between">
             <div>
-                <p class="text-gray-500 text-sm font-medium">Citas Hoy</p>
-                <h3 class="text-3xl font-bold text-gray-800 mt-2">{{ stats.today.total }}</h3>
+                <p class="text-gray-500 text-xs md:text-sm font-medium">Citas Hoy</p>
+                <h3 class="text-2xl md:text-3xl font-bold text-gray-800 mt-1 md:mt-2">{{ stats.today.total }}</h3>
             </div>
-            <div class="bg-blue-100 rounded-full p-4">
-                <i class="fas fa-calendar-day text-blue-600 text-2xl"></i>
+            <div class="bg-blue-100 rounded-full p-3 md:p-4">
+                <i class="fas fa-calendar-day text-blue-600 text-xl md:text-2xl"></i>
             </div>
         </div>
-        <div class="mt-4 flex items-center text-sm">
+        <div class="mt-3 md:mt-4 flex flex-col sm:flex-row items-start sm:items-center text-xs md:text-sm gap-1 sm:gap-0">
             <span class="text-green-600 font-medium">{{ stats.today.confirmed }} confirmadas</span>
-            <span class="text-gray-400 mx-2">|</span>
+            <span class="text-gray-400 mx-2 hidden sm:inline">|</span>
             <span class="text-yellow-600 font-medium">{{ stats.today.pending }} pendientes</span>
         </div>
     </div>
     
     <!-- Completadas -->
-    <div class="bg-white rounded-lg shadow-md p-6">
+    <div class="bg-white rounded-lg shadow-md p-4 md:p-6">
         <div class="flex items-center justify-between">
             <div>
-                <p class="text-gray-500 text-sm font-medium">Completadas</p>
-                <h3 class="text-3xl font-bold text-green-600 mt-2">{{ stats.today.completed }}</h3>
+                <p class="text-gray-500 text-xs md:text-sm font-medium">Completadas</p>
+                <h3 class="text-2xl md:text-3xl font-bold text-green-600 mt-1 md:mt-2">{{ stats.today.completed }}</h3>
             </div>
-            <div class="bg-green-100 rounded-full p-4">
-                <i class="fas fa-check-circle text-green-600 text-2xl"></i>
+            <div class="bg-green-100 rounded-full p-3 md:p-4">
+                <i class="fas fa-check-circle text-green-600 text-xl md:text-2xl"></i>
             </div>
         </div>
-        <p class="mt-4 text-sm text-gray-600">
+        <p class="mt-3 md:mt-4 text-xs md:text-sm text-gray-600">
             Citas atendidas hoy
         </p>
     </div>
     
     <!-- Total Pacientes -->
-    <div class="bg-white rounded-lg shadow-md p-6">
+    <div class="bg-white rounded-lg shadow-md p-4 md:p-6">
         <div class="flex items-center justify-between">
             <div>
-                <p class="text-gray-500 text-sm font-medium">Total Pacientes</p>
-                <h3 class="text-3xl font-bold text-purple-600 mt-2">{{ stats.total_patients }}</h3>
+                <p class="text-gray-500 text-xs md:text-sm font-medium">Total Pacientes</p>
+                <h3 class="text-2xl md:text-3xl font-bold text-purple-600 mt-1 md:mt-2">{{ stats.total_patients }}</h3>
             </div>
-            <div class="bg-purple-100 rounded-full p-4">
-                <i class="fas fa-users text-purple-600 text-2xl"></i>
+            <div class="bg-purple-100 rounded-full p-3 md:p-4">
+                <i class="fas fa-users text-purple-600 text-xl md:text-2xl"></i>
             </div>
         </div>
-        <p class="mt-4 text-sm text-gray-600">
+        <p class="mt-3 md:mt-4 text-xs md:text-sm text-gray-600">
             Pacientes activos
         </p>
     </div>
 </div>
 
-<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
     <!-- Próximas Citas -->
-    <div class="bg-white rounded-lg shadow-md p-6">
-        <div class="flex items-center justify-between mb-4">
-            <h3 class="text-lg font-semibold text-gray-800">
+    <div class="bg-white rounded-lg shadow-md p-4 md:p-6">
+        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4 gap-2">
+            <h3 class="text-base md:text-lg font-semibold text-gray-800">
                 <i class="fas fa-clock mr-2 text-indigo-600"></i>
                 Próximas Citas
             </h3>
-            <a href="{% url 'dashboard:appointments_list' %}" class="text-indigo-600 hover:text-indigo-800 text-sm font-medium">
+            <a href="{% url 'dashboard:appointments_list' %}" class="text-indigo-600 hover:text-indigo-800 text-xs md:text-sm font-medium">
                 Ver todas <i class="fas fa-arrow-right ml-1"></i>
             </a>
         </div>
         
         {% if upcoming_appointments %}
-        <div class="space-y-3">
+        <div class="space-y-2 md:space-y-3">
             {% for appointment in upcoming_appointments %}
-            <div class="border-l-4 {% if appointment.status == 'confirmed' %}border-green-500{% elif appointment.status == 'pending' %}border-yellow-500{% else %}border-gray-300{% endif %} pl-4 py-2">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <p class="font-semibold text-gray-800">{{ appointment.full_name }}</p>
-                        <p class="text-sm text-gray-600">
+            <div class="border-l-4 {% if appointment.status == 'confirmed' %}border-green-500{% elif appointment.status == 'pending' %}border-yellow-500{% else %}border-gray-300{% endif %} pl-3 md:pl-4 py-2">
+                <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
+                    <div class="flex-1">
+                        <p class="font-semibold text-sm md:text-base text-gray-800">{{ appointment.full_name }}</p>
+                        <p class="text-xs md:text-sm text-gray-600 mt-1">
                             <i class="fas fa-calendar mr-1"></i>
                             {{ appointment.appointment_date|date:"d/m/Y" }}
                             <i class="fas fa-clock ml-2 mr-1"></i>
                             {{ appointment.appointment_time|time:"H:i" }}
                         </p>
                     </div>
-                    <span class="px-3 py-1 text-xs font-semibold rounded-full
+                    <span class="px-2 md:px-3 py-1 text-xs font-semibold rounded-full whitespace-nowrap
                         {% if appointment.status == 'confirmed' %}bg-green-100 text-green-800
                         {% elif appointment.status == 'pending' %}bg-yellow-100 text-yellow-800
                         {% else %}bg-gray-100 text-gray-800{% endif %}">
@@ -122,23 +122,23 @@
     </div>
     
     <!-- Estado del Sistema -->
-    <div class="bg-white rounded-lg shadow-md p-6">
-        <h3 class="text-lg font-semibold text-gray-800 mb-4">
+    <div class="bg-white rounded-lg shadow-md p-4 md:p-6">
+        <h3 class="text-base md:text-lg font-semibold text-gray-800 mb-4">
             <i class="fas fa-info-circle mr-2 text-indigo-600"></i>
             Estado del Sistema
         </h3>
         
-        <div class="space-y-4">
+        <div class="space-y-3 md:space-y-4">
             <!-- Sistema Abierto/Cerrado -->
-            <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+            <div class="flex items-center justify-between p-3 md:p-4 bg-gray-50 rounded-lg">
                 <div class="flex items-center">
-                    <div class="w-10 h-10 rounded-full flex items-center justify-center
+                    <div class="w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center flex-shrink-0
                         {% if stats.system_open %}bg-green-100{% else %}bg-red-100{% endif %}">
-                        <i class="fas {% if stats.system_open %}fa-check text-green-600{% else %}fa-times text-red-600{% endif %}"></i>
+                        <i class="fas {% if stats.system_open %}fa-check text-green-600{% else %}fa-times text-red-600{% endif %} text-sm md:text-base"></i>
                     </div>
-                    <div class="ml-4">
-                        <p class="font-semibold text-gray-800">Sistema de Agendamiento</p>
-                        <p class="text-sm text-gray-600">
+                    <div class="ml-3 md:ml-4">
+                        <p class="font-semibold text-sm md:text-base text-gray-800">Sistema de Agendamiento</p>
+                        <p class="text-xs md:text-sm text-gray-600">
                             {% if stats.system_open %}
                             Abierto - Recibiendo citas
                             {% else %}
@@ -150,25 +150,25 @@
             </div>
             
             <!-- Accesos Rápidos -->
-            <div class="grid grid-cols-2 gap-3 mt-4">
-                <a href="{% url 'dashboard:appointments_today' %}" class="p-4 bg-indigo-50 rounded-lg hover:bg-indigo-100 transition">
-                    <i class="fas fa-calendar-day text-indigo-600 text-xl"></i>
-                    <p class="mt-2 font-medium text-gray-800">Citas de Hoy</p>
+            <div class="grid grid-cols-2 gap-2 md:gap-3 mt-3 md:mt-4">
+                <a href="{% url 'dashboard:appointments_today' %}" class="p-3 md:p-4 bg-indigo-50 rounded-lg hover:bg-indigo-100 transition">
+                    <i class="fas fa-calendar-day text-indigo-600 text-lg md:text-xl"></i>
+                    <p class="mt-2 font-medium text-xs md:text-sm text-gray-800">Citas de Hoy</p>
                 </a>
                 
-                <a href="{% url 'dashboard:configuration' %}" class="p-4 bg-purple-50 rounded-lg hover:bg-purple-100 transition">
-                    <i class="fas fa-cog text-purple-600 text-xl"></i>
-                    <p class="mt-2 font-medium text-gray-800">Configuración</p>
+                <a href="{% url 'dashboard:configuration' %}" class="p-3 md:p-4 bg-purple-50 rounded-lg hover:bg-purple-100 transition">
+                    <i class="fas fa-cog text-purple-600 text-lg md:text-xl"></i>
+                    <p class="mt-2 font-medium text-xs md:text-sm text-gray-800">Configuración</p>
                 </a>
                 
-                <a href="{% url 'dashboard:patients_list' %}" class="p-4 bg-blue-50 rounded-lg hover:bg-blue-100 transition">
-                    <i class="fas fa-users text-blue-600 text-xl"></i>
-                    <p class="mt-2 font-medium text-gray-800">Pacientes</p>
+                <a href="{% url 'dashboard:patients_list' %}" class="p-3 md:p-4 bg-blue-50 rounded-lg hover:bg-blue-100 transition">
+                    <i class="fas fa-users text-blue-600 text-lg md:text-xl"></i>
+                    <p class="mt-2 font-medium text-xs md:text-sm text-gray-800">Pacientes</p>
                 </a>
                 
-                <a href="{% url 'dashboard:calendar' %}" class="p-4 bg-green-50 rounded-lg hover:bg-green-100 transition">
-                    <i class="fas fa-calendar text-green-600 text-xl"></i>
-                    <p class="mt-2 font-medium text-gray-800">Calendario</p>
+                <a href="{% url 'dashboard:calendar' %}" class="p-3 md:p-4 bg-green-50 rounded-lg hover:bg-green-100 transition">
+                    <i class="fas fa-calendar text-green-600 text-lg md:text-xl"></i>
+                    <p class="mt-2 font-medium text-xs md:text-sm text-gray-800">Calendario</p>
                 </a>
             </div>
         </div>
