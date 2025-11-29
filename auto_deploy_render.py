@@ -22,10 +22,10 @@ import sys
 # ============================================================================
 
 # Tu API Key de Render (genera uno en https://dashboard.render.com/u/settings#api-keys)
-RENDER_API_KEY = ""  # <-- PEGA TU API KEY AQUÍ
+RENDER_API_KEY = "rnd_eVnjyJYdEHuaH39VmT9Vk0aliWbM"  # <-- PEGA TU API KEY AQUÍ
 
 # ID de tu servicio web (lo encuentras en la URL: https://dashboard.render.com/web/srv-XXXXX)
-WEB_SERVICE_ID = ""  # <-- Ejemplo: srv-ddkbkbnqaepq-0
+WEB_SERVICE_ID = ""  # <-- Ejemplo: srv-ddkbkbnqaepq-0 o srv-ddjkhrbnqaepq-0
 
 # URL de tu PostgreSQL (la que ya tienes)
 DATABASE_URL = "postgresql://oceano_admin:GqZwicsr384aWBS8YjwBfMbxWrdq61qT@dpg-d4llkbruibrs7384b38g-a/oceano_optico"
