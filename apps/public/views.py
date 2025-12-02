@@ -8,10 +8,12 @@ from apps.appointments.utils import get_available_slots_for_date
 
 def home(request):
     """Página principal pública"""
-    config = AppointmentConfiguration.get_config()
+    # Para vistas públicas, usar la organización del request si existe, sino la primera disponible
+    organization = getattr(request, 'organization', None)
+    config = AppointmentConfiguration.get_config(organization)
     
     context = {
-        'system_open': config.is_open,
+        'system_open': config.is_open if config else True,
     }
     
     return render(request, 'public/home.html', context)
@@ -19,9 +21,10 @@ def home(request):
 
 def booking(request):
     """Página de agendamiento de citas"""
-    config = AppointmentConfiguration.get_config()
+    organization = getattr(request, 'organization', None)
+    config = AppointmentConfiguration.get_config(organization)
     
-    if not config.is_open:
+    if not config or not config.is_open:
         context = {
             'system_closed': True,
         }
@@ -32,15 +35,19 @@ def booking(request):
     today = timezone.now().date()
     available_dates = []
     
+    # Filtrar por organización si existe
+    org_filter = {'organization': organization} if organization else {}
+    
     # Obtener todas las fechas específicas configuradas
     specific_dates = SpecificDateSchedule.objects.filter(
         date__gte=today,
-        is_active=True
+        is_active=True,
+        **org_filter
     ).values_list('date', flat=True).distinct().order_by('date')
     
     for date in specific_dates:
         # Verificar si no está bloqueado
-        is_blocked = BlockedDate.objects.filter(date=date).exists()
+        is_blocked = BlockedDate.objects.filter(date=date, **org_filter).exists()
         
         if not is_blocked:
             available_dates.append(date)

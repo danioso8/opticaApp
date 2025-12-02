@@ -1,8 +1,12 @@
 from django.db import models
 from django.core.validators import RegexValidator
+from apps.organizations.base_models import TenantModel
+
+# Importar modelos de historia clínica
+from .models_clinical import ClinicalHistory, ClinicalHistoryAttachment
 
 
-class Patient(models.Model):
+class Patient(TenantModel):
     """Modelo de Paciente/Cliente"""
     GENDER_CHOICES = [
         ('M', 'Masculino'),
@@ -14,7 +18,6 @@ class Patient(models.Model):
     full_name = models.CharField(max_length=200, verbose_name="Nombre completo")
     identification = models.CharField(
         max_length=50,
-        unique=True,
         blank=True,
         null=True,
         verbose_name="Identificación"
@@ -40,6 +43,19 @@ class Patient(models.Model):
     medical_conditions = models.TextField(blank=True, verbose_name="Condiciones médicas")
     current_medications = models.TextField(blank=True, verbose_name="Medicamentos actuales")
 
+    # Datos adicionales de óptica
+    occupation = models.CharField(max_length=200, blank=True, verbose_name="Ocupación")
+    residence_area = models.CharField(max_length=200, blank=True, verbose_name="Zona de residencia")
+    business_name = models.CharField(max_length=200, blank=True, verbose_name="Nombre de empresa")
+    business_address = models.TextField(blank=True, verbose_name="Dirección de empresa")
+    business_phone = models.CharField(max_length=17, blank=True, verbose_name="Teléfono de empresa")
+    business_type = models.CharField(max_length=200, blank=True, verbose_name="Tipo encadenado")
+    civil_status = models.CharField(max_length=50, blank=True, verbose_name="Estado civil")
+    
+    # Información bancaria
+    bank_entity = models.CharField(max_length=200, blank=True, verbose_name="Entidad bancaria")
+    account_number = models.CharField(max_length=50, blank=True, verbose_name="# Cuenta bancaria")
+
     # Metadatos
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="Fecha de registro")
     updated_at = models.DateTimeField(auto_now=True, verbose_name="Última actualización")
@@ -50,8 +66,11 @@ class Patient(models.Model):
         verbose_name_plural = "Pacientes"
         ordering = ['-created_at']
         indexes = [
-            models.Index(fields=['phone_number']),
-            models.Index(fields=['identification']),
+            models.Index(fields=['organization', 'phone_number']),
+            models.Index(fields=['organization', 'identification']),
+        ]
+        unique_together = [
+            ['organization', 'identification'],
         ]
 
     def __str__(self):

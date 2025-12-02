@@ -34,11 +34,15 @@ def sales_dashboard(request):
         start_date = today
         end_date = today
     
+    # Filtrar por organización
+    org_filter = {'organization': request.organization} if hasattr(request, 'organization') and request.organization else {}
+    
     # Ventas del período
     sales = Sale.objects.filter(
         created_at__date__gte=start_date,
         created_at__date__lte=end_date,
-        status='completed'
+        status='completed',
+        **org_filter
     )
     
     # Estadísticas principales
@@ -72,12 +76,13 @@ def sales_dashboard(request):
     ).order_by('-quantity')[:10]
     
     # Últimas ventas
-    recent_sales = Sale.objects.filter(status='completed').order_by('-created_at')[:10]
+    recent_sales = Sale.objects.filter(status='completed', **org_filter).order_by('-created_at')[:10]
     
     # Productos con bajo stock
     low_stock_products = Product.objects.filter(
         is_active=True,
-        stock__lte=models.F('min_stock')
+        stock__lte=models.F('min_stock'),
+        **org_filter
     ).order_by('stock')[:5]
     
     context = {
@@ -120,13 +125,16 @@ def daily_stats_api(request):
     today = timezone.now().date()
     start_date = today - timedelta(days=29)
     
+    org_filter = {'organization': request.organization} if hasattr(request, 'organization') and request.organization else {}
+    
     # Ventas por día
     daily_sales = []
     for i in range(30):
         date = start_date + timedelta(days=i)
         sales = Sale.objects.filter(
             created_at__date=date,
-            status='completed'
+            status='completed',
+            **org_filter
         )
         total = sales.aggregate(Sum('total'))['total__sum'] or 0
         count = sales.count()
@@ -146,6 +154,8 @@ def weekly_stats_api(request):
     """Estadísticas de ventas semanales de las últimas 12 semanas"""
     today = timezone.now().date()
     
+    org_filter = {'organization': request.organization} if hasattr(request, 'organization') and request.organization else {}
+    
     weekly_sales = []
     for i in range(12):
         week_end = today - timedelta(days=i*7)
@@ -154,7 +164,8 @@ def weekly_stats_api(request):
         sales = Sale.objects.filter(
             created_at__date__gte=week_start,
             created_at__date__lte=week_end,
-            status='completed'
+            status='completed',
+            **org_filter
         )
         total = sales.aggregate(Sum('total'))['total__sum'] or 0
         count = sales.count()
@@ -174,6 +185,8 @@ def monthly_stats_api(request):
     today = timezone.now().date()
     year = today.year
     
+    org_filter = {'organization': request.organization} if hasattr(request, 'organization') and request.organization else {}
+    
     monthly_sales = []
     months = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic']
     
@@ -181,7 +194,8 @@ def monthly_stats_api(request):
         sales = Sale.objects.filter(
             created_at__date__year=year,
             created_at__date__month=month,
-            status='completed'
+            status='completed',
+            **org_filter
         )
         total = sales.aggregate(Sum('total'))['total__sum'] or 0
         count = sales.count()

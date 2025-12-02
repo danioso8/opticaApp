@@ -59,6 +59,7 @@ INSTALLED_APPS = [
     'django_filters',
     
     # Local apps
+    'apps.organizations',
     'apps.appointments',
     'apps.patients',
     'apps.users',
@@ -75,6 +76,8 @@ MIDDLEWARE = [
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'apps.organizations.middleware.TenantMiddleware',  # Multi-tenant support
+    'apps.organizations.middleware.SubscriptionMiddleware',  # Subscription validation
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]

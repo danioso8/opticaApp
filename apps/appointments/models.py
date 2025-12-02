@@ -2,9 +2,10 @@ from django.db import models
 from django.utils import timezone
 from django.core.validators import RegexValidator
 from django.conf import settings
+from apps.organizations.base_models import TenantModel
 
 
-class AppointmentConfiguration(models.Model):
+class AppointmentConfiguration(TenantModel):
     """Configuración global del sistema de citas"""
     is_open = models.BooleanField(
         default=True,
@@ -29,18 +30,22 @@ class AppointmentConfiguration(models.Model):
     class Meta:
         verbose_name = "Configuración de Citas"
         verbose_name_plural = "Configuración de Citas"
+        unique_together = [['organization']]
 
     def __str__(self):
-        return f"Configuración - {'Abierto' if self.is_open else 'Cerrado'}"
+        return f"Configuración {self.organization.name} - {'Abierto' if self.is_open else 'Cerrado'}"
 
     @classmethod
-    def get_config(cls):
-        """Obtiene o crea la configuración"""
-        config, created = cls.objects.get_or_create(pk=1)
-        return config
+    def get_config(cls, organization=None):
+        """Obtiene o crea la configuración para una organización"""
+        if organization:
+            config, created = cls.objects.get_or_create(organization=organization)
+            return config
+        # Si no hay organización, retornar la primera configuración disponible (para vistas públicas)
+        return cls.objects.first()
 
 
-class WorkingHours(models.Model):
+class WorkingHours(TenantModel):
     """Horarios de atención por día de la semana"""
     DAYS_OF_WEEK = [
         (0, 'Lunes'),
@@ -69,13 +74,13 @@ class WorkingHours(models.Model):
         verbose_name = "Horario de Atención"
         verbose_name_plural = "Horarios de Atención"
         ordering = ['day_of_week', 'start_time']
-        unique_together = ['day_of_week', 'start_time']
+        unique_together = [['organization', 'day_of_week', 'start_time']]
 
     def __str__(self):
         return f"{self.get_day_of_week_display()} - {self.start_time} a {self.end_time}"
 
 
-class SpecificDateSchedule(models.Model):
+class SpecificDateSchedule(TenantModel):
     """Horarios para fechas específicas (sobrescribe WorkingHours)"""
     date = models.DateField(
         verbose_name="Fecha específica"
@@ -104,16 +109,15 @@ class SpecificDateSchedule(models.Model):
         verbose_name = "Horario Específico"
         verbose_name_plural = "Horarios Específicos"
         ordering = ['date', 'start_time']
-        unique_together = ['date', 'start_time']
+        unique_together = [['organization', 'date', 'start_time']]
 
     def __str__(self):
         return f"{self.date} - {self.start_time} a {self.end_time}"
 
 
-class BlockedDate(models.Model):
+class BlockedDate(TenantModel):
     """Fechas bloqueadas (festivos, vacaciones, etc.)"""
     date = models.DateField(
-        unique=True,
         verbose_name="Fecha bloqueada"
     )
     reason = models.CharField(
@@ -133,12 +137,13 @@ class BlockedDate(models.Model):
         verbose_name = "Fecha Bloqueada"
         verbose_name_plural = "Fechas Bloqueadas"
         ordering = ['-date']
+        unique_together = [['organization', 'date']]
 
     def __str__(self):
         return f"{self.date} - {self.reason}"
 
 
-class Appointment(models.Model):
+class Appointment(TenantModel):
     """Cita agendada"""
     STATUS_CHOICES = [
         ('pending', 'Pendiente'),
@@ -216,10 +221,10 @@ class Appointment(models.Model):
         verbose_name = "Cita"
         verbose_name_plural = "Citas"
         ordering = ['-appointment_date', '-appointment_time']
-        unique_together = ['appointment_date', 'appointment_time']
+        unique_together = [['organization', 'appointment_date', 'appointment_time']]
         indexes = [
-            models.Index(fields=['appointment_date', 'status']),
-            models.Index(fields=['phone_number']),
+            models.Index(fields=['organization', 'appointment_date', 'status']),
+            models.Index(fields=['organization', 'phone_number']),
         ]
 
     def __str__(self):
@@ -248,7 +253,7 @@ class Appointment(models.Model):
         return self.status in ['pending', 'confirmed'] and not self.is_past
 
 
-class TimeSlot(models.Model):
+class TimeSlot(TenantModel):
     """Slots de tiempo disponibles (generados dinámicamente)"""
     date = models.DateField(verbose_name="Fecha")
     time = models.TimeField(verbose_name="Hora")
@@ -270,10 +275,10 @@ class TimeSlot(models.Model):
     class Meta:
         verbose_name = "Slot de Tiempo"
         verbose_name_plural = "Slots de Tiempo"
-        unique_together = ['date', 'time']
+        unique_together = [['organization', 'date', 'time']]
         ordering = ['date', 'time']
         indexes = [
-            models.Index(fields=['date', 'is_available']),
+            models.Index(fields=['organization', 'date', 'is_available']),
         ]
 
     def __str__(self):

@@ -7,6 +7,15 @@ from django.utils import timezone
 from django.db.models import Count, Q
 from datetime import datetime, timedelta
 
+# Importar vistas de historia clínica
+from .views_clinical import (
+    clinical_history_list,
+    clinical_history_create,
+    clinical_history_detail,
+    clinical_history_edit,
+    clinical_history_delete
+)
+
 from apps.appointments.models import (
     Appointment,
     AppointmentConfiguration,
@@ -22,6 +31,14 @@ from apps.appointments.utils import (
 from apps.appointments.signals import (
     notify_appointment_updated,
     notify_system_toggled
+)
+from apps.patients.views import (
+    patient_list as patients_list_view,
+    patient_detail as patient_detail_view,
+    patient_create,
+    patient_edit,
+    patient_delete,
+    patient_search_api
 )
 
 
@@ -62,13 +79,16 @@ def dashboard_home(request):
     """Página principal del dashboard"""
     today = timezone.now().date()
     
+    # Filtrar por organización si existe
+    org_filter = {'organization': request.organization} if hasattr(request, 'organization') and request.organization else {}
+    
     # Estadísticas del día
-    today_appointments = Appointment.objects.filter(appointment_date=today)
+    today_appointments = Appointment.objects.filter(appointment_date=today, **org_filter)
     
     # Estadísticas de ventas
-    today_sales = Sale.objects.filter(created_at__date=today, status='completed')
+    today_sales = Sale.objects.filter(created_at__date=today, status='completed', **org_filter)
     today_revenue = sum(sale.total for sale in today_sales)
-    month_sales = Sale.objects.filter(created_at__date__year=today.year, created_at__date__month=today.month, status='completed')
+    month_sales = Sale.objects.filter(created_at__date__year=today.year, created_at__date__month=today.month, status='completed', **org_filter)
     month_revenue = sum(sale.total for sale in month_sales)
     
     stats = {
@@ -85,13 +105,14 @@ def dashboard_home(request):
             'month_count': month_sales.count(),
             'month_revenue': month_revenue,
         },
-        'total_patients': Patient.objects.filter(is_active=True).count(),
-        'system_open': AppointmentConfiguration.get_config().is_open,
+        'total_patients': Patient.objects.filter(is_active=True, **org_filter).count(),
+        'system_open': AppointmentConfiguration.get_config(request.organization).is_open if request.organization else True,
     }
     
     # Próximas citas (siguientes 5)
     upcoming_appointments = Appointment.objects.filter(
-        appointment_date__gte=today
+        appointment_date__gte=today,
+        **org_filter
     ).exclude(status__in=['cancelled', 'completed']).order_by('appointment_date', 'appointment_time')[:5]
     
     context = {
@@ -110,13 +131,17 @@ def appointments_list(request):
     """Vista unificada: Citas de hoy y todas las citas con filtros"""
     today = timezone.now().date()
     
+    # Filtrar por organización
+    org_filter = {'organization': request.organization} if hasattr(request, 'organization') and request.organization else {}
+    
     # Citas de hoy
     today_appointments = Appointment.objects.filter(
-        appointment_date=today
+        appointment_date=today,
+        **org_filter
     ).select_related('patient', 'attended_by').order_by('appointment_time')
     
     # Todas las citas con filtros
-    all_appointments = Appointment.objects.all().select_related('patient', 'attended_by')
+    all_appointments = Appointment.objects.filter(**org_filter).select_related('patient', 'attended_by')
     
     # Aplicar filtros
     status_filter = request.GET.get('status')
@@ -155,8 +180,10 @@ def appointments_list(request):
 def appointments_today(request):
     """Citas del día en tiempo real"""
     today = timezone.now().date()
+    org_filter = {'organization': request.organization} if hasattr(request, 'organization') and request.organization else {}
     appointments = Appointment.objects.filter(
-        appointment_date=today
+        appointment_date=today,
+        **org_filter
     ).select_related('patient', 'attended_by').order_by('appointment_time')
     
     stats = get_appointments_stats()
@@ -220,10 +247,12 @@ def configuration(request):
     """Vista de configuración del sistema"""
     from apps.appointments.models import SpecificDateSchedule
     
-    config = AppointmentConfiguration.get_config()
-    working_hours = WorkingHours.objects.all().order_by('day_of_week', 'start_time')
-    blocked_dates = BlockedDate.objects.filter(date__gte=timezone.now().date()).order_by('date')
-    specific_schedules = SpecificDateSchedule.objects.filter(date__gte=timezone.now().date()).order_by('date', 'start_time')
+    org_filter = {'organization': request.organization} if hasattr(request, 'organization') and request.organization else {}
+    
+    config = AppointmentConfiguration.get_config(request.organization) if request.organization else None
+    working_hours = WorkingHours.objects.filter(**org_filter).order_by('day_of_week', 'start_time')
+    blocked_dates = BlockedDate.objects.filter(date__gte=timezone.now().date(), **org_filter).order_by('date')
+    specific_schedules = SpecificDateSchedule.objects.filter(date__gte=timezone.now().date(), **org_filter).order_by('date', 'start_time')
     
     context = {
         'config': config,
@@ -239,7 +268,10 @@ def configuration(request):
 def toggle_system(request):
     """Abrir/Cerrar sistema de agendamiento (AJAX)"""
     if request.method == 'POST':
-        config = AppointmentConfiguration.get_config()
+        if not request.organization:
+            return JsonResponse({'success': False, 'message': 'No hay organización activa'}, status=400)
+        
+        config = AppointmentConfiguration.get_config(request.organization)
         config.is_open = not config.is_open
         config.save()
         
@@ -265,8 +297,12 @@ def block_date(request):
         try:
             date = datetime.strptime(date_str, '%Y-%m-%d').date()
             
+            if not request.organization:
+                return JsonResponse({'success': False, 'message': 'No hay organización activa'}, status=400)
+            
             blocked, created = BlockedDate.objects.get_or_create(
                 date=date,
+                organization=request.organization,
                 defaults={
                     'reason': reason,
                     'created_by': request.user
@@ -287,41 +323,10 @@ def block_date(request):
 
 
 # ==================== PACIENTES ====================
+# Las vistas de pacientes están importadas desde apps.patients.views
 
-@login_required
-def patients_list(request):
-    """Lista de pacientes"""
-    patients = Patient.objects.filter(is_active=True)
-    
-    search = request.GET.get('search')
-    if search:
-        patients = patients.filter(
-            Q(full_name__icontains=search) |
-            Q(phone_number__icontains=search) |
-            Q(identification__icontains=search)
-        )
-    
-    patients = patients.order_by('-created_at')
-    
-    context = {
-        'patients': patients,
-    }
-    
-    return render(request, 'dashboard/patients/list.html', context)
-
-
-@login_required
-def patient_detail(request, pk):
-    """Detalle de un paciente"""
-    patient = get_object_or_404(Patient, pk=pk)
-    appointments = patient.appointments.all().order_by('-appointment_date')
-    
-    context = {
-        'patient': patient,
-        'appointments': appointments,
-    }
-    
-    return render(request, 'dashboard/patients/detail.html', context)
+patients_list = patients_list_view
+patient_detail = patient_detail_view
 
 
 # ==================== CALENDARIO ====================
@@ -340,9 +345,11 @@ def calendar_view(request):
     days_in_month = monthrange(year, month)[1]
     
     # Obtener todas las citas del mes
+    org_filter = {'organization': request.organization} if hasattr(request, 'organization') and request.organization else {}
     appointments = Appointment.objects.filter(
         appointment_date__year=year,
-        appointment_date__month=month
+        appointment_date__month=month,
+        **org_filter
     ).values('appointment_date').annotate(count=Count('id'))
     
     appointments_dict = {item['appointment_date']: item['count'] for item in appointments}
@@ -358,6 +365,314 @@ def calendar_view(request):
     return render(request, 'dashboard/calendar.html', context)
 
 
+@login_required
+def patient_edit(request, pk):
+    """Editar paciente (AJAX)"""
+    if request.method == 'POST':
+        org_filter = {'organization': request.organization} if hasattr(request, 'organization') and request.organization else {}
+        patient = get_object_or_404(Patient, pk=pk, **org_filter)
+        
+        try:
+            patient.full_name = request.POST.get('full_name')
+            patient.identification = request.POST.get('identification', '')
+            patient.date_of_birth = request.POST.get('date_of_birth') or None
+            patient.gender = request.POST.get('gender', '')
+            patient.phone_number = request.POST.get('phone_number')
+            patient.email = request.POST.get('email', '')
+            patient.address = request.POST.get('address', '')
+            patient.allergies = request.POST.get('allergies', '')
+            patient.medical_conditions = request.POST.get('medical_conditions', '')
+            patient.current_medications = request.POST.get('current_medications', '')
+            # Datos adicionales de óptica
+            patient.occupation = request.POST.get('occupation', '')
+            patient.residence_area = request.POST.get('residence_area', '')
+            patient.business_name = request.POST.get('business_name', '')
+            patient.business_address = request.POST.get('business_address', '')
+            patient.business_phone = request.POST.get('business_phone', '')
+            patient.business_type = request.POST.get('business_type', '')
+            patient.civil_status = request.POST.get('civil_status', '')
+            patient.bank_entity = request.POST.get('bank_entity', '')
+            patient.account_number = request.POST.get('account_number', '')
+            patient.save()
+            
+            return JsonResponse({
+                'success': True,
+                'message': f'Paciente {patient.full_name} actualizado exitosamente'
+            })
+        except Exception as e:
+            return JsonResponse({
+                'success': False,
+                'message': f'Error al actualizar paciente: {str(e)}'
+            }, status=400)
+    
+    return JsonResponse({'success': False, 'message': 'Método no permitido'}, status=405)
+
+
+@login_required
+def patient_delete(request, pk):
+    """Eliminar paciente (AJAX)"""
+    if request.method == 'POST':
+        org_filter = {'organization': request.organization} if hasattr(request, 'organization') and request.organization else {}
+        patient = get_object_or_404(Patient, pk=pk, **org_filter)
+        
+        try:
+            patient_name = patient.full_name
+            patient.is_active = False
+            patient.save()
+            
+            return JsonResponse({
+                'success': True,
+                'message': f'Paciente {patient_name} desactivado exitosamente'
+            })
+        except Exception as e:
+            return JsonResponse({
+                'success': False,
+                'message': f'Error al desactivar paciente: {str(e)}'
+            }, status=400)
+    
+    return JsonResponse({'success': False, 'message': 'Método no permitido'}, status=405)
+
+
+@login_required
+def patient_search_api(request):
+    """API para buscar pacientes (para autocomplete y edición)"""
+    query = request.GET.get('q', '')
+    patient_id = request.GET.get('id', '')
+    org_filter = {'organization': request.organization} if hasattr(request, 'organization') and request.organization else {}
+    
+    # Búsqueda por ID (para editar)
+    if patient_id:
+        try:
+            patient = Patient.objects.get(id=patient_id, is_active=True, **org_filter)
+            patient_data = {
+                'id': patient.id,
+                'full_name': patient.full_name,
+                'identification': patient.identification or '',
+                'date_of_birth': patient.date_of_birth.isoformat() if patient.date_of_birth else '',
+                'gender': patient.gender or '',
+                'phone_number': patient.phone_number,
+                'email': patient.email or '',
+                'address': patient.address or '',
+                'allergies': patient.allergies or '',
+                'medical_conditions': patient.medical_conditions or '',
+                'current_medications': patient.current_medications or '',
+                'occupation': patient.occupation or '',
+                'residence_area': patient.residence_area or '',
+                'business_name': patient.business_name or '',
+                'business_address': patient.business_address or '',
+                'business_phone': patient.business_phone or '',
+                'business_type': patient.business_type or '',
+                'civil_status': patient.civil_status or '',
+                'bank_entity': patient.bank_entity or '',
+                'account_number': patient.account_number or ''
+            }
+            return JsonResponse({'patients': [patient_data]})
+        except Patient.DoesNotExist:
+            return JsonResponse({'patients': []})
+    
+    # Búsqueda por texto (autocomplete)
+    if len(query) < 2:
+        return JsonResponse({'results': []})
+    
+    patients = Patient.objects.filter(
+        is_active=True,
+        **org_filter
+    ).filter(
+        Q(full_name__icontains=query) |
+        Q(phone_number__icontains=query) |
+        Q(identification__icontains=query)
+    )[:10]
+    
+    results = [{
+        'id': p.id,
+        'name': p.full_name,
+        'phone': p.phone_number,
+        'identification': p.identification or 'N/A'
+    } for p in patients]
+    
+    return JsonResponse({'results': results})
+
+
+# ==================== GESTIÓN DE PACIENTES (CRUD) ====================
+
+@login_required
+def patient_create(request):
+    """Crear nuevo paciente (AJAX)"""
+    if request.method == 'POST':
+        # Debug log
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.error(f"DEBUG patient_create - User: {request.user.username}, Organization: {getattr(request, 'organization', 'NOT SET')}")
+        
+        # Verificar organización
+        organization = getattr(request, 'organization', None)
+        if not organization:
+            # Si no hay organización en el request, obtener la organización por defecto
+            from apps.organizations.models import Organization
+            organization = Organization.objects.filter(is_active=True).first()
+            logger.error(f"DEBUG - Fallback organization: {organization}")
+            if not organization:
+                return JsonResponse({
+                    'success': False, 
+                    'message': 'No hay organización configurada. Por favor contacta al administrador.'
+                }, status=400)
+        
+        try:
+            # Validar si ya existe un paciente con esa identificación
+            identification = request.POST.get('identification', '').strip()
+            existing = None
+            
+            if identification:
+                existing = Patient.objects.filter(
+                    organization=organization,
+                    identification=identification
+                ).first()
+                
+                if existing and existing.is_active:
+                    # Si existe y está activo, no permitir duplicado
+                    return JsonResponse({
+                        'success': False,
+                        'message': f'Ya existe un paciente activo con la identificación {identification}. Nombre: {existing.full_name}',
+                        'patient_id': existing.id
+                    }, status=400)
+                elif existing and not existing.is_active:
+                    # Si existe pero está inactivo, reactivarlo y actualizar datos
+                    existing.is_active = True
+                    existing.full_name = request.POST.get('full_name')
+                    existing.date_of_birth = request.POST.get('date_of_birth') or None
+                    existing.gender = request.POST.get('gender', '')
+                    existing.phone_number = request.POST.get('phone_number')
+                    existing.email = request.POST.get('email', '')
+                    existing.address = request.POST.get('address', '')
+                    existing.allergies = request.POST.get('allergies', '')
+                    existing.medical_conditions = request.POST.get('medical_conditions', '')
+                    existing.current_medications = request.POST.get('current_medications', '')
+                    existing.occupation = request.POST.get('occupation', '')
+                    existing.residence_area = request.POST.get('residence_area', '')
+                    existing.business_name = request.POST.get('business_name', '')
+                    existing.business_address = request.POST.get('business_address', '')
+                    existing.business_phone = request.POST.get('business_phone', '')
+                    existing.business_type = request.POST.get('business_type', '')
+                    existing.civil_status = request.POST.get('civil_status', '')
+                    existing.bank_entity = request.POST.get('bank_entity', '')
+                    existing.account_number = request.POST.get('account_number', '')
+                    existing.save()
+                    
+                    return JsonResponse({
+                        'success': True,
+                        'message': f'Paciente {existing.full_name} reactivado exitosamente',
+                        'patient_id': existing.id,
+                        'patient_name': existing.full_name,
+                        'reactivated': True
+                    })
+            
+            patient = Patient.objects.create(
+                organization=organization,
+                full_name=request.POST.get('full_name'),
+                identification=identification,
+                date_of_birth=request.POST.get('date_of_birth') or None,
+                gender=request.POST.get('gender', ''),
+                phone_number=request.POST.get('phone_number'),
+                email=request.POST.get('email', ''),
+                address=request.POST.get('address', ''),
+                allergies=request.POST.get('allergies', ''),
+                medical_conditions=request.POST.get('medical_conditions', ''),
+                current_medications=request.POST.get('current_medications', ''),
+                # Datos adicionales de óptica
+                occupation=request.POST.get('occupation', ''),
+                residence_area=request.POST.get('residence_area', ''),
+                business_name=request.POST.get('business_name', ''),
+                business_address=request.POST.get('business_address', ''),
+                business_phone=request.POST.get('business_phone', ''),
+                business_type=request.POST.get('business_type', ''),
+                civil_status=request.POST.get('civil_status', ''),
+                bank_entity=request.POST.get('bank_entity', ''),
+                account_number=request.POST.get('account_number', '')
+            )
+            
+            return JsonResponse({
+                'success': True,
+                'message': f'Paciente {patient.full_name} creado exitosamente',
+                'patient_id': patient.id,
+                'patient_name': patient.full_name
+            })
+        except Exception as e:
+            return JsonResponse({
+                'success': False,
+                'message': f'Error al crear paciente: {str(e)}'
+            }, status=400)
+    
+    return JsonResponse({'success': False, 'message': 'Método no permitido'}, status=405)
+
+
+@login_required
+def patient_edit(request, pk):
+    """Editar paciente (AJAX)"""
+    if request.method == 'POST':
+        org_filter = {'organization': request.organization} if hasattr(request, 'organization') and request.organization else {}
+        patient = get_object_or_404(Patient, pk=pk, **org_filter)
+        
+        try:
+            patient.full_name = request.POST.get('full_name')
+            patient.identification = request.POST.get('identification', '')
+            patient.date_of_birth = request.POST.get('date_of_birth') or None
+            patient.gender = request.POST.get('gender', '')
+            patient.phone_number = request.POST.get('phone_number')
+            patient.email = request.POST.get('email', '')
+            patient.address = request.POST.get('address', '')
+            patient.allergies = request.POST.get('allergies', '')
+            patient.medical_conditions = request.POST.get('medical_conditions', '')
+            patient.current_medications = request.POST.get('current_medications', '')
+            # Datos adicionales de óptica
+            patient.occupation = request.POST.get('occupation', '')
+            patient.residence_area = request.POST.get('residence_area', '')
+            patient.business_name = request.POST.get('business_name', '')
+            patient.business_address = request.POST.get('business_address', '')
+            patient.business_phone = request.POST.get('business_phone', '')
+            patient.business_type = request.POST.get('business_type', '')
+            patient.civil_status = request.POST.get('civil_status', '')
+            patient.bank_entity = request.POST.get('bank_entity', '')
+            patient.account_number = request.POST.get('account_number', '')
+            patient.save()
+            
+            return JsonResponse({
+                'success': True,
+                'message': f'Paciente {patient.full_name} actualizado exitosamente'
+            })
+        except Exception as e:
+            return JsonResponse({
+                'success': False,
+                'message': f'Error al actualizar paciente: {str(e)}'
+            }, status=400)
+    
+    return JsonResponse({'success': False, 'message': 'Método no permitido'}, status=405)
+
+
+@login_required
+def patient_delete(request, pk):
+    """Eliminar paciente (AJAX)"""
+    if request.method == 'POST':
+        org_filter = {'organization': request.organization} if hasattr(request, 'organization') and request.organization else {}
+        patient = get_object_or_404(Patient, pk=pk, **org_filter)
+        
+        try:
+            patient_name = patient.full_name
+            patient.is_active = False
+            patient.save()
+            
+            return JsonResponse({
+                'success': True,
+                'message': f'Paciente {patient_name} desactivado exitosamente'
+            })
+        except Exception as e:
+            return JsonResponse({
+                'success': False,
+                'message': f'Error al desactivar paciente: {str(e)}'
+            }, status=400)
+    
+    return JsonResponse({'success': False, 'message': 'Método no permitido'}, status=405)
+
+
 # ==================== GESTIÓN DE HORARIOS ====================
 
 @login_required
@@ -370,7 +685,11 @@ def add_working_hour(request):
         is_active = request.POST.get('is_active') == 'on'
         
         try:
+            if not request.organization:
+                return JsonResponse({'success': False, 'message': 'No hay organización activa'}, status=400)
+            
             working_hour = WorkingHours.objects.create(
+                organization=request.organization,
                 day_of_week=int(day_of_week),
                 start_time=start_time,
                 end_time=end_time,
@@ -457,7 +776,11 @@ def add_specific_schedule(request):
                     'message': 'No puedes agregar horarios en fechas pasadas'
                 }, status=400)
             
+            if not request.organization:
+                return JsonResponse({'success': False, 'message': 'No hay organización activa'}, status=400)
+            
             schedule = SpecificDateSchedule.objects.create(
+                organization=request.organization,
                 date=date,
                 start_time=start_time,
                 end_time=end_time,

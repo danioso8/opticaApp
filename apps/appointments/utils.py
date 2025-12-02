@@ -34,23 +34,27 @@ def generate_time_slots(start_time, end_time, duration_minutes=30):
     return slots
 
 
-def get_available_slots_for_date(date):
+def get_available_slots_for_date(date, organization=None):
     """
     Obtiene los horarios disponibles para una fecha específica
     
     Args:
         date: Fecha a consultar (date object)
+        organization: Organización (opcional)
     
     Returns:
         Lista de diccionarios con información de slots disponibles
     """
     # Verificar configuración
-    config = AppointmentConfiguration.get_config()
-    if not config.is_open:
+    config = AppointmentConfiguration.get_config(organization)
+    if not config or not config.is_open:
         return []
     
+    # Filtrar por organización
+    org_filter = {'organization': organization} if organization else {}
+    
     # Verificar fecha bloqueada
-    if BlockedDate.objects.filter(date=date).exists():
+    if BlockedDate.objects.filter(date=date, **org_filter).exists():
         return []
     
     # Verificar si es fecha pasada
@@ -61,7 +65,8 @@ def get_available_slots_for_date(date):
     from .models import SpecificDateSchedule
     specific_schedules = SpecificDateSchedule.objects.filter(
         date=date,
-        is_active=True
+        is_active=True,
+        **org_filter
     )
     
     # Si hay horarios específicos, usar esos (ignora WorkingHours)
@@ -72,7 +77,8 @@ def get_available_slots_for_date(date):
         day_of_week = date.weekday()
         working_hours = WorkingHours.objects.filter(
             day_of_week=day_of_week,
-            is_active=True
+            is_active=True,
+            **org_filter
         )
     
     if not working_hours.exists():
@@ -90,7 +96,8 @@ def get_available_slots_for_date(date):
     
     # Obtener citas ya agendadas
     booked_appointments = Appointment.objects.filter(
-        appointment_date=date
+        appointment_date=date,
+        **org_filter
     ).exclude(status='cancelled').values_list('appointment_time', flat=True)
     
     # Filtrar slots disponibles
@@ -117,24 +124,26 @@ def get_available_slots_for_date(date):
     return available_slots
 
 
-def get_available_dates(days_ahead=30):
+def get_available_dates(days_ahead=30, organization=None):
     """
     Obtiene las fechas disponibles para agendar citas
     Prioriza horarios específicos sobre horarios recurrentes
     
     Args:
         days_ahead: Número de días hacia adelante a consultar
+        organization: Organización (opcional)
     
     Returns:
         Lista de diccionarios con fechas y disponibilidad
     """
-    config = AppointmentConfiguration.get_config()
-    if not config.is_open:
+    config = AppointmentConfiguration.get_config(organization)
+    if not config or not config.is_open:
         return []
     
     from .models import SpecificDateSchedule
     today = timezone.now().date()
     dates = []
+    org_filter = {'organization': organization} if organization else {}
     
     for i in range(days_ahead):
         date = today + timedelta(days=i)
@@ -142,11 +151,12 @@ def get_available_dates(days_ahead=30):
         # Verificar si hay horarios específicos para esta fecha
         has_specific = SpecificDateSchedule.objects.filter(
             date=date,
-            is_active=True
+            is_active=True,
+            **org_filter
         ).exists()
         
         # Si tiene horarios específicos O si tiene horarios del día de la semana
-        slots = get_available_slots_for_date(date)
+        slots = get_available_slots_for_date(date, organization)
         
         available_count = sum(1 for slot in slots if slot['available'])
         
@@ -162,17 +172,21 @@ def get_available_dates(days_ahead=30):
     return dates
 
 
-def get_appointments_stats():
+def get_appointments_stats(organization=None):
     """
     Obtiene estadísticas de citas
+    
+    Args:
+        organization: Organización (opcional)
     
     Returns:
         Diccionario con estadísticas
     """
     today = timezone.now().date()
+    org_filter = {'organization': organization} if organization else {}
     
     # Citas de hoy
-    today_appointments = Appointment.objects.filter(appointment_date=today)
+    today_appointments = Appointment.objects.filter(appointment_date=today, **org_filter)
     
     stats = {
         'today': {
@@ -183,24 +197,25 @@ def get_appointments_stats():
             'cancelled': today_appointments.filter(status='cancelled').count(),
             'no_show': today_appointments.filter(status='no_show').count(),
         },
-        'system_open': AppointmentConfiguration.get_config().is_open,
+        'system_open': AppointmentConfiguration.get_config(organization).is_open if AppointmentConfiguration.get_config(organization) else True,
     }
     
     return stats
 
 
-def check_slot_availability(date, time):
+def check_slot_availability(date, time, organization=None):
     """
     Verifica si un slot específico está disponible
     
     Args:
         date: Fecha (date object)
         time: Hora (time object)
+        organization: Organización (opcional)
     
     Returns:
         Tuple (is_available: bool, reason: str)
     """
-    config = AppointmentConfiguration.get_config()
+    config = AppointmentConfiguration.get_config(organization)
     
     # Sistema cerrado
     if not config.is_open:
@@ -214,15 +229,18 @@ def check_slot_availability(date, time):
     if date == timezone.now().date() and time <= timezone.now().time():
         return False, "Hora pasada"
     
+    org_filter = {'organization': organization} if organization else {}
+    
     # Fecha bloqueada
-    if BlockedDate.objects.filter(date=date).exists():
+    if BlockedDate.objects.filter(date=date, **org_filter).exists():
         return False, "Fecha bloqueada"
     
     # Día sin atención
     day_of_week = date.weekday()
     working_hours = WorkingHours.objects.filter(
         day_of_week=day_of_week,
-        is_active=True
+        is_active=True,
+        **org_filter
     )
     
     if not working_hours.exists():
@@ -241,7 +259,8 @@ def check_slot_availability(date, time):
     # Verificar si ya está ocupado
     if Appointment.objects.filter(
         appointment_date=date,
-        appointment_time=time
+        appointment_time=time,
+        **org_filter
     ).exclude(status='cancelled').exists():
         return False, "Horario ya ocupado"
     

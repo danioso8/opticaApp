@@ -1,0 +1,57 @@
+{% extends "dashboard/base.html" %}
+
+{% block title %}Mis Organizaciones{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Mis Organizaciones</h2>
+        <a href="{% url 'organizations:create' %}" class="btn btn-primary">
+            <i class="fas fa-plus"></i> Nueva Organización
+        </a>
+    </div>
+
+    {% if memberships %}
+        <div class="row">
+            {% for membership in memberships %}
+            <div class="col-md-6 mb-4">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">{{ membership.organization.name }}</h5>
+                        <p class="card-text">
+                            <span class="badge badge-info">{{ membership.get_role_display }}</span>
+                            {% if membership.organization.current_subscription %}
+                                <span class="badge badge-success">
+                                    {{ membership.organization.current_subscription.plan.name }}
+                                </span>
+                            {% else %}
+                                <span class="badge badge-warning">Sin suscripción</span>
+                            {% endif %}
+                        </p>
+                        <p class="text-muted">
+                            <i class="fas fa-envelope"></i> {{ membership.organization.email }}<br>
+                            {% if membership.organization.phone %}
+                                <i class="fas fa-phone"></i> {{ membership.organization.phone }}
+                            {% endif %}
+                        </p>
+                        <div class="btn-group" role="group">
+                            <a href="{% url 'organizations:detail' membership.organization.id %}" class="btn btn-sm btn-outline-primary">
+                                Ver Detalles
+                            </a>
+                            <a href="{% url 'organizations:switch' membership.organization.id %}?next=dashboard:home" class="btn btn-sm btn-outline-success">
+                                Acceder
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="alert alert-info">
+            No tienes organizaciones todavía. 
+            <a href="{% url 'organizations:create' %}" class="alert-link">Crea tu primera organización</a>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

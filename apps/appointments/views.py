@@ -42,7 +42,10 @@ class AppointmentViewSet(viewsets.ModelViewSet):
         return AppointmentDetailSerializer
     
     def get_queryset(self):
+        # Filtrar por organización si existe
         queryset = Appointment.objects.all()
+        if hasattr(self.request, 'organization') and self.request.organization:
+            queryset = queryset.filter(organization=self.request.organization)
         
         # Filtros
         status_filter = self.request.query_params.get('status', None)
@@ -65,6 +68,8 @@ class AppointmentViewSet(viewsets.ModelViewSet):
         """Obtiene las citas del día"""
         today = timezone.now().date()
         appointments = Appointment.objects.filter(appointment_date=today)
+        if hasattr(request, 'organization') and request.organization:
+            appointments = appointments.filter(organization=request.organization)
         serializer = AppointmentListSerializer(appointments, many=True)
         return Response(serializer.data)
     
@@ -182,7 +187,10 @@ def book_appointment(request):
 @permission_classes([IsAuthenticated])
 def configuration(request):
     """Obtiene la configuración del sistema"""
-    config = AppointmentConfiguration.get_config()
+    if not hasattr(request, 'organization') or not request.organization:
+        return Response({'error': 'No hay organización activa'}, status=status.HTTP_400_BAD_REQUEST)
+    
+    config = AppointmentConfiguration.get_config(request.organization)
     serializer = AppointmentConfigurationSerializer(config)
     return Response(serializer.data)
 
@@ -191,7 +199,10 @@ def configuration(request):
 @permission_classes([IsAuthenticated])
 def toggle_system(request):
     """Abre o cierra el sistema de agendamiento"""
-    config = AppointmentConfiguration.get_config()
+    if not hasattr(request, 'organization') or not request.organization:
+        return Response({'error': 'No hay organización activa'}, status=status.HTTP_400_BAD_REQUEST)
+    
+    config = AppointmentConfiguration.get_config(request.organization)
     config.is_open = not config.is_open
     config.save()
     
@@ -224,8 +235,12 @@ def block_date(request):
             status=status.HTTP_400_BAD_REQUEST
         )
     
+    if not hasattr(request, 'organization') or not request.organization:
+        return Response({'error': 'No hay organización activa'}, status=status.HTTP_400_BAD_REQUEST)
+    
     blocked, created = BlockedDate.objects.get_or_create(
         date=date,
+        organization=request.organization,
         defaults={
             'reason': reason,
             'created_by': request.user
@@ -269,9 +284,13 @@ def block_slot(request):
             status=status.HTTP_400_BAD_REQUEST
         )
     
+    if not hasattr(request, 'organization') or not request.organization:
+        return Response({'error': 'No hay organización activa'}, status=status.HTTP_400_BAD_REQUEST)
+    
     slot, created = TimeSlot.objects.get_or_create(
         date=date,
         time=time_obj,
+        organization=request.organization,
         defaults={
             'is_available': False,
             'manually_blocked': True,

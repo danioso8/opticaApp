@@ -2,9 +2,10 @@ from django.db import models
 from django.contrib.auth.models import User
 from django.core.validators import MinValueValidator
 from decimal import Decimal
+from apps.organizations.base_models import TenantModel
 
 
-class Category(models.Model):
+class Category(TenantModel):
     """Categorías de productos"""
     name = models.CharField('Nombre', max_length=100)
     description = models.TextField('Descripción', blank=True)
@@ -14,16 +15,17 @@ class Category(models.Model):
     class Meta:
         verbose_name = 'Categoría'
         verbose_name_plural = 'Categorías'
-        ordering = ['name']
+        ordering = ['organization', 'name']
+        unique_together = [['organization', 'name']]
     
     def __str__(self):
         return self.name
 
 
-class Product(models.Model):
+class Product(TenantModel):
     """Productos e inventario"""
     name = models.CharField('Nombre', max_length=200)
-    sku = models.CharField('SKU', max_length=50, unique=True)
+    sku = models.CharField('SKU', max_length=50)
     category = models.ForeignKey(Category, on_delete=models.PROTECT, verbose_name='Categoría')
     description = models.TextField('Descripción', blank=True)
     price = models.DecimalField('Precio', max_digits=10, decimal_places=2, validators=[MinValueValidator(Decimal('0.01'))])
@@ -38,6 +40,7 @@ class Product(models.Model):
         verbose_name = 'Producto'
         verbose_name_plural = 'Productos'
         ordering = ['name']
+        unique_together = [['organization', 'sku']]
     
     def __str__(self):
         return f"{self.name} ({self.sku})"
@@ -55,7 +58,7 @@ class Product(models.Model):
         return 0
 
 
-class Sale(models.Model):
+class Sale(TenantModel):
     """Ventas realizadas"""
     PAYMENT_METHODS = [
         ('cash', 'Efectivo'),
@@ -70,7 +73,7 @@ class Sale(models.Model):
         ('cancelled', 'Cancelada'),
     ]
     
-    sale_number = models.CharField('Número de Venta', max_length=20, unique=True)
+    sale_number = models.CharField('Número de Venta', max_length=20)
     patient = models.ForeignKey('patients.Patient', on_delete=models.PROTECT, verbose_name='Paciente', null=True, blank=True)
     customer_name = models.CharField('Nombre del Cliente', max_length=200, blank=True, help_text='Usar si no es un paciente registrado')
     sold_by = models.ForeignKey(User, on_delete=models.PROTECT, verbose_name='Vendido por')
@@ -88,6 +91,7 @@ class Sale(models.Model):
         verbose_name = 'Venta'
         verbose_name_plural = 'Ventas'
         ordering = ['-created_at']
+        unique_together = [['organization', 'sale_number']]
     
     def __str__(self):
         return f"Venta {self.sale_number} - {self.get_customer_display()}"

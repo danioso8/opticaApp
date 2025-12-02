@@ -1,0 +1,243 @@
+{% extends 'dashboard/base.html' %}
+{% load static %}
+
+{% block title %}Historia Clínica - {{ patient.full_name }} - {{ history.date }}{% endblock %}
+
+{% block content %}
+<div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+    <!-- Header -->
+    <div class="mb-6 pb-6 border-b flex justify-between items-start">
+        <div>
+            <div class="flex items-center gap-3 mb-2">
+                <a href="{% url 'dashboard:clinical_history_list' patient.id %}" class="text-gray-600 hover:text-gray-800">
+                    <i class="fas fa-arrow-left"></i>
+                </a>
+                <h1 class="text-2xl font-bold text-gray-800">
+                    <i class="fas fa-file-medical text-purple-600 mr-2"></i>
+                    Historia Clínica - {{ history.date|date:"d/m/Y" }}
+                </h1>
+            </div>
+            <div class="ml-9 space-y-1">
+                <p class="text-lg text-gray-700"><strong>Paciente:</strong> {{ patient.full_name }}</p>
+                {% if patient.identification %}
+                <p class="text-sm text-gray-600"><strong>Identificación:</strong> {{ patient.identification }}</p>
+                {% endif %}
+                {% if history.doctor %}
+                <p class="text-sm text-gray-600"><strong>Atendido por:</strong> {{ history.doctor }}</p>
+                {% endif %}
+            </div>
+        </div>
+        
+        <div class="flex gap-2">
+            <a href="{% url 'dashboard:clinical_history_edit' patient.id history.id %}"
+               class="px-4 py-2 bg-yellow-500 hover:bg-yellow-600 text-white rounded-lg transition-colors">
+                <i class="fas fa-edit mr-2"></i>Editar/Completar
+            </a>
+            <button onclick="window.print()" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors">
+                <i class="fas fa-print mr-2"></i>Imprimir
+            </button>
+        </div>
+    </div>
+
+    <!-- Motivo de Consulta -->
+    {% if history.chief_complaint %}
+    <div class="mb-6 bg-green-50 rounded-lg p-5">
+        <h3 class="text-lg font-semibold text-gray-800 mb-2 flex items-center">
+            <i class="fas fa-comment-medical text-green-600 mr-2"></i>
+            Motivo de Consulta
+        </h3>
+        <p class="text-gray-700">{{ history.chief_complaint }}</p>
+    </div>
+    {% endif %}
+
+    <!-- Síntomas -->
+    {% if history.blurred_vision or history.eye_pain or history.headaches or history.photophobia or history.redness or history.diplopia or history.tearing or history.itching or history.floaters or history.halos %}
+    <div class="mb-6">
+        <h3 class="text-lg font-semibold text-gray-800 mb-3">Síntomas Presentes</h3>
+        <div class="flex flex-wrap gap-2">
+            {% if history.blurred_vision %}<span class="px-3 py-1 bg-gray-100 text-gray-800 rounded-full text-sm">Visión Borrosa</span>{% endif %}
+            {% if history.eye_pain %}<span class="px-3 py-1 bg-red-100 text-red-800 rounded-full text-sm">Dolor Ocular</span>{% endif %}
+            {% if history.headaches %}<span class="px-3 py-1 bg-orange-100 text-orange-800 rounded-full text-sm">Cefaleas</span>{% endif %}
+            {% if history.photophobia %}<span class="px-3 py-1 bg-yellow-100 text-yellow-800 rounded-full text-sm">Fotofobia</span>{% endif %}
+            {% if history.redness %}<span class="px-3 py-1 bg-red-100 text-red-800 rounded-full text-sm">Enrojecimiento</span>{% endif %}
+            {% if history.diplopia %}<span class="px-3 py-1 bg-purple-100 text-purple-800 rounded-full text-sm">Diplopía</span>{% endif %}
+            {% if history.tearing %}<span class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm">Lagrimeo</span>{% endif %}
+            {% if history.itching %}<span class="px-3 py-1 bg-pink-100 text-pink-800 rounded-full text-sm">Picazón</span>{% endif %}
+            {% if history.floaters %}<span class="px-3 py-1 bg-gray-100 text-gray-800 rounded-full text-sm">Moscas Volantes</span>{% endif %}
+            {% if history.halos %}<span class="px-3 py-1 bg-yellow-100 text-yellow-800 rounded-full text-sm">Halos</span>{% endif %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Refracción -->
+    {% if history.refraction_od_sphere or history.refraction_os_sphere %}
+    <div class="mb-6 bg-blue-50 rounded-lg p-5">
+        <h3 class="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+            <i class="fas fa-eye text-blue-600 mr-2"></i>
+            Refracción (Fórmula de Lentes)
+        </h3>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <!-- OD -->
+            <div>
+                <h4 class="font-semibold text-gray-700 mb-3 flex items-center">
+                    <span class="bg-blue-500 text-white w-8 h-8 rounded-full flex items-center justify-center text-sm mr-2">OD</span>
+                    Ojo Derecho
+                </h4>
+                <div class="space-y-2 text-sm">
+                    {% if history.refraction_od_sphere %}
+                    <p><strong>Esfera:</strong> {{ history.refraction_od_sphere|stringformat:"+.2f" }}</p>
+                    {% endif %}
+                    {% if history.refraction_od_cylinder %}
+                    <p><strong>Cilindro:</strong> {{ history.refraction_od_cylinder|stringformat:"+.2f" }}</p>
+                    {% endif %}
+                    {% if history.refraction_od_axis %}
+                    <p><strong>Eje:</strong> {{ history.refraction_od_axis }}°</p>
+                    {% endif %}
+                    {% if history.refraction_od_add %}
+                    <p><strong>Adición:</strong> +{{ history.refraction_od_add }}</p>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- OS -->
+            <div>
+                <h4 class="font-semibold text-gray-700 mb-3 flex items-center">
+                    <span class="bg-green-500 text-white w-8 h-8 rounded-full flex items-center justify-center text-sm mr-2">OS</span>
+                    Ojo Izquierdo
+                </h4>
+                <div class="space-y-2 text-sm">
+                    {% if history.refraction_os_sphere %}
+                    <p><strong>Esfera:</strong> {{ history.refraction_os_sphere|stringformat:"+.2f" }}</p>
+                    {% endif %}
+                    {% if history.refraction_os_cylinder %}
+                    <p><strong>Cilindro:</strong> {{ history.refraction_os_cylinder|stringformat:"+.2f" }}</p>
+                    {% endif %}
+                    {% if history.refraction_os_axis %}
+                    <p><strong>Eje:</strong> {{ history.refraction_os_axis }}°</p>
+                    {% endif %}
+                    {% if history.refraction_os_add %}
+                    <p><strong>Adición:</strong> +{{ history.refraction_os_add }}</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- DP -->
+        {% if history.pd_distance or history.pd_near or history.pd_od or history.pd_os %}
+        <div class="mt-4 pt-4 border-t border-blue-200">
+            <h4 class="font-semibold text-gray-700 mb-2">Distancia Pupilar</h4>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
+                {% if history.pd_distance %}<p><strong>Lejos:</strong> {{ history.pd_distance }} mm</p>{% endif %}
+                {% if history.pd_near %}<p><strong>Cerca:</strong> {{ history.pd_near }} mm</p>{% endif %}
+                {% if history.pd_od %}<p><strong>OD:</strong> {{ history.pd_od }} mm</p>{% endif %}
+                {% if history.pd_os %}<p><strong>OS:</strong> {{ history.pd_os }} mm</p>{% endif %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    <!-- Diagnóstico -->
+    <div class="mb-6 bg-red-50 rounded-lg p-5">
+        <h3 class="text-lg font-semibold text-gray-800 mb-3 flex items-center">
+            <i class="fas fa-stethoscope text-red-600 mr-2"></i>
+            Diagnóstico
+        </h3>
+        
+        {% if history.dx_myopia or history.dx_hyperopia or history.dx_astigmatism or history.dx_presbyopia %}
+        <div class="mb-3">
+            <div class="flex flex-wrap gap-2">
+                {% if history.dx_myopia %}<span class="px-3 py-1 bg-red-100 text-red-800 rounded-full text-sm font-medium">Miopía</span>{% endif %}
+                {% if history.dx_hyperopia %}<span class="px-3 py-1 bg-orange-100 text-orange-800 rounded-full text-sm font-medium">Hipermetropía</span>{% endif %}
+                {% if history.dx_astigmatism %}<span class="px-3 py-1 bg-yellow-100 text-yellow-800 rounded-full text-sm font-medium">Astigmatismo</span>{% endif %}
+                {% if history.dx_presbyopia %}<span class="px-3 py-1 bg-purple-100 text-purple-800 rounded-full text-sm font-medium">Presbicia</span>{% endif %}
+                {% if history.dx_glaucoma %}<span class="px-3 py-1 bg-pink-100 text-pink-800 rounded-full text-sm font-medium">Glaucoma</span>{% endif %}
+                {% if history.dx_cataracts %}<span class="px-3 py-1 bg-gray-100 text-gray-800 rounded-full text-sm font-medium">Cataratas</span>{% endif %}
+                {% if history.dx_dry_eye %}<span class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium">Ojo Seco</span>{% endif %}
+            </div>
+        </div>
+        {% endif %}
+        
+        {% if history.diagnosis %}
+        <p class="text-gray-700">{{ history.diagnosis }}</p>
+        {% else %}
+        <p class="text-gray-500 italic">No especificado</p>
+        {% endif %}
+    </div>
+
+    <!-- Tratamiento/Prescripción -->
+    <div class="mb-6 bg-purple-50 rounded-lg p-5">
+        <h3 class="text-lg font-semibold text-gray-800 mb-3 flex items-center">
+            <i class="fas fa-prescription text-purple-600 mr-2"></i>
+            Tratamiento y Prescripción
+        </h3>
+        
+        <div class="mb-4">
+            <div class="flex flex-wrap gap-2">
+                {% if history.prescription_glasses %}
+                <span class="px-3 py-1 bg-purple-100 text-purple-800 rounded-full text-sm font-medium">
+                    <i class="fas fa-glasses mr-1"></i>Prescripción de Lentes
+                </span>
+                {% endif %}
+                {% if history.prescription_contact_lenses %}
+                <span class="px-3 py-1 bg-indigo-100 text-indigo-800 rounded-full text-sm font-medium">
+                    <i class="fas fa-eye mr-1"></i>Lentes de Contacto
+                </span>
+                {% endif %}
+                {% if history.prescription_medication %}
+                <span class="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-medium">
+                    <i class="fas fa-pills mr-1"></i>Medicación
+                </span>
+                {% endif %}
+            </div>
+        </div>
+
+        {% if history.lens_type or history.lens_material or history.lens_coating %}
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4 text-sm">
+            {% if history.lens_type %}
+            <div>
+                <strong>Tipo de Lentes:</strong>
+                <p class="text-gray-700">{{ history.get_lens_type_display }}</p>
+            </div>
+            {% endif %}
+            {% if history.lens_material %}
+            <div>
+                <strong>Material:</strong>
+                <p class="text-gray-700">{{ history.lens_material }}</p>
+            </div>
+            {% endif %}
+            {% if history.lens_coating %}
+            <div>
+                <strong>Tratamientos:</strong>
+                <p class="text-gray-700">{{ history.lens_coating }}</p>
+            </div>
+            {% endif %}
+        </div>
+        {% endif %}
+
+        {% if history.treatment_plan %}
+        <div>
+            <strong>Plan de Tratamiento:</strong>
+            <p class="text-gray-700 mt-1">{{ history.treatment_plan }}</p>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Información de registro -->
+    <div class="text-sm text-gray-500 pt-4 border-t">
+        <p><strong>Registrado:</strong> {{ history.created_at|date:"d/m/Y H:i" }}</p>
+        {% if history.updated_at != history.created_at %}
+        <p><strong>Última actualización:</strong> {{ history.updated_at|date:"d/m/Y H:i" }}</p>
+        {% endif %}
+    </div>
+</div>
+
+<style>
+@media print {
+    .no-print, nav, button, .border-t:last-child {
+        display: none !important;
+    }
+}
+</style>
+{% endblock %}

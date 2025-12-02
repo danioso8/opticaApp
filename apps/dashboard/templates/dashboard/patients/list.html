@@ -10,7 +10,7 @@
             <h1 class="text-2xl font-bold text-gray-800">Gestión de Pacientes</h1>
             <p class="text-gray-600 mt-1">Administra la información de tus pacientes</p>
         </div>
-        <button onclick="showCreatePatientModal()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors">
+        <button onclick="openCreatePatientModal()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors inline-block">
             <i class="fas fa-user-plus mr-2"></i>Nuevo Paciente
         </button>
     </div>
@@ -40,7 +40,7 @@
             <div class="flex items-center justify-between">
                 <div>
                     <p class="text-sm opacity-90">Total Pacientes</p>
-                    <p class="text-2xl font-bold">{{ patients.count }}</p>
+                    <p class="text-2xl font-bold">{{ total_patients }}</p>
                 </div>
                 <i class="fas fa-users text-3xl opacity-80"></i>
             </div>
@@ -49,30 +49,30 @@
         <div class="bg-gradient-to-br from-green-500 to-green-600 rounded-lg p-4 text-white">
             <div class="flex items-center justify-between">
                 <div>
-                    <p class="text-sm opacity-90">Activos</p>
-                    <p class="text-2xl font-bold">{{ patients.count }}</p>
+                    <p class="text-sm opacity-90">Con Citas</p>
+                    <p class="text-2xl font-bold">{{ patients_with_appointments }}</p>
                 </div>
-                <i class="fas fa-user-check text-3xl opacity-80"></i>
+                <i class="fas fa-calendar-check text-3xl opacity-80"></i>
             </div>
         </div>
         
         <div class="bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg p-4 text-white">
             <div class="flex items-center justify-between">
                 <div>
-                    <p class="text-sm opacity-90">Nuevos (Este mes)</p>
-                    <p class="text-2xl font-bold">0</p>
+                    <p class="text-sm opacity-90">En Página</p>
+                    <p class="text-2xl font-bold">{{ patients.paginator.count }}</p>
                 </div>
-                <i class="fas fa-user-plus text-3xl opacity-80"></i>
+                <i class="fas fa-file-alt text-3xl opacity-80"></i>
             </div>
         </div>
         
         <div class="bg-gradient-to-br from-orange-500 to-orange-600 rounded-lg p-4 text-white">
             <div class="flex items-center justify-between">
                 <div>
-                    <p class="text-sm opacity-90">Con Citas</p>
-                    <p class="text-2xl font-bold">0</p>
+                    <p class="text-sm opacity-90">Mostrando</p>
+                    <p class="text-2xl font-bold">{{ patients|length }}</p>
                 </div>
-                <i class="fas fa-calendar-check text-3xl opacity-80"></i>
+                <i class="fas fa-list text-3xl opacity-80"></i>
             </div>
         </div>
     </div>
@@ -104,23 +104,43 @@
                     <span class="truncate">{{ patient.email }}</span>
                 </div>
                 {% endif %}
+                {% if patient.age %}
                 <div class="flex items-center text-sm text-gray-600">
                     <i class="fas fa-birthday-cake w-5 text-purple-600"></i>
                     <span>{{ patient.age }} años</span>
                 </div>
+                {% endif %}
             </div>
             
             <div class="flex gap-2 pt-3 border-t border-gray-200">
                 <a href="{% url 'dashboard:patient_detail' patient.id %}" 
-                   class="flex-1 text-center px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm rounded-lg transition-colors">
+                   class="flex-1 text-center px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm rounded-lg transition-colors"
+                   title="Ver Perfil">
                     <i class="fas fa-eye mr-1"></i>Ver
                 </a>
+                <a href="{% url 'dashboard:clinical_history_list' patient.id %}" 
+                   class="px-3 py-2 bg-purple-600 hover:bg-purple-700 text-white text-sm rounded-lg transition-colors"
+                   title="Historia Clínica">
+                    <i class="fas fa-file-medical"></i>
+                </a>
+                <button onclick="openEditPatientModal({{ patient.id }})" 
+                        class="px-3 py-2 bg-yellow-500 hover:bg-yellow-600 text-white text-sm rounded-lg transition-colors" 
+                        title="Editar">
+                    <i class="fas fa-edit"></i>
+                </button>
+                <button onclick="confirmDeletePatient({{ patient.id }}, '{{ patient.full_name|escapejs }}')" 
+                        class="px-3 py-2 bg-red-600 hover:bg-red-700 text-white text-sm rounded-lg transition-colors"
+                        title="Eliminar">
+                    <i class="fas fa-trash"></i>
+                </button>
                 <a href="tel:{{ patient.phone_number }}" 
-                   class="px-3 py-2 bg-green-600 hover:bg-green-700 text-white text-sm rounded-lg transition-colors">
+                   class="px-3 py-2 bg-green-600 hover:bg-green-700 text-white text-sm rounded-lg transition-colors"
+                   title="Llamar">
                     <i class="fas fa-phone"></i>
                 </a>
                 <a href="https://wa.me/{{ patient.phone_number|cut:'+' }}" target="_blank"
-                   class="px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-sm rounded-lg transition-colors">
+                   class="px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-sm rounded-lg transition-colors"
+                   title="WhatsApp">
                     <i class="fab fa-whatsapp"></i>
                 </a>
             </div>
@@ -135,121 +155,829 @@
                 Ver todos los pacientes
             </a>
             {% else %}
-            <button onclick="showCreatePatientModal()" class="mt-4 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors">
+            <button onclick="openCreatePatientModal()" class="mt-4 inline-block px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors">
                 <i class="fas fa-user-plus mr-2"></i>Registrar Primer Paciente
             </button>
             {% endif %}
         </div>
         {% endfor %}
     </div>
+    
+    <!-- Paginación -->
+    {% if patients.has_other_pages %}
+    <div class="mt-6 flex justify-center">
+        <nav class="flex items-center gap-2">
+            {% if patients.has_previous %}
+                <a href="?page={{ patients.previous_page_number }}{% if search %}&search={{ search }}{% endif %}" 
+                   class="px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+                    <i class="fas fa-chevron-left"></i>
+                </a>
+            {% endif %}
+            
+            <span class="px-4 py-2 bg-blue-600 text-white rounded-lg">
+                Página {{ patients.number }} de {{ patients.paginator.num_pages }}
+            </span>
+            
+            {% if patients.has_next %}
+                <a href="?page={{ patients.next_page_number }}{% if search %}&search={{ search }}{% endif %}" 
+                   class="px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+                    <i class="fas fa-chevron-right"></i>
+                </a>
+            {% endif %}
+        </nav>
+    </div>
+    {% endif %}
 </div>
 
-<!-- Modal para Crear Paciente -->
-<div id="createPatientModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
-    <div class="bg-white rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
-        <div class="p-6">
-            <div class="flex justify-between items-center mb-6">
-                <h3 class="text-2xl font-bold text-gray-800">
-                    <i class="fas fa-user-plus text-blue-600 mr-2"></i>Nuevo Paciente
-                </h3>
-                <button onclick="closeCreatePatientModal()" class="text-gray-400 hover:text-gray-600">
-                    <i class="fas fa-times text-xl"></i>
-                </button>
-            </div>
+<!-- Modal Crear Paciente -->
+<div id="createPatientModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+    <div class="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto m-4">
+        <div class="bg-blue-600 text-white px-6 py-4 rounded-t-lg flex justify-between items-center">
+            <h2 class="text-xl font-bold">
+                <i class="fas fa-user-plus mr-2"></i>Nuevo Paciente
+            </h2>
+            <button onclick="closeCreatePatientModal()" class="text-white hover:text-gray-200">
+                <i class="fas fa-times text-2xl"></i>
+            </button>
+        </div>
+        
+        <form id="createPatientForm" class="p-6">
+            {% csrf_token %}
             
-            <form id="createPatientForm" class="space-y-4">
-                {% csrf_token %}
+            <!-- Información Personal -->
+            <div class="mb-6">
+                <h3 class="text-lg font-semibold text-gray-800 mb-3 border-b pb-2">
+                    <i class="fas fa-user mr-2 text-blue-600"></i>Información Personal
+                </h3>
+                
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div class="md:col-span-2">
-                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">
                             Nombre Completo <span class="text-red-500">*</span>
                         </label>
-                        <input type="text" name="full_name" required 
-                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                        <input type="text" name="full_name" required
+                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                               placeholder="Ej: Juan Pérez García">
                     </div>
                     
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">
-                            Cédula/DNI <span class="text-red-500">*</span>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">
+                            Identificación
                         </label>
-                        <input type="text" name="identification" required 
-                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                        <input type="text" name="identification"
+                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                               placeholder="Cédula o documento">
                     </div>
                     
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">
-                            Fecha de Nacimiento <span class="text-red-500">*</span>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">
+                            Fecha de Nacimiento
                         </label>
-                        <input type="date" name="date_of_birth" required 
-                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                        <input type="date" name="date_of_birth"
+                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
                     </div>
                     
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">
+                            Género
+                        </label>
+                        <select name="gender"
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                            <option value="">Seleccionar...</option>
+                            <option value="M">Masculino</option>
+                            <option value="F">Femenino</option>
+                            <option value="O">Otro</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Información de Contacto -->
+            <div class="mb-6">
+                <h3 class="text-lg font-semibold text-gray-800 mb-3 border-b pb-2">
+                    <i class="fas fa-phone mr-2 text-green-600"></i>Información de Contacto
+                </h3>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">
                             Teléfono <span class="text-red-500">*</span>
                         </label>
-                        <input type="tel" name="phone_number" required placeholder="+57 300 1234567"
-                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                        <input type="tel" name="phone_number" required
+                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                               placeholder="300 123 4567">
                     </div>
                     
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Email</label>
-                        <input type="email" name="email" 
-                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">
+                            Email
+                        </label>
+                        <input type="email" name="email"
+                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                               placeholder="correo@ejemplo.com">
                     </div>
                     
                     <div class="md:col-span-2">
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Dirección</label>
-                        <input type="text" name="address" 
-                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
-                    </div>
-                    
-                    <div class="md:col-span-2">
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Notas Médicas</label>
-                        <textarea name="medical_notes" rows="3"
-                                  class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                                  placeholder="Alergias, condiciones especiales, etc."></textarea>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">
+                            Dirección
+                        </label>
+                        <input type="text" name="address"
+                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                               placeholder="Calle, número, barrio, ciudad">
                     </div>
                 </div>
+            </div>
+            
+            <!-- Información Médica -->
+            <div class="mb-6">
+                <h3 class="text-lg font-semibold text-gray-800 mb-3 border-b pb-2">
+                    <i class="fas fa-notes-medical mr-2 text-red-600"></i>Información Médica
+                </h3>
                 
-                <div class="flex gap-3 pt-4">
-                    <button type="submit" class="flex-1 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors">
-                        <i class="fas fa-save mr-2"></i>Guardar Paciente
-                    </button>
-                    <button type="button" onclick="closeCreatePatientModal()" 
-                            class="px-6 py-3 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg transition-colors">
-                        Cancelar
-                    </button>
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">
+                            Alergias
+                        </label>
+                        <textarea name="allergies" rows="2"
+                                  class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                  placeholder="Ej: Penicilina, Polen..."></textarea>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">
+                            Condiciones Médicas
+                        </label>
+                        <textarea name="medical_conditions" rows="2"
+                                  class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                  placeholder="Ej: Diabetes, Hipertensión..."></textarea>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">
+                            Medicamentos Actuales
+                        </label>
+                        <textarea name="current_medications" rows="2"
+                                  class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                  placeholder="Ej: Losartán 50mg, Metformina 850mg..."></textarea>
+                    </div>
                 </div>
-            </form>
+            </div>
+            
+            <!-- Datos de Óptica -->
+            <div class="mb-6">
+                <h3 class="text-lg font-semibold text-gray-800 mb-3 border-b pb-2">
+                    <i class="fas fa-glasses mr-2 text-purple-600"></i>Datos de Óptica
+                </h3>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">
+                            Ocupación
+                        </label>
+                        <input type="text" name="occupation"
+                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                               placeholder="Ej: Médico, Ingeniero...">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">
+                            Estado Civil
+                        </label>
+                        <select name="civil_status"
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                            <option value="">Seleccionar...</option>
+                            <option value="Soltero/a">Soltero/a</option>
+                            <option value="Casado/a">Casado/a</option>
+                            <option value="Divorciado/a">Divorciado/a</option>
+                            <option value="Viudo/a">Viudo/a</option>
+                            <option value="Unión Libre">Unión Libre</option>
+                        </select>
+                    </div>
+                    
+                    <div class="md:col-span-2">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">
+                            Zona de Residencia
+                        </label>
+                        <input type="text" name="residence_area"
+                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                               placeholder="Ej: Norte, Sur, Centro...">
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Información del Negocio -->
+            <div class="mb-6">
+                <h3 class="text-lg font-semibold text-gray-800 mb-3 border-b pb-2">
+                    <i class="fas fa-briefcase mr-2 text-orange-600"></i>Información del Negocio
+                </h3>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">
+                            Nombre del Negocio
+                        </label>
+                        <input type="text" name="business_name"
+                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                               placeholder="Ej: Restaurante El Buen Sabor">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">
+                            Tipo de Negocio
+                        </label>
+                        <input type="text" name="business_type"
+                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                               placeholder="Ej: Comercio, Servicios...">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">
+                            Teléfono del Negocio
+                        </label>
+                        <input type="tel" name="business_phone"
+                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                               placeholder="300 123 4567">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">
+                            Dirección del Negocio
+                        </label>
+                        <input type="text" name="business_address"
+                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                               placeholder="Calle, número, barrio">
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Información Bancaria -->
+            <div class="mb-6">
+                <h3 class="text-lg font-semibold text-gray-800 mb-3 border-b pb-2">
+                    <i class="fas fa-university mr-2 text-teal-600"></i>Información Bancaria
+                </h3>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">
+                            Entidad Bancaria
+                        </label>
+                        <input type="text" name="bank_entity"
+                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                               placeholder="Ej: Bancolombia, Davivienda...">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">
+                            Número de Cuenta
+                        </label>
+                        <input type="text" name="account_number"
+                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                               placeholder="Número de cuenta bancaria">
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Botones -->
+            <div class="flex gap-3 pt-4 border-t">
+                <button type="submit" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg transition-colors font-medium">
+                    <i class="fas fa-save mr-2"></i>Guardar Paciente
+                </button>
+                <button type="button" onclick="closeCreatePatientModal()" 
+                        class="px-6 py-3 bg-gray-300 hover:bg-gray-400 text-gray-700 rounded-lg transition-colors font-medium">
+                    <i class="fas fa-times mr-2"></i>Cancelar
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Modal Editar Paciente -->
+<div id="editPatientModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+    <div class="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto m-4">
+        <div class="bg-yellow-500 text-white px-6 py-4 rounded-t-lg flex justify-between items-center">
+            <h2 class="text-xl font-bold">
+                <i class="fas fa-edit mr-2"></i>Editar Paciente
+            </h2>
+            <button onclick="closeEditPatientModal()" class="text-white hover:text-gray-200">
+                <i class="fas fa-times text-2xl"></i>
+            </button>
+        </div>
+        
+        <form id="editPatientForm" class="p-6">
+            {% csrf_token %}
+            <input type="hidden" id="edit_patient_id" name="patient_id">
+            
+            <!-- Información Personal -->
+            <div class="mb-6">
+                <h3 class="text-lg font-semibold text-gray-800 mb-3 border-b pb-2">
+                    <i class="fas fa-user mr-2 text-blue-600"></i>Información Personal
+                </h3>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="md:col-span-2">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">
+                            Nombre Completo <span class="text-red-500">*</span>
+                        </label>
+                        <input type="text" id="edit_full_name" name="full_name" required
+                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">
+                            Identificación
+                        </label>
+                        <input type="text" id="edit_identification" name="identification"
+                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">
+                            Fecha de Nacimiento
+                        </label>
+                        <input type="date" id="edit_date_of_birth" name="date_of_birth"
+                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">
+                            Género
+                        </label>
+                        <select id="edit_gender" name="gender"
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                            <option value="">Seleccionar...</option>
+                            <option value="M">Masculino</option>
+                            <option value="F">Femenino</option>
+                            <option value="O">Otro</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Información de Contacto -->
+            <div class="mb-6">
+                <h3 class="text-lg font-semibold text-gray-800 mb-3 border-b pb-2">
+                    <i class="fas fa-phone mr-2 text-green-600"></i>Información de Contacto
+                </h3>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">
+                            Teléfono <span class="text-red-500">*</span>
+                        </label>
+                        <input type="tel" id="edit_phone_number" name="phone_number" required
+                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">
+                            Email
+                        </label>
+                        <input type="email" id="edit_email" name="email"
+                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    </div>
+                    
+                    <div class="md:col-span-2">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">
+                            Dirección
+                        </label>
+                        <input type="text" id="edit_address" name="address"
+                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Información Médica -->
+            <div class="mb-6">
+                <h3 class="text-lg font-semibold text-gray-800 mb-3 border-b pb-2">
+                    <i class="fas fa-notes-medical mr-2 text-red-600"></i>Información Médica
+                </h3>
+                
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">
+                            Alergias
+                        </label>
+                        <textarea id="edit_allergies" name="allergies" rows="2"
+                                  class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"></textarea>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">
+                            Condiciones Médicas
+                        </label>
+                        <textarea id="edit_medical_conditions" name="medical_conditions" rows="2"
+                                  class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"></textarea>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">
+                            Medicamentos Actuales
+                        </label>
+                        <textarea id="edit_current_medications" name="current_medications" rows="2"
+                                  class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"></textarea>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Datos de Óptica -->
+            <div class="mb-6">
+                <h3 class="text-lg font-semibold text-gray-800 mb-3 border-b pb-2">
+                    <i class="fas fa-glasses mr-2 text-purple-600"></i>Datos de Óptica
+                </h3>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">
+                            Ocupación
+                        </label>
+                        <input type="text" id="edit_occupation" name="occupation"
+                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">
+                            Estado Civil
+                        </label>
+                        <select id="edit_civil_status" name="civil_status"
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                            <option value="">Seleccionar...</option>
+                            <option value="Soltero/a">Soltero/a</option>
+                            <option value="Casado/a">Casado/a</option>
+                            <option value="Divorciado/a">Divorciado/a</option>
+                            <option value="Viudo/a">Viudo/a</option>
+                            <option value="Unión Libre">Unión Libre</option>
+                        </select>
+                    </div>
+                    
+                    <div class="md:col-span-2">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">
+                            Zona de Residencia
+                        </label>
+                        <input type="text" id="edit_residence_area" name="residence_area"
+                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Información del Negocio -->
+            <div class="mb-6">
+                <h3 class="text-lg font-semibold text-gray-800 mb-3 border-b pb-2">
+                    <i class="fas fa-briefcase mr-2 text-orange-600"></i>Información del Negocio
+                </h3>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">
+                            Nombre del Negocio
+                        </label>
+                        <input type="text" id="edit_business_name" name="business_name"
+                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">
+                            Tipo de Negocio
+                        </label>
+                        <input type="text" id="edit_business_type" name="business_type"
+                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">
+                            Teléfono del Negocio
+                        </label>
+                        <input type="tel" id="edit_business_phone" name="business_phone"
+                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">
+                            Dirección del Negocio
+                        </label>
+                        <input type="text" id="edit_business_address" name="business_address"
+                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Información Bancaria -->
+            <div class="mb-6">
+                <h3 class="text-lg font-semibold text-gray-800 mb-3 border-b pb-2">
+                    <i class="fas fa-university mr-2 text-teal-600"></i>Información Bancaria
+                </h3>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">
+                            Entidad Bancaria
+                        </label>
+                        <input type="text" id="edit_bank_entity" name="bank_entity"
+                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">
+                            Número de Cuenta
+                        </label>
+                        <input type="text" id="edit_account_number" name="account_number"
+                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Botones -->
+            <div class="flex gap-3 pt-4 border-t">
+                <button type="submit" class="flex-1 bg-yellow-500 hover:bg-yellow-600 text-white px-6 py-3 rounded-lg transition-colors font-medium">
+                    <i class="fas fa-save mr-2"></i>Actualizar Paciente
+                </button>
+                <button type="button" onclick="closeEditPatientModal()" 
+                        class="px-6 py-3 bg-gray-300 hover:bg-gray-400 text-gray-700 rounded-lg transition-colors font-medium">
+                    <i class="fas fa-times mr-2"></i>Cancelar
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Modal Confirmar Eliminación -->
+<div id="deletePatientModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+    <div class="bg-white rounded-lg shadow-xl max-w-md w-full m-4">
+        <div class="bg-red-600 text-white px-6 py-4 rounded-t-lg">
+            <h2 class="text-xl font-bold">
+                <i class="fas fa-exclamation-triangle mr-2"></i>Confirmar Eliminación
+            </h2>
+        </div>
+        
+        <div class="p-6">
+            <p class="text-gray-700 mb-4">
+                ¿Estás seguro de que deseas eliminar al paciente <strong id="delete_patient_name"></strong>?
+            </p>
+            <p class="text-sm text-gray-600 mb-6">
+                Esta acción desactivará el paciente. Sus datos permanecerán en el sistema pero no se mostrará en la lista activa.
+            </p>
+            
+            <input type="hidden" id="delete_patient_id">
+            
+            <div class="flex gap-3">
+                <button onclick="deletePatient()" 
+                        class="flex-1 bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-lg transition-colors font-medium">
+                    <i class="fas fa-trash mr-2"></i>Sí, Eliminar
+                </button>
+                <button onclick="closeDeletePatientModal()" 
+                        class="px-6 py-3 bg-gray-300 hover:bg-gray-400 text-gray-700 rounded-lg transition-colors font-medium">
+                    <i class="fas fa-times mr-2"></i>Cancelar
+                </button>
+            </div>
         </div>
     </div>
 </div>
 
-<script>
-function showCreatePatientModal() {
-    document.getElementById('createPatientModal').classList.remove('hidden');
-}
+{% endblock %}
 
-function closeCreatePatientModal() {
-    document.getElementById('createPatientModal').classList.add('hidden');
+{% block extra_js %}
+<script>
+// Abrir modal
+function openCreatePatientModal() {
+    document.getElementById('createPatientModal').classList.remove('hidden');
+    document.getElementById('createPatientModal').classList.add('flex');
     document.getElementById('createPatientForm').reset();
 }
 
-document.getElementById('createPatientForm').addEventListener('submit', function(e) {
-    e.preventDefault();
-    
-    // Por ahora solo mostramos un mensaje
-    // TODO: Implementar el endpoint de creación de pacientes
-    alert('Funcionalidad en desarrollo.\nProximamente podrás crear pacientes desde aquí.');
-    closeCreatePatientModal();
+// Cerrar modal
+function closeCreatePatientModal() {
+    document.getElementById('createPatientModal').classList.add('hidden');
+    document.getElementById('createPatientModal').classList.remove('flex');
+}
+
+// Cerrar con ESC
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        closeCreatePatientModal();
+    }
 });
 
-// Cerrar modal al hacer click fuera
+// Cerrar al hacer click fuera del modal
 document.getElementById('createPatientModal').addEventListener('click', function(e) {
     if (e.target === this) {
         closeCreatePatientModal();
     }
 });
+
+// Submit del formulario
+document.getElementById('createPatientForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    const submitBtn = this.querySelector('button[type="submit"]');
+    const originalText = submitBtn.innerHTML;
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Guardando...';
+    
+    try {
+        const formData = new FormData(this);
+        
+        // Debug: Log form data
+        console.log('Form Data being sent:');
+        for (let [key, value] of formData.entries()) {
+            console.log(`${key}: ${value}`);
+        }
+        
+        const response = await fetch('{% url "dashboard:patient_create" %}', {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            }
+        });
+        
+        const data = await response.json();
+        
+        console.log('Response status:', response.status);
+        console.log('Response data:', data);
+        
+        if (data.success) {
+            // Mostrar mensaje de éxito
+            alert('✓ ' + data.message);
+            
+            // Recargar la página para mostrar el nuevo paciente
+            window.location.reload();
+        } else {
+            alert('Error: ' + data.message);
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = originalText;
+        }
+    } catch (error) {
+        console.error('Fetch error:', error);
+        alert('Error de conexión: ' + error.message);
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = originalText;
+    }
+});
+
+// ========== MODAL EDITAR PACIENTE ==========
+
+// Abrir modal de editar
+async function openEditPatientModal(patientId) {
+    try {
+        // Obtener datos del paciente
+        const response = await fetch(`{% url 'dashboard:patient_search_api' %}?id=${patientId}`);
+        const data = await response.json();
+        
+        if (data.patients && data.patients.length > 0) {
+            const patient = data.patients[0];
+            
+            // Llenar el formulario
+            document.getElementById('edit_patient_id').value = patient.id;
+            document.getElementById('edit_full_name').value = patient.full_name || '';
+            document.getElementById('edit_identification').value = patient.identification || '';
+            document.getElementById('edit_date_of_birth').value = patient.date_of_birth || '';
+            document.getElementById('edit_gender').value = patient.gender || '';
+            document.getElementById('edit_phone_number').value = patient.phone_number || '';
+            document.getElementById('edit_email').value = patient.email || '';
+            document.getElementById('edit_address').value = patient.address || '';
+            document.getElementById('edit_allergies').value = patient.allergies || '';
+            document.getElementById('edit_medical_conditions').value = patient.medical_conditions || '';
+            document.getElementById('edit_current_medications').value = patient.current_medications || '';
+            document.getElementById('edit_occupation').value = patient.occupation || '';
+            document.getElementById('edit_civil_status').value = patient.civil_status || '';
+            document.getElementById('edit_residence_area').value = patient.residence_area || '';
+            document.getElementById('edit_business_name').value = patient.business_name || '';
+            document.getElementById('edit_business_type').value = patient.business_type || '';
+            document.getElementById('edit_business_phone').value = patient.business_phone || '';
+            document.getElementById('edit_business_address').value = patient.business_address || '';
+            document.getElementById('edit_bank_entity').value = patient.bank_entity || '';
+            document.getElementById('edit_account_number').value = patient.account_number || '';
+            
+            // Abrir modal
+            document.getElementById('editPatientModal').classList.remove('hidden');
+            document.getElementById('editPatientModal').classList.add('flex');
+        } else {
+            alert('No se pudo cargar la información del paciente');
+        }
+    } catch (error) {
+        alert('Error al cargar paciente: ' + error.message);
+    }
+}
+
+// Cerrar modal de editar
+function closeEditPatientModal() {
+    document.getElementById('editPatientModal').classList.add('hidden');
+    document.getElementById('editPatientModal').classList.remove('flex');
+}
+
+// Cerrar modal de editar con ESC
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        closeEditPatientModal();
+        closeDeletePatientModal();
+    }
+});
+
+// Cerrar al hacer click fuera del modal de editar
+document.getElementById('editPatientModal').addEventListener('click', function(e) {
+    if (e.target === this) {
+        closeEditPatientModal();
+    }
+});
+
+// Submit del formulario de editar
+document.getElementById('editPatientForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    const patientId = document.getElementById('edit_patient_id').value;
+    const submitBtn = this.querySelector('button[type="submit"]');
+    const originalText = submitBtn.innerHTML;
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Actualizando...';
+    
+    try {
+        const formData = new FormData(this);
+        const url = `/dashboard/patients/${patientId}/edit/`;
+        const response = await fetch(url, {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            alert('✓ ' + data.message);
+            window.location.reload();
+        } else {
+            alert('Error: ' + data.message);
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = originalText;
+        }
+    } catch (error) {
+        alert('Error de conexión: ' + error.message);
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = originalText;
+    }
+});
+
+// ========== MODAL ELIMINAR PACIENTE ==========
+
+// Abrir modal de confirmar eliminación
+function confirmDeletePatient(patientId, patientName) {
+    document.getElementById('delete_patient_id').value = patientId;
+    document.getElementById('delete_patient_name').textContent = patientName;
+    document.getElementById('deletePatientModal').classList.remove('hidden');
+    document.getElementById('deletePatientModal').classList.add('flex');
+}
+
+// Cerrar modal de eliminar
+function closeDeletePatientModal() {
+    document.getElementById('deletePatientModal').classList.add('hidden');
+    document.getElementById('deletePatientModal').classList.remove('flex');
+}
+
+// Cerrar al hacer click fuera del modal de eliminar
+document.getElementById('deletePatientModal').addEventListener('click', function(e) {
+    if (e.target === this) {
+        closeDeletePatientModal();
+    }
+});
+
+// Eliminar paciente
+async function deletePatient() {
+    const patientId = document.getElementById('delete_patient_id').value;
+    const deleteBtn = document.querySelector('#deletePatientModal button[onclick="deletePatient()"]');
+    const originalText = deleteBtn.innerHTML;
+    deleteBtn.disabled = true;
+    deleteBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Eliminando...';
+    
+    try {
+        const formData = new FormData();
+        formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
+        
+        const url = `/dashboard/patients/${patientId}/delete/`;
+        const response = await fetch(url, {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            alert('✓ ' + data.message);
+            window.location.reload();
+        } else {
+            alert('Error: ' + data.message);
+            deleteBtn.disabled = false;
+            deleteBtn.innerHTML = originalText;
+        }
+    } catch (error) {
+        alert('Error de conexión: ' + error.message);
+        deleteBtn.disabled = false;
+        deleteBtn.innerHTML = originalText;
+    }
+}
 </script>
 {% endblock %}

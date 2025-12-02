@@ -1,0 +1,73 @@
+{% extends "dashboard/base.html" %}
+
+{% block title %}Planes de Suscripción{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="text-center mb-5">
+        <h2>Planes de Suscripción</h2>
+        <p class="lead">Elige el plan que mejor se adapte a tu negocio</p>
+    </div>
+
+    <div class="row">
+        {% for plan in plans %}
+        <div class="col-md-3 mb-4">
+            <div class="card {% if current_plan and plan.id == current_plan.id %}border-primary{% endif %}">
+                {% if current_plan and plan.id == current_plan.id %}
+                <div class="card-header bg-primary text-white text-center">
+                    <strong>Tu Plan Actual</strong>
+                </div>
+                {% endif %}
+                <div class="card-body text-center">
+                    <h4 class="card-title">{{ plan.name }}</h4>
+                    <h2 class="text-primary mb-0">${{ plan.price_monthly }}</h2>
+                    <p class="text-muted">/mes</p>
+                    <p class="text-muted small">o ${{ plan.price_yearly }}/año</p>
+                    
+                    <hr>
+                    
+                    <ul class="list-unstyled text-left">
+                        <li><i class="fas fa-check text-success"></i> {{ plan.max_users }} usuarios</li>
+                        <li><i class="fas fa-check text-success"></i> {{ plan.max_appointments_month }} citas/mes</li>
+                        <li><i class="fas fa-check text-success"></i> {{ plan.max_patients }} pacientes</li>
+                        <li><i class="fas fa-check text-success"></i> {{ plan.max_storage_mb }} MB storage</li>
+                        
+                        {% if plan.whatsapp_integration %}
+                        <li><i class="fas fa-check text-success"></i> WhatsApp</li>
+                        {% endif %}
+                        
+                        {% if plan.custom_branding %}
+                        <li><i class="fas fa-check text-success"></i> Marca personalizada</li>
+                        {% endif %}
+                        
+                        {% if plan.api_access %}
+                        <li><i class="fas fa-check text-success"></i> Acceso API</li>
+                        {% endif %}
+                        
+                        {% if plan.priority_support %}
+                        <li><i class="fas fa-check text-success"></i> Soporte prioritario</li>
+                        {% endif %}
+                        
+                        {% if plan.analytics %}
+                        <li><i class="fas fa-check text-success"></i> Análisis avanzado</li>
+                        {% endif %}
+                        
+                        {% if plan.multi_location %}
+                        <li><i class="fas fa-check text-success"></i> Múltiples ubicaciones</li>
+                        {% endif %}
+                    </ul>
+                    
+                    {% if current_plan and plan.id == current_plan.id %}
+                        <button class="btn btn-secondary btn-block" disabled>Plan Actual</button>
+                    {% elif plan.price_monthly == 0 %}
+                        <button class="btn btn-outline-primary btn-block" disabled>Gratis</button>
+                    {% else %}
+                        <a href="#" class="btn btn-primary btn-block">Seleccionar</a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}
