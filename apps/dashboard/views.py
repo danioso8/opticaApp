@@ -1196,3 +1196,81 @@ Sistema de Citas
             }, status=500)
     
     return JsonResponse({'success': False}, status=405)
+
+
+# ==================== CREAR PACIENTE DESDE CITA ====================
+
+@login_required
+def create_patient_from_appointment(request):
+    """Crear un paciente desde el detalle de una cita"""
+    if request.method == 'POST':
+        try:
+            # Obtener datos del formulario
+            full_name = request.POST.get('full_name')
+            phone_number = request.POST.get('phone_number')
+            
+            if not full_name or not phone_number:
+                return JsonResponse({
+                    'success': False,
+                    'message': 'Nombre y teléfono son requeridos'
+                }, status=400)
+            
+            # Verificar si ya existe un paciente con ese teléfono
+            existing_patient = Patient.objects.filter(
+                organization=request.user.organization,
+                phone_number=phone_number
+            ).first()
+            
+            if existing_patient:
+                return JsonResponse({
+                    'success': False,
+                    'message': f'Ya existe un paciente con ese teléfono: {existing_patient.full_name}'
+                }, status=400)
+            
+            # Crear el paciente
+            patient = Patient.objects.create(
+                organization=request.user.organization,
+                full_name=full_name,
+                identification=request.POST.get('identification', ''),
+                date_of_birth=request.POST.get('date_of_birth') or None,
+                gender=request.POST.get('gender', ''),
+                phone_number=phone_number,
+                email=request.POST.get('email', ''),
+                address=request.POST.get('address', ''),
+                allergies=request.POST.get('allergies', ''),
+                medical_conditions=request.POST.get('medical_conditions', ''),
+                current_medications=request.POST.get('current_medications', ''),
+                occupation=request.POST.get('occupation', ''),
+                civil_status=request.POST.get('civil_status', ''),
+                residence_area=request.POST.get('residence_area', ''),
+                is_active=True
+            )
+            
+            # Asociar el paciente con la cita
+            appointment_id = request.POST.get('appointment_id')
+            if appointment_id:
+                appointment = Appointment.objects.get(
+                    id=appointment_id,
+                    organization=request.user.organization
+                )
+                appointment.patient = patient
+                appointment.save()
+            
+            return JsonResponse({
+                'success': True,
+                'message': 'Paciente creado exitosamente',
+                'patient_id': patient.id
+            })
+            
+        except Appointment.DoesNotExist:
+            return JsonResponse({
+                'success': False,
+                'message': 'Cita no encontrada'
+            }, status=404)
+        except Exception as e:
+            return JsonResponse({
+                'success': False,
+                'message': f'Error al crear paciente: {str(e)}'
+            }, status=500)
+    
+    return JsonResponse({'success': False, 'message': 'Método no permitido'}, status=405)

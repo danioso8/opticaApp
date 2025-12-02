@@ -42,6 +42,7 @@ urlpatterns = [
     path('patients/<int:pk>/edit/', views.patient_edit, name='patient_edit'),
     path('patients/<int:pk>/delete/', views.patient_delete, name='patient_delete'),
     path('patients/search-api/', views.patient_search_api, name='patient_search_api'),
+    path('patients/create-from-appointment/', views.create_patient_from_appointment, name='create_patient_from_appointment'),
     
     # Historia Clínica
     path('patients/<int:patient_id>/clinical-history/', views.clinical_history_list, name='clinical_history_list'),
