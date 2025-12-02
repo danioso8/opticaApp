@@ -42,23 +42,61 @@ from apps.patients.views import (
 )
 
 
+# ==================== WHATSAPP STATUS ====================
+
+def check_whatsapp_status():
+    """Verifica el estado del bot de WhatsApp"""
+    from django.conf import settings
+    import requests
+    
+    api_url = getattr(settings, 'WHATSAPP_API_URL', 'http://localhost:3000')
+    
+    try:
+        response = requests.get(f'{api_url}/health', timeout=2)
+        if response.status_code == 200:
+            data = response.json()
+            return {
+                'server_running': True,
+                'connected': data.get('connected', False),
+                'api_url': api_url
+            }
+    except:
+        pass
+    
+    return {
+        'server_running': False,
+        'connected': False,
+        'api_url': api_url
+    }
+
+
 # ==================== AUTENTICACIÓN ====================
 
 def login_view(request):
     """Vista de login"""
     if request.user.is_authenticated:
+        next_url = request.GET.get('next', 'dashboard:home')
+        if next_url.startswith('/'):
+            return redirect(next_url)
         return redirect('dashboard:home')
     
     if request.method == 'POST':
         username = request.POST.get('username')
         password = request.POST.get('password')
+        next_url = request.POST.get('next') or request.GET.get('next', '')
         
         user = authenticate(request, username=username, password=password)
         
         if user is not None:
             login(request, user)
             messages.success(request, f'¡Bienvenido, {user.username}!')
-            return redirect('dashboard:home')
+            
+            # Redirigir al next URL si existe
+            if next_url and next_url.startswith('/'):
+                return redirect(next_url)
+            
+            # Redirigir a la lista de organizaciones para que seleccione una
+            return redirect('organizations:list')
         else:
             messages.error(request, 'Credenciales inválidas')
     
@@ -77,6 +115,11 @@ def logout_view(request):
 @login_required
 def dashboard_home(request):
     """Página principal del dashboard"""
+    # Verificar si hay una organización seleccionada
+    if not hasattr(request, 'organization') or not request.organization:
+        messages.info(request, 'Por favor selecciona una empresa para comenzar')
+        return redirect('organizations:list')
+    
     today = timezone.now().date()
     
     # Filtrar por organización si existe
@@ -107,6 +150,7 @@ def dashboard_home(request):
         },
         'total_patients': Patient.objects.filter(is_active=True, **org_filter).count(),
         'system_open': AppointmentConfiguration.get_config(request.organization).is_open if request.organization else True,
+        'whatsapp': check_whatsapp_status(),
     }
     
     # Próximas citas (siguientes 5)
@@ -226,6 +270,16 @@ def appointment_change_status(request, pk):
             
             # Notificar cambio en tiempo real
             notify_appointment_updated(appointment)
+            
+            # Enviar notificación si se cancela la cita (WhatsApp/Email según entorno)
+            if new_status == 'cancelled':
+                try:
+                    from apps.appointments.notifications import notify_appointment_cancelled
+                    notify_appointment_cancelled(appointment)
+                except Exception as e:
+                    import logging
+                    logger = logging.getLogger(__name__)
+                    logger.error(f"Error al enviar notificación de cancelación: {e}")
             
             return JsonResponse({
                 'success': True,
@@ -851,5 +905,294 @@ def delete_specific_schedule(request, pk):
                 'success': False,
                 'message': f'Error: {str(e)}'
             }, status=400)
+    
+    return JsonResponse({'success': False}, status=405)
+
+
+# ==================== WHATSAPP API ====================
+
+@login_required
+def whatsapp_status_api(request):
+    """API para verificar el estado del bot de WhatsApp"""
+    status = check_whatsapp_status()
+    return JsonResponse(status)
+
+
+@login_required
+def whatsapp_test_send(request):
+    """Enviar mensaje de prueba por WhatsApp"""
+    if request.method == 'POST':
+        import json
+        from apps.appointments.whatsapp_local import whatsapp_notifier
+        
+        try:
+            data = json.loads(request.body)
+            phone = data.get('phone')
+            
+            if not phone:
+                return JsonResponse({
+                    'success': False,
+                    'message': 'Número de teléfono requerido'
+                }, status=400)
+            
+            # Verificar estado primero
+            status = check_whatsapp_status()
+            if not status['server_running']:
+                return JsonResponse({
+                    'success': False,
+                    'message': 'Servidor WhatsApp no está corriendo',
+                    'help': 'Ejecuta: cd whatsapp-bot && npm start'
+                }, status=503)
+            
+            if not status['connected']:
+                return JsonResponse({
+                    'success': False,
+                    'message': 'WhatsApp no está conectado',
+                    'help': f'Ve a {status["api_url"]}/qr para conectar'
+                }, status=503)
+            
+            # Enviar mensaje de prueba
+            org_name = request.organization.name if hasattr(request, 'organization') and request.organization else 'Sistema'
+            
+            message = f"""
+👓 *{org_name.upper()}*
+
+¡Hola! Este es un mensaje de prueba.
+
+✅ El sistema de notificaciones WhatsApp está funcionando correctamente.
+
+_Este mensaje fue enviado desde el panel de administración_
+            """.strip()
+            
+            success = whatsapp_notifier.send_message(phone, message)
+            
+            if success:
+                return JsonResponse({
+                    'success': True,
+                    'message': f'Mensaje enviado exitosamente a {phone}'
+                })
+            else:
+                return JsonResponse({
+                    'success': False,
+                    'message': 'Error al enviar el mensaje'
+                }, status=500)
+                
+        except json.JSONDecodeError:
+            return JsonResponse({
+                'success': False,
+                'message': 'JSON inválido'
+            }, status=400)
+        except Exception as e:
+            return JsonResponse({
+                'success': False,
+                'message': f'Error: {str(e)}'
+            }, status=500)
+    
+    return JsonResponse({'success': False}, status=405)
+
+
+# ==================== CONFIGURACIÓN DE NOTIFICACIONES ====================
+
+@login_required
+def notification_settings(request):
+    """Vista de configuración de notificaciones"""
+    from apps.appointments.models_notifications import NotificationSettings
+    
+    org = request.organization if hasattr(request, 'organization') and request.organization else None
+    settings = NotificationSettings.get_settings(org)
+    
+    context = {
+        'settings': settings,
+        'page_title': 'Configuración de Notificaciones',
+    }
+    
+    return render(request, 'dashboard/notification_settings.html', context)
+
+
+@login_required
+def save_notification_settings(request):
+    """Guardar configuración de notificaciones"""
+    if request.method == 'POST':
+        from apps.appointments.models_notifications import NotificationSettings
+        
+        org = request.organization if hasattr(request, 'organization') and request.organization else None
+        settings = NotificationSettings.get_settings(org)
+        
+        # Twilio WhatsApp
+        settings.twilio_enabled = request.POST.get('twilio_enabled') == 'on'
+        settings.twilio_account_sid = request.POST.get('twilio_account_sid', '').strip()
+        settings.twilio_auth_token = request.POST.get('twilio_auth_token', '').strip()
+        settings.twilio_whatsapp_from = request.POST.get('twilio_whatsapp_from', 'whatsapp:+14155238886').strip()
+        
+        # Email
+        settings.email_enabled = request.POST.get('email_enabled') == 'on'
+        settings.email_from = request.POST.get('email_from', '').strip()
+        
+        # WhatsApp Local
+        settings.local_whatsapp_enabled = request.POST.get('local_whatsapp_enabled') == 'on'
+        settings.local_whatsapp_url = request.POST.get('local_whatsapp_url', 'http://localhost:3000').strip()
+        
+        # Notificaciones automáticas
+        settings.send_confirmation = request.POST.get('send_confirmation') == 'on'
+        settings.send_reminder = request.POST.get('send_reminder') == 'on'
+        settings.send_cancellation = request.POST.get('send_cancellation') == 'on'
+        
+        settings.save()
+        
+        messages.success(request, '✅ Configuración de notificaciones guardada correctamente')
+        return redirect('dashboard:notification_settings')
+    
+    return redirect('dashboard:notification_settings')
+
+
+@login_required
+def test_notification(request):
+    """Enviar notificación de prueba"""
+    if request.method == 'POST':
+        import json
+        from apps.appointments.models_notifications import NotificationSettings
+        
+        try:
+            data = json.loads(request.body)
+            phone_or_email = data.get('destination')
+            method = data.get('method', 'auto')
+            
+            if not phone_or_email:
+                return JsonResponse({
+                    'success': False,
+                    'message': 'Teléfono o email requerido'
+                }, status=400)
+            
+            org = request.organization if hasattr(request, 'organization') and request.organization else None
+            settings = NotificationSettings.get_settings(org)
+            
+            # Determinar método a usar
+            if method == 'twilio' and settings.twilio_enabled:
+                # Enviar por Twilio
+                from twilio.rest import Client
+                
+                if not settings.twilio_account_sid or not settings.twilio_auth_token:
+                    return JsonResponse({
+                        'success': False,
+                        'message': 'Twilio no está configurado correctamente'
+                    }, status=400)
+                
+                try:
+                    client = Client(settings.twilio_account_sid, settings.twilio_auth_token)
+                    
+                    # Formatear número
+                    phone = ''.join(filter(str.isdigit, phone_or_email))
+                    if not phone.startswith('57'):
+                        phone = '57' + phone
+                    to_number = f'whatsapp:+{phone}'
+                    
+                    org_name = org.name if org else 'OCEANO OPTICO'
+                    
+                    message = f"""
+👓 *{org_name.upper()}*
+
+¡Hola! Este es un mensaje de prueba.
+
+✅ El sistema de notificaciones WhatsApp (Twilio) está funcionando correctamente.
+
+_Mensaje enviado desde el panel de administración_
+                    """.strip()
+                    
+                    response = client.messages.create(
+                        from_=settings.twilio_whatsapp_from,
+                        body=message,
+                        to=to_number
+                    )
+                    
+                    return JsonResponse({
+                        'success': True,
+                        'message': f'WhatsApp enviado exitosamente via Twilio',
+                        'sid': response.sid
+                    })
+                    
+                except Exception as e:
+                    return JsonResponse({
+                        'success': False,
+                        'message': f'Error de Twilio: {str(e)}'
+                    }, status=500)
+            
+            elif method == 'local_whatsapp' and settings.local_whatsapp_enabled:
+                # Enviar por WhatsApp local
+                from apps.appointments.whatsapp_local import whatsapp_notifier
+                
+                org_name = org.name if org else 'Sistema'
+                message = f"""
+👓 *{org_name.upper()}*
+
+¡Hola! Este es un mensaje de prueba.
+
+✅ El sistema de notificaciones WhatsApp local está funcionando correctamente.
+
+_Mensaje enviado desde el panel de administración_
+                """.strip()
+                
+                success = whatsapp_notifier.send_message(phone_or_email, message)
+                
+                if success:
+                    return JsonResponse({
+                        'success': True,
+                        'message': f'WhatsApp local enviado exitosamente'
+                    })
+                else:
+                    return JsonResponse({
+                        'success': False,
+                        'message': 'Error al enviar por WhatsApp local'
+                    }, status=500)
+            
+            elif method == 'email' and settings.email_enabled:
+                # Enviar por email
+                from django.core.mail import send_mail
+                from django.conf import settings as django_settings
+                
+                org_name = org.name if org else 'OCEANO OPTICO'
+                subject = f'Prueba de Notificaciones - {org_name}'
+                message = f"""
+Hola,
+
+Este es un correo de prueba del sistema de notificaciones de {org_name}.
+
+✅ Si recibes este mensaje, el sistema de email está funcionando correctamente.
+
+--
+{org_name}
+Sistema de Citas
+                """.strip()
+                
+                from_email = settings.email_from if settings.email_from else django_settings.DEFAULT_FROM_EMAIL
+                
+                send_mail(
+                    subject,
+                    message,
+                    from_email,
+                    [phone_or_email],
+                    fail_silently=False,
+                )
+                
+                return JsonResponse({
+                    'success': True,
+                    'message': f'Email enviado exitosamente'
+                })
+            
+            else:
+                return JsonResponse({
+                    'success': False,
+                    'message': 'Ningún método de notificación está habilitado'
+                }, status=400)
+                
+        except json.JSONDecodeError:
+            return JsonResponse({
+                'success': False,
+                'message': 'JSON inválido'
+            }, status=400)
+        except Exception as e:
+            return JsonResponse({
+                'success': False,
+                'message': f'Error: {str(e)}'
+            }, status=500)
     
     return JsonResponse({'success': False}, status=405)

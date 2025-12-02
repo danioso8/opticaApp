@@ -1,62 +1,330 @@
 {% extends "dashboard/base.html" %}
 
-{% block title %}Configuración - {{ organization.name }}{% endblock %}
+{% block title %}Editar - {{ organization.name }}{% endblock %}
 
 {% block content %}
-<div class="container mt-4">
-    <div class="row justify-content-center">
-        <div class="col-md-10">
-            <div class="card">
-                <div class="card-header">
-                    <h3>Configuración de {{ organization.name }}</h3>
+<div class="max-w-4xl mx-auto p-6">
+    <!-- Header -->
+    <div class="mb-6">
+        <div class="flex items-center gap-4 mb-2">
+            <a href="{% url 'organizations:detail' organization.id %}" 
+               class="w-10 h-10 flex items-center justify-center rounded-lg bg-gray-100 hover:bg-gray-200 transition">
+                <i class="fas fa-arrow-left text-gray-600"></i>
+            </a>
+            <div>
+                <h1 class="text-3xl font-bold text-gray-900">Editar Organización</h1>
+                <p class="text-gray-600 mt-1">Actualiza la información de {{ organization.name }}</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Formulario -->
+    <div class="bg-white rounded-lg shadow-md">
+        <form method="post" class="p-6 space-y-6">
+            {% csrf_token %}
+
+            <!-- Información Legal -->
+            <div class="border-b border-gray-200 pb-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">
+                    <i class="fas fa-file-contract text-indigo-600 mr-2"></i>
+                    Información Legal
+                </h3>
+                
+                <div class="space-y-4">
+                    <div>
+                        <label for="name" class="block text-sm font-medium text-gray-700 mb-2">
+                            Nombre Comercial <span class="text-red-500">*</span>
+                        </label>
+                        <input type="text" 
+                               id="name" 
+                               name="name" 
+                               value="{{ organization.name }}" 
+                               required
+                               class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition">
+                    </div>
+
+                    <div>
+                        <label for="legal_name" class="block text-sm font-medium text-gray-700 mb-2">
+                            Razón Social
+                        </label>
+                        <input type="text" 
+                               id="legal_name" 
+                               name="legal_name" 
+                               value="{{ organization.legal_name }}"
+                               class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition"
+                               placeholder="Nombre legal registrado">
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label for="tax_id_type" class="block text-sm font-medium text-gray-700 mb-2">
+                                Tipo de Documento Fiscal
+                            </label>
+                            <select id="tax_id_type" 
+                                    name="tax_id_type" 
+                                    class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition">
+                                <option value="">Seleccionar tipo...</option>
+                                <option value="RUC" {% if organization.tax_id_type == 'RUC' %}selected{% endif %}>RUC - Registro Único de Contribuyentes</option>
+                                <option value="NIT" {% if organization.tax_id_type == 'NIT' %}selected{% endif %}>NIT - Número de Identificación Tributaria</option>
+                                <option value="RFC" {% if organization.tax_id_type == 'RFC' %}selected{% endif %}>RFC - Registro Federal de Contribuyentes</option>
+                                <option value="CUIT" {% if organization.tax_id_type == 'CUIT' %}selected{% endif %}>CUIT - Clave Única de Identificación Tributaria</option>
+                                <option value="RUT" {% if organization.tax_id_type == 'RUT' %}selected{% endif %}>RUT - Rol Único Tributario</option>
+                                <option value="OTHER" {% if organization.tax_id_type == 'OTHER' %}selected{% endif %}>Otro</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label for="tax_id" class="block text-sm font-medium text-gray-700 mb-2">
+                                Número Fiscal
+                            </label>
+                            <input type="text" 
+                                   id="tax_id" 
+                                   name="tax_id" 
+                                   value="{{ organization.tax_id }}"
+                                   class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition"
+                                   placeholder="Número fiscal">
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 gap-4">
+
+                        <div>
+                            <label for="legal_representative" class="block text-sm font-medium text-gray-700 mb-2">
+                                Representante Legal
+                            </label>
+                            <input type="text" 
+                                   id="legal_representative" 
+                                   name="legal_representative" 
+                                   value="{{ organization.legal_representative }}"
+                                   class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition"
+                                   placeholder="Nombre del representante">
+                        </div>
+                    </div>
                 </div>
-                <div class="card-body">
-                    <form method="post">
-                        {% csrf_token %}
-                        
-                        <div class="form-group">
-                            <label for="name">Nombre de la Organización</label>
-                            <input type="text" class="form-control" id="name" name="name" value="{{ organization.name }}" required>
-                        </div>
+            </div>
 
-                        <div class="row">
-                            <div class="col-md-6">
-                                <div class="form-group">
-                                    <label for="email">Email</label>
-                                    <input type="email" class="form-control" id="email" name="email" value="{{ organization.email }}" required>
+            <!-- Información de Contacto -->
+            <div class="border-b border-gray-200 pb-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">
+                    <i class="fas fa-address-book text-indigo-600 mr-2"></i>
+                    Información de Contacto
+                </h3>
+                
+                <div class="space-y-4">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label for="email" class="block text-sm font-medium text-gray-700 mb-2">
+                                Email Principal <span class="text-red-500">*</span>
+                            </label>
+                            <div class="relative">
+                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <i class="fas fa-envelope text-gray-400"></i>
                                 </div>
+                                <input type="email" 
+                                       id="email" 
+                                       name="email" 
+                                       value="{{ organization.email }}" 
+                                       required
+                                       class="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition">
                             </div>
-                            <div class="col-md-6">
-                                <div class="form-group">
-                                    <label for="phone">Teléfono</label>
-                                    <input type="text" class="form-control" id="phone" name="phone" value="{{ organization.phone }}">
+                        </div>
+
+                        <div>
+                            <label for="website" class="block text-sm font-medium text-gray-700 mb-2">
+                                Sitio Web
+                            </label>
+                            <div class="relative">
+                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <i class="fas fa-globe text-gray-400"></i>
                                 </div>
+                                <input type="url" 
+                                       id="website" 
+                                       name="website" 
+                                       value="{{ organization.website }}"
+                                       placeholder="https://ejemplo.com"
+                                       class="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label for="phone" class="block text-sm font-medium text-gray-700 mb-2">
+                                Teléfono Principal
+                            </label>
+                            <div class="relative">
+                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <i class="fas fa-phone text-gray-400"></i>
+                                </div>
+                                <input type="text" 
+                                       id="phone" 
+                                       name="phone" 
+                                       value="{{ organization.phone }}"
+                                       placeholder="+57 300 123 4567"
+                                       class="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition">
                             </div>
                         </div>
 
-                        <div class="form-group">
-                            <label for="address">Dirección</label>
-                            <textarea class="form-control" id="address" name="address" rows="3">{{ organization.address }}</textarea>
+                        <div>
+                            <label for="secondary_phone" class="block text-sm font-medium text-gray-700 mb-2">
+                                Teléfono Secundario
+                            </label>
+                            <div class="relative">
+                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <i class="fas fa-phone-alt text-gray-400"></i>
+                                </div>
+                                <input type="text" 
+                                       id="secondary_phone" 
+                                       name="secondary_phone" 
+                                       value="{{ organization.secondary_phone }}"
+                                       placeholder="+57 300 987 6543"
+                                       class="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition">
+                            </div>
                         </div>
-
-                        <div class="form-group">
-                            <label for="primary_color">Color Primario</label>
-                            <input type="color" class="form-control" id="primary_color" name="primary_color" value="{{ organization.primary_color }}">
-                            <small class="form-text text-muted">Color personalizado para tu marca</small>
-                        </div>
-
-                        <hr>
-
-                        <div class="form-group">
-                            <button type="submit" class="btn btn-primary">
-                                <i class="fas fa-save"></i> Guardar Cambios
-                            </button>
-                            <a href="{% url 'organizations:detail' organization.id %}" class="btn btn-secondary">
-                                Cancelar
-                            </a>
-                        </div>
-                    </form>
+                    </div>
                 </div>
+            </div>
+
+            <!-- Ubicación -->
+            <div class="border-b border-gray-200 pb-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">
+                    <i class="fas fa-map-marked-alt text-indigo-600 mr-2"></i>
+                    Ubicación
+                </h3>
+                
+                <div class="space-y-4">
+                    <div>
+                        <label for="address" class="block text-sm font-medium text-gray-700 mb-2">
+                            Dirección Completa
+                        </label>
+                        <div class="relative">
+                            <div class="absolute top-3 left-3 pointer-events-none">
+                                <i class="fas fa-map-marker-alt text-gray-400"></i>
+                            </div>
+                            <textarea id="address" 
+                                      name="address" 
+                                      rows="2"
+                                      placeholder="Calle y número..."
+                                      class="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition">{{ organization.address }}</textarea>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label for="neighborhood" class="block text-sm font-medium text-gray-700 mb-2">
+                                Barrio
+                            </label>
+                            <input type="text" 
+                                   id="neighborhood" 
+                                   name="neighborhood" 
+                                   value="{{ organization.neighborhood }}"
+                                   class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition"
+                                   placeholder="Ej: El Poblado">
+                        </div>
+
+                        <div>
+                            <label for="city" class="block text-sm font-medium text-gray-700 mb-2">
+                                Ciudad
+                            </label>
+                            <input type="text" 
+                                   id="city" 
+                                   name="city" 
+                                   value="{{ organization.city }}"
+                                   class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition"
+                                   placeholder="Ej: Bogotá">
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label for="state" class="block text-sm font-medium text-gray-700 mb-2">
+                                Estado/Provincia
+                            </label>
+                            <input type="text" 
+                                   id="state" 
+                                   name="state" 
+                                   value="{{ organization.state }}"
+                                   class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition"
+                                   placeholder="Ej: Cundinamarca">
+                        </div>
+
+                        <div>
+                            <label for="postal_code" class="block text-sm font-medium text-gray-700 mb-2">
+                                Código Postal
+                            </label>
+                            <input type="text" 
+                                   id="postal_code" 
+                                   name="postal_code" 
+                                   value="{{ organization.postal_code }}"
+                                   class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition"
+                                   placeholder="110111">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label for="country" class="block text-sm font-medium text-gray-700 mb-2">
+                            País
+                        </label>
+                        <input type="text" 
+                               id="country" 
+                               name="country" 
+                               value="{{ organization.country|default:'Colombia' }}"
+                               class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition"
+                               placeholder="País">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Personalización -->
+            <div class="pb-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">
+                    <i class="fas fa-palette text-indigo-600 mr-2"></i>
+                    Personalización
+                </h3>
+                
+                <div>
+                    <label for="primary_color" class="block text-sm font-medium text-gray-700 mb-2">
+                        Color Primario de la Marca
+                    </label>
+                    <div class="flex items-center gap-4">
+                        <input type="color" 
+                               id="primary_color" 
+                               name="primary_color" 
+                               value="{{ organization.primary_color }}"
+                               class="w-20 h-12 rounded-lg border-2 border-gray-300 cursor-pointer">
+                        <div class="flex-1">
+                            <p class="text-sm text-gray-600">
+                                Selecciona el color que representa tu organización. Se usará en varios elementos visuales del sistema.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Botones de acción -->
+            <div class="flex items-center gap-3 pt-6 border-t border-gray-200">
+                <button type="submit" 
+                        class="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-semibold transition flex items-center gap-2">
+                    <i class="fas fa-save"></i>
+                    Guardar Cambios
+                </button>
+                <a href="{% url 'organizations:detail' organization.id %}" 
+                   class="px-6 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg font-semibold transition">
+                    Cancelar
+                </a>
+            </div>
+        </form>
+    </div>
+
+    <!-- Información adicional -->
+    <div class="mt-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
+        <div class="flex items-start gap-3">
+            <i class="fas fa-info-circle text-blue-600 mt-0.5"></i>
+            <div class="flex-1">
+                <h4 class="font-semibold text-blue-900 mb-1">Información</h4>
+                <p class="text-sm text-blue-800">
+                    Los cambios afectarán a todos los miembros de la organización. El email será usado para notificaciones importantes.
+                </p>
             </div>
         </div>
     </div>

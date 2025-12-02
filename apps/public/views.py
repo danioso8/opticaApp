@@ -10,10 +10,24 @@ def home(request):
     """Página principal pública"""
     # Para vistas públicas, usar la organización del request si existe, sino la primera disponible
     organization = getattr(request, 'organization', None)
-    config = AppointmentConfiguration.get_config(organization)
+    
+    # Si el usuario está autenticado, obtener su primera organización
+    first_organization = None
+    if request.user.is_authenticated:
+        from apps.organizations.models import OrganizationMember
+        first_membership = OrganizationMember.objects.filter(
+            user=request.user,
+            is_active=True
+        ).select_related('organization').first()
+        
+        if first_membership:
+            first_organization = first_membership.organization
+    
+    config = AppointmentConfiguration.get_config(organization or first_organization)
     
     context = {
         'system_open': config.is_open if config else True,
+        'organization_data': first_organization,
     }
     
     return render(request, 'public/home.html', context)
@@ -21,41 +35,39 @@ def home(request):
 
 def booking(request):
     """Página de agendamiento de citas"""
-    organization = getattr(request, 'organization', None)
-    config = AppointmentConfiguration.get_config(organization)
+    from apps.organizations.models import Organization
     
-    if not config or not config.is_open:
-        context = {
-            'system_closed': True,
-        }
-        return render(request, 'public/booking.html', context)
-    
-    # Obtener fechas disponibles (solo fechas con horarios específicos configurados)
-    from apps.appointments.models import SpecificDateSchedule, BlockedDate
+    # Obtener todas las organizaciones activas que tienen horarios configurados
+    from apps.appointments.models import SpecificDateSchedule
     today = timezone.now().date()
-    available_dates = []
     
-    # Filtrar por organización si existe
-    org_filter = {'organization': organization} if organization else {}
-    
-    # Obtener todas las fechas específicas configuradas
-    specific_dates = SpecificDateSchedule.objects.filter(
+    # Obtener organizaciones que tienen horarios específicos configurados
+    orgs_with_schedules = SpecificDateSchedule.objects.filter(
         date__gte=today,
-        is_active=True,
-        **org_filter
-    ).values_list('date', flat=True).distinct().order_by('date')
+        is_active=True
+    ).values_list('organization_id', flat=True).distinct()
     
-    for date in specific_dates:
-        # Verificar si no está bloqueado
-        is_blocked = BlockedDate.objects.filter(date=date, **org_filter).exists()
+    available_organizations = Organization.objects.filter(
+        id__in=orgs_with_schedules,
+        is_active=True
+    ).order_by('name')
+    
+    # Si el usuario está autenticado, obtener su primera organización
+    first_organization = None
+    if request.user.is_authenticated:
+        from apps.organizations.models import OrganizationMember
+        first_membership = OrganizationMember.objects.filter(
+            user=request.user,
+            is_active=True
+        ).select_related('organization').first()
         
-        if not is_blocked:
-            available_dates.append(date)
+        if first_membership:
+            first_organization = first_membership.organization
     
     context = {
         'system_closed': False,
-        'available_dates': available_dates,
-        'slot_duration': config.slot_duration,
+        'available_organizations': available_organizations,
+        'organization_data': first_organization,
     }
     
     return render(request, 'public/booking.html', context)
@@ -63,5 +75,19 @@ def booking(request):
 
 def shop(request):
     """Tienda de monturas (placeholder)"""
-    context = {}
+    # Si el usuario está autenticado, obtener su primera organización
+    first_organization = None
+    if request.user.is_authenticated:
+        from apps.organizations.models import OrganizationMember
+        first_membership = OrganizationMember.objects.filter(
+            user=request.user,
+            is_active=True
+        ).select_related('organization').first()
+        
+        if first_membership:
+            first_organization = first_membership.organization
+    
+    context = {
+        'organization_data': first_organization,
+    }
     return render(request, 'public/shop.html', context)

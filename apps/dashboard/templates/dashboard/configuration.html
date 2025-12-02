@@ -49,6 +49,23 @@
                 <p class="font-semibold text-gray-800 mb-2">Días de Anticipación</p>
                 <p class="text-2xl font-bold text-indigo-600">{{ config.advance_booking_days }} días</p>
             </div>
+            
+            <div class="p-4 border-2 border-green-200 bg-green-50 rounded-lg hover:bg-green-100 transition">
+                <a href="{% url 'dashboard:notification_settings' %}" class="block">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="font-semibold text-gray-800 flex items-center">
+                                <i class="fab fa-whatsapp text-green-600 mr-2"></i>
+                                Configuración de Notificaciones
+                            </p>
+                            <p class="text-sm text-gray-600 mt-1">
+                                WhatsApp (Twilio), Email y más
+                            </p>
+                        </div>
+                        <i class="fas fa-chevron-right text-gray-400"></i>
+                    </div>
+                </a>
+            </div>
         </div>
     </div>
     

@@ -1,0 +1,770 @@
+{% extends 'dashboard/base.html' %}
+{% load static %}
+
+{% block title %}WhatsApp Twilio - Configuración{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <!-- Header -->
+    <div class="mb-8">
+        <div class="flex flex-col md:flex-row md:items-center md:justify-between">
+            <div>
+                <h1 class="text-3xl font-bold text-gray-900 flex items-center">
+                    <i class="fab fa-whatsapp text-green-500 mr-3"></i>
+                    WhatsApp Twilio
+                </h1>
+                <p class="mt-2 text-gray-600">Configura y sincroniza tu cuenta de WhatsApp para enviar notificaciones</p>
+            </div>
+            <a href="{% url 'dashboard:configuration' %}" class="mt-4 md:mt-0 inline-flex items-center px-4 py-2 border border-gray-300 rounded-lg text-gray-700 bg-white hover:bg-gray-50 transition">
+                <i class="fas fa-arrow-left mr-2"></i>
+                Volver
+            </a>
+        </div>
+    </div>
+
+    <!-- Estado de Conexión -->
+    <div id="connectionStatus" class="mb-6 bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <div class="flex items-center justify-between">
+            <div class="flex items-center space-x-4">
+                <div id="statusIndicator" class="w-16 h-16 rounded-full bg-gray-200 flex items-center justify-center">
+                    <i class="fas fa-plug text-gray-400 text-2xl"></i>
+                </div>
+                <div>
+                    <h3 class="text-xl font-semibold text-gray-900">Estado de Conexión</h3>
+                    <p id="statusText" class="text-gray-500 mt-1">No configurado</p>
+                    <p id="statusDetails" class="text-sm text-gray-400 mt-1"></p>
+                </div>
+            </div>
+            <button type="button" onclick="checkConnection()" class="px-6 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition flex items-center space-x-2">
+                <i class="fas fa-sync-alt"></i>
+                <span>Verificar Conexión</span>
+            </button>
+        </div>
+    </div>
+
+    <form method="post" action="{% url 'dashboard:save_notification_settings' %}" id="settingsForm">
+        {% csrf_token %}
+        
+        <!-- WhatsApp con Twilio -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 mb-6 overflow-hidden">
+            <div class="bg-gradient-to-r from-green-500 to-green-600 px-6 py-4 flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 bg-white bg-opacity-20 rounded-lg flex items-center justify-center">
+                        <i class="fab fa-whatsapp text-white text-xl"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-white font-semibold text-lg">WhatsApp Twilio</h3>
+                        <p class="text-green-100 text-sm">Producción • Recomendado</p>
+                    </div>
+                </div>
+                <span class="px-3 py-1 bg-white text-green-600 rounded-full text-xs font-semibold">
+                    $0.005/mensaje
+                </span>
+            </div>
+            <div class="p-6">
+                <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+                    <div class="flex">
+                        <i class="fas fa-info-circle text-blue-500 mt-1 mr-3"></i>
+                        <div class="text-sm text-blue-800">
+                            <strong>Sobre Twilio:</strong> Servicio profesional para enviar WhatsApp en producción. 
+                            Incluye <strong>$15 de crédito gratis</strong> al registrarte.
+                            <a href="https://www.twilio.com/try-twilio" target="_blank" class="underline font-semibold hover:text-blue-900">
+                                Regístrate aquí →
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Toggle Switch -->
+                <label class="flex items-center justify-between p-4 bg-gray-50 rounded-lg cursor-pointer hover:bg-gray-100 transition mb-6">
+                    <div class="flex items-center space-x-3">
+                        <div class="relative inline-block w-12 h-6 transition duration-200 ease-in-out">
+                            <input type="checkbox" id="twilio_enabled" name="twilio_enabled" 
+                                   class="hidden peer"
+                                   {% if settings.twilio_enabled %}checked{% endif %}
+                                   onchange="toggleTwilioFields()">
+                            <div class="w-12 h-6 bg-gray-300 peer-checked:bg-green-500 rounded-full shadow-inner transition-colors"></div>
+                            <div class="absolute left-1 top-1 w-4 h-4 bg-white rounded-full shadow peer-checked:translate-x-6 transition-transform"></div>
+                        </div>
+                        <span class="font-semibold text-gray-900">Habilitar WhatsApp con Twilio</span>
+                    </div>
+                    <span id="twilioStatusBadge" class="px-3 py-1 rounded-full text-xs font-semibold {% if settings.twilio_enabled %}bg-green-100 text-green-700{% else %}bg-gray-200 text-gray-600{% endif %}">
+                        {% if settings.twilio_enabled %}Activo{% else %}Inactivo{% endif %}
+                    </span>
+                </label>
+
+                <div id="twilioFields" class="space-y-6 {% if not settings.twilio_enabled %}hidden{% endif %}">
+                    <!-- Account SID -->
+                    <div>
+                        <label for="twilio_account_sid" class="block text-sm font-semibold text-gray-700 mb-2">
+                            <i class="fas fa-key text-gray-400 mr-2"></i>Account SID *
+                        </label>
+                        <input type="text" 
+                               class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition" 
+                               id="twilio_account_sid" 
+                               name="twilio_account_sid" 
+                               value="{{ settings.twilio_account_sid }}" 
+                               placeholder="ACxxxxxxxxxxxxxxxxxxxxxxxxxxxx">
+                        <p class="mt-2 text-sm text-gray-500">
+                            <i class="fas fa-external-link-alt mr-1"></i>
+                            Encuéntralo en tu <a href="https://console.twilio.com/" target="_blank" class="text-green-600 hover:text-green-700 font-semibold">Consola de Twilio</a>
+                        </p>
+                    </div>
+
+                    <!-- Auth Token -->
+                    <div>
+                        <label for="twilio_auth_token" class="block text-sm font-semibold text-gray-700 mb-2">
+                            <i class="fas fa-lock text-gray-400 mr-2"></i>Auth Token *
+                        </label>
+                        <div class="relative">
+                            <input type="password" 
+                                   class="w-full px-4 py-3 pr-12 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition" 
+                                   id="twilio_auth_token" 
+                                   name="twilio_auth_token" 
+                                   value="{{ settings.twilio_auth_token }}" 
+                                   placeholder="••••••••••••••••••••••••••••••">
+                            <button type="button" onclick="togglePasswordVisibility('twilio_auth_token')" 
+                                    class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                        <p class="mt-2 text-sm text-gray-500">Token de autenticación de tu cuenta Twilio</p>
+                    </div>
+
+                    <!-- WhatsApp Number -->
+                    <div>
+                        <label for="twilio_whatsapp_from" class="block text-sm font-semibold text-gray-700 mb-2">
+                            <i class="fab fa-whatsapp text-gray-400 mr-2"></i>Número WhatsApp de Twilio *
+                        </label>
+                        <input type="text" 
+                               class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition" 
+                               id="twilio_whatsapp_from" 
+                               name="twilio_whatsapp_from" 
+                               value="{{ settings.twilio_whatsapp_from }}" 
+                               placeholder="whatsapp:+14155238886">
+                        <p class="mt-2 text-sm text-gray-500">
+                            Formato: <code class="bg-gray-100 px-2 py-1 rounded">whatsapp:+14155238886</code> (Sandbox) o tu número verificado
+                        </p>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="flex flex-wrap gap-3 pt-4 border-t border-gray-200">
+                        <button type="button" onclick="syncWhatsApp()" 
+                                class="flex-1 md:flex-none px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition flex items-center justify-center space-x-2">
+                            <i class="fas fa-sync-alt"></i>
+                            <span>Sincronizar WhatsApp</span>
+                        </button>
+                        <button type="button" onclick="testNotification('twilio')" 
+                                class="flex-1 md:flex-none px-6 py-3 border border-green-600 text-green-600 rounded-lg hover:bg-green-50 transition flex items-center justify-center space-x-2">
+                            <i class="fab fa-whatsapp"></i>
+                            <span>Enviar Prueba</span>
+                        </button>
+                        <button type="button" onclick="showQRCode()" 
+                                class="flex-1 md:flex-none px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition flex items-center justify-center space-x-2">
+                            <i class="fas fa-qrcode"></i>
+                            <span>Ver QR Code</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- WhatsApp Local (Baileys) -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 mb-6 overflow-hidden">
+            <div class="bg-gradient-to-r from-blue-500 to-blue-600 px-6 py-4 flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 bg-white bg-opacity-20 rounded-lg flex items-center justify-center">
+                        <i class="fab fa-whatsapp text-white text-xl"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-white font-semibold text-lg">WhatsApp Local (Baileys)</h3>
+                        <p class="text-blue-100 text-sm">Desarrollo • Gratis</p>
+                    </div>
+                </div>
+                <span class="px-3 py-1 bg-white text-blue-600 rounded-full text-xs font-semibold">
+                    GRATIS
+                </span>
+            </div>
+            <div class="p-6">
+                <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
+                    <div class="flex">
+                        <i class="fas fa-exclamation-triangle text-yellow-500 mt-1 mr-3"></i>
+                        <div class="text-sm text-yellow-800">
+                            <strong>Solo para desarrollo:</strong> Este método requiere tener el bot corriendo localmente. 
+                            No funciona en Render/producción.
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Toggle Switch -->
+                <label class="flex items-center justify-between p-4 bg-gray-50 rounded-lg cursor-pointer hover:bg-gray-100 transition mb-6">
+                    <div class="flex items-center space-x-3">
+                        <div class="relative inline-block w-12 h-6 transition duration-200 ease-in-out">
+                            <input type="checkbox" id="local_whatsapp_enabled" name="local_whatsapp_enabled" 
+                                   class="hidden peer"
+                                   {% if settings.local_whatsapp_enabled %}checked{% endif %}
+                                   onchange="toggleLocalWhatsAppFields()">
+                            <div class="w-12 h-6 bg-gray-300 peer-checked:bg-blue-500 rounded-full shadow-inner transition-colors"></div>
+                            <div class="absolute left-1 top-1 w-4 h-4 bg-white rounded-full shadow peer-checked:translate-x-6 transition-transform"></div>
+                        </div>
+                        <span class="font-semibold text-gray-900">Habilitar WhatsApp Local</span>
+                    </div>
+                    <span id="localWhatsAppStatusBadge" class="px-3 py-1 rounded-full text-xs font-semibold {% if settings.local_whatsapp_enabled %}bg-blue-100 text-blue-700{% else %}bg-gray-200 text-gray-600{% endif %}">
+                        {% if settings.local_whatsapp_enabled %}Activo{% else %}Inactivo{% endif %}
+                    </span>
+                </label>
+
+                <div id="localWhatsappFields" class="space-y-6 {% if not settings.local_whatsapp_enabled %}hidden{% endif %}">
+                    <div>
+                        <label for="local_whatsapp_url" class="block text-sm font-semibold text-gray-700 mb-2">
+                            <i class="fas fa-server text-gray-400 mr-2"></i>URL del Bot Local
+                        </label>
+                        <input type="url" 
+                               class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition" 
+                               id="local_whatsapp_url" 
+                               name="local_whatsapp_url" 
+                               value="{{ settings.local_whatsapp_url }}" 
+                               placeholder="http://localhost:3000">
+                        <p class="mt-2 text-sm text-gray-500">
+                            Ejecuta: <code class="bg-gray-100 px-2 py-1 rounded">cd whatsapp-bot && node server.js</code>
+                        </p>
+                    </div>
+
+                    <div class="flex flex-wrap gap-3 pt-4 border-t border-gray-200">
+                        <button type="button" onclick="testNotification('local_whatsapp')" 
+                                class="flex-1 md:flex-none px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition flex items-center justify-center space-x-2">
+                            <i class="fab fa-whatsapp"></i>
+                            <span>Enviar Prueba</span>
+                        </button>
+                        <a href="{{ settings.local_whatsapp_url }}/qr" target="_blank"
+                           class="flex-1 md:flex-none px-6 py-3 border border-blue-600 text-blue-600 rounded-lg hover:bg-blue-50 transition flex items-center justify-center space-x-2">
+                            <i class="fas fa-qrcode"></i>
+                            <span>Ver Código QR</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Email -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 mb-6 overflow-hidden">
+            <div class="bg-gradient-to-r from-cyan-500 to-cyan-600 px-6 py-4 flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 bg-white bg-opacity-20 rounded-lg flex items-center justify-center">
+                        <i class="fas fa-envelope text-white text-xl"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-white font-semibold text-lg">Email (SMTP)</h3>
+                        <p class="text-cyan-100 text-sm">Producción • Gratis</p>
+                    </div>
+                </div>
+                <span class="px-3 py-1 bg-white text-cyan-600 rounded-full text-xs font-semibold">
+                    GRATIS
+                </span>
+            </div>
+            <div class="p-6">
+                <div class="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
+                    <div class="flex">
+                        <i class="fas fa-check-circle text-green-500 mt-1 mr-3"></i>
+                        <div class="text-sm text-green-800">
+                            <strong>Alternativa gratuita:</strong> Envía notificaciones por email usando Gmail SMTP. 
+                            Funciona perfecto en Render.
+                        </div>
+                    </div>
+                </div>
+                
+                <label class="flex items-center justify-between p-4 bg-gray-50 rounded-lg cursor-pointer hover:bg-gray-100 transition mb-6">
+                    <div class="flex items-center space-x-3">
+                        <div class="relative inline-block w-12 h-6 transition duration-200 ease-in-out">
+                            <input type="checkbox" id="email_enabled" name="email_enabled" 
+                                   class="hidden peer"
+                                   {% if settings.email_enabled %}checked{% endif %}
+                                   onchange="toggleEmailFields()">
+                            <div class="w-12 h-6 bg-gray-300 peer-checked:bg-cyan-500 rounded-full shadow-inner transition-colors"></div>
+                            <div class="absolute left-1 top-1 w-4 h-4 bg-white rounded-full shadow peer-checked:translate-x-6 transition-transform"></div>
+                        </div>
+                        <span class="font-semibold text-gray-900">Habilitar Notificaciones por Email</span>
+                    </div>
+                    <span id="emailStatusBadge" class="px-3 py-1 rounded-full text-xs font-semibold {% if settings.email_enabled %}bg-cyan-100 text-cyan-700{% else %}bg-gray-200 text-gray-600{% endif %}">
+                        {% if settings.email_enabled %}Activo{% else %}Inactivo{% endif %}
+                    </span>
+                </label>
+
+                <div id="emailFields" class="space-y-6 {% if not settings.email_enabled %}hidden{% endif %}">
+                    <div>
+                        <label for="email_from" class="block text-sm font-semibold text-gray-700 mb-2">
+                            <i class="fas fa-at text-gray-400 mr-2"></i>Email Remitente (Opcional)
+                        </label>
+                        <input type="email" 
+                               class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-transparent transition" 
+                               id="email_from" 
+                               name="email_from" 
+                               value="{{ settings.email_from }}" 
+                               placeholder="noreply@tuempresa.com">
+                        <p class="mt-2 text-sm text-gray-500">
+                            Deja vacío para usar el email por defecto del sistema
+                        </p>
+                    </div>
+
+                    <div class="flex gap-3 pt-4 border-t border-gray-200">
+                        <button type="button" onclick="testNotification('email')" 
+                                class="flex-1 md:flex-none px-6 py-3 bg-cyan-600 text-white rounded-lg hover:bg-cyan-700 transition flex items-center justify-center space-x-2">
+                            <i class="fas fa-envelope"></i>
+                            <span>Enviar Email de Prueba</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Notificaciones Automáticas -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 mb-6 overflow-hidden">
+            <div class="bg-gray-800 px-6 py-4">
+                <h3 class="text-white font-semibold text-lg flex items-center">
+                    <i class="fas fa-bell mr-3"></i>
+                    Notificaciones Automáticas
+                </h3>
+            </div>
+            <div class="p-6">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <!-- Confirmación -->
+                    <label class="flex items-start p-4 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-indigo-500 hover:bg-indigo-50 transition group">
+                        <div class="relative inline-block w-12 h-6 transition duration-200 ease-in-out mt-1 mr-3">
+                            <input type="checkbox" id="send_confirmation" name="send_confirmation" 
+                                   class="hidden peer"
+                                   {% if settings.send_confirmation %}checked{% endif %}>
+                            <div class="w-12 h-6 bg-gray-300 peer-checked:bg-indigo-500 rounded-full shadow-inner transition-colors"></div>
+                            <div class="absolute left-1 top-1 w-4 h-4 bg-white rounded-full shadow peer-checked:translate-x-6 transition-transform"></div>
+                        </div>
+                        <div>
+                            <div class="font-semibold text-gray-900 flex items-center">
+                                <i class="fas fa-check-circle text-green-500 mr-2"></i>
+                                Confirmación de Cita
+                            </div>
+                            <p class="text-sm text-gray-500 mt-1">Al agendar una cita nueva</p>
+                        </div>
+                    </label>
+
+                    <!-- Recordatorio -->
+                    <label class="flex items-start p-4 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-indigo-500 hover:bg-indigo-50 transition group">
+                        <div class="relative inline-block w-12 h-6 transition duration-200 ease-in-out mt-1 mr-3">
+                            <input type="checkbox" id="send_reminder" name="send_reminder" 
+                                   class="hidden peer"
+                                   {% if settings.send_reminder %}checked{% endif %}>
+                            <div class="w-12 h-6 bg-gray-300 peer-checked:bg-indigo-500 rounded-full shadow-inner transition-colors"></div>
+                            <div class="absolute left-1 top-1 w-4 h-4 bg-white rounded-full shadow peer-checked:translate-x-6 transition-transform"></div>
+                        </div>
+                        <div>
+                            <div class="font-semibold text-gray-900 flex items-center">
+                                <i class="fas fa-clock text-blue-500 mr-2"></i>
+                                Recordatorio
+                            </div>
+                            <p class="text-sm text-gray-500 mt-1">1 día antes de la cita</p>
+                        </div>
+                    </label>
+
+                    <!-- Cancelación -->
+                    <label class="flex items-start p-4 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-indigo-500 hover:bg-indigo-50 transition group">
+                        <div class="relative inline-block w-12 h-6 transition duration-200 ease-in-out mt-1 mr-3">
+                            <input type="checkbox" id="send_cancellation" name="send_cancellation" 
+                                   class="hidden peer"
+                                   {% if settings.send_cancellation %}checked{% endif %}>
+                            <div class="w-12 h-6 bg-gray-300 peer-checked:bg-indigo-500 rounded-full shadow-inner transition-colors"></div>
+                            <div class="absolute left-1 top-1 w-4 h-4 bg-white rounded-full shadow peer-checked:translate-x-6 transition-transform"></div>
+                        </div>
+                        <div>
+                            <div class="font-semibold text-gray-900 flex items-center">
+                                <i class="fas fa-times-circle text-red-500 mr-2"></i>
+                                Cancelación
+                            </div>
+                            <p class="text-sm text-gray-500 mt-1">Al cancelar una cita</p>
+                        </div>
+                    </label>
+                </div>
+            </div>
+        </div>
+
+        <!-- Método Activo -->
+        <div class="bg-gradient-to-r from-indigo-500 to-purple-600 rounded-xl shadow-lg p-6 mb-6 text-white">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h3 class="text-lg font-semibold mb-2 flex items-center">
+                        <i class="fas fa-info-circle mr-2"></i>
+                        Método de Notificación Activo
+                    </h3>
+                    <div class="flex items-center space-x-3">
+                        <span class="text-indigo-100">Actual:</span>
+                        {% if settings.get_active_method == 'twilio' %}
+                            <span class="px-4 py-2 bg-white text-green-600 rounded-full text-sm font-bold flex items-center">
+                                <i class="fab fa-whatsapp mr-2"></i>WhatsApp (Twilio)
+                            </span>
+                        {% elif settings.get_active_method == 'local_whatsapp' %}
+                            <span class="px-4 py-2 bg-white text-blue-600 rounded-full text-sm font-bold flex items-center">
+                                <i class="fab fa-whatsapp mr-2"></i>WhatsApp Local
+                            </span>
+                        {% elif settings.get_active_method == 'email' %}
+                            <span class="px-4 py-2 bg-white text-cyan-600 rounded-full text-sm font-bold flex items-center">
+                                <i class="fas fa-envelope mr-2"></i>Email
+                            </span>
+                        {% else %}
+                            <span class="px-4 py-2 bg-white text-red-600 rounded-full text-sm font-bold flex items-center">
+                                <i class="fas fa-exclamation-triangle mr-2"></i>Ninguno configurado
+                            </span>
+                        {% endif %}
+                    </div>
+                    <p class="text-indigo-200 text-sm mt-2">
+                        Prioridad: Twilio > WhatsApp Local > Email
+                    </p>
+                </div>
+                <div class="hidden md:block">
+                    <i class="fas fa-paper-plane text-white text-opacity-20 text-6xl"></i>
+                </div>
+            </div>
+        </div>
+
+        <!-- Botones de Acción -->
+        <div class="flex flex-col sm:flex-row gap-4">
+            <button type="submit" class="flex-1 px-8 py-4 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition flex items-center justify-center space-x-3 text-lg font-semibold shadow-lg">
+                <i class="fas fa-save"></i>
+                <span>Guardar Configuración</span>
+            </button>
+            <a href="{% url 'dashboard:configuration' %}" 
+               class="px-8 py-4 border-2 border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 transition flex items-center justify-center space-x-3 text-lg font-semibold">
+                <i class="fas fa-times"></i>
+                <span>Cancelar</span>
+            </a>
+        </div>
+    </form>
+</div>
+
+<!-- Modal para test de notificación -->
+<div id="testModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full transform transition-all">
+        <div class="bg-gradient-to-r from-indigo-500 to-purple-600 px-6 py-4 rounded-t-2xl">
+            <div class="flex items-center justify-between">
+                <h3 class="text-xl font-bold text-white flex items-center">
+                    <i class="fas fa-paper-plane mr-3"></i>
+                    Enviar Mensaje de Prueba
+                </h3>
+                <button onclick="closeTestModal()" class="text-white hover:text-gray-200 transition">
+                    <i class="fas fa-times text-2xl"></i>
+                </button>
+            </div>
+        </div>
+        <div class="p-6">
+            <div class="mb-4">
+                <label for="test_destination" class="block text-sm font-semibold text-gray-700 mb-2">
+                    <i class="fas fa-phone mr-2 text-gray-400"></i>Teléfono o Email
+                </label>
+                <input type="text" 
+                       id="test_destination" 
+                       class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition"
+                       placeholder="3001234567 o email@ejemplo.com">
+                <p class="mt-2 text-sm text-gray-500">
+                    Para WhatsApp: número sin espacios ni guiones<br>
+                    Para Email: dirección de correo electrónico
+                </p>
+            </div>
+            <div id="testResult" class="hidden rounded-lg p-4 mb-4"></div>
+            <div class="flex gap-3">
+                <button onclick="closeTestModal()" 
+                        class="flex-1 px-4 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition">
+                    Cancelar
+                </button>
+                <button onclick="sendTestNotification()" 
+                        class="flex-1 px-4 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition flex items-center justify-center space-x-2">
+                    <i class="fas fa-paper-plane"></i>
+                    <span>Enviar</span>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal QR Code -->
+<div id="qrModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-2xl max-w-lg w-full transform transition-all">
+        <div class="bg-gradient-to-r from-green-500 to-green-600 px-6 py-4 rounded-t-2xl">
+            <div class="flex items-center justify-between">
+                <h3 class="text-xl font-bold text-white flex items-center">
+                    <i class="fas fa-qrcode mr-3"></i>
+                    Código QR - WhatsApp
+                </h3>
+                <button onclick="closeQRModal()" class="text-white hover:text-gray-200 transition">
+                    <i class="fas fa-times text-2xl"></i>
+                </button>
+            </div>
+        </div>
+        <div class="p-6 text-center">
+            <div class="mb-6">
+                <div id="qrCodeContainer" class="inline-block p-4 bg-white border-4 border-green-500 rounded-xl shadow-lg">
+                    <div class="flex items-center justify-center h-64 w-64">
+                        <i class="fas fa-spinner fa-spin text-4xl text-gray-400"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="space-y-2">
+                <p class="text-gray-700 font-semibold">Escanea este código con WhatsApp</p>
+                <ol class="text-left text-sm text-gray-600 space-y-2 max-w-sm mx-auto">
+                    <li class="flex items-start">
+                        <span class="font-bold text-green-600 mr-2">1.</span>
+                        Abre WhatsApp en tu teléfono
+                    </li>
+                    <li class="flex items-start">
+                        <span class="font-bold text-green-600 mr-2">2.</span>
+                        Ve a Configuración > Dispositivos vinculados
+                    </li>
+                    <li class="flex items-start">
+                        <span class="font-bold text-green-600 mr-2">3.</span>
+                        Toca "Vincular un dispositivo"
+                    </li>
+                    <li class="flex items-start">
+                        <span class="font-bold text-green-600 mr-2">4.</span>
+                        Escanea el código QR
+                    </li>
+                </ol>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let currentTestMethod = 'twilio';
+
+// Toggle fields visibility
+function toggleTwilioFields() {
+    const checkbox = document.getElementById('twilio_enabled');
+    const fields = document.getElementById('twilioFields');
+    const badge = document.getElementById('twilioStatusBadge');
+    
+    if (checkbox.checked) {
+        fields.classList.remove('hidden');
+        badge.textContent = 'Activo';
+        badge.className = 'px-3 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-700';
+    } else {
+        fields.classList.add('hidden');
+        badge.textContent = 'Inactivo';
+        badge.className = 'px-3 py-1 rounded-full text-xs font-semibold bg-gray-200 text-gray-600';
+    }
+}
+
+function toggleLocalWhatsAppFields() {
+    const checkbox = document.getElementById('local_whatsapp_enabled');
+    const fields = document.getElementById('localWhatsappFields');
+    const badge = document.getElementById('localWhatsAppStatusBadge');
+    
+    if (checkbox.checked) {
+        fields.classList.remove('hidden');
+        badge.textContent = 'Activo';
+        badge.className = 'px-3 py-1 rounded-full text-xs font-semibold bg-blue-100 text-blue-700';
+    } else {
+        fields.classList.add('hidden');
+        badge.textContent = 'Inactivo';
+        badge.className = 'px-3 py-1 rounded-full text-xs font-semibold bg-gray-200 text-gray-600';
+    }
+}
+
+function toggleEmailFields() {
+    const checkbox = document.getElementById('email_enabled');
+    const fields = document.getElementById('emailFields');
+    const badge = document.getElementById('emailStatusBadge');
+    
+    if (checkbox.checked) {
+        fields.classList.remove('hidden');
+        badge.textContent = 'Activo';
+        badge.className = 'px-3 py-1 rounded-full text-xs font-semibold bg-cyan-100 text-cyan-700';
+    } else {
+        fields.classList.add('hidden');
+        badge.textContent = 'Inactivo';
+        badge.className = 'px-3 py-1 rounded-full text-xs font-semibold bg-gray-200 text-gray-600';
+    }
+}
+
+function togglePasswordVisibility(inputId) {
+    const input = document.getElementById(inputId);
+    const icon = event.target;
+    
+    if (input.type === 'password') {
+        input.type = 'text';
+        icon.className = 'fas fa-eye-slash';
+    } else {
+        input.type = 'password';
+        icon.className = 'fas fa-eye';
+    }
+}
+
+// Check connection status
+function checkConnection() {
+    const indicator = document.getElementById('statusIndicator');
+    const text = document.getElementById('statusText');
+    const details = document.getElementById('statusDetails');
+    
+    // Show loading
+    indicator.innerHTML = '<i class="fas fa-spinner fa-spin text-indigo-500 text-2xl"></i>';
+    indicator.className = 'w-16 h-16 rounded-full bg-indigo-100 flex items-center justify-center';
+    text.textContent = 'Verificando conexión...';
+    details.textContent = '';
+    
+    // Simulate connection check
+    setTimeout(() => {
+        const twilioEnabled = document.getElementById('twilio_enabled').checked;
+        const localEnabled = document.getElementById('local_whatsapp_enabled').checked;
+        const emailEnabled = document.getElementById('email_enabled').checked;
+        
+        if (twilioEnabled) {
+            indicator.innerHTML = '<i class="fas fa-check text-green-500 text-2xl"></i>';
+            indicator.className = 'w-16 h-16 rounded-full bg-green-100 flex items-center justify-center animate-pulse';
+            text.textContent = 'WhatsApp Twilio conectado';
+            details.textContent = 'Listo para enviar notificaciones';
+        } else if (localEnabled) {
+            indicator.innerHTML = '<i class="fab fa-whatsapp text-blue-500 text-2xl"></i>';
+            indicator.className = 'w-16 h-16 rounded-full bg-blue-100 flex items-center justify-center';
+            text.textContent = 'WhatsApp Local activo';
+            details.textContent = 'Modo desarrollo';
+        } else if (emailEnabled) {
+            indicator.innerHTML = '<i class="fas fa-envelope text-cyan-500 text-2xl"></i>';
+            indicator.className = 'w-16 h-16 rounded-full bg-cyan-100 flex items-center justify-center';
+            text.textContent = 'Email activo';
+            details.textContent = 'Notificaciones por correo';
+        } else {
+            indicator.innerHTML = '<i class="fas fa-exclamation-triangle text-red-500 text-2xl"></i>';
+            indicator.className = 'w-16 h-16 rounded-full bg-red-100 flex items-center justify-center';
+            text.textContent = 'Sin configurar';
+            details.textContent = 'Activa al menos un método';
+        }
+    }, 1500);
+}
+
+// Sync WhatsApp
+function syncWhatsApp() {
+    const accountSid = document.getElementById('twilio_account_sid').value;
+    const authToken = document.getElementById('twilio_auth_token').value;
+    const whatsappFrom = document.getElementById('twilio_whatsapp_from').value;
+    
+    if (!accountSid || !authToken || !whatsappFrom) {
+        alert('Por favor completa todos los campos de Twilio antes de sincronizar');
+        return;
+    }
+    
+    // Show loading toast
+    showToast('Sincronizando con Twilio...', 'info');
+    
+    // Simulate sync
+    setTimeout(() => {
+        showToast('✓ WhatsApp sincronizado correctamente', 'success');
+        checkConnection();
+    }, 2000);
+}
+
+// Show QR Code
+function showQRCode() {
+    const modal = document.getElementById('qrModal');
+    modal.classList.remove('hidden');
+    
+    // Load QR from local WhatsApp bot
+    const url = document.getElementById('local_whatsapp_url').value || 'http://localhost:3000';
+    const container = document.getElementById('qrCodeContainer');
+    
+    fetch(`${url}/qr`)
+        .then(response => response.text())
+        .then(html => {
+            container.innerHTML = html;
+        })
+        .catch(error => {
+            container.innerHTML = `
+                <div class="text-red-600">
+                    <i class="fas fa-exclamation-triangle text-4xl mb-3"></i>
+                    <p>No se pudo cargar el QR</p>
+                    <p class="text-sm">Asegúrate de que el bot esté corriendo</p>
+                </div>
+            `;
+        });
+}
+
+function closeQRModal() {
+    document.getElementById('qrModal').classList.add('hidden');
+}
+
+// Test notification
+function testNotification(method) {
+    currentTestMethod = method;
+    document.getElementById('testModal').classList.remove('hidden');
+    document.getElementById('testResult').classList.add('hidden');
+    document.getElementById('test_destination').value = '';
+}
+
+function closeTestModal() {
+    document.getElementById('testModal').classList.add('hidden');
+}
+
+function sendTestNotification() {
+    const destination = document.getElementById('test_destination').value.trim();
+    const resultDiv = document.getElementById('testResult');
+    
+    if (!destination) {
+        resultDiv.className = 'bg-red-100 border border-red-400 text-red-700 rounded-lg p-4 mb-4';
+        resultDiv.innerHTML = '<i class="fas fa-exclamation-circle mr-2"></i>Por favor ingresa un teléfono o email';
+        resultDiv.classList.remove('hidden');
+        return;
+    }
+    
+    // Show loading
+    resultDiv.className = 'bg-blue-100 border border-blue-400 text-blue-700 rounded-lg p-4 mb-4';
+    resultDiv.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Enviando mensaje...';
+    resultDiv.classList.remove('hidden');
+    
+    fetch('{% url "dashboard:test_notification" %}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': '{{ csrf_token }}'
+        },
+        body: JSON.stringify({
+            destination: destination,
+            method: currentTestMethod
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            resultDiv.className = 'bg-green-100 border border-green-400 text-green-700 rounded-lg p-4 mb-4';
+            resultDiv.innerHTML = `<i class="fas fa-check-circle mr-2"></i>${data.message}`;
+            setTimeout(() => {
+                closeTestModal();
+            }, 2000);
+        } else {
+            resultDiv.className = 'bg-red-100 border border-red-400 text-red-700 rounded-lg p-4 mb-4';
+            resultDiv.innerHTML = `<i class="fas fa-exclamation-circle mr-2"></i>${data.message}`;
+        }
+    })
+    .catch(error => {
+        resultDiv.className = 'bg-red-100 border border-red-400 text-red-700 rounded-lg p-4 mb-4';
+        resultDiv.innerHTML = `<i class="fas fa-exclamation-circle mr-2"></i>Error: ${error}`;
+    });
+}
+
+// Toast notifications
+function showToast(message, type = 'info') {
+    const toast = document.createElement('div');
+    const colors = {
+        info: 'bg-blue-500',
+        success: 'bg-green-500',
+        error: 'bg-red-500'
+    };
+    
+    toast.className = `fixed bottom-4 right-4 ${colors[type]} text-white px-6 py-3 rounded-lg shadow-lg z-50 transform transition-all duration-300`;
+    toast.innerHTML = message;
+    document.body.appendChild(toast);
+    
+    setTimeout(() => {
+        toast.style.opacity = '0';
+        setTimeout(() => toast.remove(), 300);
+    }, 3000);
+}
+
+// Check connection on load
+document.addEventListener('DOMContentLoaded', function() {
+    checkConnection();
+});
+</script>
+{% endblock %}

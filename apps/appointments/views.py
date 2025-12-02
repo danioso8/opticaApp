@@ -103,12 +103,49 @@ class AppointmentViewSet(viewsets.ModelViewSet):
 def available_dates(request):
     """
     API pública para obtener fechas disponibles
-    Endpoint: /api/appointments/available-dates/
+    Endpoint: /api/appointments/available-dates/?organization_id=1
     """
-    days = int(request.query_params.get('days', 30))
-    dates = get_available_dates(days_ahead=days)
-    serializer = AvailableDatesSerializer(dates, many=True)
-    return Response(serializer.data)
+    from apps.organizations.models import Organization
+    from .models import SpecificDateSchedule, BlockedDate
+    from django.utils import timezone
+    
+    org_id = request.query_params.get('organization_id')
+    
+    if not org_id:
+        return Response(
+            {'error': 'El parámetro "organization_id" es requerido'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+    
+    try:
+        organization = Organization.objects.get(id=org_id, is_active=True)
+    except Organization.DoesNotExist:
+        return Response(
+            {'error': 'Organización no encontrada'},
+            status=status.HTTP_404_NOT_FOUND
+        )
+    
+    today = timezone.now().date()
+    
+    # Obtener fechas con horarios específicos para esta organización
+    specific_dates = SpecificDateSchedule.objects.filter(
+        organization=organization,
+        date__gte=today,
+        is_active=True
+    ).values_list('date', flat=True).distinct().order_by('date')
+    
+    # Filtrar fechas bloqueadas
+    available_dates = []
+    for date in specific_dates:
+        is_blocked = BlockedDate.objects.filter(
+            organization=organization,
+            date=date
+        ).exists()
+        
+        if not is_blocked:
+            available_dates.append(str(date))
+    
+    return Response({'dates': available_dates})
 
 
 @api_view(['GET'])
@@ -116,13 +153,22 @@ def available_dates(request):
 def available_slots(request):
     """
     API pública para obtener horarios disponibles de una fecha
-    Endpoint: /api/appointments/available-slots/?date=2025-12-01
+    Endpoint: /api/appointments/available-slots/?date=2025-12-01&organization_id=1
     """
+    from apps.organizations.models import Organization
+    
     date_str = request.query_params.get('date')
+    org_id = request.query_params.get('organization_id')
     
     if not date_str:
         return Response(
             {'error': 'El parámetro "date" es requerido'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+    
+    if not org_id:
+        return Response(
+            {'error': 'El parámetro "organization_id" es requerido'},
             status=status.HTTP_400_BAD_REQUEST
         )
     
@@ -134,7 +180,15 @@ def available_slots(request):
             status=status.HTTP_400_BAD_REQUEST
         )
     
-    slots = get_available_slots_for_date(date)
+    try:
+        organization = Organization.objects.get(id=org_id, is_active=True)
+    except Organization.DoesNotExist:
+        return Response(
+            {'error': 'Organización no encontrada'},
+            status=status.HTTP_404_NOT_FOUND
+        )
+    
+    slots = get_available_slots_for_date(date, organization)
     serializer = AvailableSlotsSerializer(slots, many=True)
     
     return Response({
@@ -163,11 +217,13 @@ def book_appointment(request):
     if serializer.is_valid():
         appointment = serializer.save()
         
-        # Aquí se puede agregar lógica para enviar SMS/Email de confirmación
+        # Enviar notificación automáticamente (WhatsApp/Email según entorno)
+        from apps.appointments.signals import notify_new_appointment
+        notify_new_appointment(appointment)
         
         return Response({
             'success': True,
-            'message': '¡Cita agendada exitosamente!',
+            'message': '¡Cita agendada exitosamente! Te enviaremos una confirmación.',
             'appointment': {
                 'id': appointment.id,
                 'full_name': appointment.full_name,

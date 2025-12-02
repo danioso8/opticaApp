@@ -3,6 +3,7 @@ from django.utils import timezone
 from django.core.validators import RegexValidator
 from django.conf import settings
 from apps.organizations.base_models import TenantModel
+from apps.appointments.models_notifications import NotificationSettings
 
 
 class AppointmentConfiguration(TenantModel):
@@ -167,6 +168,13 @@ class Appointment(TenantModel):
         validators=[phone_regex],
         max_length=17,
         verbose_name="Número de celular"
+    )
+    
+    email = models.EmailField(
+        blank=True,
+        null=True,
+        verbose_name="Email",
+        help_text="Email para notificaciones (opcional)"
     )
 
     # Fecha y hora

@@ -34,7 +34,9 @@
                 <div class="flex items-center">
                     <a href="{% url 'public:home' %}" class="flex items-center">
                         <i class="fas fa-glasses text-blue-600 text-3xl mr-3"></i>
-                        <span class="text-2xl font-bold text-gray-800">OCEANO OPTICO</span>
+                        <span class="text-2xl font-bold text-gray-800">
+                            {% if organization_data %}{{ organization_data.name|upper }}{% else %}OCEANO OPTICO{% endif %}
+                        </span>
                     </a>
                 </div>
                 
@@ -107,11 +109,19 @@
                 <div>
                     <div class="flex items-center mb-4">
                         <i class="fas fa-glasses text-blue-400 text-2xl mr-2"></i>
-                        <span class="text-xl font-bold">OCEANO OPTICO</span>
+                        <span class="text-xl font-bold">
+                            {% if organization_data %}{{ organization_data.name|upper }}{% else %}OCEANO OPTICO{% endif %}
+                        </span>
                     </div>
                     <p class="text-gray-400 text-sm">
                         Cuidamos tu salud visual con tecnología de última generación y atención personalizada.
                     </p>
+                    {% if organization_data and organization_data.legal_name %}
+                    <p class="text-gray-500 text-xs mt-2">
+                        {{ organization_data.legal_name }}
+                        {% if organization_data.tax_id %}<br>{{ organization_data.tax_id_type }}: {{ organization_data.tax_id }}{% endif %}
+                    </p>
+                    {% endif %}
                 </div>
                 
                 <div>
@@ -137,9 +147,27 @@
                 <div>
                     <h3 class="text-lg font-semibold mb-4">Contacto</h3>
                     <ul class="space-y-2 text-gray-400 text-sm">
+                        {% if organization_data %}
+                        <li><i class="fas fa-phone mr-2"></i>{{ organization_data.phone|default:"+57 312 680 9496" }}</li>
+                        {% if organization_data.secondary_phone %}
+                        <li><i class="fas fa-phone-alt mr-2"></i>{{ organization_data.secondary_phone }}</li>
+                        {% endif %}
+                        <li><i class="fas fa-envelope mr-2"></i>{{ organization_data.email|default:"ocenoptics4@gmail.com" }}</li>
+                        <li><i class="fas fa-map-marker-alt mr-2"></i>
+                            {% if organization_data.address %}
+                                {{ organization_data.address }}{% if organization_data.city %}, {{ organization_data.city }}{% endif %}
+                            {% else %}
+                                Medellin, Colombia
+                            {% endif %}
+                        </li>
+                        {% if organization_data.website %}
+                        <li><i class="fas fa-globe mr-2"></i><a href="{{ organization_data.website }}" target="_blank" class="hover:text-white">Sitio Web</a></li>
+                        {% endif %}
+                        {% else %}
                         <li><i class="fas fa-phone mr-2"></i>+57 312 680 9496</li>
                         <li><i class="fas fa-envelope mr-2"></i>ocenoptics4@gmail.com</li>
                         <li><i class="fas fa-map-marker-alt mr-2"></i>Medellin, Colombia</li>
+                        {% endif %}
                         <li class="flex space-x-4 mt-4">
                             <a href="#" class="text-gray-400 hover:text-white transition"><i class="fab fa-facebook text-xl"></i></a>
                             <a href="#" class="text-gray-400 hover:text-white transition"><i class="fab fa-instagram text-xl"></i></a>
@@ -150,7 +178,7 @@
             </div>
             
             <div class="border-t border-gray-800 mt-8 pt-8 text-center text-gray-400 text-sm">
-                <p>&copy; 2025 OCEANO OPTICO. Todos los derechos reservados.</p>
+                <p>&copy; 2025 {% if organization_data %}{{ organization_data.name|upper }}{% else %}OCEANO OPTICO{% endif %}. Todos los derechos reservados.</p>
             </div>
         </div>
     </footer>

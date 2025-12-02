@@ -67,14 +67,17 @@ class AppointmentDetailSerializer(serializers.ModelSerializer):
 
 class AppointmentCreateSerializer(serializers.ModelSerializer):
     """Serializer para crear citas desde la landing page (público)"""
+    organization_id = serializers.IntegerField(write_only=True, required=False)
     
     class Meta:
         model = Appointment
         fields = [
             'full_name',
             'phone_number',
+            'email',
             'appointment_date',
-            'appointment_time'
+            'appointment_time',
+            'organization_id'
         ]
     
     def validate(self, data):
@@ -156,12 +159,31 @@ class AppointmentCreateSerializer(serializers.ModelSerializer):
     
     def create(self, validated_data):
         """Crear cita y buscar/crear paciente si existe el teléfono"""
-        phone_number = validated_data.get('phone_number')
+        from apps.organizations.models import Organization
         
-        # Buscar si ya existe un paciente con ese teléfono
+        phone_number = validated_data.get('phone_number')
+        organization_id = validated_data.pop('organization_id', None)
+        
+        # Asignar organización si se proporciona
+        if organization_id:
+            try:
+                organization = Organization.objects.get(id=organization_id)
+                validated_data['organization'] = organization
+            except Organization.DoesNotExist:
+                pass
+        
+        # Buscar si ya existe un paciente con ese teléfono en la misma organización
         try:
-            patient = Patient.objects.get(phone_number=phone_number)
-            validated_data['patient'] = patient
+            if organization_id:
+                patient = Patient.objects.filter(
+                    phone_number=phone_number,
+                    organization_id=organization_id
+                ).first()
+            else:
+                patient = Patient.objects.filter(phone_number=phone_number).first()
+            
+            if patient:
+                validated_data['patient'] = patient
         except Patient.DoesNotExist:
             pass
         
@@ -193,6 +215,7 @@ class AvailableSlotsSerializer(serializers.Serializer):
     """Serializer para mostrar horarios disponibles"""
     time = serializers.TimeField()
     available = serializers.BooleanField()
+    organization = serializers.DictField(required=False, allow_null=True)
 
 
 class AvailableDatesSerializer(serializers.Serializer):

@@ -2,142 +2,253 @@
 
 {% block title %}{{ organization.name }}{% endblock %}
 
+{% block page_title %}{{ organization.name }}{% endblock %}
+{% block page_subtitle %}Detalles de la organización{% endblock %}
+
 {% block content %}
-<div class="container mt-4">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2>{{ organization.name }}</h2>
-        {% if membership.role in 'owner,admin' %}
-            <a href="{% url 'organizations:settings' organization.id %}" class="btn btn-outline-primary">
-                <i class="fas fa-cog"></i> Configuración
-            </a>
-        {% endif %}
-    </div>
-
-    <div class="row">
-        <div class="col-md-8">
-            <!-- Información de la organización -->
-            <div class="card mb-4">
-                <div class="card-header">
-                    <h5>Información</h5>
-                </div>
-                <div class="card-body">
-                    <p><strong>Email:</strong> {{ organization.email }}</p>
-                    {% if organization.phone %}
-                        <p><strong>Teléfono:</strong> {{ organization.phone }}</p>
-                    {% endif %}
-                    {% if organization.address %}
-                        <p><strong>Dirección:</strong> {{ organization.address }}</p>
-                    {% endif %}
-                    <p><strong>Tu rol:</strong> <span class="badge badge-info">{{ membership.get_role_display }}</span></p>
-                </div>
+<!-- Header con acciones -->
+<div class="bg-white rounded-lg shadow-md p-6 mb-6">
+    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <div class="flex items-center gap-4">
+            <div class="w-16 h-16 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center text-white text-2xl font-bold shadow-lg">
+                {{ organization.name.0|upper }}
             </div>
-
-            <!-- Miembros -->
-            <div class="card">
-                <div class="card-header">
-                    <h5>Miembros ({{ members.count }})</h5>
-                </div>
-                <div class="card-body">
-                    <div class="list-group">
-                        {% for member in members %}
-                        <div class="list-group-item">
-                            <div class="d-flex justify-content-between align-items-center">
-                                <div>
-                                    <h6 class="mb-0">
-                                        {{ member.user.get_full_name|default:member.user.username }}
-                                        {% if member.user == request.user %}
-                                            <span class="badge badge-secondary">Tú</span>
-                                        {% endif %}
-                                    </h6>
-                                    <small class="text-muted">{{ member.user.email }}</small>
-                                </div>
-                                <span class="badge badge-primary">{{ member.get_role_display }}</span>
-                            </div>
-                        </div>
-                        {% endfor %}
-                    </div>
-                </div>
+            <div>
+                <h2 class="text-2xl font-bold text-gray-800">{{ organization.name }}</h2>
+                <p class="text-sm text-gray-600">
+                    <span class="px-2 py-1 rounded-full text-xs font-semibold
+                        {% if membership.role == 'owner' %}bg-purple-100 text-purple-800
+                        {% elif membership.role == 'admin' %}bg-blue-100 text-blue-800
+                        {% else %}bg-gray-100 text-gray-800{% endif %}">
+                        <i class="fas fa-user-tag mr-1"></i>{{ membership.get_role_display }}
+                    </span>
+                </p>
             </div>
         </div>
-
-        <div class="col-md-4">
-            <!-- Suscripción actual -->
-            <div class="card mb-4">
-                <div class="card-header">
-                    <h5>Suscripción</h5>
-                </div>
-                <div class="card-body">
-                    {% if current_subscription %}
-                        <h4>{{ current_subscription.plan.name }}</h4>
-                        <p class="text-muted">
-                            <strong>${{ current_subscription.amount_paid }}</strong> / 
-                            {{ current_subscription.get_billing_cycle_display|lower }}
-                        </p>
-                        
-                        {% if current_subscription.is_active %}
-                            <p>
-                                <i class="fas fa-check-circle text-success"></i> 
-                                Activa
-                            </p>
-                            <p class="small text-muted">
-                                Vence en {{ current_subscription.days_remaining }} días
-                                <br>
-                                ({{ current_subscription.end_date|date:"d/m/Y" }})
-                            </p>
-                        {% else %}
-                            <p>
-                                <i class="fas fa-exclamation-triangle text-warning"></i> 
-                                Expirada
-                            </p>
-                        {% endif %}
-
-                        <a href="{% url 'organizations:subscription_plans' %}" class="btn btn-primary btn-block btn-sm">
-                            Cambiar Plan
-                        </a>
-                    {% else %}
-                        <div class="alert alert-warning">
-                            No hay suscripción activa
-                        </div>
-                        <a href="{% url 'organizations:subscription_plans' %}" class="btn btn-primary btn-block">
-                            Ver Planes
-                        </a>
-                    {% endif %}
-                </div>
-            </div>
-
-            <!-- Límites del plan -->
-            {% if plan_limits %}
-            <div class="card">
-                <div class="card-header">
-                    <h5>Límites del Plan</h5>
-                </div>
-                <div class="card-body">
-                    <ul class="list-unstyled">
-                        <li><i class="fas fa-users"></i> {{ plan_limits.max_users }} usuarios</li>
-                        <li><i class="fas fa-calendar"></i> {{ plan_limits.max_appointments_month }} citas/mes</li>
-                        <li><i class="fas fa-user-injured"></i> {{ plan_limits.max_patients }} pacientes</li>
-                        <li><i class="fas fa-database"></i> {{ plan_limits.max_storage_mb }} MB almacenamiento</li>
-                    </ul>
-                    
-                    <hr>
-                    
-                    <h6>Características</h6>
-                    <ul class="list-unstyled small">
-                        {% for feature, enabled in plan_limits.features.items %}
-                        <li>
-                            {% if enabled %}
-                                <i class="fas fa-check text-success"></i>
-                            {% else %}
-                                <i class="fas fa-times text-muted"></i>
-                            {% endif %}
-                            {{ feature|title|replace:"_":" " }}
-                        </li>
-                        {% endfor %}
-                    </ul>
-                </div>
-            </div>
+        
+        {% if membership.role in 'owner,admin' %}
+        <div class="flex gap-2">
+            <a href="{% url 'organizations:settings' organization.id %}" 
+               class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg transition">
+                <i class="fas fa-edit mr-2"></i>Editar
+            </a>
+            {% if membership.role == 'owner' %}
+            <button onclick="confirmDelete()" 
+                    class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition">
+                <i class="fas fa-trash mr-2"></i>Eliminar
+            </button>
             {% endif %}
         </div>
+        {% endif %}
     </div>
 </div>
+
+{% if messages %}
+    {% for message in messages %}
+    <div class="mb-6 p-4 rounded-lg {% if message.tags == 'success' %}bg-green-100 text-green-800{% elif message.tags == 'error' %}bg-red-100 text-red-800{% else %}bg-blue-100 text-blue-800{% endif %}">
+        <i class="fas {% if message.tags == 'success' %}fa-check-circle{% elif message.tags == 'error' %}fa-exclamation-circle{% else %}fa-info-circle{% endif %} mr-2"></i>
+        {{ message }}
+    </div>
+    {% endfor %}
+{% endif %}
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <!-- Columna principal -->
+    <div class="lg:col-span-2 space-y-6">
+        <!-- Información de la organización -->
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <h3 class="text-lg font-bold text-gray-800 mb-4">
+                <i class="fas fa-info-circle text-indigo-600 mr-2"></i>
+                Información General
+            </h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <p class="text-sm text-gray-600">Email</p>
+                    <p class="text-base font-medium text-gray-800">{{ organization.email }}</p>
+                </div>
+                {% if organization.phone %}
+                <div>
+                    <p class="text-sm text-gray-600">Teléfono</p>
+                    <p class="text-base font-medium text-gray-800">{{ organization.phone }}</p>
+                </div>
+                {% endif %}
+                {% if organization.address %}
+                <div class="md:col-span-2">
+                    <p class="text-sm text-gray-600">Dirección</p>
+                    <p class="text-base font-medium text-gray-800">{{ organization.address }}</p>
+                </div>
+                {% endif %}
+                <div>
+                    <p class="text-sm text-gray-600">Creada el</p>
+                    <p class="text-base font-medium text-gray-800">{{ organization.created_at|date:"d/m/Y" }}</p>
+                </div>
+                <div>
+                    <p class="text-sm text-gray-600">Estado</p>
+                    <p class="text-base font-medium">
+                        {% if organization.is_active %}
+                        <span class="text-green-600"><i class="fas fa-check-circle mr-1"></i>Activa</span>
+                        {% else %}
+                        <span class="text-red-600"><i class="fas fa-times-circle mr-1"></i>Inactiva</span>
+                        {% endif %}
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Miembros -->
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <h3 class="text-lg font-bold text-gray-800 mb-4">
+                <i class="fas fa-users text-indigo-600 mr-2"></i>
+                Miembros ({{ members.count }})
+            </h3>
+            <div class="space-y-3">
+                {% for member in members %}
+                <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition">
+                    <div class="flex items-center gap-3">
+                        <div class="w-12 h-12 bg-indigo-600 rounded-full flex items-center justify-center text-white font-bold text-lg">
+                            {{ member.user.username.0|upper }}
+                        </div>
+                        <div>
+                            <p class="font-medium text-gray-800">
+                                {{ member.user.get_full_name|default:member.user.username }}
+                                {% if member.user == request.user %}
+                                <span class="ml-2 px-2 py-1 bg-indigo-100 text-indigo-800 text-xs rounded-full">Tú</span>
+                                {% endif %}
+                            </p>
+                            <p class="text-sm text-gray-600">{{ member.user.email }}</p>
+                        </div>
+                    </div>
+                    <span class="px-3 py-1 rounded-full text-xs font-semibold
+                        {% if member.role == 'owner' %}bg-purple-100 text-purple-800
+                        {% elif member.role == 'admin' %}bg-blue-100 text-blue-800
+                        {% else %}bg-gray-100 text-gray-800{% endif %}">
+                        {{ member.get_role_display }}
+                    </span>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Sidebar -->
+    <div class="space-y-6">
+        <!-- Suscripción -->
+        {% if current_subscription %}
+        <div class="bg-gradient-to-br from-indigo-500 to-purple-600 rounded-lg shadow-md p-6 text-white">
+            <h3 class="text-lg font-bold mb-4">
+                <i class="fas fa-crown mr-2"></i>Suscripción
+            </h3>
+            <p class="text-2xl font-bold mb-2">{{ current_subscription.plan.name }}</p>
+            <p class="text-indigo-100 mb-4">
+                <span class="text-xl font-semibold">${{ current_subscription.amount_paid }}</span>
+                <span class="text-sm">/ {{ current_subscription.get_billing_cycle_display|lower }}</span>
+            </p>
+            
+            {% if current_subscription.is_active %}
+            <div class="bg-white bg-opacity-20 rounded-lg p-3 mb-4">
+                <p class="text-sm">
+                    <i class="fas fa-check-circle mr-1"></i>Activa
+                </p>
+                <p class="text-xs mt-1">
+                    Vence en <strong>{{ current_subscription.days_remaining }} días</strong>
+                    <br>({{ current_subscription.end_date|date:"d/m/Y" }})
+                </p>
+            </div>
+            {% else %}
+            <div class="bg-yellow-500 bg-opacity-50 rounded-lg p-3 mb-4">
+                <p class="text-sm">
+                    <i class="fas fa-exclamation-triangle mr-1"></i>Expirada
+                </p>
+            </div>
+            {% endif %}
+            
+            <a href="{% url 'organizations:subscription_plans' %}" 
+               class="block w-full text-center bg-white text-indigo-600 hover:bg-indigo-50 px-4 py-2 rounded-lg font-semibold transition">
+                Cambiar Plan
+            </a>
+        </div>
+        {% endif %}
+
+        <!-- Límites del plan -->
+        {% if plan_limits %}
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <h3 class="text-lg font-bold text-gray-800 mb-4">
+                <i class="fas fa-chart-bar text-indigo-600 mr-2"></i>
+                Límites del Plan
+            </h3>
+            <div class="space-y-3">
+                <div class="flex items-center justify-between">
+                    <span class="text-sm text-gray-600"><i class="fas fa-users text-indigo-500 mr-2"></i>Usuarios</span>
+                    <span class="font-semibold text-gray-800">{{ plan_limits.max_users }}</span>
+                </div>
+                <div class="flex items-center justify-between">
+                    <span class="text-sm text-gray-600"><i class="fas fa-calendar text-indigo-500 mr-2"></i>Citas/mes</span>
+                    <span class="font-semibold text-gray-800">{{ plan_limits.max_appointments_month }}</span>
+                </div>
+                <div class="flex items-center justify-between">
+                    <span class="text-sm text-gray-600"><i class="fas fa-user-injured text-indigo-500 mr-2"></i>Pacientes</span>
+                    <span class="font-semibold text-gray-800">{{ plan_limits.max_patients }}</span>
+                </div>
+                <div class="flex items-center justify-between">
+                    <span class="text-sm text-gray-600"><i class="fas fa-database text-indigo-500 mr-2"></i>Almacenamiento</span>
+                    <span class="font-semibold text-gray-800">{{ plan_limits.max_storage_mb }} MB</span>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Modal de confirmación de eliminación -->
+<div id="deleteModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-lg shadow-2xl max-w-md w-full p-6">
+        <div class="text-center mb-4">
+            <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <i class="fas fa-exclamation-triangle text-red-600 text-3xl"></i>
+            </div>
+            <h3 class="text-2xl font-bold text-gray-900 mb-2">¿Eliminar organización?</h3>
+            <p class="text-gray-600 mb-2">
+                Esta acción eliminará <strong>{{ organization.name }}</strong> y todos sus datos:
+            </p>
+            <ul class="text-sm text-left text-gray-600 mb-4 space-y-1">
+                <li><i class="fas fa-times text-red-500 mr-2"></i>Todos los pacientes</li>
+                <li><i class="fas fa-times text-red-500 mr-2"></i>Todas las citas</li>
+                <li><i class="fas fa-times text-red-500 mr-2"></i>Todas las ventas</li>
+                <li><i class="fas fa-times text-red-500 mr-2"></i>Todos los miembros</li>
+            </ul>
+            <p class="text-red-600 font-semibold text-sm">Esta acción no se puede deshacer</p>
+        </div>
+        
+        <form method="POST" action="{% url 'organizations:delete' organization.id %}">
+            {% csrf_token %}
+            <div class="flex gap-3">
+                <button type="button" onclick="closeDeleteModal()" 
+                        class="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 py-3 rounded-lg font-semibold transition">
+                    Cancelar
+                </button>
+                <button type="submit" 
+                        class="flex-1 bg-red-600 hover:bg-red-700 text-white py-3 rounded-lg font-semibold transition">
+                    Eliminar
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+function confirmDelete() {
+    document.getElementById('deleteModal').classList.remove('hidden');
+}
+
+function closeDeleteModal() {
+    document.getElementById('deleteModal').classList.add('hidden');
+}
+
+// Cerrar modal al hacer clic fuera
+document.getElementById('deleteModal').addEventListener('click', function(e) {
+    if (e.target === this) {
+        closeDeleteModal();
+    }
+});
+</script>
 {% endblock %}

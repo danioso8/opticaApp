@@ -27,28 +27,44 @@ class Command(BaseCommand):
 
         # Verificar si el servidor está corriendo
         import requests
+        self.stdout.write(self.style.HTTP_INFO(f'\n🔍 Verificando bot de WhatsApp en {whatsapp_notifier.api_url}...\n'))
+        
         try:
-            response = requests.get(f'{whatsapp_notifier.api_url}/status', timeout=2)
-            status = response.json()
+            # Intentar endpoint /health primero
+            try:
+                response = requests.get(f'{whatsapp_notifier.api_url}/health', timeout=3)
+                status = response.json()
+            except:
+                # Fallback a /status
+                response = requests.get(f'{whatsapp_notifier.api_url}/status', timeout=3)
+                status = response.json()
+            
+            self.stdout.write(self.style.SUCCESS('✅ Servidor está corriendo'))
             
             if not status.get('connected'):
                 self.stdout.write(
-                    self.style.WARNING('⚠️ WhatsApp Bot no está conectado')
+                    self.style.WARNING('⚠️  WhatsApp NO está conectado')
                 )
-                self.stdout.write(f'Inicia el bot con: cd whatsapp-bot && npm start')
-                self.stdout.write(f'Luego ve a: {whatsapp_notifier.api_url}/qr')
+                self.stdout.write('\n💡 Para conectar WhatsApp:')
+                self.stdout.write('   1. Abre en tu navegador: ' + self.style.HTTP_INFO(f'{whatsapp_notifier.api_url}/qr'))
+                self.stdout.write('   2. Escanea el código QR con WhatsApp')
+                self.stdout.write('   3. Menú (⋮) > Dispositivos vinculados > Vincular dispositivo\n')
                 return
             
-            self.stdout.write(self.style.SUCCESS('✅ WhatsApp Bot está conectado y listo'))
+            self.stdout.write(self.style.SUCCESS('✅ WhatsApp está conectado\n'))
         except requests.exceptions.ConnectionError:
             self.stdout.write(
                 self.style.ERROR('❌ Servidor WhatsApp no está corriendo')
             )
-            self.stdout.write('Inicia el bot con:')
-            self.stdout.write('  cd whatsapp-bot')
-            self.stdout.write('  npm install  (solo la primera vez)')
-            self.stdout.write('  npm start')
-            self.stdout.write(f'\nLuego ve a: {whatsapp_notifier.api_url}/qr para conectar')
+            self.stdout.write('\n💡 Para iniciar el bot:')
+            self.stdout.write('   1. Abre una nueva terminal')
+            self.stdout.write('   2. cd whatsapp-bot')
+            self.stdout.write('   3. npm install (solo la primera vez)')
+            self.stdout.write('   4. npm start')
+            self.stdout.write(f'\n   Luego ve a: {whatsapp_notifier.api_url}/qr para conectar\n')
+            return
+        except Exception as e:
+            self.stdout.write(self.style.ERROR(f'❌ Error: {e}\n'))
             return
 
         # Si se proporciona ID de cita

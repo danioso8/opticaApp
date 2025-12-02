@@ -50,10 +50,31 @@ class Organization(models.Model):
     name = models.CharField(max_length=200, verbose_name='Nombre de la Organización')
     slug = models.SlugField(unique=True, max_length=100)
     
+    # Información legal
+    legal_name = models.CharField(max_length=300, blank=True, verbose_name='Razón Social', help_text='Nombre legal registrado de la empresa')
+    TAX_ID_TYPES = [
+        ('RUC', 'RUC - Registro Único de Contribuyentes'),
+        ('NIT', 'NIT - Número de Identificación Tributaria'),
+        ('RFC', 'RFC - Registro Federal de Contribuyentes'),
+        ('CUIT', 'CUIT - Clave Única de Identificación Tributaria'),
+        ('RUT', 'RUT - Rol Único Tributario'),
+        ('OTHER', 'Otro'),
+    ]
+    tax_id_type = models.CharField(max_length=10, choices=TAX_ID_TYPES, blank=True, verbose_name='Tipo de Documento Fiscal')
+    tax_id = models.CharField(max_length=50, blank=True, verbose_name='Número Fiscal', help_text='Número de identificación fiscal')
+    legal_representative = models.CharField(max_length=200, blank=True, verbose_name='Representante Legal')
+    
     # Información de contacto
     email = models.EmailField(verbose_name='Email')
     phone = models.CharField(max_length=20, blank=True, verbose_name='Teléfono')
+    secondary_phone = models.CharField(max_length=20, blank=True, verbose_name='Teléfono Secundario')
     address = models.TextField(blank=True, verbose_name='Dirección')
+    neighborhood = models.CharField(max_length=100, blank=True, verbose_name='Barrio')
+    city = models.CharField(max_length=100, blank=True, verbose_name='Ciudad')
+    state = models.CharField(max_length=100, blank=True, verbose_name='Estado/Provincia')
+    country = models.CharField(max_length=100, blank=True, default='Colombia', verbose_name='País')
+    postal_code = models.CharField(max_length=20, blank=True, verbose_name='Código Postal')
+    website = models.URLField(blank=True, verbose_name='Sitio Web')
     
     # Configuración de marca
     logo = models.ImageField(upload_to='organizations/logos/', blank=True, null=True)

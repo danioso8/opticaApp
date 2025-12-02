@@ -64,6 +64,7 @@ INSTALLED_APPS = [
     'apps.patients',
     'apps.users',
     'apps.dashboard',
+    'apps.admin_dashboard',
     'apps.public',
     'apps.sales',
 ]
@@ -213,9 +214,9 @@ MAX_DAILY_APPOINTMENTS = config('MAX_DAILY_APPOINTMENTS', default=20, cast=int)
 ADVANCE_BOOKING_DAYS = config('ADVANCE_BOOKING_DAYS', default=30, cast=int)
 
 # Login Settings
-LOGIN_URL = '/login/'
-LOGIN_REDIRECT_URL = '/'
-LOGOUT_REDIRECT_URL = '/login/'
+LOGIN_URL = '/dashboard/login/'
+LOGIN_REDIRECT_URL = '/dashboard/'
+LOGOUT_REDIRECT_URL = '/dashboard/login/'
 
 # Channels Configuration
 ASGI_APPLICATION = 'config.asgi.application'
@@ -226,7 +227,26 @@ CHANNEL_LAYERS = {
     }
 }
 
-# Twilio WhatsApp Configuration
+# ==================== NOTIFICACIONES ====================
+
+# Sistema de Notificaciones (Auto-detecta entorno)
+# False = WhatsApp Local (Desarrollo)
+# True = Email (Producción - Gratis)
+USE_EMAIL_NOTIFICATIONS = config('USE_EMAIL_NOTIFICATIONS', default=not DEBUG, cast=bool)
+
+# Email Configuration (GRATIS - Gmail SMTP)
+EMAIL_BACKEND = config('EMAIL_BACKEND', default='django.core.mail.backends.smtp.EmailBackend')
+EMAIL_HOST = config('EMAIL_HOST', default='smtp.gmail.com')
+EMAIL_PORT = config('EMAIL_PORT', default=587, cast=int)
+EMAIL_USE_TLS = config('EMAIL_USE_TLS', default=True, cast=bool)
+EMAIL_HOST_USER = config('EMAIL_HOST_USER', default='')
+EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD', default='')
+DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL', default='OCEANO OPTICO <noreply@oceanooptico.com>')
+
+# WhatsApp Configuration (Local Bot - Gratuito)
+WHATSAPP_API_URL = config('WHATSAPP_API_URL', default='http://localhost:3000')
+
+# Twilio WhatsApp Configuration (Opcional - de pago)
 TWILIO_ACCOUNT_SID = config('TWILIO_ACCOUNT_SID', default='')
 TWILIO_AUTH_TOKEN = config('TWILIO_AUTH_TOKEN', default='')
 TWILIO_WHATSAPP_FROM = config('TWILIO_WHATSAPP_FROM', default='whatsapp:+14155238886')  # Twilio Sandbox

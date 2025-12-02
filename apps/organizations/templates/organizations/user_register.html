@@ -1,0 +1,430 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registro - OpticaApp</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <style>
+        :root {
+            --primary-color: #4f46e5;
+            --secondary-color: #06b6d4;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        .register-container {
+            max-width: 1200px;
+            margin: 2rem auto;
+        }
+        
+        .register-card {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+        
+        .register-header {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+            color: white;
+            padding: 3rem 2rem;
+            text-align: center;
+        }
+        
+        .register-header h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+        
+        .register-header p {
+            font-size: 1.1rem;
+            opacity: 0.95;
+        }
+        
+        .register-body {
+            padding: 3rem;
+        }
+        
+        .section-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: #1f2937;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .section-title i {
+            color: var(--primary-color);
+        }
+        
+        .form-label {
+            font-weight: 600;
+            color: #374151;
+            margin-bottom: 0.5rem;
+        }
+        
+        .form-control, .form-select {
+            border: 2px solid #e5e7eb;
+            border-radius: 10px;
+            padding: 0.75rem 1rem;
+            font-size: 1rem;
+            transition: all 0.3s;
+        }
+        
+        .form-control:focus, .form-select:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+        }
+        
+        .plan-selection {
+            margin: 2rem 0;
+        }
+        
+        .plan-card {
+            border: 3px solid #e5e7eb;
+            border-radius: 15px;
+            padding: 1.5rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            height: 100%;
+            position: relative;
+        }
+        
+        .plan-card:hover {
+            border-color: var(--primary-color);
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(79, 70, 229, 0.2);
+        }
+        
+        .plan-card.selected {
+            border-color: var(--primary-color);
+            background: linear-gradient(135deg, rgba(79, 70, 229, 0.05) 0%, rgba(6, 182, 212, 0.05) 100%);
+        }
+        
+        .plan-card input[type="radio"] {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            width: 24px;
+            height: 24px;
+            cursor: pointer;
+        }
+        
+        .plan-badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            margin-bottom: 0.5rem;
+        }
+        
+        .plan-badge.free {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+        
+        .plan-badge.basic {
+            background: #dcfce7;
+            color: #15803d;
+        }
+        
+        .plan-badge.professional {
+            background: #fef3c7;
+            color: #92400e;
+        }
+        
+        .plan-badge.enterprise {
+            background: #f3e8ff;
+            color: #6b21a8;
+        }
+        
+        .plan-name {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #1f2937;
+            margin: 0.5rem 0;
+        }
+        
+        .plan-price {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--primary-color);
+            margin: 0.5rem 0;
+        }
+        
+        .plan-price small {
+            font-size: 1rem;
+            color: #6b7280;
+            font-weight: 400;
+        }
+        
+        .plan-features {
+            list-style: none;
+            padding: 0;
+            margin: 1rem 0 0 0;
+        }
+        
+        .plan-features li {
+            padding: 0.5rem 0;
+            color: #4b5563;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .plan-features li i {
+            color: #10b981;
+        }
+        
+        .billing-cycle {
+            margin: 1.5rem 0;
+            text-align: center;
+        }
+        
+        .billing-toggle {
+            display: inline-flex;
+            background: #f3f4f6;
+            border-radius: 50px;
+            padding: 0.25rem;
+        }
+        
+        .billing-toggle label {
+            padding: 0.5rem 1.5rem;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: 600;
+        }
+        
+        .billing-toggle input[type="radio"]:checked + label {
+            background: var(--primary-color);
+            color: white;
+        }
+        
+        .btn-register {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+            color: white;
+            padding: 1rem 2rem;
+            border-radius: 10px;
+            border: none;
+            font-size: 1.1rem;
+            font-weight: 600;
+            width: 100%;
+            margin-top: 2rem;
+            transition: all 0.3s;
+        }
+        
+        .btn-register:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(79, 70, 229, 0.3);
+        }
+        
+        .login-link {
+            text-align: center;
+            margin-top: 1.5rem;
+            color: #6b7280;
+        }
+        
+        .login-link a {
+            color: var(--primary-color);
+            text-decoration: none;
+            font-weight: 600;
+        }
+        
+        .login-link a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="register-container">
+            <div class="register-card">
+                <div class="register-header">
+                    <h1><i class="bi bi-eye"></i> OpticaApp</h1>
+                    <p>Crea tu cuenta y comienza a gestionar tu óptica de forma profesional</p>
+                </div>
+                
+                <div class="register-body">
+                    {% if messages %}
+                        {% for message in messages %}
+                            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                    
+                    <form method="post" id="registerForm">
+                        {% csrf_token %}
+                        
+                        <!-- Información Personal -->
+                        <div class="section-title">
+                            <i class="bi bi-person-circle"></i>
+                            Información Personal
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Nombre <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" name="first_name" 
+                                       value="{{ form_data.first_name }}" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Apellido <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" name="last_name" 
+                                       value="{{ form_data.last_name }}" required>
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Email <span class="text-danger">*</span></label>
+                                <input type="email" class="form-control" name="email" 
+                                       value="{{ form_data.email }}" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Nombre de Usuario <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" name="username" 
+                                       value="{{ form_data.username }}" required>
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <label class="form-label">Contraseña <span class="text-danger">*</span></label>
+                                <input type="password" class="form-control" name="password" 
+                                       minlength="8" required>
+                                <small class="text-muted">Mínimo 8 caracteres</small>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Confirmar Contraseña <span class="text-danger">*</span></label>
+                                <input type="password" class="form-control" name="password_confirm" 
+                                       minlength="8" required>
+                            </div>
+                        </div>
+                        
+                        <!-- Selección de Plan -->
+                        <div class="section-title">
+                            <i class="bi bi-credit-card"></i>
+                            Selecciona tu Plan
+                        </div>
+                        
+                        <div class="billing-cycle">
+                            <div class="billing-toggle">
+                                <input type="radio" name="billing_cycle" value="monthly" id="monthly" 
+                                       {% if not form_data.billing_cycle or form_data.billing_cycle == 'monthly' %}checked{% endif %} hidden>
+                                <label for="monthly">Mensual</label>
+                                
+                                <input type="radio" name="billing_cycle" value="yearly" id="yearly" 
+                                       {% if form_data.billing_cycle == 'yearly' %}checked{% endif %} hidden>
+                                <label for="yearly">Anual (20% descuento)</label>
+                            </div>
+                        </div>
+                        
+                        <div class="plan-selection">
+                            <div class="row g-4">
+                                {% for plan in plans %}
+                                <div class="col-md-6 col-lg-3">
+                                    <div class="plan-card {% if forloop.first and not form_data.plan_id %}selected{% endif %} 
+                                                {% if form_data.plan_id == plan.id|stringformat:'s' %}selected{% endif %}"
+                                         onclick="selectPlan({{ plan.id }})">
+                                        <input type="radio" name="plan_id" value="{{ plan.id }}" 
+                                               {% if forloop.first and not form_data.plan_id %}checked{% endif %}
+                                               {% if form_data.plan_id == plan.id|stringformat:'s' %}checked{% endif %} required>
+                                        
+                                        <span class="plan-badge {{ plan.plan_type }}">{{ plan.get_plan_type_display }}</span>
+                                        <div class="plan-name">{{ plan.name }}</div>
+                                        <div class="plan-price">
+                                            $<span class="monthly-price">{{ plan.price_monthly }}</span>
+                                            <span class="yearly-price" style="display:none;">{{ plan.price_yearly }}</span>
+                                            <small class="billing-label">/mes</small>
+                                        </div>
+                                        
+                                        <ul class="plan-features">
+                                            <li><i class="bi bi-check-circle-fill"></i> {{ plan.max_users }} Organizaciones</li>
+                                            <li><i class="bi bi-check-circle-fill"></i> {{ plan.max_patients }} Pacientes</li>
+                                            <li><i class="bi bi-check-circle-fill"></i> {{ plan.max_appointments_month }} Citas/mes</li>
+                                            {% if plan.whatsapp_integration %}
+                                            <li><i class="bi bi-check-circle-fill"></i> WhatsApp</li>
+                                            {% endif %}
+                                            {% if plan.custom_branding %}
+                                            <li><i class="bi bi-check-circle-fill"></i> Marca propia</li>
+                                            {% endif %}
+                                            {% if plan.analytics %}
+                                            <li><i class="bi bi-check-circle-fill"></i> Análisis avanzado</li>
+                                            {% endif %}
+                                        </ul>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        
+                        <button type="submit" class="btn-register">
+                            <i class="bi bi-rocket-takeoff"></i> Crear Cuenta y Comenzar
+                        </button>
+                    </form>
+                    
+                    <div class="login-link">
+                        ¿Ya tienes una cuenta? <a href="{% url 'dashboard:login' %}">Inicia sesión aquí</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        function selectPlan(planId) {
+            // Remover selected de todos
+            document.querySelectorAll('.plan-card').forEach(card => {
+                card.classList.remove('selected');
+            });
+            
+            // Agregar selected al clickeado
+            event.currentTarget.classList.add('selected');
+            
+            // Marcar radio
+            document.querySelector(`input[name="plan_id"][value="${planId}"]`).checked = true;
+        }
+        
+        // Actualizar precios según billing cycle
+        document.querySelectorAll('input[name="billing_cycle"]').forEach(radio => {
+            radio.addEventListener('change', function() {
+                const isYearly = this.value === 'yearly';
+                
+                document.querySelectorAll('.plan-card').forEach(card => {
+                    const monthlyPrice = card.querySelector('.monthly-price');
+                    const yearlyPrice = card.querySelector('.yearly-price');
+                    const billingLabel = card.querySelector('.billing-label');
+                    
+                    if (isYearly) {
+                        monthlyPrice.style.display = 'none';
+                        yearlyPrice.style.display = 'inline';
+                        billingLabel.textContent = '/año';
+                    } else {
+                        monthlyPrice.style.display = 'inline';
+                        yearlyPrice.style.display = 'none';
+                        billingLabel.textContent = '/mes';
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>

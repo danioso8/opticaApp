@@ -1,57 +1,210 @@
 {% extends "dashboard/base.html" %}
 
-{% block title %}Mis Organizaciones{% endblock %}
+{% block title %}Mis Empresas/Sucursales{% endblock %}
+
+{% block page_title %}Mis Empresas/Sucursales{% endblock %}
+{% block page_subtitle %}Gestiona tus empresas y sucursales{% endblock %}
 
 {% block content %}
-<div class="container mt-4">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2>Mis Organizaciones</h2>
-        <a href="{% url 'organizations:create' %}" class="btn btn-primary">
-            <i class="fas fa-plus"></i> Nueva Organización
-        </a>
+<!-- Información del Plan del Usuario (solo si NO tiene acceso ilimitado) -->
+{% if user_subscription and not has_unlimited_access %}
+<div class="bg-gradient-to-r from-indigo-500 to-purple-600 rounded-lg shadow-lg p-6 mb-6 text-white">
+    <div class="flex flex-col md:flex-row items-center justify-between gap-4">
+        <div class="flex-1">
+            <h3 class="text-2xl font-bold mb-2">
+                <i class="fas fa-crown mr-2"></i>{{ user_subscription.plan.name }}
+            </h3>
+            <p class="text-indigo-100">
+                Tu plan te permite gestionar hasta <strong>{{ max_allowed }}</strong> empresas/sucursales
+            </p>
+            <p class="text-sm text-indigo-200 mt-1">
+                <i class="fas fa-calendar-alt mr-1"></i>
+                {% if user_subscription.is_expired %}
+                    <span class="text-red-300 font-semibold">Plan expirado</span>
+                {% else %}
+                    Vence en {{ user_subscription.days_remaining }} días
+                {% endif %}
+            </p>
+        </div>
+        <div class="flex flex-col md:flex-row items-center gap-4">
+            <div class="bg-white bg-opacity-20 rounded-lg p-4 backdrop-blur-sm">
+                <p class="text-3xl font-bold">{{ current_count }}/{{ max_allowed }}</p>
+                <p class="text-sm text-indigo-100">Empresas creadas</p>
+            </div>
+            <a href="{% url 'organizations:subscription_plans' %}" 
+               class="bg-white text-indigo-600 hover:bg-indigo-50 px-6 py-3 rounded-lg font-semibold transition shadow-lg whitespace-nowrap">
+                <i class="fas fa-rocket mr-2"></i>Mejorar Plan
+            </a>
+        </div>
     </div>
+</div>
+{% endif %}
 
-    {% if memberships %}
-        <div class="row">
-            {% for membership in memberships %}
-            <div class="col-md-6 mb-4">
-                <div class="card">
-                    <div class="card-body">
-                        <h5 class="card-title">{{ membership.organization.name }}</h5>
-                        <p class="card-text">
-                            <span class="badge badge-info">{{ membership.get_role_display }}</span>
-                            {% if membership.organization.current_subscription %}
-                                <span class="badge badge-success">
-                                    {{ membership.organization.current_subscription.plan.name }}
-                                </span>
-                            {% else %}
-                                <span class="badge badge-warning">Sin suscripción</span>
-                            {% endif %}
-                        </p>
-                        <p class="text-muted">
-                            <i class="fas fa-envelope"></i> {{ membership.organization.email }}<br>
-                            {% if membership.organization.phone %}
-                                <i class="fas fa-phone"></i> {{ membership.organization.phone }}
-                            {% endif %}
-                        </p>
-                        <div class="btn-group" role="group">
-                            <a href="{% url 'organizations:detail' membership.organization.id %}" class="btn btn-sm btn-outline-primary">
-                                Ver Detalles
-                            </a>
-                            <a href="{% url 'organizations:switch' membership.organization.id %}?next=dashboard:home" class="btn btn-sm btn-outline-success">
-                                Acceder
-                            </a>
-                        </div>
+<div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
+    <div>
+        <h2 class="text-2xl font-bold text-gray-800">
+            <i class="fas fa-building mr-2 text-indigo-600"></i>
+            Mis Empresas/Sucursales
+        </h2>
+        <p class="text-gray-600 mt-1">Administra y accede a tus diferentes ubicaciones</p>
+    </div>
+    {% if can_create_more %}
+    <a href="{% url 'organizations:create' %}" class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 px-6 rounded-lg shadow-md transition duration-200 flex items-center">
+        <i class="fas fa-plus mr-2"></i> Nueva Empresa/Sucursal
+    </a>
+    {% else %}
+    <div class="text-center">
+        <button disabled class="bg-gray-400 text-white font-semibold py-3 px-6 rounded-lg shadow-md cursor-not-allowed opacity-60">
+            <i class="fas fa-lock mr-2"></i> Límite Alcanzado
+        </button>
+        <p class="text-xs text-gray-500 mt-2">
+            <a href="{% url 'organizations:subscription_plans' %}" class="text-indigo-600 hover:underline">
+                Actualiza tu plan
+            </a> para crear más
+        </p>
+    </div>
+    {% endif %}
+</div>
+
+{% if messages %}
+    {% for message in messages %}
+    <div class="mb-4 p-4 rounded-lg {% if message.tags == 'success' %}bg-green-100 text-green-800{% elif message.tags == 'error' %}bg-red-100 text-red-800{% else %}bg-blue-100 text-blue-800{% endif %}">
+        <i class="fas {% if message.tags == 'success' %}fa-check-circle{% elif message.tags == 'error' %}fa-exclamation-circle{% else %}fa-info-circle{% endif %} mr-2"></i>
+        {{ message }}
+    </div>
+    {% endfor %}
+{% endif %}
+
+{% if memberships %}
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    {% for membership in memberships %}
+    <div class="bg-white rounded-lg shadow-md hover:shadow-xl transition-shadow duration-300 overflow-hidden">
+        <!-- Header con degradado según rol -->
+        <div class="h-2 {% if membership.role == 'owner' %}bg-gradient-to-r from-purple-500 to-indigo-600{% elif membership.role == 'admin' %}bg-gradient-to-r from-blue-500 to-cyan-600{% else %}bg-gradient-to-r from-gray-400 to-gray-500{% endif %}"></div>
+        
+        <div class="p-6">
+            <!-- Nombre y Badge -->
+            <div class="flex items-start justify-between mb-4">
+                <div class="flex-1">
+                    <h3 class="text-xl font-bold text-gray-800 mb-2">
+                        {{ membership.organization.name }}
+                    </h3>
+                    <div class="flex flex-wrap gap-2">
+                        <span class="inline-block px-3 py-1 text-xs font-semibold rounded-full
+                            {% if membership.role == 'owner' %}bg-purple-100 text-purple-800
+                            {% elif membership.role == 'admin' %}bg-blue-100 text-blue-800
+                            {% else %}bg-gray-100 text-gray-800{% endif %}">
+                            <i class="fas fa-user-tag mr-1"></i>{{ membership.get_role_display }}
+                        </span>
+                    </div>
+                </div>
+                <div class="flex-shrink-0 ml-4">
+                    <div class="w-12 h-12 bg-gradient-to-br from-indigo-100 to-purple-100 rounded-full flex items-center justify-center">
+                        <i class="fas fa-building text-indigo-600 text-xl"></i>
                     </div>
                 </div>
             </div>
-            {% endfor %}
+            
+            <!-- Información de contacto -->
+            <div class="space-y-2 mb-4 text-sm text-gray-600">
+                <p class="flex items-center">
+                    <i class="fas fa-envelope w-5 text-indigo-500"></i>
+                    <span class="ml-2 truncate">{{ membership.organization.email }}</span>
+                </p>
+                {% if membership.organization.phone %}
+                <p class="flex items-center">
+                    <i class="fas fa-phone w-5 text-indigo-500"></i>
+                    <span class="ml-2">{{ membership.organization.phone }}</span>
+                </p>
+                {% endif %}
+                {% if membership.organization.address %}
+                <p class="flex items-start">
+                    <i class="fas fa-map-marker-alt w-5 text-indigo-500 mt-1"></i>
+                    <span class="ml-2 text-xs">{{ membership.organization.address|truncatewords:10 }}</span>
+                </p>
+                {% endif %}
+            </div>
+            
+            <!-- Estado -->
+            <div class="mb-4 pb-4 border-b border-gray-200">
+                {% if membership.organization.is_active %}
+                <span class="inline-flex items-center text-sm text-green-600 font-medium">
+                    <span class="w-2 h-2 bg-green-500 rounded-full mr-2 animate-pulse"></span>
+                    Activa
+                </span>
+                {% else %}
+                <span class="inline-flex items-center text-sm text-red-600 font-medium">
+                    <span class="w-2 h-2 bg-red-500 rounded-full mr-2"></span>
+                    Inactiva
+                </span>
+                {% endif %}
+            </div>
+            
+            <!-- Botones de acción -->
+            <div class="flex gap-2">
+                <a href="{% url 'organizations:detail' membership.organization.id %}" 
+                   class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-800 font-medium py-2 px-4 rounded-lg transition text-center text-sm">
+                    <i class="fas fa-info-circle mr-1"></i>
+                    Detalles
+                </a>
+                {% if request.organization.id == membership.organization.id %}
+                <button disabled
+                   class="flex-1 bg-green-100 text-green-800 font-medium py-2 px-4 rounded-lg text-center text-sm cursor-default border-2 border-green-500">
+                    <i class="fas fa-check-circle mr-1"></i>
+                    Activa
+                </button>
+                {% else %}
+                <a href="{% url 'organizations:switch' membership.organization.id %}" 
+                   class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 px-4 rounded-lg transition text-center text-sm">
+                    <i class="fas fa-sign-in-alt mr-1"></i>
+                    Seleccionar
+                </a>
+                {% endif %}
+            </div>
         </div>
-    {% else %}
-        <div class="alert alert-info">
-            No tienes organizaciones todavía. 
-            <a href="{% url 'organizations:create' %}" class="alert-link">Crea tu primera organización</a>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<!-- Estado vacío -->
+<div class="bg-white rounded-lg shadow-md p-12 text-center">
+    <div class="max-w-md mx-auto">
+        <div class="w-24 h-24 bg-indigo-100 rounded-full flex items-center justify-center mx-auto mb-6">
+            <i class="fas fa-building text-indigo-600 text-5xl"></i>
         </div>
-    {% endif %}
+        <h3 class="text-2xl font-bold text-gray-800 mb-3">No tienes empresas todavía</h3>
+        <p class="text-gray-600 mb-6">
+            Crea tu primera empresa o sucursal para comenzar a gestionar tu negocio
+        </p>
+        {% if can_create_more %}
+        <a href="{% url 'organizations:create' %}" class="inline-block bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 px-8 rounded-lg shadow-md transition duration-200">
+            <i class="fas fa-plus mr-2"></i> Crear Mi Primera Empresa
+        </a>
+        {% else %}
+        <div>
+            <button disabled class="bg-gray-400 text-white font-semibold py-3 px-8 rounded-lg cursor-not-allowed opacity-60">
+                <i class="fas fa-lock mr-2"></i> Plan Requerido
+            </button>
+            <p class="text-sm text-gray-500 mt-3">
+                <a href="{% url 'organizations:subscription_plans' %}" class="text-indigo-600 hover:underline font-medium">
+                    Selecciona un plan
+                </a> para comenzar
+            </p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endif %}
+
+<!-- Información adicional -->
+<div class="mt-8 bg-blue-50 border-l-4 border-blue-500 p-4 rounded">
+    <div class="flex items-start">
+        <i class="fas fa-info-circle text-blue-500 mt-1 mr-3"></i>
+        <div class="text-sm text-blue-800">
+            <p class="font-semibold mb-1">Sobre las empresas y sucursales</p>
+            <p>Cada empresa/sucursal puede tener su propia configuración, horarios, pacientes y citas independientes. 
+            Puedes cambiar entre ellas fácilmente usando el botón "Acceder".</p>
+        </div>
+    </div>
 </div>
 {% endblock %}

@@ -25,6 +25,11 @@ urlpatterns = [
     path('toggle-working-hour/<int:pk>/', views.toggle_working_hour, name='toggle_working_hour'),
     path('delete-working-hour/<int:pk>/', views.delete_working_hour, name='delete_working_hour'),
     
+    # Configuración de Notificaciones
+    path('notifications/settings/', views.notification_settings, name='notification_settings'),
+    path('notifications/settings/save/', views.save_notification_settings, name='save_notification_settings'),
+    path('notifications/test/', views.test_notification, name='test_notification'),
+    
     # Horarios específicos
     path('configuration/add-specific-schedule/', views.add_specific_schedule, name='add_specific_schedule'),
     path('configuration/specific-schedule/<int:pk>/toggle/', views.toggle_specific_schedule, name='toggle_specific_schedule'),
@@ -47,4 +52,8 @@ urlpatterns = [
     
     # Calendario
     path('calendar/', views.calendar_view, name='calendar'),
+    
+    # WhatsApp API
+    path('api/whatsapp/status/', views.whatsapp_status_api, name='whatsapp_status'),
+    path('api/whatsapp/test-send/', views.whatsapp_test_send, name='whatsapp_test_send'),
 ]

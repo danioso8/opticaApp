@@ -1,0 +1,157 @@
+{% extends 'admin_dashboard/base.html' %}
+
+{% block title %}{{ organization.name }} - Admin{% endblock %}
+
+{% block content %}
+<div class="mb-6">
+    <a href="{% url 'admin_dashboard:organizations_list' %}" class="text-indigo-600 hover:text-indigo-800 inline-flex items-center">
+        <i class="fas fa-arrow-left mr-2"></i> Volver a organizaciones
+    </a>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <!-- Información Principal -->
+    <div class="lg:col-span-2 space-y-6">
+        <!-- Datos de la Organización -->
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <h2 class="text-xl font-bold text-gray-800 mb-4">
+                <i class="fas fa-building text-indigo-600 mr-2"></i>
+                Información de la Organización
+            </h2>
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <p class="text-sm text-gray-600">Nombre</p>
+                    <p class="text-base font-medium text-gray-800">{{ organization.name }}</p>
+                </div>
+                <div>
+                    <p class="text-sm text-gray-600">Subdominio</p>
+                    <p class="text-base font-medium text-gray-800">{{ organization.subdomain|default:"No definido" }}</p>
+                </div>
+                <div>
+                    <p class="text-sm text-gray-600">Teléfono</p>
+                    <p class="text-base font-medium text-gray-800">{{ organization.phone|default:"No definido" }}</p>
+                </div>
+                <div>
+                    <p class="text-sm text-gray-600">Email</p>
+                    <p class="text-base font-medium text-gray-800">{{ organization.email|default:"No definido" }}</p>
+                </div>
+                <div class="col-span-2">
+                    <p class="text-sm text-gray-600">Dirección</p>
+                    <p class="text-base font-medium text-gray-800">{{ organization.address|default:"No definida" }}</p>
+                </div>
+                <div>
+                    <p class="text-sm text-gray-600">Creada</p>
+                    <p class="text-base font-medium text-gray-800">{{ organization.created_at|date:"d/m/Y H:i" }}</p>
+                </div>
+                <div>
+                    <p class="text-sm text-gray-600">Estado</p>
+                    <span class="px-2 py-1 text-xs font-semibold rounded-full 
+                        {% if organization.is_active %}bg-green-100 text-green-800
+                        {% else %}bg-red-100 text-red-800{% endif %}">
+                        {% if organization.is_active %}Activa{% else %}Inactiva{% endif %}
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Propietario -->
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <h2 class="text-xl font-bold text-gray-800 mb-4">
+                <i class="fas fa-user-crown text-indigo-600 mr-2"></i>
+                Propietario
+            </h2>
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-base font-medium text-gray-800">{{ organization.owner.get_full_name|default:organization.owner.username }}</p>
+                    <p class="text-sm text-gray-600">{{ organization.owner.email }}</p>
+                </div>
+                <a href="{% url 'admin_dashboard:user_detail' organization.owner.id %}" 
+                   class="text-indigo-600 hover:text-indigo-800">
+                    Ver perfil <i class="fas fa-arrow-right ml-1"></i>
+                </a>
+            </div>
+        </div>
+
+        <!-- Miembros -->
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <h2 class="text-xl font-bold text-gray-800 mb-4">
+                <i class="fas fa-users text-indigo-600 mr-2"></i>
+                Miembros ({{ members.count }})
+            </h2>
+            <div class="space-y-3">
+                {% for membership in members %}
+                <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 bg-indigo-600 rounded-full flex items-center justify-center text-white font-bold">
+                            {{ membership.user.username.0|upper }}
+                        </div>
+                        <div>
+                            <p class="text-sm font-medium text-gray-800">{{ membership.user.get_full_name|default:membership.user.username }}</p>
+                            <p class="text-xs text-gray-600">{{ membership.user.email }}</p>
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <span class="px-2 py-1 text-xs font-semibold rounded-full 
+                            {% if membership.role == 'owner' %}bg-purple-100 text-purple-800
+                            {% elif membership.role == 'admin' %}bg-blue-100 text-blue-800
+                            {% else %}bg-gray-100 text-gray-800{% endif %}">
+                            {{ membership.get_role_display }}
+                        </span>
+                        <p class="text-xs text-gray-500 mt-1">Desde {{ membership.joined_at|date:"d/m/Y" }}</p>
+                    </div>
+                </div>
+                {% empty %}
+                <p class="text-gray-500 text-center py-4">No hay miembros adicionales</p>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Acciones Laterales -->
+    <div class="space-y-4">
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <h3 class="text-lg font-bold text-gray-800 mb-4">Acciones</h3>
+            
+            <!-- Toggle Estado -->
+            <form method="post" action="{% url 'admin_dashboard:organization_toggle_active' organization.id %}">
+                {% csrf_token %}
+                <button type="submit" class="w-full mb-3 px-4 py-2 rounded-lg
+                    {% if organization.is_active %}
+                        bg-red-600 hover:bg-red-700 text-white
+                    {% else %}
+                        bg-green-600 hover:bg-green-700 text-white
+                    {% endif %}">
+                    <i class="fas fa-{% if organization.is_active %}ban{% else %}check{% endif %} mr-2"></i>
+                    {% if organization.is_active %}Desactivar{% else %}Activar{% endif %}
+                </button>
+            </form>
+
+            <!-- Eliminar -->
+            <form method="post" action="{% url 'admin_dashboard:organization_delete' organization.id %}" 
+                  onsubmit="return confirm('¿Está seguro de eliminar esta organización? Esta acción no se puede deshacer.');">
+                {% csrf_token %}
+                <button type="submit" class="w-full bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg">
+                    <i class="fas fa-trash mr-2"></i>Eliminar Organización
+                </button>
+            </form>
+        </div>
+
+        <!-- Estadísticas -->
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <h3 class="text-lg font-bold text-gray-800 mb-4">Estadísticas</h3>
+            <div class="space-y-3">
+                <div>
+                    <p class="text-sm text-gray-600">Total Miembros</p>
+                    <p class="text-2xl font-bold text-indigo-600">{{ members.count }}</p>
+                </div>
+                <div>
+                    <p class="text-sm text-gray-600">Días Activa</p>
+                    <p class="text-2xl font-bold text-indigo-600">
+                        {{ organization.created_at|timesince|split:" "|first }}
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

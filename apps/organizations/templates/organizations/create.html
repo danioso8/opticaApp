@@ -1,52 +1,334 @@
 {% extends "dashboard/base.html" %}
 
-{% block title %}Crear Organización{% endblock %}
+{% block title %}Crear Empresa/Sucursal{% endblock %}
+
+{% block page_title %}Crear Nueva Empresa/Sucursal{% endblock %}
+{% block page_subtitle %}Agrega una nueva ubicación a tu cuenta{% endblock %}
 
 {% block content %}
-<div class="container mt-4">
-    <div class="row justify-content-center">
-        <div class="col-md-8">
-            <div class="card">
-                <div class="card-header">
-                    <h3>Crear Nueva Organización</h3>
+<div class="max-w-3xl mx-auto">
+    <!-- Información del plan -->
+    {% if user_subscription %}
+    <div class="bg-indigo-50 border-l-4 border-indigo-500 p-4 mb-6 rounded">
+        <div class="flex items-start">
+            <i class="fas fa-info-circle text-indigo-500 mt-1 mr-3"></i>
+            <div class="text-sm text-indigo-800">
+                <p class="font-semibold mb-1">Plan: {{ user_subscription.plan.name }}</p>
+                <p>Puedes crear hasta <strong>{{ user_subscription.plan.max_users }}</strong> empresas/sucursales con tu plan actual.</p>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if messages %}
+        {% for message in messages %}
+        <div class="mb-4 p-4 rounded-lg {% if message.tags == 'success' %}bg-green-100 text-green-800{% elif message.tags == 'error' %}bg-red-100 text-red-800{% else %}bg-blue-100 text-blue-800{% endif %}">
+            <i class="fas {% if message.tags == 'success' %}fa-check-circle{% elif message.tags == 'error' %}fa-exclamation-circle{% else %}fa-info-circle{% endif %} mr-2"></i>
+            {{ message }}
+        </div>
+        {% endfor %}
+    {% endif %}
+
+    <div class="bg-white rounded-lg shadow-lg overflow-hidden">
+        <div class="bg-gradient-to-r from-indigo-600 to-purple-600 px-6 py-4">
+            <h2 class="text-2xl font-bold text-white">
+                <i class="fas fa-building mr-2"></i>
+                Información de la Empresa/Sucursal
+            </h2>
+        </div>
+        
+        <form method="post" class="p-6 space-y-6">
+            {% csrf_token %}
+            
+            <!-- Información Legal -->
+            <div class="border-b border-gray-200 pb-6">
+                <h3 class="text-lg font-semibold text-gray-800 mb-4">
+                    <i class="fas fa-file-contract text-indigo-600 mr-2"></i>
+                    Información Legal
+                </h3>
+                <div class="space-y-4">
+                    <div>
+                        <label for="name" class="block text-sm font-semibold text-gray-700 mb-2">
+                            Nombre Comercial <span class="text-red-500">*</span>
+                        </label>
+                        <input type="text" 
+                               id="name" 
+                               name="name" 
+                               required 
+                               class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition"
+                               placeholder="Ej: Óptica Central, Sucursal Norte">
+                        <p class="mt-1 text-sm text-gray-500">
+                            <i class="fas fa-lightbulb mr-1"></i>
+                            Nombre con el que se conoce tu negocio
+                        </p>
+                    </div>
+
+                    <div>
+                        <label for="legal_name" class="block text-sm font-semibold text-gray-700 mb-2">
+                            Razón Social
+                        </label>
+                        <input type="text" 
+                               id="legal_name" 
+                               name="legal_name" 
+                               class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition"
+                               placeholder="Nombre legal registrado de la empresa">
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label for="tax_id_type" class="block text-sm font-semibold text-gray-700 mb-2">
+                                Tipo de Documento Fiscal
+                            </label>
+                            <select id="tax_id_type" 
+                                    name="tax_id_type" 
+                                    class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition">
+                                <option value="">Seleccionar tipo...</option>
+                                <option value="RUC">RUC - Registro Único de Contribuyentes</option>
+                                <option value="NIT">NIT - Número de Identificación Tributaria</option>
+                                <option value="RFC">RFC - Registro Federal de Contribuyentes</option>
+                                <option value="CUIT">CUIT - Clave Única de Identificación Tributaria</option>
+                                <option value="RUT">RUT - Rol Único Tributario</option>
+                                <option value="OTHER">Otro</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label for="tax_id" class="block text-sm font-semibold text-gray-700 mb-2">
+                                Número Fiscal
+                            </label>
+                            <input type="text" 
+                                   id="tax_id" 
+                                   name="tax_id" 
+                                   class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition"
+                                   placeholder="Número de identificación fiscal">
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 gap-4">
+
+                        <div>
+                            <label for="legal_representative" class="block text-sm font-semibold text-gray-700 mb-2">
+                                Representante Legal
+                            </label>
+                            <input type="text" 
+                                   id="legal_representative" 
+                                   name="legal_representative" 
+                                   class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition"
+                                   placeholder="Nombre del representante">
+                        </div>
+                    </div>
                 </div>
-                <div class="card-body">
-                    <form method="post">
-                        {% csrf_token %}
-                        
-                        <div class="form-group">
-                            <label for="name">Nombre de la Organización *</label>
-                            <input type="text" class="form-control" id="name" name="name" required>
-                            <small class="form-text text-muted">
-                                Nombre de tu óptica o negocio
-                            </small>
+            </div>
+
+            <!-- Información de Contacto -->
+            <div class="border-b border-gray-200 pb-6">
+                <h3 class="text-lg font-semibold text-gray-800 mb-4">
+                    <i class="fas fa-address-book text-indigo-600 mr-2"></i>
+                    Información de Contacto
+                </h3>
+                <div class="space-y-4">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label for="email" class="block text-sm font-semibold text-gray-700 mb-2">
+                                Email Principal <span class="text-red-500">*</span>
+                            </label>
+                            <div class="relative">
+                                <span class="absolute left-3 top-3.5 text-gray-400">
+                                    <i class="fas fa-envelope"></i>
+                                </span>
+                                <input type="email" 
+                                       id="email" 
+                                       name="email" 
+                                       required 
+                                       class="w-full pl-10 pr-4 py-3 border-2 border-gray-300 rounded-lg focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition"
+                                       placeholder="contacto@empresa.com">
+                            </div>
                         </div>
 
-                        <div class="form-group">
-                            <label for="email">Email *</label>
-                            <input type="email" class="form-control" id="email" name="email" required>
+                        <div>
+                            <label for="website" class="block text-sm font-semibold text-gray-700 mb-2">
+                                Sitio Web
+                            </label>
+                            <div class="relative">
+                                <span class="absolute left-3 top-3.5 text-gray-400">
+                                    <i class="fas fa-globe"></i>
+                                </span>
+                                <input type="url" 
+                                       id="website" 
+                                       name="website" 
+                                       class="w-full pl-10 pr-4 py-3 border-2 border-gray-300 rounded-lg focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition"
+                                       placeholder="https://www.ejemplo.com">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label for="phone" class="block text-sm font-semibold text-gray-700 mb-2">
+                                Teléfono Principal
+                            </label>
+                            <div class="relative">
+                                <span class="absolute left-3 top-3.5 text-gray-400">
+                                    <i class="fas fa-phone"></i>
+                                </span>
+                                <input type="tel" 
+                                       id="phone" 
+                                       name="phone" 
+                                       class="w-full pl-10 pr-4 py-3 border-2 border-gray-300 rounded-lg focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition"
+                                       placeholder="+57 300 123 4567">
+                            </div>
                         </div>
 
-                        <div class="form-group">
-                            <label for="phone">Teléfono</label>
-                            <input type="text" class="form-control" id="phone" name="phone">
+                        <div>
+                            <label for="secondary_phone" class="block text-sm font-semibold text-gray-700 mb-2">
+                                Teléfono Secundario
+                            </label>
+                            <div class="relative">
+                                <span class="absolute left-3 top-3.5 text-gray-400">
+                                    <i class="fas fa-phone-alt"></i>
+                                </span>
+                                <input type="tel" 
+                                       id="secondary_phone" 
+                                       name="secondary_phone" 
+                                       class="w-full pl-10 pr-4 py-3 border-2 border-gray-300 rounded-lg focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition"
+                                       placeholder="+57 300 987 6543">
+                            </div>
                         </div>
-
-                        <div class="alert alert-info">
-                            <i class="fas fa-info-circle"></i> 
-                            Se creará con un plan gratuito. Podrás actualizar a un plan premium después.
-                        </div>
-
-                        <div class="form-group">
-                            <button type="submit" class="btn btn-primary btn-block">
-                                <i class="fas fa-plus"></i> Crear Organización
-                            </button>
-                            <a href="{% url 'organizations:list' %}" class="btn btn-secondary btn-block">
-                                Cancelar
-                            </a>
-                        </div>
-                    </form>
+                    </div>
                 </div>
+            </div>
+
+            <!-- Ubicación -->
+            <div class="pb-6">
+                <h3 class="text-lg font-semibold text-gray-800 mb-4">
+                    <i class="fas fa-map-marked-alt text-indigo-600 mr-2"></i>
+                    Ubicación
+                </h3>
+                <div class="space-y-4">
+                    <div>
+                        <label for="address" class="block text-sm font-semibold text-gray-700 mb-2">
+                            Dirección Completa
+                        </label>
+                        <div class="relative">
+                            <span class="absolute left-3 top-3.5 text-gray-400">
+                                <i class="fas fa-map-marker-alt"></i>
+                            </span>
+                            <textarea id="address" 
+                                      name="address" 
+                                      rows="2"
+                                      class="w-full pl-10 pr-4 py-3 border-2 border-gray-300 rounded-lg focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition"
+                                      placeholder="Calle y número..."></textarea>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label for="neighborhood" class="block text-sm font-semibold text-gray-700 mb-2">
+                                Barrio
+                            </label>
+                            <input type="text" 
+                                   id="neighborhood" 
+                                   name="neighborhood" 
+                                   class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition"
+                                   placeholder="Ej: El Poblado">
+                        </div>
+
+                        <div>
+                            <label for="city" class="block text-sm font-semibold text-gray-700 mb-2">
+                                Ciudad
+                            </label>
+                            <input type="text" 
+                                   id="city" 
+                                   name="city" 
+                                   class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition"
+                                   placeholder="Ej: Bogotá">
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label for="state" class="block text-sm font-semibold text-gray-700 mb-2">
+                                Estado/Provincia
+                            </label>
+                            <input type="text" 
+                                   id="state" 
+                                   name="state" 
+                                   class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition"
+                                   placeholder="Ej: Cundinamarca">
+                        </div>
+
+                        <div>
+                            <label for="postal_code" class="block text-sm font-semibold text-gray-700 mb-2">
+                                Código Postal
+                            </label>
+                            <input type="text" 
+                                   id="postal_code" 
+                                   name="postal_code" 
+                                   class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition"
+                                   placeholder="110111">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label for="country" class="block text-sm font-semibold text-gray-700 mb-2">
+                            País
+                        </label>
+                        <input type="text" 
+                               id="country" 
+                               name="country" 
+                               value="Colombia"
+                               class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition"
+                               placeholder="País">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Información importante -->
+            <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <div class="flex items-start">
+                    <i class="fas fa-info-circle text-blue-500 mt-0.5 mr-3"></i>
+                    <div class="text-sm text-blue-800">
+                        <p class="font-semibold mb-2">¿Qué sucede después de crear la empresa?</p>
+                        <ul class="list-disc list-inside space-y-1 ml-1">
+                            <li>Se creará como owner (propietario) automáticamente</li>
+                            <li>Podrás configurar horarios y servicios específicos</li>
+                            <li>Tendrás acceso completo para gestionar citas y pacientes</li>
+                            <li>Puedes invitar a otros usuarios a colaborar</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Botones -->
+            <div class="flex flex-col sm:flex-row gap-3 pt-4">
+                <button type="submit" 
+                        class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 px-6 rounded-lg shadow-md transition duration-200 flex items-center justify-center">
+                    <i class="fas fa-plus mr-2"></i>
+                    Crear Empresa/Sucursal
+                </button>
+                <a href="{% url 'organizations:list' %}" 
+                   class="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-3 px-6 rounded-lg shadow-md transition duration-200 flex items-center justify-center">
+                    <i class="fas fa-times mr-2"></i>
+                    Cancelar
+                </a>
+            </div>
+        </form>
+    </div>
+
+    <!-- Ayuda adicional -->
+    <div class="mt-6 bg-gray-50 rounded-lg p-6">
+        <h3 class="text-lg font-semibold text-gray-800 mb-3">
+            <i class="fas fa-question-circle text-indigo-600 mr-2"></i>
+            ¿Necesitas ayuda?
+        </h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-gray-600">
+            <div>
+                <p class="font-medium text-gray-700 mb-1">Múltiples sucursales</p>
+                <p>Si tienes varias ubicaciones, crea una empresa por cada sucursal para mejor organización.</p>
+            </div>
+            <div>
+                <p class="font-medium text-gray-700 mb-1">Gestión independiente</p>
+                <p>Cada empresa tiene su propia configuración, horarios y datos completamente separados.</p>
             </div>
         </div>
     </div>

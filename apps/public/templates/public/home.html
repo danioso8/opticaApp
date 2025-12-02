@@ -17,6 +17,13 @@
     <div class="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
             <div class="text-white">
+                {% if organization_data %}
+                <div class="mb-4">
+                    <p class="text-2xl font-semibold text-blue-200 mb-2">
+                        <i class="fas fa-glasses mr-2"></i>{{ organization_data.name }}
+                    </p>
+                </div>
+                {% endif %}
                 <h1 class="text-5xl md:text-6xl font-bold mb-6 leading-tight">
                     Cuida tu Salud Visual
                 </h1>
@@ -205,9 +212,27 @@
                         </div>
                         <div>
                             <h3 class="font-semibold text-lg">Teléfono</h3>
-                            <p class="text-blue-100">+57 312 680 9496</p>
+                            <p class="text-blue-100">
+                                {% if organization_data and organization_data.phone %}
+                                    {{ organization_data.phone }}
+                                {% else %}
+                                    +57 312 680 9496
+                                {% endif %}
+                            </p>
                         </div>
                     </div>
+                    
+                    {% if organization_data and organization_data.secondary_phone %}
+                    <div class="flex items-start">
+                        <div class="bg-white bg-opacity-20 p-3 rounded-lg mr-4">
+                            <i class="fas fa-phone-alt text-2xl"></i>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold text-lg">Teléfono 2</h3>
+                            <p class="text-blue-100">{{ organization_data.secondary_phone }}</p>
+                        </div>
+                    </div>
+                    {% endif %}
                     
                     <div class="flex items-start">
                         <div class="bg-white bg-opacity-20 p-3 rounded-lg mr-4">
@@ -225,7 +250,13 @@
                         </div>
                         <div>
                             <h3 class="font-semibold text-lg">Email</h3>
-                            <p class="text-blue-100">ocenoptics4@gmail.com</p>
+                            <p class="text-blue-100">
+                                {% if organization_data and organization_data.email %}
+                                    {{ organization_data.email }}
+                                {% else %}
+                                    ocenoptics4@gmail.com
+                                {% endif %}
+                            </p>
                         </div>
                     </div>
                     
@@ -235,9 +266,35 @@
                         </div>
                         <div>
                             <h3 class="font-semibold text-lg">Ubicación</h3>
-                            <p class="text-blue-100">Calle 44 # 98 - 47, Medellin, Colombia</p>
+                            <p class="text-blue-100">
+                                {% if organization_data %}
+                                    {% if organization_data.address %}
+                                        {{ organization_data.address }}{% if organization_data.city %}, {{ organization_data.city }}{% endif %}{% if organization_data.state %}, {{ organization_data.state }}{% endif %}
+                                    {% else %}
+                                        {% if organization_data.city %}{{ organization_data.city }}{% if organization_data.country %}, {{ organization_data.country }}{% endif %}{% else %}Medellin, Colombia{% endif %}
+                                    {% endif %}
+                                {% else %}
+                                    Calle 44 # 98 - 47, Medellin, Colombia
+                                {% endif %}
+                            </p>
                         </div>
                     </div>
+                    
+                    {% if organization_data and organization_data.website %}
+                    <div class="flex items-start">
+                        <div class="bg-white bg-opacity-20 p-3 rounded-lg mr-4">
+                            <i class="fas fa-globe text-2xl"></i>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold text-lg">Sitio Web</h3>
+                            <p class="text-blue-100">
+                                <a href="{{ organization_data.website }}" target="_blank" class="hover:text-white underline">
+                                    {{ organization_data.website }}
+                                </a>
+                            </p>
+                        </div>
+                    </div>
+                    {% endif %}
                 </div>
             </div>
             

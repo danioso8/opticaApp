@@ -21,6 +21,9 @@ from django.conf.urls.static import static
 urlpatterns = [
     path('admin/', admin.site.urls),
     
+    # Admin Dashboard URLs (SaaS Management)
+    path('saas-admin/', include('apps.admin_dashboard.urls')),
+    
     # Organizations URLs
     path('organizations/', include('apps.organizations.urls')),
     

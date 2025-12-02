@@ -1,7 +1,9 @@
-const { default: makeWASocket, DisconnectReason, useMultiFileAuthState } = require('@whiskeysockets/baileys');
+const { default: makeWASocket, DisconnectReason, useMultiFileAuthState, fetchLatestBaileysVersion } = require('@whiskeysockets/baileys');
 const express = require('express');
 const qrcode = require('qrcode-terminal');
 const pino = require('pino');
+const fs = require('fs');
+const path = require('path');
 
 const app = express();
 app.use(express.json());
@@ -13,13 +15,29 @@ let isConnected = false;
 // Logger
 const logger = pino({ level: 'silent' });
 
+// Limpiar auth_info si está corrupto
+const authPath = path.join(__dirname, 'auth_info');
+if (fs.existsSync(authPath)) {
+    const files = fs.readdirSync(authPath);
+    if (files.length === 0 || files.some(f => f.includes('session'))) {
+        console.log('🧹 Limpiando sesión anterior...');
+        fs.rmSync(authPath, { recursive: true, force: true });
+    }
+}
+
 async function connectToWhatsApp() {
     const { state, saveCreds } = await useMultiFileAuthState('auth_info');
+    const { version } = await fetchLatestBaileysVersion();
     
     sock = makeWASocket({
+        version,
         auth: state,
         printQRInTerminal: false,
-        logger: logger
+        logger: logger,
+        markOnlineOnConnect: false,
+        syncFullHistory: false,
+        browser: ['OCEANO OPTICO Bot', 'Chrome', '4.0.0'],
+        defaultQueryTimeoutMs: undefined
     });
 
     sock.ev.on('connection.update', (update) => {
@@ -37,10 +55,16 @@ async function connectToWhatsApp() {
 
         if (connection === 'close') {
             const shouldReconnect = lastDisconnect?.error?.output?.statusCode !== DisconnectReason.loggedOut;
-            console.log('❌ Conexión cerrada. Reconectando:', shouldReconnect);
+            const statusCode = lastDisconnect?.error?.output?.statusCode;
+            
+            console.log('❌ Conexión cerrada.');
+            console.log('   Código:', statusCode);
+            console.log('   Reconectando:', shouldReconnect);
             
             if (shouldReconnect) {
-                connectToWhatsApp();
+                setTimeout(() => {
+                    connectToWhatsApp();
+                }, 3000);
             }
             isConnected = false;
         } else if (connection === 'open') {
@@ -113,7 +137,7 @@ app.get('/qr', (req, res) => {
                 <div class="container">
                     <h1>🌊 OCEANO OPTICO 👓</h1>
                     <h2>Conectar WhatsApp Bot</h2>
-                    <div id="qrcode"></div>
+                    <canvas id="qrcode"></canvas>
                     <div class="instructions">
                         <h3>📱 Instrucciones:</h3>
                         <ol>
@@ -127,9 +151,17 @@ app.get('/qr', (req, res) => {
                 </div>
                 <script>
                     const qrData = ${JSON.stringify(qrCodeData)};
-                    QRCode.toCanvas(document.getElementById('qrcode'), qrData, {
+                    const canvas = document.getElementById('qrcode');
+                    QRCode.toCanvas(canvas, qrData, {
                         width: 300,
-                        margin: 2
+                        margin: 2,
+                        color: {
+                            dark: '#000000',
+                            light: '#FFFFFF'
+                        }
+                    }, function (error) {
+                        if (error) console.error(error);
+                        console.log('QR generado correctamente');
                     });
                     
                     // Verificar conexión cada 2 segundos

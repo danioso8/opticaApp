@@ -24,6 +24,10 @@
                 transform: translateX(-100%);
             }
         }
+        /* Rotación del icono del submenu */
+        .rotate-180 {
+            transform: rotate(180deg);
+        }
     </style>
     
     {% block extra_css %}{% endblock %}
@@ -37,9 +41,16 @@
             <button onclick="toggleSidebar()" class="text-white focus:outline-none">
                 <i class="fas fa-bars text-2xl"></i>
             </button>
-            <h1 class="text-lg font-bold">
-                <i class="fas fa-glasses mr-2"></i>OCEANO OPTICO
-            </h1>
+            <div class="flex-1 text-center mx-2">
+                <h1 class="text-lg font-bold">
+                    <i class="fas fa-glasses mr-2"></i>OCEANO OPTICO
+                </h1>
+                {% if request.organization %}
+                <p class="text-xs text-indigo-200 truncate">
+                    <i class="fas fa-building text-xs"></i> {{ request.organization.name }}
+                </p>
+                {% endif %}
+            </div>
             <a href="{% url 'dashboard:logout' %}" class="text-white">
                 <i class="fas fa-sign-out-alt text-xl"></i>
             </a>
@@ -61,36 +72,82 @@
             </div>
             
             <nav class="mt-6">
+                <!-- Siempre visible: Mis Empresas -->
+                <a href="{% url 'organizations:list' %}" class="flex items-center px-4 py-3 hover:bg-indigo-800 {% if 'organizations' in request.path %}bg-indigo-800{% endif %}">
+                    <i class="fas fa-building mr-3"></i>
+                    <span>Mis Empresas</span>
+                </a>
+                
+                {% if request.organization %}
+                <!-- Solo visible si hay organización seleccionada -->
+                <div class="border-t border-indigo-800 my-2"></div>
+                
                 <a href="{% url 'dashboard:home' %}" class="flex items-center px-4 py-3 hover:bg-indigo-800 {% if request.resolver_match.url_name == 'home' %}bg-indigo-800{% endif %}">
                     <i class="fas fa-home mr-3"></i>
                     <span>Dashboard</span>
                 </a>
-                 <a href="{% url 'sales:dashboard' %}" class="flex items-center px-4 py-3 hover:bg-indigo-800 {% if 'sales' in request.path %}bg-indigo-800{% endif %}">
+                
+                <a href="{% url 'sales:dashboard' %}" class="flex items-center px-4 py-3 hover:bg-indigo-800 {% if 'sales' in request.path %}bg-indigo-800{% endif %}">
                     <i class="fas fa-chart-line mr-3"></i>
                     <span>Panel de Ventas</span>
                 </a>
                 
-                <a href="{% url 'dashboard:appointments_list' %}" class="flex items-center px-4 py-3 hover:bg-indigo-800 {% if 'appointments' in request.path %}bg-indigo-800{% endif %}">
-                    <i class="fas fa-calendar-check mr-3"></i>
-                    <span>Gestión de Citas</span>
-                </a>
-                
-               
-                
-                <a href="{% url 'dashboard:calendar' %}" class="flex items-center px-4 py-3 hover:bg-indigo-800 {% if 'calendar' in request.path %}bg-indigo-800{% endif %}">
-                    <i class="fas fa-calendar mr-3"></i>
-                    <span>Calendario</span>
-                </a>
+                <!-- Gestión de Citas (Menú Desplegable) -->
+                <div class="appointments-menu">
+                    <button onclick="toggleSubmenu('appointments-submenu')" class="flex items-center justify-between w-full px-4 py-3 hover:bg-indigo-800 {% if 'appointments' in request.path or 'calendar' in request.path or 'configuration' in request.path %}bg-indigo-800{% endif %}">
+                        <div class="flex items-center">
+                            <i class="fas fa-calendar-check mr-3"></i>
+                            <span>Gestión de Citas</span>
+                        </div>
+                        <i class="fas fa-chevron-down text-sm transition-transform duration-200" id="appointments-submenu-icon"></i>
+                    </button>
+                    <div id="appointments-submenu" class="bg-indigo-950 hidden">
+                        <a href="{% url 'dashboard:appointments_list' %}" class="flex items-center px-8 py-2 hover:bg-indigo-800 text-sm {% if 'appointments' in request.path and 'calendar' not in request.path %}bg-indigo-800{% endif %}">
+                            <i class="fas fa-list mr-3"></i>
+                            <span>Lista de Citas</span>
+                        </a>
+                        <a href="{% url 'dashboard:calendar' %}" class="flex items-center px-8 py-2 hover:bg-indigo-800 text-sm {% if 'calendar' in request.path %}bg-indigo-800{% endif %}">
+                            <i class="fas fa-calendar mr-3"></i>
+                            <span>Calendario</span>
+                        </a>
+                        <a href="{% url 'dashboard:configuration' %}" class="flex items-center px-8 py-2 hover:bg-indigo-800 text-sm {% if 'configuration' in request.path and 'notifications' not in request.path %}bg-indigo-800{% endif %}">
+                            <i class="fas fa-clock mr-3"></i>
+                            <span>Horarios y Fechas</span>
+                        </a>
+                    </div>
+                </div>
                 
                 <a href="{% url 'dashboard:patients_list' %}" class="flex items-center px-4 py-3 hover:bg-indigo-800 {% if 'patients' in request.path %}bg-indigo-800{% endif %}">
                     <i class="fas fa-users mr-3"></i>
                     <span>Pacientes</span>
                 </a>
                 
-                <a href="{% url 'dashboard:configuration' %}" class="flex items-center px-4 py-3 hover:bg-indigo-800 {% if 'configuration' in request.path %}bg-indigo-800{% endif %}">
-                    <i class="fas fa-cog mr-3"></i>
-                    <span>Configuración</span>
-                </a>
+                <!-- Configuración (Menú Desplegable) -->
+                <div class="configuration-menu">
+                    <button onclick="toggleSubmenu('configuration-submenu')" class="flex items-center justify-between w-full px-4 py-3 hover:bg-indigo-800 {% if 'notifications' in request.path %}bg-indigo-800{% endif %}">
+                        <div class="flex items-center">
+                            <i class="fas fa-cog mr-3"></i>
+                            <span>Configuración</span>
+                        </div>
+                        <i class="fas fa-chevron-down text-sm transition-transform duration-200" id="configuration-submenu-icon"></i>
+                    </button>
+                    <div id="configuration-submenu" class="bg-indigo-950 hidden">
+                        <a href="{% url 'dashboard:notification_settings' %}" class="flex items-center px-8 py-2 hover:bg-indigo-800 text-sm {% if 'notifications' in request.path %}bg-indigo-800{% endif %}">
+                            <i class="fab fa-whatsapp mr-3"></i>
+                            <span>WhatsApp Twilio</span>
+                        </a>
+                    </div>
+                </div>
+                
+                {% else %}
+                <!-- Mensaje cuando no hay organización seleccionada -->
+                <div class="px-4 py-6 text-center">
+                    <i class="fas fa-info-circle text-indigo-400 text-3xl mb-3"></i>
+                    <p class="text-indigo-300 text-sm">
+                        Selecciona una empresa para acceder al menú completo
+                    </p>
+                </div>
+                {% endif %}
             </nav>
             
             <div class="absolute bottom-0 w-64 p-4 bg-indigo-950">
@@ -116,6 +173,11 @@
                     <div>
                         <h2 class="text-xl md:text-2xl font-bold text-gray-800">
                             {% block page_title %}Dashboard{% endblock %}
+                            {% if request.organization %}
+                            <span class="text-base font-normal text-indigo-600 ml-2">
+                                <i class="fas fa-building text-sm"></i> {{ request.organization.name }}
+                            </span>
+                            {% endif %}
                         </h2>
                         <p class="text-xs md:text-sm text-gray-600">
                             {% block page_subtitle %}Resumen general del sistema{% endblock %}
@@ -183,6 +245,34 @@
             sidebar.classList.toggle('sidebar-hidden');
             overlay.classList.toggle('hidden');
         }
+        
+        // Toggle submenu
+        function toggleSubmenu(submenuId) {
+            const submenu = document.getElementById(submenuId);
+            const icon = document.getElementById(submenuId + '-icon');
+            
+            submenu.classList.toggle('hidden');
+            icon.classList.toggle('rotate-180');
+        }
+        
+        // Abrir submenu automáticamente si estamos en una página del submenu
+        document.addEventListener('DOMContentLoaded', function() {
+            const currentPath = window.location.pathname;
+            
+            // Submenu de Gestión de Citas
+            if (currentPath.includes('appointments') || currentPath.includes('calendar') || currentPath.includes('configuration')) {
+                const appointmentsSubmenu = document.getElementById('appointments-submenu');
+                appointmentsSubmenu.classList.remove('hidden');
+                document.getElementById('appointments-submenu-icon').classList.add('rotate-180');
+            }
+            
+            // Submenu de Configuración
+            if (currentPath.includes('notifications')) {
+                const configurationSubmenu = document.getElementById('configuration-submenu');
+                configurationSubmenu.classList.remove('hidden');
+                document.getElementById('configuration-submenu-icon').classList.add('rotate-180');
+            }
+        });
         
         // Cerrar sidebar al hacer click en un enlace (solo en móvil)
         document.querySelectorAll('#sidebar a').forEach(link => {

@@ -77,16 +77,37 @@ class WhatsAppNotifierLocal:
         fecha = appointment.appointment_date.strftime('%d/%m/%Y')
         hora = appointment.appointment_time.strftime('%I:%M %p')
         
+        # Obtener datos de la organización
+        org_name = "OCEANO OPTICO"
+        org_phone = getattr(settings, 'BUSINESS_PHONE', '300 123 4567')
+        org_address = ""
+        
+        if hasattr(appointment, 'organization') and appointment.organization:
+            org = appointment.organization
+            org_name = org.name.upper()
+            org_phone = org.phone or org_phone
+            
+            # Construir dirección completa
+            address_parts = []
+            if org.address:
+                address_parts.append(org.address)
+            if org.neighborhood:
+                address_parts.append(org.neighborhood)
+            if org.city:
+                address_parts.append(org.city)
+            
+            if address_parts:
+                org_address = f"\n📍 *Dirección:* {', '.join(address_parts)}"
+        
         message = f"""
-🌊 *OCEANO OPTICO* 👓
+👓 *{org_name}* 
 
 ¡Hola {appointment.full_name}!
 
 ✅ Tu cita ha sido agendada exitosamente:
 
 📅 *Fecha:* {fecha}
-🕐 *Hora:* {hora}
-📍 *Lugar:* OCEANO OPTICO
+🕐 *Hora:* {hora}{org_address}
 
 💡 *Recomendaciones:*
 • Llega 10 minutos antes
@@ -94,7 +115,7 @@ class WhatsAppNotifierLocal:
 • Si usas lentes, tráelos contigo
 
 ❓ *¿Necesitas cancelar o reagendar?*
-Llámanos al: {getattr(settings, 'BUSINESS_PHONE', '300 123 4567')}
+Llámanos al: {org_phone}
 
 ¡Te esperamos! 😊
         """.strip()
@@ -106,8 +127,29 @@ Llámanos al: {getattr(settings, 'BUSINESS_PHONE', '300 123 4567')}
         fecha = appointment.appointment_date.strftime('%d/%m/%Y')
         hora = appointment.appointment_time.strftime('%I:%M %p')
         
+        # Obtener datos de la organización
+        org_name = "OCEANO OPTICO"
+        org_phone = getattr(settings, 'BUSINESS_PHONE', '300 123 4567')
+        org_address = ""
+        
+        if hasattr(appointment, 'organization') and appointment.organization:
+            org = appointment.organization
+            org_name = org.name.upper()
+            org_phone = org.phone or org_phone
+            
+            address_parts = []
+            if org.address:
+                address_parts.append(org.address)
+            if org.neighborhood:
+                address_parts.append(org.neighborhood)
+            if org.city:
+                address_parts.append(org.city)
+            
+            if address_parts:
+                org_address = f"\n📍 *Dirección:* {', '.join(address_parts)}"
+        
         message = f"""
-🌊 *OCEANO OPTICO* 👓
+👓 *{org_name}*
 
 ¡Hola {appointment.full_name}!
 
@@ -116,13 +158,12 @@ Llámanos al: {getattr(settings, 'BUSINESS_PHONE', '300 123 4567')}
 Mañana tienes una cita agendada:
 
 📅 *Fecha:* {fecha}
-🕐 *Hora:* {hora}
-📍 *Lugar:* OCEANO OPTICO
+🕐 *Hora:* {hora}{org_address}
 
 Nos vemos mañana 😊
 
 *Si necesitas cancelar, llámanos:*
-📞 {getattr(settings, 'BUSINESS_PHONE', '300 123 4567')}
+📞 {org_phone}
         """.strip()
         
         return self.send_message(appointment.phone_number, message)
@@ -132,18 +173,28 @@ Nos vemos mañana 😊
         fecha = appointment.appointment_date.strftime('%d/%m/%Y')
         hora = appointment.appointment_time.strftime('%I:%M %p')
         
+        # Obtener datos de la organización
+        org_name = "OCEANO OPTICO"
+        org_phone = getattr(settings, 'BUSINESS_PHONE', '300 123 4567')
+        booking_url = getattr(settings, 'WEBSITE_URL', 'http://127.0.0.1:8000') + '/agendar/'
+        
+        if hasattr(appointment, 'organization') and appointment.organization:
+            org = appointment.organization
+            org_name = org.name.upper()
+            org_phone = org.phone or org_phone
+        
         message = f"""
-🌊 *OCEANO OPTICO* 👓
+👓 *{org_name}*
 
 Hola {appointment.full_name},
 
 Tu cita del día *{fecha}* a las *{hora}* ha sido cancelada.
 
 Si deseas reagendar, contáctanos:
-📞 {getattr(settings, 'BUSINESS_PHONE', '300 123 4567')}
+📞 {org_phone}
 
 O agenda en línea:
-🌐 {getattr(settings, 'WEBSITE_URL', 'http://127.0.0.1:8000')}/agendar/
+🌐 {booking_url}
 
 ¡Gracias! 😊
         """.strip()

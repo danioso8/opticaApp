@@ -10,13 +10,24 @@ class TenantMiddleware(MiddlewareMixin):
     basándose en el subdominio o en la sesión del usuario
     """
     
+    EXEMPT_PATHS = ['/admin/', '/saas-admin/', '/dashboard/login/', '/dashboard/logout/', '/organizations/register/']
+    
     def process_request(self, request):
         # Inicializar el tenant en None
         request.organization = None
         request.tenant = None
         
+        # Verificar si la ruta está exenta
+        for exempt_path in self.EXEMPT_PATHS:
+            if request.path.startswith(exempt_path):
+                return None
+        
         # Si el usuario no está autenticado, no hay tenant
         if not request.user.is_authenticated:
+            return None
+        
+        # Los superusuarios no requieren tenant
+        if request.user.is_superuser:
             return None
         
         # Intentar obtener la organización del subdominio
@@ -79,22 +90,31 @@ class TenantMiddleware(MiddlewareMixin):
 
 class SubscriptionMiddleware(MiddlewareMixin):
     """
-    Middleware que verifica que la organización tenga una suscripción activa
+    Middleware que verifica que el usuario tenga una suscripción activa
+    (La suscripción está asociada al usuario, no a la organización)
     """
     
     # URLs que no requieren suscripción activa
     EXEMPT_URLS = [
         '/admin/',
-        '/accounts/login/',
-        '/accounts/logout/',
+        '/saas-admin/',
+        '/dashboard/login/',
+        '/dashboard/logout/',
+        '/dashboard/register/',
+        '/organizations/register/',
+        '/organizations/subscription/',
         '/subscription/expired/',
         '/subscription/plans/',
         '/subscription/checkout/',
     ]
     
     def process_request(self, request):
-        # Si no hay organización, no verificar suscripción
-        if not hasattr(request, 'organization') or not request.organization:
+        # Si el usuario no está autenticado, no verificar suscripción
+        if not request.user.is_authenticated:
+            return None
+        
+        # Los superusuarios tienen acceso sin restricciones
+        if request.user.is_superuser:
             return None
         
         # Verificar si la URL está exenta
@@ -102,12 +122,18 @@ class SubscriptionMiddleware(MiddlewareMixin):
             if request.path.startswith(exempt_url):
                 return None
         
-        # Verificar si la organización tiene suscripción activa
-        organization = request.organization
-        
-        if not organization.is_subscription_active:
-            # Redirigir a página de suscripción expirada
-            if request.path != reverse('subscription_expired'):
-                return redirect('subscription_expired')
+        # Verificar si el usuario tiene suscripción activa
+        try:
+            from apps.users.models import UserSubscription
+            user_subscription = UserSubscription.objects.get(user=request.user)
+            
+            # Si la suscripción ha expirado o no está activa
+            if not user_subscription.is_active or user_subscription.is_expired:
+                if request.path != reverse('organizations:subscription_expired'):
+                    return redirect('organizations:subscription_expired')
+        except UserSubscription.DoesNotExist:
+            # Si no tiene suscripción, redirigir a seleccionar plan
+            if request.path != reverse('organizations:subscription_plans'):
+                return redirect('organizations:subscription_plans')
         
         return None

@@ -2,72 +2,228 @@
 
 {% block title %}Planes de Suscripción{% endblock %}
 
-{% block content %}
-<div class="container mt-4">
-    <div class="text-center mb-5">
-        <h2>Planes de Suscripción</h2>
-        <p class="lead">Elige el plan que mejor se adapte a tu negocio</p>
-    </div>
+{% block page_title %}Planes de Suscripción{% endblock %}
+{% block page_subtitle %}Elige el plan perfecto para tu negocio{% endblock %}
 
-    <div class="row">
-        {% for plan in plans %}
-        <div class="col-md-3 mb-4">
-            <div class="card {% if current_plan and plan.id == current_plan.id %}border-primary{% endif %}">
-                {% if current_plan and plan.id == current_plan.id %}
-                <div class="card-header bg-primary text-white text-center">
-                    <strong>Tu Plan Actual</strong>
-                </div>
-                {% endif %}
-                <div class="card-body text-center">
-                    <h4 class="card-title">{{ plan.name }}</h4>
-                    <h2 class="text-primary mb-0">${{ plan.price_monthly }}</h2>
-                    <p class="text-muted">/mes</p>
-                    <p class="text-muted small">o ${{ plan.price_yearly }}/año</p>
-                    
-                    <hr>
-                    
-                    <ul class="list-unstyled text-left">
-                        <li><i class="fas fa-check text-success"></i> {{ plan.max_users }} usuarios</li>
-                        <li><i class="fas fa-check text-success"></i> {{ plan.max_appointments_month }} citas/mes</li>
-                        <li><i class="fas fa-check text-success"></i> {{ plan.max_patients }} pacientes</li>
-                        <li><i class="fas fa-check text-success"></i> {{ plan.max_storage_mb }} MB storage</li>
-                        
-                        {% if plan.whatsapp_integration %}
-                        <li><i class="fas fa-check text-success"></i> WhatsApp</li>
-                        {% endif %}
-                        
-                        {% if plan.custom_branding %}
-                        <li><i class="fas fa-check text-success"></i> Marca personalizada</li>
-                        {% endif %}
-                        
-                        {% if plan.api_access %}
-                        <li><i class="fas fa-check text-success"></i> Acceso API</li>
-                        {% endif %}
-                        
-                        {% if plan.priority_support %}
-                        <li><i class="fas fa-check text-success"></i> Soporte prioritario</li>
-                        {% endif %}
-                        
-                        {% if plan.analytics %}
-                        <li><i class="fas fa-check text-success"></i> Análisis avanzado</li>
-                        {% endif %}
-                        
-                        {% if plan.multi_location %}
-                        <li><i class="fas fa-check text-success"></i> Múltiples ubicaciones</li>
-                        {% endif %}
-                    </ul>
-                    
-                    {% if current_plan and plan.id == current_plan.id %}
-                        <button class="btn btn-secondary btn-block" disabled>Plan Actual</button>
-                    {% elif plan.price_monthly == 0 %}
-                        <button class="btn btn-outline-primary btn-block" disabled>Gratis</button>
-                    {% else %}
-                        <a href="#" class="btn btn-primary btn-block">Seleccionar</a>
-                    {% endif %}
-                </div>
-            </div>
+{% block content %}
+<!-- Banner de plan actual -->
+{% if current_subscription and not has_unlimited_access %}
+<div class="bg-gradient-to-r from-blue-500 to-indigo-600 rounded-lg shadow-lg p-6 mb-8 text-white">
+    <div class="flex flex-col md:flex-row items-center justify-between">
+        <div class="mb-4 md:mb-0">
+            <h3 class="text-xl font-bold mb-2">
+                <i class="fas fa-star mr-2"></i>Plan Actual: {{ current_subscription.plan.name }}
+            </h3>
+            <p class="text-blue-100">
+                Vence en {{ current_subscription.days_remaining }} días • 
+                <span class="font-semibold">${{ current_subscription.amount_paid }}</span>
+            </p>
         </div>
-        {% endfor %}
+        <div class="text-right">
+            <span class="px-4 py-2 bg-white bg-opacity-20 rounded-lg backdrop-blur-sm">
+                {{ current_subscription.get_billing_cycle_display }}
+            </span>
+        </div>
     </div>
 </div>
+{% elif has_unlimited_access %}
+<div class="bg-gradient-to-r from-purple-500 to-pink-600 rounded-lg shadow-lg p-6 mb-8 text-white">
+    <div class="text-center">
+        <i class="fas fa-crown text-5xl mb-3"></i>
+        <h3 class="text-2xl font-bold mb-2">Acceso Ilimitado</h3>
+        <p class="text-purple-100">Tienes acceso completo sin restricciones</p>
+    </div>
+</div>
+{% endif %}
+
+{% if messages %}
+    {% for message in messages %}
+    <div class="mb-6 p-4 rounded-lg {% if message.tags == 'success' %}bg-green-100 text-green-800{% elif message.tags == 'error' %}bg-red-100 text-red-800{% else %}bg-blue-100 text-blue-800{% endif %}">
+        <i class="fas {% if message.tags == 'success' %}fa-check-circle{% elif message.tags == 'error' %}fa-exclamation-circle{% else %}fa-info-circle{% endif %} mr-2"></i>
+        {{ message }}
+    </div>
+    {% endfor %}
+{% endif %}
+
+<!-- Toggle Mensual/Anual -->
+<div class="text-center mb-8">
+    <div class="inline-flex bg-gray-100 rounded-lg p-1">
+        <button onclick="toggleBilling('monthly')" id="btn-monthly" class="px-6 py-2 rounded-md font-medium transition bg-white text-indigo-600 shadow">
+            Mensual
+        </button>
+        <button onclick="toggleBilling('yearly')" id="btn-yearly" class="px-6 py-2 rounded-md font-medium transition text-gray-600">
+            Anual <span class="ml-2 text-xs bg-green-500 text-white px-2 py-1 rounded">Ahorra hasta 20%</span>
+        </button>
+    </div>
+</div>
+
+<!-- Grid de Planes -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+    {% for plan in plans %}
+    <div class="bg-white rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden border-2 
+        {% if current_subscription and current_subscription.plan.id == plan.id %}border-indigo-600{% else %}border-gray-200{% endif %}">
+        
+        <!-- Header del Plan -->
+        <div class="p-6 {% if plan.plan_type == 'enterprise' %}bg-gradient-to-br from-purple-600 to-indigo-600 text-white
+            {% elif plan.plan_type == 'professional' %}bg-gradient-to-br from-blue-600 to-cyan-600 text-white
+            {% elif plan.plan_type == 'basic' %}bg-gradient-to-br from-indigo-500 to-blue-500 text-white
+            {% else %}bg-gradient-to-br from-gray-500 to-gray-600 text-white{% endif %}">
+            
+            {% if current_subscription and current_subscription.plan.id == plan.id %}
+            <span class="inline-block px-3 py-1 bg-white bg-opacity-20 rounded-full text-xs font-semibold mb-3">
+                Plan Actual
+            </span>
+            {% endif %}
+            
+            <h3 class="text-2xl font-bold mb-2">{{ plan.name }}</h3>
+            <p class="text-sm opacity-90">{{ plan.get_plan_type_display }}</p>
+            
+            <!-- Precio Mensual -->
+            <div class="mt-4 price-monthly">
+                <span class="text-4xl font-bold">${{ plan.price_monthly }}</span>
+                <span class="text-sm opacity-90">/mes</span>
+            </div>
+            
+            <!-- Precio Anual (oculto por defecto) -->
+            <div class="mt-4 price-yearly hidden">
+                <span class="text-4xl font-bold">${{ plan.price_yearly }}</span>
+                <span class="text-sm opacity-90">/año</span>
+            </div>
+        </div>
+        
+        <!-- Características -->
+        <div class="p-6">
+            <ul class="space-y-3 mb-6">
+                <li class="flex items-start text-sm">
+                    <i class="fas fa-check text-green-500 mt-1 mr-3"></i>
+                    <span><strong>{{ plan.max_patients }}</strong> empresas</span>
+                </li>
+                <li class="flex items-start text-sm">
+                    <i class="fas fa-check text-green-500 mt-1 mr-3"></i>
+                    <span><strong>{{ plan.max_users }}</strong> usuarios</span>
+                </li>
+                <li class="flex items-start text-sm">
+                    <i class="fas fa-check text-green-500 mt-1 mr-3"></i>
+                    <span><strong>{{ plan.max_appointments_month }}</strong> citas/mes</span>
+                </li>
+                <li class="flex items-start text-sm">
+                    <i class="fas fa-check text-green-500 mt-1 mr-3"></i>
+                    <span><strong>{{ plan.max_storage_mb }}MB</strong> almacenamiento</span>
+                </li>
+                
+                {% if plan.whatsapp_integration %}
+                <li class="flex items-start text-sm">
+                    <i class="fas fa-check text-green-500 mt-1 mr-3"></i>
+                    <span>Integración WhatsApp</span>
+                </li>
+                {% endif %}
+                
+                {% if plan.custom_branding %}
+                <li class="flex items-start text-sm">
+                    <i class="fas fa-check text-green-500 mt-1 mr-3"></i>
+                    <span>Marca personalizada</span>
+                </li>
+                {% endif %}
+                
+                {% if plan.priority_support %}
+                <li class="flex items-start text-sm">
+                    <i class="fas fa-check text-green-500 mt-1 mr-3"></i>
+                    <span>Soporte prioritario</span>
+                </li>
+                {% endif %}
+            </ul>
+            
+            <!-- Botón de Acción -->
+            {% if not has_unlimited_access %}
+                {% if current_subscription and current_subscription.plan.id == plan.id %}
+                    <button disabled class="w-full bg-gray-300 text-gray-600 py-3 rounded-lg font-semibold cursor-not-allowed">
+                        Plan Actual
+                    </button>
+                {% else %}
+                    <button onclick="selectPlan({{ plan.id }}, '{{ plan.name }}')" 
+                            class="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-3 rounded-lg font-semibold transition">
+                        {% if current_subscription %}Cambiar Plan{% else %}Seleccionar{% endif %}
+                    </button>
+                {% endif %}
+            {% else %}
+                <button disabled class="w-full bg-purple-300 text-purple-700 py-3 rounded-lg font-semibold cursor-not-allowed">
+                    <i class="fas fa-crown mr-2"></i>Ilimitado
+                </button>
+            {% endif %}
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- Modal de Confirmación -->
+<div id="confirmModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-lg shadow-2xl max-w-md w-full p-6">
+        <h3 class="text-2xl font-bold text-gray-900 mb-4">Confirmar cambio de plan</h3>
+        <p class="text-gray-600 mb-6">
+            ¿Deseas cambiar al plan <strong id="selectedPlanName"></strong>?
+        </p>
+        
+        <form id="upgradePlanForm" method="POST" action="">
+            {% csrf_token %}
+            <input type="hidden" name="billing_cycle" id="billingCycleInput" value="monthly">
+            
+            <div class="flex gap-3">
+                <button type="button" onclick="closeModal()" 
+                        class="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 py-3 rounded-lg font-semibold transition">
+                    Cancelar
+                </button>
+                <button type="submit" 
+                        class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white py-3 rounded-lg font-semibold transition">
+                    Confirmar
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+let currentBilling = 'monthly';
+
+function toggleBilling(type) {
+    currentBilling = type;
+    
+    const btnMonthly = document.getElementById('btn-monthly');
+    const btnYearly = document.getElementById('btn-yearly');
+    
+    if (type === 'monthly') {
+        btnMonthly.classList.add('bg-white', 'text-indigo-600', 'shadow');
+        btnMonthly.classList.remove('text-gray-600');
+        btnYearly.classList.remove('bg-white', 'text-indigo-600', 'shadow');
+        btnYearly.classList.add('text-gray-600');
+        
+        document.querySelectorAll('.price-monthly').forEach(el => el.classList.remove('hidden'));
+        document.querySelectorAll('.price-yearly').forEach(el => el.classList.add('hidden'));
+    } else {
+        btnYearly.classList.add('bg-white', 'text-indigo-600', 'shadow');
+        btnYearly.classList.remove('text-gray-600');
+        btnMonthly.classList.remove('bg-white', 'text-indigo-600', 'shadow');
+        btnMonthly.classList.add('text-gray-600');
+        
+        document.querySelectorAll('.price-yearly').forEach(el => el.classList.remove('hidden'));
+        document.querySelectorAll('.price-monthly').forEach(el => el.classList.add('hidden'));
+    }
+}
+
+function selectPlan(planId, planName) {
+    document.getElementById('selectedPlanName').textContent = planName;
+    document.getElementById('billingCycleInput').value = currentBilling;
+    document.getElementById('upgradePlanForm').action = `/organizations/subscription/upgrade/${planId}/`;
+    document.getElementById('confirmModal').classList.remove('hidden');
+}
+
+function closeModal() {
+    document.getElementById('confirmModal').classList.add('hidden');
+}
+
+document.getElementById('confirmModal').addEventListener('click', function(e) {
+    if (e.target === this) {
+        closeModal();
+    }
+});
+</script>
 {% endblock %}

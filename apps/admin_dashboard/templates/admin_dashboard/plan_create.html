@@ -1,0 +1,112 @@
+{% extends 'admin_dashboard/base.html' %}
+
+{% block title %}Crear Plan - Admin{% endblock %}
+
+{% block content %}
+<div class="mb-6">
+    <a href="{% url 'admin_dashboard:plans_list' %}" class="text-indigo-600 hover:text-indigo-800 inline-flex items-center">
+        <i class="fas fa-arrow-left mr-2"></i> Volver a planes
+    </a>
+</div>
+
+<div class="max-w-3xl">
+    <div class="bg-white rounded-lg shadow-md p-6">
+        <h1 class="text-2xl font-bold text-gray-800 mb-6">
+            <i class="fas fa-plus text-indigo-600 mr-2"></i>
+            Crear Nuevo Plan de Suscripción
+        </h1>
+
+        <form method="post" class="space-y-6">
+            {% csrf_token %}
+
+            <!-- Nombre -->
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Nombre del Plan *</label>
+                <input type="text" name="name" required 
+                       class="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-indigo-500"
+                       placeholder="ej. Plan Básico, Plan Pro, Plan Empresarial">
+            </div>
+
+            <!-- Descripción -->
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Descripción</label>
+                <textarea name="description" rows="3"
+                          class="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-indigo-500"
+                          placeholder="Descripción breve del plan y sus beneficios"></textarea>
+            </div>
+
+            <!-- Precios -->
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Precio Mensual *</label>
+                    <div class="relative">
+                        <span class="absolute left-3 top-2 text-gray-500">$</span>
+                        <input type="number" name="monthly_price" step="0.01" required 
+                               class="w-full pl-8 pr-4 py-2 border-2 border-gray-300 rounded-lg focus:border-indigo-500">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Precio Anual *</label>
+                    <div class="relative">
+                        <span class="absolute left-3 top-2 text-gray-500">$</span>
+                        <input type="number" name="yearly_price" step="0.01" required 
+                               class="w-full pl-8 pr-4 py-2 border-2 border-gray-300 rounded-lg focus:border-indigo-500">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Límites -->
+            <div class="border-t pt-4">
+                <h3 class="text-lg font-semibold text-gray-800 mb-4">Límites del Plan</h3>
+                
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            <i class="fas fa-building text-indigo-600 mr-1"></i>
+                            Máx. Organizaciones *
+                        </label>
+                        <input type="number" name="max_organizations" required min="1"
+                               class="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-indigo-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            <i class="fas fa-users text-indigo-600 mr-1"></i>
+                            Máx. Usuarios *
+                        </label>
+                        <input type="number" name="max_users" required min="1"
+                               class="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-indigo-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            <i class="fas fa-calendar text-indigo-600 mr-1"></i>
+                            Máx. Citas/mes *
+                        </label>
+                        <input type="number" name="max_appointments" required min="1"
+                               class="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-indigo-500">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Estado -->
+            <div class="flex items-center">
+                <input type="checkbox" name="is_active" id="is_active" checked
+                       class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded">
+                <label for="is_active" class="ml-2 block text-sm text-gray-700">
+                    Plan activo (disponible para nuevos usuarios)
+                </label>
+            </div>
+
+            <!-- Botones -->
+            <div class="flex gap-3 pt-4">
+                <button type="submit" class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-lg font-medium">
+                    <i class="fas fa-save mr-2"></i>Crear Plan
+                </button>
+                <a href="{% url 'admin_dashboard:plans_list' %}" 
+                   class="px-6 py-3 border-2 border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">
+                    Cancelar
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

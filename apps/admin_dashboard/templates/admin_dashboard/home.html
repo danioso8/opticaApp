@@ -1,0 +1,173 @@
+{% extends 'admin_dashboard/base.html' %}
+
+{% block title %}Dashboard - Admin{% endblock %}
+
+{% block content %}
+<div class="mb-6">
+    <h1 class="text-3xl font-bold text-gray-800">
+        <i class="fas fa-chart-line text-indigo-600 mr-2"></i>
+        Dashboard de Administración
+    </h1>
+    <p class="text-gray-600 mt-1">Vista general del sistema SaaS</p>
+</div>
+
+<!-- Estadísticas principales -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+    <div class="bg-white rounded-lg shadow-md p-6">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-gray-500 text-sm font-medium">Total Usuarios</p>
+                <h3 class="text-3xl font-bold text-gray-800 mt-2">{{ total_users }}</h3>
+                <p class="text-sm text-green-600 mt-1">
+                    <i class="fas fa-arrow-up mr-1"></i>{{ recent_users }} esta semana
+                </p>
+            </div>
+            <div class="bg-blue-100 rounded-full p-4">
+                <i class="fas fa-users text-blue-600 text-2xl"></i>
+            </div>
+        </div>
+    </div>
+
+    <div class="bg-white rounded-lg shadow-md p-6">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-gray-500 text-sm font-medium">Suscripciones Activas</p>
+                <h3 class="text-3xl font-bold text-gray-800 mt-2">{{ active_subscriptions }}</h3>
+                <p class="text-sm text-gray-600 mt-1">de {{ total_subscriptions }} totales</p>
+            </div>
+            <div class="bg-green-100 rounded-full p-4">
+                <i class="fas fa-check-circle text-green-600 text-2xl"></i>
+            </div>
+        </div>
+    </div>
+
+    <div class="bg-white rounded-lg shadow-md p-6">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-gray-500 text-sm font-medium">Organizaciones</p>
+                <h3 class="text-3xl font-bold text-gray-800 mt-2">{{ total_organizations }}</h3>
+                <p class="text-sm text-gray-600 mt-1">empresas registradas</p>
+            </div>
+            <div class="bg-purple-100 rounded-full p-4">
+                <i class="fas fa-building text-purple-600 text-2xl"></i>
+            </div>
+        </div>
+    </div>
+
+    <div class="bg-white rounded-lg shadow-md p-6">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-gray-500 text-sm font-medium">Por Expirar</p>
+                <h3 class="text-3xl font-bold text-orange-600 mt-2">{{ expiring_soon.count }}</h3>
+                <p class="text-sm text-gray-600 mt-1">próximos 7 días</p>
+            </div>
+            <div class="bg-orange-100 rounded-full p-4">
+                <i class="fas fa-exclamation-triangle text-orange-600 text-2xl"></i>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <!-- Últimos usuarios -->
+    <div class="bg-white rounded-lg shadow-md p-6">
+        <h3 class="text-lg font-semibold text-gray-800 mb-4">
+            <i class="fas fa-user-plus text-indigo-600 mr-2"></i>
+            Últimos Usuarios Registrados
+        </h3>
+        <div class="space-y-3">
+            {% for user in latest_users %}
+            <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                <div class="flex items-center">
+                    <div class="w-10 h-10 bg-indigo-100 rounded-full flex items-center justify-center">
+                        <i class="fas fa-user text-indigo-600"></i>
+                    </div>
+                    <div class="ml-3">
+                        <p class="font-medium text-gray-800">{{ user.get_full_name|default:user.username }}</p>
+                        <p class="text-sm text-gray-500">{{ user.email }}</p>
+                    </div>
+                </div>
+                <a href="{% url 'admin_dashboard:user_detail' user.id %}" class="text-indigo-600 hover:text-indigo-800">
+                    <i class="fas fa-arrow-right"></i>
+                </a>
+            </div>
+            {% empty %}
+            <p class="text-gray-500 text-center py-4">No hay usuarios registrados</p>
+            {% endfor %}
+        </div>
+        <a href="{% url 'admin_dashboard:users_list' %}" class="block text-center mt-4 text-indigo-600 hover:text-indigo-800 font-medium">
+            Ver todos los usuarios <i class="fas fa-arrow-right ml-1"></i>
+        </a>
+    </div>
+
+    <!-- Suscripciones por expirar -->
+    <div class="bg-white rounded-lg shadow-md p-6">
+        <h3 class="text-lg font-semibold text-gray-800 mb-4">
+            <i class="fas fa-clock text-orange-600 mr-2"></i>
+            Suscripciones Por Expirar
+        </h3>
+        <div class="space-y-3">
+            {% for sub in expiring_soon %}
+            <div class="flex items-center justify-between p-3 bg-orange-50 rounded-lg border-l-4 border-orange-500">
+                <div>
+                    <p class="font-medium text-gray-800">{{ sub.user.get_full_name|default:sub.user.username }}</p>
+                    <p class="text-sm text-gray-600">{{ sub.plan.name }} - Expira: {{ sub.end_date|date:"d/m/Y" }}</p>
+                    <p class="text-xs text-orange-600 font-medium">{{ sub.days_remaining }} días restantes</p>
+                </div>
+                <a href="{% url 'admin_dashboard:user_detail' sub.user.id %}" class="text-orange-600 hover:text-orange-800">
+                    <i class="fas fa-arrow-right"></i>
+                </a>
+            </div>
+            {% empty %}
+            <p class="text-gray-500 text-center py-4">No hay suscripciones por expirar</p>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Distribución de planes -->
+    <div class="bg-white rounded-lg shadow-md p-6">
+        <h3 class="text-lg font-semibold text-gray-800 mb-4">
+            <i class="fas fa-chart-pie text-purple-600 mr-2"></i>
+            Suscripciones por Plan
+        </h3>
+        <div class="space-y-3">
+            {% for item in subscriptions_by_plan %}
+            <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                <span class="font-medium text-gray-800">{{ item.plan__name }}</span>
+                <span class="bg-purple-100 text-purple-800 px-3 py-1 rounded-full text-sm font-semibold">
+                    {{ item.count }}
+                </span>
+            </div>
+            {% empty %}
+            <p class="text-gray-500 text-center py-4">No hay suscripciones activas</p>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Accesos rápidos -->
+    <div class="bg-white rounded-lg shadow-md p-6">
+        <h3 class="text-lg font-semibold text-gray-800 mb-4">
+            <i class="fas fa-bolt text-yellow-600 mr-2"></i>
+            Accesos Rápidos
+        </h3>
+        <div class="grid grid-cols-2 gap-3">
+            <a href="{% url 'admin_dashboard:users_list' %}" class="p-4 bg-blue-50 rounded-lg hover:bg-blue-100 transition text-center">
+                <i class="fas fa-users text-blue-600 text-2xl mb-2"></i>
+                <p class="text-sm font-medium text-gray-800">Gestionar Usuarios</p>
+            </a>
+            <a href="{% url 'admin_dashboard:subscriptions_list' %}" class="p-4 bg-green-50 rounded-lg hover:bg-green-100 transition text-center">
+                <i class="fas fa-credit-card text-green-600 text-2xl mb-2"></i>
+                <p class="text-sm font-medium text-gray-800">Suscripciones</p>
+            </a>
+            <a href="{% url 'admin_dashboard:plans_list' %}" class="p-4 bg-purple-50 rounded-lg hover:bg-purple-100 transition text-center">
+                <i class="fas fa-box text-purple-600 text-2xl mb-2"></i>
+                <p class="text-sm font-medium text-gray-800">Planes</p>
+            </a>
+            <a href="{% url 'admin_dashboard:organizations_list' %}" class="p-4 bg-orange-50 rounded-lg hover:bg-orange-100 transition text-center">
+                <i class="fas fa-building text-orange-600 text-2xl mb-2"></i>
+                <p class="text-sm font-medium text-gray-800">Organizaciones</p>
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}
