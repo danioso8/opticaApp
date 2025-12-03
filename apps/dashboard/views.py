@@ -429,6 +429,7 @@ def patient_edit(request, pk):
         
         try:
             patient.full_name = request.POST.get('full_name')
+            patient.identification_type = request.POST.get('identification_type', 'CC')
             patient.identification = request.POST.get('identification', '')
             patient.date_of_birth = request.POST.get('date_of_birth') or None
             patient.gender = request.POST.get('gender', '')
@@ -671,6 +672,7 @@ def patient_edit(request, pk):
         
         try:
             patient.full_name = request.POST.get('full_name')
+            patient.identification_type = request.POST.get('identification_type', 'CC')
             patient.identification = request.POST.get('identification', '')
             patient.date_of_birth = request.POST.get('date_of_birth') or None
             patient.gender = request.POST.get('gender', '')

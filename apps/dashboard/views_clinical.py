@@ -413,7 +413,7 @@ def clinical_history_pdf(request, patient_id, history_id):
     
     patient_data = [
         ['Nombre:', patient.full_name, 'Número de HC:', str(history.id)],
-        ['Identificación:', f"{patient.get_identification_type_display()} {patient.identification_number}", 'Edad:', f"{history.age_at_exam or 'N/A'} años"],
+        ['Identificación:', f"{patient.get_identification_type_display()} {patient.identification}", 'Edad:', f"{history.age_at_exam or 'N/A'} años"],
         ['Fecha de Nacimiento:', str(patient.date_of_birth) if patient.date_of_birth else 'N/A', 'Sexo:', patient.get_gender_display() if patient.gender else 'N/A'],
         ['Teléfono:', patient.phone or 'N/A', 'Email:', patient.email or 'N/A'],
         ['Fecha del Examen:', str(history.date), 'Médico/Optómetra:', history.doctor.full_name if history.doctor else 'N/A'],

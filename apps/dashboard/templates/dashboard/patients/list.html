@@ -502,7 +502,24 @@
                     
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">
-                            Identificación
+                            Tipo de Identificación
+                        </label>
+                        <select id="edit_identification_type" name="identification_type"
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                            <option value="">Seleccionar...</option>
+                            <option value="CC">Cédula de Ciudadanía</option>
+                            <option value="CE">Cédula de Extranjería</option>
+                            <option value="TI">Tarjeta de Identidad</option>
+                            <option value="PA">Pasaporte</option>
+                            <option value="RC">Registro Civil</option>
+                            <option value="NIT">NIT</option>
+                            <option value="OTRO">Otro</option>
+                        </select>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">
+                            Número de Identificación
                         </label>
                         <input type="text" id="edit_identification" name="identification"
                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
@@ -847,6 +864,7 @@ async function openEditPatientModal(patientId) {
             // Llenar el formulario
             document.getElementById('edit_patient_id').value = patient.id;
             document.getElementById('edit_full_name').value = patient.full_name || '';
+            document.getElementById('edit_identification_type').value = patient.identification_type || 'CC';
             document.getElementById('edit_identification').value = patient.identification || '';
             document.getElementById('edit_date_of_birth').value = patient.date_of_birth || '';
             document.getElementById('edit_gender').value = patient.gender || '';
