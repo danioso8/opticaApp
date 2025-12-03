@@ -7,11 +7,13 @@ import django.db.models.deletion
 def clear_doctor_field(apps, schema_editor):
     """
     Limpia el campo doctor de todas las historias clínicas existentes
-    antes de cambiar su tipo de CharField a ForeignKey
+    antes de cambiar su tipo de CharField a ForeignKey.
+    Establece NULL en lugar de cadena vacía.
     """
-    ClinicalHistory = apps.get_model('patients', 'ClinicalHistory')
-    # Establecer el campo doctor como vacío para todas las historias existentes
-    ClinicalHistory.objects.all().update(doctor='')
+    # Usar SQL directo para establecer el campo como NULL
+    from django.db import connection
+    with connection.cursor() as cursor:
+        cursor.execute("UPDATE patients_clinicalhistory SET doctor = NULL")
 
 
 class Migration(migrations.Migration):
