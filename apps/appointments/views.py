@@ -12,6 +12,7 @@ from .models import (
     Appointment,
     TimeSlot
 )
+from apps.patients.models import Patient
 from .serializers import (
     AppointmentConfigurationSerializer,
     WorkingHoursSerializer,
