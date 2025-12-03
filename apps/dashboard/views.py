@@ -593,6 +593,7 @@ def patient_create(request):
                     # Si existe pero está inactivo, reactivarlo y actualizar datos
                     existing.is_active = True
                     existing.full_name = request.POST.get('full_name')
+                    existing.identification_type = request.POST.get('identification_type', 'CC')
                     existing.date_of_birth = request.POST.get('date_of_birth') or None
                     existing.gender = request.POST.get('gender', '')
                     existing.phone_number = request.POST.get('phone_number')
@@ -623,6 +624,7 @@ def patient_create(request):
             patient = Patient.objects.create(
                 organization=organization,
                 full_name=request.POST.get('full_name'),
+                identification_type=request.POST.get('identification_type', 'CC'),
                 identification=identification,
                 date_of_birth=request.POST.get('date_of_birth') or None,
                 gender=request.POST.get('gender', ''),

@@ -16,9 +16,26 @@ class Patient(TenantModel):
         ('F', 'Femenino'),
         ('O', 'Otro'),
     ]
+    
+    ID_TYPE_CHOICES = [
+        ('CC', 'Cédula de Ciudadanía'),
+        ('CE', 'Cédula de Extranjería'),
+        ('TI', 'Tarjeta de Identidad'),
+        ('PA', 'Pasaporte'),
+        ('RC', 'Registro Civil'),
+        ('NIT', 'NIT'),
+        ('OTRO', 'Otro'),
+    ]
 
     # Información personal
     full_name = models.CharField(max_length=200, verbose_name="Nombre completo")
+    identification_type = models.CharField(
+        max_length=10,
+        choices=ID_TYPE_CHOICES,
+        blank=True,
+        default='CC',
+        verbose_name="Tipo de identificación"
+    )
     identification = models.CharField(
         max_length=50,
         blank=True,
