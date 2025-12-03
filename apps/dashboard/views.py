@@ -13,7 +13,8 @@ from .views_clinical import (
     clinical_history_create,
     clinical_history_detail,
     clinical_history_edit,
-    clinical_history_delete
+    clinical_history_delete,
+    clinical_history_pdf
 )
 
 from apps.appointments.models import (

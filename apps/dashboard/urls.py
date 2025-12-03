@@ -50,6 +50,7 @@ urlpatterns = [
     path('patients/<int:patient_id>/clinical-history/<int:history_id>/', views.clinical_history_detail, name='clinical_history_detail'),
     path('patients/<int:patient_id>/clinical-history/<int:history_id>/edit/', views.clinical_history_edit, name='clinical_history_edit'),
     path('patients/<int:patient_id>/clinical-history/<int:history_id>/delete/', views.clinical_history_delete, name='clinical_history_delete'),
+    path('patients/<int:patient_id>/clinical-history/<int:history_id>/pdf/', views.clinical_history_pdf, name='clinical_history_pdf'),
     
     # Calendario
     path('calendar/', views.calendar_view, name='calendar'),

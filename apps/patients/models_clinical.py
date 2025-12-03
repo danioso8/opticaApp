@@ -26,10 +26,19 @@ class ClinicalHistory(TenantModel):
     )
     
     # ==================== ANAMNESIS ====================
-    chief_complaint = models.TextField(verbose_name='Motivo de Consulta', blank=True)
-    current_illness = models.TextField(verbose_name='Enfermedad Actual', blank=True)
+    # Motivo de Consulta (MC)
+    chief_complaint = models.TextField(verbose_name='Motivo de Consulta (MC)', blank=True)
     
-    # Síntomas
+    # Enfermedad Actual (EA)
+    current_illness = models.TextField(verbose_name='Enfermedad Actual (EA)', blank=True)
+    
+    # Condición Clínica Actual
+    current_clinical_condition = models.TextField(verbose_name='Condición Clínica Actual', blank=True)
+    
+    # Antecedentes Generales
+    medical_history = models.TextField(verbose_name='Antecedentes Médicos', blank=True, help_text='Enfermedades sistémicas, cirugías previas, etc.')
+    
+    # Signos y Síntomas (Semiología Clínica)
     blurred_vision = models.BooleanField(default=False, verbose_name='Visión Borrosa')
     eye_pain = models.BooleanField(default=False, verbose_name='Dolor Ocular')
     headaches = models.BooleanField(default=False, verbose_name='Cefaleas')
@@ -146,7 +155,7 @@ class ClinicalHistory(TenantModel):
         blank=True
     )
     
-    # ==================== BIOMICROSCOPÍA ====================
+    # ==================== EXAMEN OCULAR (BIOMICROSCOPÍA) ====================
     
     # Segmento Anterior OD
     biomicroscopy_od_lids = models.TextField(verbose_name='OD Párpados', blank=True)
@@ -155,6 +164,7 @@ class ClinicalHistory(TenantModel):
     biomicroscopy_od_anterior_chamber = models.TextField(verbose_name='OD Cámara Anterior', blank=True)
     biomicroscopy_od_iris = models.TextField(verbose_name='OD Iris', blank=True)
     biomicroscopy_od_lens = models.TextField(verbose_name='OD Cristalino', blank=True)
+    biomicroscopy_od_pupil = models.TextField(verbose_name='OD Pupila', blank=True, help_text='Tamaño, forma, reactividad')
     
     # Segmento Anterior OS
     biomicroscopy_os_lids = models.TextField(verbose_name='OS Párpados', blank=True)
@@ -163,22 +173,31 @@ class ClinicalHistory(TenantModel):
     biomicroscopy_os_anterior_chamber = models.TextField(verbose_name='OS Cámara Anterior', blank=True)
     biomicroscopy_os_iris = models.TextField(verbose_name='OS Iris', blank=True)
     biomicroscopy_os_lens = models.TextField(verbose_name='OS Cristalino', blank=True)
+    biomicroscopy_os_pupil = models.TextField(verbose_name='OS Pupila', blank=True, help_text='Tamaño, forma, reactividad')
     
-    # ==================== FONDO DE OJO ====================
+    # ==================== EXAMEN EXTERNO ====================
+    external_exam_od = models.TextField(verbose_name='Examen Externo OD', blank=True, help_text='Anexos oculares, órbita, etc.')
+    external_exam_os = models.TextField(verbose_name='Examen Externo OS', blank=True)
+    
+    # ==================== EXAMEN OFTALMOSCÓPICO (FONDO DE OJO) ====================
     
     # Ojo Derecho
     fundoscopy_od_vitreous = models.TextField(verbose_name='OD Vítreo', blank=True)
     fundoscopy_od_optic_disc = models.TextField(verbose_name='OD Disco Óptico', blank=True)
+    fundoscopy_od_cup_disc_ratio = models.CharField(max_length=10, verbose_name='OD Relación Copa/Disco', blank=True, help_text='Ej: 0.3')
     fundoscopy_od_macula = models.TextField(verbose_name='OD Mácula', blank=True)
     fundoscopy_od_vessels = models.TextField(verbose_name='OD Vasos', blank=True)
     fundoscopy_od_periphery = models.TextField(verbose_name='OD Periferia', blank=True)
+    fundoscopy_od_retina = models.TextField(verbose_name='OD Retina', blank=True)
     
     # Ojo Izquierdo
     fundoscopy_os_vitreous = models.TextField(verbose_name='OS Vítreo', blank=True)
     fundoscopy_os_optic_disc = models.TextField(verbose_name='OS Disco Óptico', blank=True)
+    fundoscopy_os_cup_disc_ratio = models.CharField(max_length=10, verbose_name='OS Relación Copa/Disco', blank=True, help_text='Ej: 0.3')
     fundoscopy_os_macula = models.TextField(verbose_name='OS Mácula', blank=True)
     fundoscopy_os_vessels = models.TextField(verbose_name='OS Vasos', blank=True)
     fundoscopy_os_periphery = models.TextField(verbose_name='OS Periferia', blank=True)
+    fundoscopy_os_retina = models.TextField(verbose_name='OS Retina', blank=True)
     
     # ==================== MOTILIDAD OCULAR ====================
     
@@ -211,9 +230,13 @@ class ClinicalHistory(TenantModel):
     )
     color_vision_test = models.CharField(max_length=50, verbose_name='Test Utilizado', blank=True, help_text='Ej: Ishihara')
     
-    # ==================== DIAGNÓSTICO Y TRATAMIENTO ====================
+    # ==================== EXÁMENES COMPLEMENTARIOS ====================
+    complementary_exams = models.TextField(verbose_name='Exámenes Complementarios', blank=True, help_text='OCT, Campo Visual, Topografía, etc.')
+    
+    # ==================== DIAGNÓSTICO ====================
     
     diagnosis = models.TextField(verbose_name='Diagnóstico', blank=True)
+    differential_diagnosis = models.TextField(verbose_name='Diagnóstico Diferencial', blank=True)
     
     # Diagnósticos comunes (checkboxes)
     dx_myopia = models.BooleanField(default=False, verbose_name='Miopía')
@@ -228,12 +251,47 @@ class ClinicalHistory(TenantModel):
     dx_conjunctivitis = models.BooleanField(default=False, verbose_name='Conjuntivitis')
     dx_keratoconus = models.BooleanField(default=False, verbose_name='Queratocono')
     
+    # ==================== PRONÓSTICO ====================
+    prognosis = models.TextField(verbose_name='Pronóstico', blank=True)
+    
+    # ==================== DISPOSICIÓN (Plan de Manejo) ====================
+    disposition = models.TextField(verbose_name='Disposición', blank=True, help_text='Plan inmediato y manejo')
+    
     # Plan de Tratamiento
     treatment_plan = models.TextField(verbose_name='Plan de Tratamiento', blank=True)
+    
+    # ==================== PRESCRIPCIÓN FARMACÉUTICA ====================
+    pharmaceutical_prescription = models.TextField(
+        verbose_name='Prescripción Farmacéutica', 
+        blank=True,
+        help_text='Medicamentos recetados: nombre, dosis, vía, frecuencia, duración'
+    )
+    
+    # Protocolo de prescripción de fármacos tópicos oftálmicos
+    topical_medication_protocol = models.TextField(
+        verbose_name='Protocolo Fármacos Tópicos Oftálmicos',
+        blank=True,
+        help_text='Gotas, ungüentos, lubricantes oculares'
+    )
+    
+    # Terapias coadyuvantes
+    adjuvant_therapies = models.TextField(
+        verbose_name='Terapias Coadyuvantes',
+        blank=True,
+        help_text='Terapias complementarias, ejercicios visuales, etc.'
+    )
+    
     prescription_glasses = models.BooleanField(default=False, verbose_name='Prescripción de Lentes')
     prescription_contact_lenses = models.BooleanField(default=False, verbose_name='Prescripción de LC')
     prescription_medication = models.BooleanField(default=False, verbose_name='Prescripción de Medicamentos')
     medication_details = models.TextField(verbose_name='Detalles de Medicación', blank=True)
+    
+    # ==================== PRESCRIPCIÓN ÓPTICA ====================
+    optical_prescription_notes = models.TextField(
+        verbose_name='Notas de Prescripción Óptica',
+        blank=True,
+        help_text='Detalles adicionales sobre la prescripción óptica'
+    )
     
     # Tipo de Lentes Recomendados
     lens_type = models.CharField(
@@ -263,15 +321,38 @@ class ClinicalHistory(TenantModel):
         help_text='Ej: Antireflejo, Blue Block, Fotocromático'
     )
     
-    # ==================== SEGUIMIENTO ====================
+    # ==================== EVOLUCIÓN Y CONTROL ====================
     
+    evolution_notes = models.TextField(verbose_name='Evolución', blank=True, help_text='Notas de evolución del paciente')
     follow_up_date = models.DateField(verbose_name='Fecha de Seguimiento', null=True, blank=True)
     follow_up_notes = models.TextField(verbose_name='Notas de Seguimiento', blank=True)
+    
+    # Remisión y Contrarremisión
+    referral_to = models.CharField(max_length=200, verbose_name='Remisión a', blank=True, help_text='Especialista o institución')
+    referral_reason = models.TextField(verbose_name='Motivo de Remisión', blank=True)
+    counter_referral = models.TextField(verbose_name='Contrarremisión', blank=True, help_text='Respuesta de especialista')
+    
+    # ==================== RESUMEN DE HISTORIA CLÍNICA ====================
+    clinical_summary = models.TextField(verbose_name='Resumen de Historia Clínica', blank=True, help_text='Resumen ejecutivo del caso')
     
     # ==================== OBSERVACIONES ====================
     
     observations = models.TextField(verbose_name='Observaciones Generales', blank=True)
     recommendations = models.TextField(verbose_name='Recomendaciones', blank=True)
+    
+    # ==================== PROCESOS DOCUMENTALES ====================
+    
+    # Consentimientos
+    surgical_consent = models.BooleanField(default=False, verbose_name='Consentimiento Quirúrgico Firmado')
+    surgical_consent_date = models.DateField(null=True, blank=True, verbose_name='Fecha Consentimiento Quirúrgico')
+    cycloplegia_consent = models.BooleanField(default=False, verbose_name='Consentimiento Cicloplejia Firmado')
+    cycloplegia_consent_date = models.DateField(null=True, blank=True, verbose_name='Fecha Consentimiento Cicloplejia')
+    
+    # Órdenes y Certificaciones
+    lab_orders = models.TextField(verbose_name='Órdenes de Laboratorio', blank=True)
+    specialized_exam_orders = models.TextField(verbose_name='Órdenes de Exámenes Especializados', blank=True, help_text='OCT, Campo Visual, etc.')
+    medical_certificate = models.TextField(verbose_name='Certificaciones Médicas', blank=True)
+    remission_document = models.TextField(verbose_name='Documento de Remisión', blank=True)
     
     # ==================== METADATA ====================
     
