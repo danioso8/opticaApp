@@ -4,6 +4,16 @@ from django.db import migrations, models
 import django.db.models.deletion
 
 
+def clear_doctor_field(apps, schema_editor):
+    """
+    Limpia el campo doctor de todas las historias clínicas existentes
+    antes de cambiar su tipo de CharField a ForeignKey
+    """
+    ClinicalHistory = apps.get_model('patients', 'ClinicalHistory')
+    # Establecer el campo doctor como vacío para todas las historias existentes
+    ClinicalHistory.objects.all().update(doctor='')
+
+
 class Migration(migrations.Migration):
 
     dependencies = [
@@ -11,6 +21,10 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
+        # Primero limpiamos los datos existentes
+        migrations.RunPython(clear_doctor_field, migrations.RunPython.noop),
+        
+        # Luego cambiamos el tipo de campo
         migrations.AlterField(
             model_name='clinicalhistory',
             name='doctor',
