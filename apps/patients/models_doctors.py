@@ -6,7 +6,7 @@ class Doctor(TenantModel):
     """Modelo de Doctor/Optómetra"""
     
     SPECIALTY_CHOICES = [
-        ('optometrist', 'Optometrista'),
+        ('optometrist', 'Optómetra'),
         ('ophthalmologist', 'Oftalmólogo'),
         ('general', 'Médico General'),
         ('other', 'Otro'),
