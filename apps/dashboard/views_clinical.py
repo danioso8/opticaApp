@@ -342,7 +342,7 @@ def clinical_history_pdf(request, patient_id, history_id):
     from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
     from reportlab.lib.units import inch
     from reportlab.lib.enums import TA_CENTER, TA_LEFT, TA_JUSTIFY
-    from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, PageBreak, KeepTogether
+    from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, PageBreak
     from reportlab.lib import colors
     from apps.patients.pdf_utils import (
         draw_eye_fundus_diagram, draw_refraction_table, 
@@ -716,7 +716,7 @@ def clinical_history_pdf(request, patient_id, history_id):
         ['_' * 40, '_' * 40],
         [f'{history.doctor.full_name if history.doctor else ""}', 'Paciente o Acudiente'],
         [f'{history.doctor.specialty if history.doctor else ""}', ''],
-        [f'Reg. {history.doctor.license_number if history.doctor and history.doctor.license_number else ""}', ''],
+        [f'T.P. {history.doctor.professional_card if history.doctor and history.doctor.professional_card else ""}', ''],
     ]
     
     signature_table = Table(signature_data, colWidths=[3*inch, 3*inch])

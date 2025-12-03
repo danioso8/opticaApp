@@ -10,10 +10,15 @@
 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
     <!-- Configuración General -->
     <div class="bg-white rounded-lg shadow p-6">
-        <h3 class="text-lg font-semibold text-gray-800 mb-4">
-            <i class="fas fa-cog mr-2 text-indigo-600"></i>
-            Configuración General
-        </h3>
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="text-lg font-semibold text-gray-800">
+                <i class="fas fa-cog mr-2 text-indigo-600"></i>
+                Configuración General
+            </h3>
+            <button onclick="showEditConfigModal()" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition text-sm">
+                <i class="fas fa-edit mr-1"></i>Editar
+            </button>
+        </div>
         
         <div class="space-y-4">
             <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
@@ -37,17 +42,17 @@
             
             <div class="p-4 bg-gray-50 rounded-lg">
                 <p class="font-semibold text-gray-800 mb-2">Duración de Citas</p>
-                <p class="text-2xl font-bold text-indigo-600">{{ config.slot_duration }} minutos</p>
+                <p class="text-2xl font-bold text-indigo-600" id="display_slot_duration">{{ config.slot_duration }} minutos</p>
             </div>
             
             <div class="p-4 bg-gray-50 rounded-lg">
                 <p class="font-semibold text-gray-800 mb-2">Máximo de Citas Diarias</p>
-                <p class="text-2xl font-bold text-indigo-600">{{ config.max_daily_appointments }}</p>
+                <p class="text-2xl font-bold text-indigo-600" id="display_max_appointments">{{ config.max_daily_appointments }}</p>
             </div>
             
             <div class="p-4 bg-gray-50 rounded-lg">
                 <p class="font-semibold text-gray-800 mb-2">Días de Anticipación</p>
-                <p class="text-2xl font-bold text-indigo-600">{{ config.advance_booking_days }} días</p>
+                <p class="text-2xl font-bold text-indigo-600" id="display_advance_days">{{ config.advance_booking_days }} días</p>
             </div>
             
             <div class="p-4 border-2 border-green-200 bg-green-50 rounded-lg hover:bg-green-100 transition">
@@ -396,6 +401,68 @@
     </div>
 </div>
 
+<!-- Modal Editar Configuración -->
+<div id="edit-config-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50">
+    <div class="absolute right-0 top-0 h-full bg-white shadow-2xl max-w-md w-full overflow-y-auto transform transition-transform duration-300 translate-x-full" id="edit-config-panel">
+        <div class="bg-blue-600 text-white px-6 py-4 rounded-t-lg flex justify-between items-center">
+            <h3 class="text-lg font-bold">
+                <i class="fas fa-edit mr-2"></i>Editar Configuración General
+            </h3>
+            <button onclick="hideEditConfigModal()" class="text-white hover:text-gray-200">
+                <i class="fas fa-times text-xl"></i>
+            </button>
+        </div>
+        
+        <form onsubmit="updateGeneralConfig(event)" class="p-6">
+            {% csrf_token %}
+            
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        <i class="fas fa-clock mr-1 text-indigo-600"></i>
+                        Duración de Citas (minutos) <span class="text-red-500">*</span>
+                    </label>
+                    <input type="number" name="slot_duration" value="{{ config.slot_duration }}" required min="5" max="120"
+                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                           placeholder="Ej: 30">
+                    <p class="text-xs text-gray-500 mt-1">Tiempo asignado para cada cita</p>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        <i class="fas fa-users mr-1 text-indigo-600"></i>
+                        Máximo de Citas Diarias <span class="text-red-500">*</span>
+                    </label>
+                    <input type="number" name="max_daily_appointments" value="{{ config.max_daily_appointments }}" required min="1" max="100"
+                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                           placeholder="Ej: 20">
+                    <p class="text-xs text-gray-500 mt-1">Número máximo de citas por día</p>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        <i class="fas fa-calendar-alt mr-1 text-indigo-600"></i>
+                        Días de Anticipación <span class="text-red-500">*</span>
+                    </label>
+                    <input type="number" name="advance_booking_days" value="{{ config.advance_booking_days }}" required min="1" max="365"
+                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                           placeholder="Ej: 30">
+                    <p class="text-xs text-gray-500 mt-1">Con cuántos días de anticipación se pueden agendar citas</p>
+                </div>
+            </div>
+            
+            <div class="flex gap-3 mt-6">
+                <button type="submit" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg transition-colors font-medium">
+                    <i class="fas fa-save mr-2"></i>Guardar Cambios
+                </button>
+                <button type="button" onclick="hideEditConfigModal()" class="px-6 py-3 bg-gray-300 hover:bg-gray-400 text-gray-700 rounded-lg transition-colors font-medium">
+                    <i class="fas fa-times mr-2"></i>Cancelar
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
 {% endblock %}
 
 {% block extra_js %}
@@ -433,15 +500,15 @@ function saveWorkingHour(event) {
     .then(response => response.json())
     .then(data => {
         if (data.success) {
-            alert('Horario agregado exitosamente');
-            location.reload();
+            Toast.success('Horario agregado exitosamente');
+            setTimeout(() => location.reload(), 1500);
         } else {
-            alert(data.message || 'Error al agregar horario');
+            Toast.error(data.message || 'Error al agregar horario');
         }
     })
     .catch(error => {
         console.error('Error:', error);
-        alert('Error al guardar el horario');
+        Toast.error('Error al guardar el horario');
     });
 }
 
@@ -458,19 +525,26 @@ function toggleWorkingHour(id) {
     .then(response => response.json())
     .then(data => {
         if (data.success) {
-            location.reload();
+            Toast.success('Estado actualizado');
+            setTimeout(() => location.reload(), 1000);
         } else {
-            alert(data.message || 'Error al cambiar estado');
+            Toast.error(data.message || 'Error al cambiar estado');
         }
     })
     .catch(error => {
         console.error('Error:', error);
-        alert('Error al cambiar el estado del horario');
+        Toast.error('Error al cambiar el estado del horario');
     });
 }
 
-function deleteWorkingHour(id) {
-    if (!confirm('¿Estás seguro de eliminar este horario?')) return;
+async function deleteWorkingHour(id) {
+    const confirmed = await Confirm.show(
+        'Este horario se eliminará permanentemente y no se podrá recuperar.',
+        '¿Eliminar horario?',
+        'Eliminar',
+        'Cancelar'
+    );
+    if (!confirmed) return;
     
     const csrftoken = getCsrfToken();
     
@@ -484,15 +558,15 @@ function deleteWorkingHour(id) {
     .then(response => response.json())
     .then(data => {
         if (data.success) {
-            alert('Horario eliminado');
-            location.reload();
+            Toast.success('Horario eliminado');
+            setTimeout(() => location.reload(), 1500);
         } else {
-            alert(data.message || 'Error al eliminar horario');
+            Toast.error(data.message || 'Error al eliminar horario');
         }
     })
     .catch(error => {
         console.error('Error:', error);
-        alert('Error al eliminar el horario');
+        Toast.error('Error al eliminar el horario');
     });
 }
 
@@ -523,16 +597,16 @@ function addSpecificSchedule(event) {
     .then(response => response.json())
     .then(data => {
         if (data.success) {
-            alert('Horario específico agregado exitosamente');
+            Toast.success('Horario específico agregado exitosamente');
             hideSpecificDateModal();
-            setTimeout(() => location.reload(), 500);
+            setTimeout(() => location.reload(), 1500);
         } else {
-            alert(data.message || 'Error al agregar el horario');
+            Toast.error(data.message || 'Error al agregar el horario');
         }
     })
     .catch(error => {
         console.error('Error:', error);
-        alert('Error al agregar el horario');
+        Toast.error('Error al agregar el horario');
     });
 }
 
@@ -549,21 +623,26 @@ function toggleSpecificSchedule(scheduleId) {
     .then(response => response.json())
     .then(data => {
         if (data.success) {
-            setTimeout(() => location.reload(), 300);
+            Toast.success('Horario actualizado');
+            setTimeout(() => location.reload(), 1000);
         } else {
-            alert(data.message || 'Error al actualizar el horario');
+            Toast.error(data.message || 'Error al actualizar el horario');
         }
     })
     .catch(error => {
         console.error('Error:', error);
-        alert('Error al actualizar el horario');
+        Toast.error('Error al actualizar el horario');
     });
 }
 
-function deleteSpecificSchedule(scheduleId) {
-    if (!confirm('¿Estás seguro de eliminar este horario específico?')) {
-        return;
-    }
+async function deleteSpecificSchedule(scheduleId) {
+    const confirmed = await Confirm.show(
+        'Este horario específico se eliminará permanentemente.',
+        '¿Eliminar horario específico?',
+        'Eliminar',
+        'Cancelar'
+    );
+    if (!confirmed) return;
     
     const csrftoken = getCsrfToken();
     
@@ -577,15 +656,15 @@ function deleteSpecificSchedule(scheduleId) {
     .then(response => response.json())
     .then(data => {
         if (data.success) {
-            alert('Horario eliminado exitosamente');
-            setTimeout(() => location.reload(), 500);
+            Toast.success('Horario eliminado exitosamente');
+            setTimeout(() => location.reload(), 1500);
         } else {
-            alert(data.message || 'Error al eliminar el horario');
+            Toast.error(data.message || 'Error al eliminar el horario');
         }
     })
     .catch(error => {
         console.error('Error:', error);
-        alert('Error al eliminar el horario');
+        Toast.error('Error al eliminar el horario');
     });
 }
 
@@ -616,16 +695,69 @@ function blockDate(event) {
     .then(response => response.json())
     .then(data => {
         if (data.success) {
-            alert('Fecha bloqueada exitosamente');
+            Toast.success('Fecha bloqueada exitosamente');
             hideBlockDateModal();
-            setTimeout(() => location.reload(), 500);
+            setTimeout(() => location.reload(), 1500);
         } else {
-            alert(data.message || 'Error al bloquear la fecha');
+            Toast.error(data.message || 'Error al bloquear la fecha');
         }
     })
     .catch(error => {
         console.error('Error:', error);
-        alert('Error al bloquear la fecha');
+        Toast.error('Error al bloquear la fecha');
+    });
+}
+
+// ==================== EDITAR CONFIGURACIÓN GENERAL ====================
+function showEditConfigModal() {
+    const modal = document.getElementById('edit-config-modal');
+    const panel = document.getElementById('edit-config-panel');
+    modal.classList.remove('hidden');
+    setTimeout(() => {
+        panel.classList.remove('translate-x-full');
+    }, 10);
+}
+
+function hideEditConfigModal() {
+    const modal = document.getElementById('edit-config-modal');
+    const panel = document.getElementById('edit-config-panel');
+    panel.classList.add('translate-x-full');
+    setTimeout(() => {
+        modal.classList.add('hidden');
+    }, 300);
+}
+
+function updateGeneralConfig(event) {
+    event.preventDefault();
+    
+    const form = event.target;
+    const formData = new FormData(form);
+    const csrftoken = getCsrfToken();
+    
+    fetch('{% url "dashboard:update_general_config" %}', {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': csrftoken
+        },
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            Toast.success(data.message);
+            hideEditConfigModal();
+            
+            // Actualizar valores en la página
+            document.getElementById('display_slot_duration').textContent = formData.get('slot_duration') + ' minutos';
+            document.getElementById('display_max_appointments').textContent = formData.get('max_daily_appointments');
+            document.getElementById('display_advance_days').textContent = formData.get('advance_booking_days') + ' días';
+        } else {
+            Toast.error(data.message || 'Error al actualizar la configuración');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        Toast.error('Error al actualizar la configuración');
     });
 }
 </script>

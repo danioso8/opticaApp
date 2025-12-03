@@ -1,0 +1,235 @@
+<!-- Sistema de Notificaciones Toast Moderno -->
+<div id="toast-container" class="fixed top-4 right-4 z-50 space-y-2" style="max-width: 400px;"></div>
+
+<style>
+    @keyframes slideInRight {
+        from {
+            transform: translateX(120%);
+            opacity: 0;
+        }
+        to {
+            transform: translateX(0);
+            opacity: 1;
+        }
+    }
+    
+    @keyframes slideOutRight {
+        from {
+            transform: translateX(0);
+            opacity: 1;
+        }
+        to {
+            transform: translateX(120%);
+            opacity: 0;
+        }
+    }
+    
+    .toast-slide-in {
+        animation: slideInRight 0.3s ease-out forwards;
+    }
+    
+    .toast-slide-out {
+        animation: slideOutRight 0.3s ease-in forwards;
+    }
+    
+    .toast-progress-bar {
+        animation: progressBar 3s linear forwards;
+    }
+    
+    @keyframes progressBar {
+        from {
+            width: 100%;
+        }
+        to {
+            width: 0%;
+        }
+    }
+</style>
+
+<script>
+    // Sistema de notificaciones toast moderno
+    const Toast = {
+        show: function(message, type = 'info', duration = 3000) {
+            const container = document.getElementById('toast-container');
+            const toastId = 'toast-' + Date.now();
+            
+            // Configuración de iconos y colores según el tipo
+            const config = {
+                success: {
+                    icon: 'fa-check-circle',
+                    bgColor: 'bg-green-500',
+                    textColor: 'text-green-50',
+                    borderColor: 'border-green-600'
+                },
+                error: {
+                    icon: 'fa-exclamation-circle',
+                    bgColor: 'bg-red-500',
+                    textColor: 'text-red-50',
+                    borderColor: 'border-red-600'
+                },
+                warning: {
+                    icon: 'fa-exclamation-triangle',
+                    bgColor: 'bg-yellow-500',
+                    textColor: 'text-yellow-50',
+                    borderColor: 'border-yellow-600'
+                },
+                info: {
+                    icon: 'fa-info-circle',
+                    bgColor: 'bg-blue-500',
+                    textColor: 'text-blue-50',
+                    borderColor: 'border-blue-600'
+                }
+            };
+            
+            const style = config[type] || config.info;
+            
+            // Crear el elemento toast
+            const toast = document.createElement('div');
+            toast.id = toastId;
+            toast.className = `toast-slide-in ${style.bgColor} ${style.textColor} rounded-lg shadow-2xl border-l-4 ${style.borderColor} overflow-hidden`;
+            toast.style.minWidth = '320px';
+            
+            toast.innerHTML = `
+                <div class="p-4">
+                    <div class="flex items-start">
+                        <div class="flex-shrink-0">
+                            <i class="fas ${style.icon} text-xl"></i>
+                        </div>
+                        <div class="ml-3 flex-1">
+                            <p class="text-sm font-medium">${message}</p>
+                        </div>
+                        <div class="ml-4 flex-shrink-0">
+                            <button onclick="Toast.close('${toastId}')" 
+                                    class="inline-flex ${style.textColor} hover:opacity-75 focus:outline-none">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="h-1 ${style.bgColor} opacity-50">
+                    <div class="toast-progress-bar h-full bg-white opacity-40"></div>
+                </div>
+            `;
+            
+            container.appendChild(toast);
+            
+            // Auto-cerrar después del tiempo especificado
+            setTimeout(() => {
+                this.close(toastId);
+            }, duration);
+            
+            return toastId;
+        },
+        
+        close: function(toastId) {
+            const toast = document.getElementById(toastId);
+            if (toast) {
+                toast.classList.remove('toast-slide-in');
+                toast.classList.add('toast-slide-out');
+                
+                setTimeout(() => {
+                    toast.remove();
+                }, 300);
+            }
+        },
+        
+        // Métodos de conveniencia
+        success: function(message, duration = 3000) {
+            return this.show(message, 'success', duration);
+        },
+        
+        error: function(message, duration = 4000) {
+            return this.show(message, 'error', duration);
+        },
+        
+        warning: function(message, duration = 3500) {
+            return this.show(message, 'warning', duration);
+        },
+        
+        info: function(message, duration = 3000) {
+            return this.show(message, 'info', duration);
+        }
+    };
+    
+    // Hacer Toast global
+    window.Toast = Toast;
+    
+    // Sistema de diálogos de confirmación moderno
+    const Confirm = {
+        show: function(message, title = '¿Estás seguro?', confirmText = 'Confirmar', cancelText = 'Cancelar') {
+            return new Promise((resolve) => {
+                const dialogId = 'confirm-dialog-' + Date.now();
+                
+                const dialog = document.createElement('div');
+                dialog.id = dialogId;
+                dialog.className = 'fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50';
+                dialog.style.animation = 'fadeIn 0.2s ease-out';
+                
+                dialog.innerHTML = `
+                    <div class="bg-white rounded-lg shadow-2xl max-w-md w-full mx-4" style="animation: slideUp 0.3s ease-out;">
+                        <div class="p-6">
+                            <div class="flex items-start">
+                                <div class="flex-shrink-0">
+                                    <i class="fas fa-exclamation-triangle text-yellow-500 text-3xl"></i>
+                                </div>
+                                <div class="ml-4 flex-1">
+                                    <h3 class="text-lg font-semibold text-gray-900 mb-2">${title}</h3>
+                                    <p class="text-gray-600">${message}</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="bg-gray-50 px-6 py-4 flex justify-end space-x-3 rounded-b-lg">
+                            <button onclick="Confirm.close('${dialogId}', false)" 
+                                    class="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-800 rounded-lg font-medium transition">
+                                ${cancelText}
+                            </button>
+                            <button onclick="Confirm.close('${dialogId}', true)" 
+                                    class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition">
+                                ${confirmText}
+                            </button>
+                        </div>
+                    </div>
+                `;
+                
+                document.body.appendChild(dialog);
+                
+                // Guardar el resolver en el elemento para acceder desde close
+                dialog._resolve = resolve;
+            });
+        },
+        
+        close: function(dialogId, result) {
+            const dialog = document.getElementById(dialogId);
+            if (dialog && dialog._resolve) {
+                dialog._resolve(result);
+                dialog.style.animation = 'fadeOut 0.2s ease-in';
+                setTimeout(() => dialog.remove(), 200);
+            }
+        }
+    };
+    
+    window.Confirm = Confirm;
+</script>
+
+<style>
+    @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+    
+    @keyframes fadeOut {
+        from { opacity: 1; }
+        to { opacity: 0; }
+    }
+    
+    @keyframes slideUp {
+        from {
+            transform: translateY(20px);
+            opacity: 0;
+        }
+        to {
+            transform: translateY(0);
+            opacity: 1;
+        }
+    }
+</style>

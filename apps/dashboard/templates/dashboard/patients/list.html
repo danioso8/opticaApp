@@ -832,18 +832,18 @@ document.getElementById('createPatientForm').addEventListener('submit', async fu
         
         if (data.success) {
             // Mostrar mensaje de éxito
-            alert('✓ ' + data.message);
+            Toast.success(data.message);
             
             // Recargar la página para mostrar el nuevo paciente
-            window.location.reload();
+            setTimeout(() => window.location.reload(), 1500);
         } else {
-            alert('Error: ' + data.message);
+            Toast.error(data.message);
             submitBtn.disabled = false;
             submitBtn.innerHTML = originalText;
         }
     } catch (error) {
         console.error('Fetch error:', error);
-        alert('Error de conexión: ' + error.message);
+        Toast.error('Error de conexión: ' + error.message);
         submitBtn.disabled = false;
         submitBtn.innerHTML = originalText;
     }
@@ -888,10 +888,10 @@ async function openEditPatientModal(patientId) {
             document.getElementById('editPatientModal').classList.remove('hidden');
             document.getElementById('editPatientModal').classList.add('flex');
         } else {
-            alert('No se pudo cargar la información del paciente');
+            Toast.error('No se pudo cargar la información del paciente');
         }
     } catch (error) {
-        alert('Error al cargar paciente: ' + error.message);
+        Toast.error('Error al cargar paciente: ' + error.message);
     }
 }
 
@@ -940,15 +940,15 @@ document.getElementById('editPatientForm').addEventListener('submit', async func
         const data = await response.json();
         
         if (data.success) {
-            alert('✓ ' + data.message);
-            window.location.reload();
+            Toast.success(data.message);
+            setTimeout(() => window.location.reload(), 1500);
         } else {
-            alert('Error: ' + data.message);
+            Toast.error(data.message);
             submitBtn.disabled = false;
             submitBtn.innerHTML = originalText;
         }
     } catch (error) {
-        alert('Error de conexión: ' + error.message);
+        Toast.error('Error de conexión: ' + error.message);
         submitBtn.disabled = false;
         submitBtn.innerHTML = originalText;
     }
@@ -1001,15 +1001,15 @@ async function deletePatient() {
         const data = await response.json();
         
         if (data.success) {
-            alert('✓ ' + data.message);
-            window.location.reload();
+            Toast.success(data.message);
+            setTimeout(() => window.location.reload(), 1500);
         } else {
-            alert('Error: ' + data.message);
+            Toast.error(data.message);
             deleteBtn.disabled = false;
             deleteBtn.innerHTML = originalText;
         }
     } catch (error) {
-        alert('Error de conexión: ' + error.message);
+        Toast.error('Error de conexión: ' + error.message);
         deleteBtn.disabled = false;
         deleteBtn.innerHTML = originalText;
     }

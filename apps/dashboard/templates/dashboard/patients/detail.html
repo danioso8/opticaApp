@@ -354,7 +354,12 @@
                                 <div class="ml-4 flex flex-col space-y-2">
                                     <a href="{% url 'dashboard:clinical_history_detail' patient.id history.id %}" 
                                        class="text-purple-600 hover:text-purple-800 text-sm">
-                                        <i class="fas fa-eye mr-1"></i>Ver Detalle
+                                        <i class="fas fa-eye mr-1"></i>Ver
+                                    </a>
+                                    <a href="{% url 'dashboard:clinical_history_pdf' patient.id history.id %}" 
+                                       target="_blank"
+                                       class="text-red-600 hover:text-red-800 text-sm">
+                                        <i class="fas fa-file-pdf mr-1"></i>PDF
                                     </a>
                                     <a href="{% url 'dashboard:clinical_history_edit' patient.id history.id %}" 
                                        class="text-blue-600 hover:text-blue-800 text-sm">
@@ -403,7 +408,7 @@ function showTab(tabName) {
     activeButton.classList.remove('border-transparent', 'text-gray-500');
 }
 
-function newAppointment() {
+async function newAppointment() {
     document.getElementById('newAppointmentModal').classList.remove('hidden');
     document.getElementById('newAppointmentModal').classList.add('flex');
     // Pre-cargar datos del paciente
@@ -411,12 +416,133 @@ function newAppointment() {
     document.getElementById('appointment_patient_id').value = '{{ patient.id }}';
     document.getElementById('appointment_phone').value = '{{ patient.phone_number }}';
     document.getElementById('appointment_email').value = '{{ patient.email|default:"" }}';
+    
+    // Cargar fechas disponibles
+    await loadAvailableDates();
+}
+
+async function loadAvailableDates() {
+    const container = document.getElementById('availableDatesContainer');
+    container.innerHTML = '<div class="text-center py-8 text-gray-500"><i class="fas fa-spinner fa-spin text-2xl mb-2"></i><p>Cargando fechas...</p></div>';
+    
+    try {
+        const url = '/api/available-dates/?organization_id={{ request.organization.id }}';
+        console.log('Fetching dates from:', url);
+        
+        const response = await fetch(url);
+        console.log('Response status:', response.status);
+        
+        const data = await response.json();
+        console.log('Response data:', data);
+        
+        if (data.dates && data.dates.length > 0) {
+            container.innerHTML = '';
+            data.dates.forEach(date => {
+                const dateObj = new Date(date + 'T00:00:00');
+                const dayName = dateObj.toLocaleDateString('es-ES', { weekday: 'long' });
+                const dateFormatted = dateObj.toLocaleDateString('es-ES', { day: '2-digit', month: 'long', year: 'numeric' });
+                
+                const button = document.createElement('button');
+                button.type = 'button';
+                button.className = 'w-full text-left px-4 py-3 border-2 border-gray-200 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition-all';
+                button.innerHTML = `
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="font-semibold text-gray-800 capitalize">${dayName}</p>
+                            <p class="text-sm text-gray-600">${dateFormatted}</p>
+                        </div>
+                        <i class="fas fa-chevron-right text-gray-400"></i>
+                    </div>
+                `;
+                button.onclick = () => selectDate(date, button);
+                container.appendChild(button);
+            });
+        } else {
+            container.innerHTML = '<div class="text-center py-8 text-gray-500"><i class="fas fa-calendar-times text-2xl mb-2"></i><p>No hay fechas disponibles</p></div>';
+        }
+    } catch (error) {
+        console.error('Error loading dates:', error);
+        container.innerHTML = '<div class="text-center py-8 text-red-500"><i class="fas fa-exclamation-triangle text-2xl mb-2"></i><p>Error al cargar fechas</p></div>';
+    }
+}
+
+async function selectDate(date, button) {
+    // Actualizar estilos de botones
+    document.querySelectorAll('#availableDatesContainer button').forEach(btn => {
+        btn.className = 'w-full text-left px-4 py-3 border-2 border-gray-200 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition-all';
+    });
+    button.className = 'w-full text-left px-4 py-3 border-2 border-blue-500 bg-blue-50 rounded-lg transition-all';
+    
+    // Guardar fecha seleccionada
+    document.getElementById('selected_appointment_date').value = date;
+    
+    // Cargar horarios para esta fecha
+    await loadAvailableSlots(date);
+}
+
+async function loadAvailableSlots(date) {
+    const container = document.getElementById('availableSlotsContainer');
+    container.innerHTML = '<div class="text-center py-8 text-gray-500"><i class="fas fa-spinner fa-spin text-2xl mb-2"></i><p>Cargando horarios...</p></div>';
+    
+    try {
+        const response = await fetch(`/api/available-slots/?date=${date}&organization_id={{ request.organization.id }}`);
+        const data = await response.json();
+        
+        if (data.slots && data.slots.length > 0) {
+            container.innerHTML = '';
+            data.slots.forEach(slot => {
+                const button = document.createElement('button');
+                button.type = 'button';
+                button.className = 'w-full px-4 py-3 border-2 border-gray-200 rounded-lg hover:border-green-500 hover:bg-green-50 transition-all';
+                button.innerHTML = `
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center">
+                            <i class="fas fa-clock text-gray-600 mr-3"></i>
+                            <span class="font-semibold text-gray-800">${slot.time}</span>
+                        </div>
+                        <span class="px-2 py-1 bg-green-100 text-green-800 text-xs font-semibold rounded-full">
+                            Disponible
+                        </span>
+                    </div>
+                `;
+                button.onclick = () => selectSlot(slot.time, button, date);
+                container.appendChild(button);
+            });
+        } else {
+            container.innerHTML = '<div class="text-center py-8 text-gray-500"><i class="fas fa-clock text-2xl mb-2"></i><p>No hay horarios disponibles</p></div>';
+        }
+    } catch (error) {
+        console.error('Error loading slots:', error);
+        container.innerHTML = '<div class="text-center py-8 text-red-500"><i class="fas fa-exclamation-triangle text-2xl mb-2"></i><p>Error al cargar horarios</p></div>';
+    }
+}
+
+function selectSlot(time, button, date) {
+    // Actualizar estilos de botones
+    document.querySelectorAll('#availableSlotsContainer button').forEach(btn => {
+        btn.className = 'w-full px-4 py-3 border-2 border-gray-200 rounded-lg hover:border-green-500 hover:bg-green-50 transition-all';
+    });
+    button.className = 'w-full px-4 py-3 border-2 border-green-500 bg-green-50 rounded-lg transition-all';
+    
+    // Guardar hora seleccionada
+    document.getElementById('selected_appointment_time').value = time;
+    
+    // Mostrar resumen
+    const dateObj = new Date(date + 'T00:00:00');
+    const dateFormatted = dateObj.toLocaleDateString('es-ES', { day: '2-digit', month: 'long', year: 'numeric' });
+    
+    document.getElementById('summaryDate').textContent = dateFormatted;
+    document.getElementById('summaryTime').textContent = time;
+    document.getElementById('selectionSummary').classList.remove('hidden');
 }
 
 function closeNewAppointmentModal() {
     document.getElementById('newAppointmentModal').classList.add('hidden');
     document.getElementById('newAppointmentModal').classList.remove('flex');
     document.getElementById('newAppointmentForm').reset();
+    document.getElementById('selectionSummary').classList.add('hidden');
+    document.getElementById('availableDatesContainer').innerHTML = '';
+    document.getElementById('availableSlotsContainer').innerHTML = '<div class="text-center py-8 text-gray-400"><i class="fas fa-clock text-2xl mb-2"></i><p>Selecciona una fecha primero</p></div>';
 }
 
 function newExam() {
@@ -433,6 +559,16 @@ document.addEventListener('DOMContentLoaded', function() {
             
             const submitBtn = this.querySelector('button[type="submit"]');
             const originalText = submitBtn.innerHTML;
+            
+            // Validar que se haya seleccionado fecha y hora
+            const appointmentDate = document.getElementById('selected_appointment_date').value;
+            const appointmentTime = document.getElementById('selected_appointment_time').value;
+            
+            if (!appointmentDate || !appointmentTime) {
+                Toast.warning('Por favor selecciona una fecha y hora para la cita');
+                return;
+            }
+            
             submitBtn.disabled = true;
             submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Creando...';
             
@@ -440,18 +576,18 @@ document.addEventListener('DOMContentLoaded', function() {
                 const formData = new FormData(this);
                 
                 // Convertir FormData a JSON para la API
-                const data = {
+                const requestData = {
                     patient_id: formData.get('patient_id'),
-                    appointment_date: formData.get('appointment_date'),
-                    appointment_time: formData.get('appointment_time'),
+                    appointment_date: appointmentDate,
+                    appointment_time: appointmentTime,
                     phone: formData.get('phone'),
                     email: formData.get('email'),
                     notes: formData.get('notes')
                 };
                 
-                const response = await fetch('/api/book/', {
+                const response = await fetch('/api/book-patient/', {
                     method: 'POST',
-                    body: JSON.stringify(data),
+                    body: JSON.stringify(requestData),
                     headers: {
                         'Content-Type': 'application/json',
                         'X-CSRFToken': formData.get('csrfmiddlewaretoken'),
@@ -462,16 +598,16 @@ document.addEventListener('DOMContentLoaded', function() {
                 const data = await response.json();
                 
                 if (data.success) {
-                    alert('✅ ' + data.message);
+                    Toast.success(data.message);
                     closeNewAppointmentModal();
-                    location.reload(); // Recargar para mostrar la nueva cita
+                    setTimeout(() => location.reload(), 1500);
                 } else {
-                    alert('❌ ' + data.message);
+                    Toast.error(data.message);
                     submitBtn.disabled = false;
                     submitBtn.innerHTML = originalText;
                 }
             } catch (error) {
-                alert('Error al crear cita: ' + error.message);
+                Toast.error('Error al crear cita: ' + error.message);
                 submitBtn.disabled = false;
                 submitBtn.innerHTML = originalText;
             }
@@ -489,7 +625,7 @@ document.addEventListener('keydown', function(e) {
 
 <!-- Modal Nueva Cita -->
 <div id="newAppointmentModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
-    <div class="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto m-4">
+    <div class="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto m-4">
         <div class="bg-blue-600 text-white px-6 py-4 rounded-t-lg flex justify-between items-center">
             <h2 class="text-xl font-bold">
                 <i class="fas fa-calendar-plus mr-2"></i>Nueva Cita para {{ patient.full_name }}
@@ -502,6 +638,8 @@ document.addEventListener('keydown', function(e) {
         <form id="newAppointmentForm" class="p-6">
             {% csrf_token %}
             <input type="hidden" id="appointment_patient_id" name="patient_id" value="{{ patient.id }}">
+            <input type="hidden" id="selected_appointment_date" name="appointment_date">
+            <input type="hidden" id="selected_appointment_time" name="appointment_time">
             
             <!-- Información del Paciente (Solo lectura) -->
             <div class="mb-6 bg-blue-50 p-4 rounded-lg">
@@ -513,28 +651,51 @@ document.addEventListener('keydown', function(e) {
                        value="{{ patient.full_name }}">
             </div>
             
-            <!-- Datos de la Cita -->
+            <!-- Selector de Fecha y Hora -->
             <div class="mb-6">
                 <h3 class="text-lg font-semibold text-gray-800 mb-3 border-b pb-2">
-                    <i class="fas fa-calendar-alt mr-2 text-blue-600"></i>Datos de la Cita
+                    <i class="fas fa-calendar-alt mr-2 text-blue-600"></i>Seleccionar Fecha y Hora
                 </h3>
                 
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Fechas Disponibles -->
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">
-                            Fecha <span class="text-red-500">*</span>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            Fechas Disponibles <span class="text-red-500">*</span>
                         </label>
-                        <input type="date" name="appointment_date" required
-                               min="{{ today|date:'Y-m-d' }}"
-                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        <div id="availableDatesContainer" class="space-y-2 max-h-96 overflow-y-auto border border-gray-200 rounded-lg p-3">
+                            <div class="text-center py-8 text-gray-500">
+                                <i class="fas fa-spinner fa-spin text-2xl mb-2"></i>
+                                <p>Cargando fechas disponibles...</p>
+                            </div>
+                        </div>
                     </div>
                     
+                    <!-- Horarios Disponibles -->
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">
-                            Hora <span class="text-red-500">*</span>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            Horarios Disponibles <span class="text-red-500">*</span>
                         </label>
-                        <input type="time" name="appointment_time" required
-                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        <div id="availableSlotsContainer" class="space-y-2 max-h-96 overflow-y-auto border border-gray-200 rounded-lg p-3">
+                            <div class="text-center py-8 text-gray-400">
+                                <i class="fas fa-clock text-2xl mb-2"></i>
+                                <p>Selecciona una fecha primero</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Resumen de Selección -->
+                <div id="selectionSummary" class="mt-4 p-4 bg-green-50 border border-green-200 rounded-lg hidden">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm text-gray-600">Cita seleccionada:</p>
+                            <p class="text-lg font-bold text-green-800">
+                                <i class="fas fa-calendar mr-2"></i><span id="summaryDate"></span>
+                                <i class="fas fa-clock ml-4 mr-2"></i><span id="summaryTime"></span>
+                            </p>
+                        </div>
+                        <i class="fas fa-check-circle text-green-600 text-3xl"></i>
                     </div>
                 </div>
             </div>

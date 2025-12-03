@@ -320,6 +320,48 @@ def configuration(request):
 
 
 @login_required
+def update_general_config(request):
+    """Actualizar configuración general (AJAX)"""
+    if request.method == 'POST':
+        if not request.organization:
+            return JsonResponse({'success': False, 'message': 'No hay organización activa'}, status=400)
+        
+        try:
+            config = AppointmentConfiguration.get_config(request.organization)
+            
+            # Actualizar campos
+            slot_duration = request.POST.get('slot_duration')
+            max_daily_appointments = request.POST.get('max_daily_appointments')
+            advance_booking_days = request.POST.get('advance_booking_days')
+            
+            if slot_duration:
+                config.slot_duration = int(slot_duration)
+            if max_daily_appointments:
+                config.max_daily_appointments = int(max_daily_appointments)
+            if advance_booking_days:
+                config.advance_booking_days = int(advance_booking_days)
+            
+            config.save()
+            
+            return JsonResponse({
+                'success': True,
+                'message': 'Configuración actualizada correctamente'
+            })
+        except ValueError:
+            return JsonResponse({
+                'success': False,
+                'message': 'Valores inválidos. Por favor ingresa números válidos.'
+            }, status=400)
+        except Exception as e:
+            return JsonResponse({
+                'success': False,
+                'message': f'Error al actualizar: {str(e)}'
+            }, status=500)
+    
+    return JsonResponse({'success': False}, status=405)
+
+
+@login_required
 def toggle_system(request):
     """Abrir/Cerrar sistema de agendamiento (AJAX)"""
     if request.method == 'POST':
@@ -1079,7 +1121,14 @@ def test_notification(request):
                 if not settings.twilio_account_sid or not settings.twilio_auth_token:
                     return JsonResponse({
                         'success': False,
-                        'message': 'Twilio no está configurado correctamente'
+                        'message': 'Twilio no está configurado correctamente. Verifica tus credenciales.'
+                    }, status=400)
+                
+                # Validar formato del Account SID
+                if not settings.twilio_account_sid.startswith('AC'):
+                    return JsonResponse({
+                        'success': False,
+                        'message': f'El Account SID debe comenzar con "AC", no con "{settings.twilio_account_sid[:2]}". Verifica tus credenciales en https://console.twilio.com'
                     }, status=400)
                 
                 try:
@@ -1531,3 +1580,9 @@ def doctor_delete(request, pk):
             messages.error(request, f'Error al desactivar doctor: {str(e)}')
     
     return redirect('dashboard:doctors_list')
+
+
+@login_required
+def notifications_demo(request):
+    """Vista de demostración del sistema de notificaciones moderno"""
+    return render(request, 'dashboard/notifications_demo.html')

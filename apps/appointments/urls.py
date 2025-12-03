@@ -15,6 +15,7 @@ urlpatterns = [
     path('book/', views.book_appointment, name='book-appointment'),
     
     # APIs administrativas
+    path('book-patient/', views.book_patient_appointment, name='book-patient-appointment'),
     path('configuration/', views.configuration, name='configuration'),
     path('toggle-system/', views.toggle_system, name='toggle-system'),
     path('block-date/', views.block_date, name='block-date'),

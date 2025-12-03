@@ -471,14 +471,14 @@ document.getElementById('bookingForm').addEventListener('submit', function(e) {
             document.getElementById('step4').classList.add('hidden');
             document.getElementById('successMessage').classList.remove('hidden');
         } else {
-            alert('Error: ' + (data.message || 'No se pudo agendar la cita'));
+            Toast.error(data.message || 'No se pudo agendar la cita');
             submitBtn.disabled = false;
             submitBtn.innerHTML = '<i class="fas fa-check-circle mr-2"></i>Confirmar Cita';
         }
     })
     .catch(error => {
         console.error('Error:', error);
-        alert('Error al procesar la solicitud');
+        Toast.error('Error al procesar la solicitud');
         submitBtn.disabled = false;
         submitBtn.innerHTML = '<i class="fas fa-check-circle mr-2"></i>Confirmar Cita';
     });

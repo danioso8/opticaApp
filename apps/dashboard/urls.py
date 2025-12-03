@@ -19,6 +19,7 @@ urlpatterns = [
     
     # Configuración
     path('configuration/', views.configuration, name='configuration'),
+    path('configuration/update/', views.update_general_config, name='update_general_config'),
     path('toggle-system/', views.toggle_system, name='toggle_system'),
     path('block-date/', views.block_date, name='block_date'),
     path('add-working-hour/', views.add_working_hour, name='add_working_hour'),
@@ -65,4 +66,7 @@ urlpatterns = [
     # WhatsApp API
     path('api/whatsapp/status/', views.whatsapp_status_api, name='whatsapp_status'),
     path('api/whatsapp/test-send/', views.whatsapp_test_send, name='whatsapp_test_send'),
+    
+    # Demostración
+    path('notifications-demo/', views.notifications_demo, name='notifications_demo'),
 ]

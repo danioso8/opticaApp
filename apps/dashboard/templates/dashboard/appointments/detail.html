@@ -256,12 +256,23 @@
 </div>
 
 <script>
-function changeStatus(newStatus) {
-    if (!confirm('¿Está seguro de cambiar el estado de esta cita?')) {
-        return;
-    }
+async function changeStatus(newStatus) {
+    const statusNames = {
+        'pending': 'Pendiente',
+        'confirmed': 'Confirmada',
+        'completed': 'Completada',
+        'cancelled': 'Cancelada'
+    };
     
-    fetch('{% url "dashboard:appointment_change_status" appointment.id %}', {
+    const confirmed = await Confirm.show(
+        `El estado de la cita cambiará a: ${statusNames[newStatus] || newStatus}`,
+        '¿Cambiar estado de la cita?',
+        'Cambiar',
+        'Cancelar'
+    );
+    if (!confirmed) return;
+    
+    fetch('{% url "dashboard:appointment_detail" appointment.id %}', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/x-www-form-urlencoded',
@@ -272,14 +283,15 @@ function changeStatus(newStatus) {
     .then(response => response.json())
     .then(data => {
         if (data.success) {
-            location.reload();
+            Toast.success('Estado actualizado');
+            setTimeout(() => location.reload(), 1000);
         } else {
-            alert('Error: ' + data.message);
+            Toast.error(data.message);
         }
     })
     .catch(error => {
         console.error('Error:', error);
-        alert('Error al cambiar el estado');
+        Toast.error('Error al cambiar el estado');
     });
 }
 
@@ -323,15 +335,15 @@ function savePatient() {
     .then(response => response.json())
     .then(data => {
         if (data.success) {
-            alert('✅ Paciente creado exitosamente');
-            location.reload();
+            Toast.success('Paciente creado exitosamente');
+            setTimeout(() => location.reload(), 1500);
         } else {
-            alert('❌ Error: ' + data.message);
+            Toast.error(data.message);
         }
     })
     .catch(error => {
         console.error('Error:', error);
-        alert('❌ Error al crear el paciente');
+        Toast.error('Error al crear el paciente');
     });
 }
 

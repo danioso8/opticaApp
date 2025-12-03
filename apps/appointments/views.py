@@ -380,3 +380,108 @@ def block_slot(request):
         'success': True,
         'message': 'Horario bloqueado exitosamente'
     })
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def book_patient_appointment(request):
+    """
+    API para agendar cita desde el dashboard con paciente existente
+    Endpoint: /api/appointments/book-patient/
+    
+    Body:
+    {
+        "patient_id": 1,
+        "appointment_date": "2025-12-01",
+        "appointment_time": "10:00:00",
+        "phone": "3001234567",
+        "email": "paciente@email.com",
+        "notes": "Notas opcionales"
+    }
+    """
+    import logging
+    logger = logging.getLogger(__name__)
+    
+    try:
+        if not hasattr(request, 'organization') or not request.organization:
+            return Response({
+                'success': False,
+                'message': 'No hay organización activa'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        patient_id = request.data.get('patient_id')
+        appointment_date = request.data.get('appointment_date')
+        appointment_time = request.data.get('appointment_time')
+        phone = request.data.get('phone')
+        email = request.data.get('email', '')
+        notes = request.data.get('notes', '')
+        
+        # Validar campos requeridos
+        if not all([patient_id, appointment_date, appointment_time, phone]):
+            return Response({
+                'success': False,
+                'message': 'Faltan campos requeridos'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Obtener el paciente
+        try:
+            patient = Patient.objects.get(
+                id=patient_id,
+                organization=request.organization
+            )
+        except Patient.DoesNotExist:
+            return Response({
+                'success': False,
+                'message': 'Paciente no encontrado'
+            }, status=status.HTTP_404_NOT_FOUND)
+        
+        # Verificar que el horario esté disponible
+        existing = Appointment.objects.filter(
+            organization=request.organization,
+            appointment_date=appointment_date,
+            appointment_time=appointment_time
+        ).exclude(status='cancelled').exists()
+        
+        if existing:
+            return Response({
+                'success': False,
+                'message': 'Este horario ya está ocupado'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Crear la cita
+        appointment = Appointment.objects.create(
+            organization=request.organization,
+            patient=patient,
+            full_name=patient.full_name,
+            phone_number=phone,
+            email=email,
+            appointment_date=appointment_date,
+            appointment_time=appointment_time,
+            notes=notes,
+            status='pending'
+        )
+        
+        # Enviar notificación (no fallar si hay error)
+        try:
+            from apps.appointments.signals import notify_new_appointment
+            notify_new_appointment(appointment)
+        except Exception as e:
+            logger.error(f"Error enviando notificación: {e}")
+        
+        return Response({
+            'success': True,
+            'message': f'Cita agendada exitosamente para {patient.full_name}',
+            'appointment': {
+                'id': appointment.id,
+                'date': str(appointment.appointment_date),
+                'time': str(appointment.appointment_time),
+                'status': appointment.status
+            }
+        }, status=status.HTTP_201_CREATED)
+        
+    except Exception as e:
+        logger.error(f"Error en book_patient_appointment: {str(e)}", exc_info=True)
+        return Response({
+            'success': False,
+            'message': f'Error al crear cita: {str(e)}'
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

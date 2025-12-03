@@ -1,0 +1,133 @@
+{% extends 'dashboard/base.html' %}
+
+{% block title %}Demostración - Sistema de Notificaciones{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <div class="bg-white rounded-lg shadow-lg p-8">
+        <h1 class="text-3xl font-bold text-gray-800 mb-6">
+            <i class="fas fa-bell text-blue-600 mr-3"></i>
+            Sistema de Notificaciones Moderno
+        </h1>
+        
+        <p class="text-gray-600 mb-8">
+            Todos los alerts del sistema han sido modernizados con notificaciones toast elegantes y diálogos de confirmación interactivos.
+        </p>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <!-- Toast Notifications -->
+            <div class="border-2 border-gray-200 rounded-lg p-6">
+                <h2 class="text-xl font-semibold text-gray-800 mb-4">
+                    <i class="fas fa-comment-dots text-green-500 mr-2"></i>
+                    Notificaciones Toast
+                </h2>
+                <p class="text-gray-600 text-sm mb-4">
+                    Notificaciones elegantes que aparecen en la esquina superior derecha con animaciones suaves.
+                </p>
+                <div class="space-y-3">
+                    <button onclick="Toast.success('¡Operación completada exitosamente!')" 
+                            class="w-full bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg transition">
+                        <i class="fas fa-check-circle mr-2"></i>Success
+                    </button>
+                    <button onclick="Toast.error('Ha ocurrido un error al procesar la solicitud')" 
+                            class="w-full bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg transition">
+                        <i class="fas fa-exclamation-circle mr-2"></i>Error
+                    </button>
+                    <button onclick="Toast.warning('Por favor verifica la información ingresada')" 
+                            class="w-full bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded-lg transition">
+                        <i class="fas fa-exclamation-triangle mr-2"></i>Warning
+                    </button>
+                    <button onclick="Toast.info('La información se está procesando...')" 
+                            class="w-full bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition">
+                        <i class="fas fa-info-circle mr-2"></i>Info
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Confirm Dialogs -->
+            <div class="border-2 border-gray-200 rounded-lg p-6">
+                <h2 class="text-xl font-semibold text-gray-800 mb-4">
+                    <i class="fas fa-question-circle text-yellow-500 mr-2"></i>
+                    Diálogos de Confirmación
+                </h2>
+                <p class="text-gray-600 text-sm mb-4">
+                    Diálogos modernos y elegantes que reemplazan el confirm() nativo del navegador.
+                </p>
+                <div class="space-y-3">
+                    <button onclick="testConfirm()" 
+                            class="w-full bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded-lg transition">
+                        <i class="fas fa-trash mr-2"></i>Eliminar Elemento
+                    </button>
+                    <button onclick="testConfirm2()" 
+                            class="w-full bg-purple-500 hover:bg-purple-600 text-white px-4 py-2 rounded-lg transition">
+                        <i class="fas fa-exchange-alt mr-2"></i>Cambiar Estado
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Características -->
+        <div class="mt-8 bg-blue-50 border-l-4 border-blue-500 p-6 rounded-r-lg">
+            <h3 class="text-lg font-semibold text-blue-800 mb-3">
+                <i class="fas fa-star mr-2"></i>Características
+            </h3>
+            <ul class="space-y-2 text-gray-700">
+                <li><i class="fas fa-check text-green-500 mr-2"></i>Animaciones suaves de entrada y salida</li>
+                <li><i class="fas fa-check text-green-500 mr-2"></i>Barra de progreso automática</li>
+                <li><i class="fas fa-check text-green-500 mr-2"></i>Cierre automático configurable</li>
+                <li><i class="fas fa-check text-green-500 mr-2"></i>Iconos Font Awesome integrados</li>
+                <li><i class="fas fa-check text-green-500 mr-2"></i>Diseño responsive con Tailwind CSS</li>
+                <li><i class="fas fa-check text-green-500 mr-2"></i>Múltiples notificaciones apilables</li>
+                <li><i class="fas fa-check text-green-500 mr-2"></i>Diálogos de confirmación modernos con Promise</li>
+            </ul>
+        </div>
+        
+        <!-- Implementado en -->
+        <div class="mt-8 bg-green-50 border-l-4 border-green-500 p-6 rounded-r-lg">
+            <h3 class="text-lg font-semibold text-green-800 mb-3">
+                <i class="fas fa-check-double mr-2"></i>Implementado en todos los módulos
+            </h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-gray-700">
+                <div><i class="fas fa-user-injured text-blue-500 mr-2"></i>Gestión de Pacientes</div>
+                <div><i class="fas fa-calendar-alt text-blue-500 mr-2"></i>Sistema de Citas</div>
+                <div><i class="fas fa-cog text-blue-500 mr-2"></i>Configuración del Sistema</div>
+                <div><i class="fas fa-bell text-blue-500 mr-2"></i>Notificaciones</div>
+                <div><i class="fas fa-globe text-blue-500 mr-2"></i>Página Pública de Reservas</div>
+                <div><i class="fas fa-file-medical text-blue-500 mr-2"></i>Historias Clínicas</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+async function testConfirm() {
+    const confirmed = await Confirm.show(
+        'Este elemento se eliminará permanentemente y no se podrá recuperar.',
+        '¿Eliminar elemento?',
+        'Eliminar',
+        'Cancelar'
+    );
+    
+    if (confirmed) {
+        Toast.success('Elemento eliminado exitosamente');
+    } else {
+        Toast.info('Operación cancelada');
+    }
+}
+
+async function testConfirm2() {
+    const confirmed = await Confirm.show(
+        'El estado del elemento cambiará inmediatamente.',
+        '¿Cambiar estado?',
+        'Confirmar',
+        'Cancelar'
+    );
+    
+    if (confirmed) {
+        Toast.success('Estado actualizado correctamente');
+    } else {
+        Toast.info('Operación cancelada');
+    }
+}
+</script>
+{% endblock %}
