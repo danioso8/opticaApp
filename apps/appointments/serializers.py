@@ -84,16 +84,33 @@ class AppointmentCreateSerializer(serializers.ModelSerializer):
         """Validaciones personalizadas"""
         from datetime import datetime, timedelta
         from django.utils import timezone
+        from apps.organizations.models import Organization
         
         appointment_date = data.get('appointment_date')
         appointment_time = data.get('appointment_time')
+        organization_id = self.initial_data.get('organization_id')
+        
+        # Obtener organización
+        organization = None
+        if organization_id:
+            try:
+                organization = Organization.objects.get(id=organization_id, is_active=True)
+            except Organization.DoesNotExist:
+                raise serializers.ValidationError("La organización seleccionada no existe o no está activa.")
         
         # Verificar que la fecha no sea en el pasado
         if appointment_date < timezone.now().date():
             raise serializers.ValidationError("No se pueden agendar citas en fechas pasadas.")
         
-        # Verificar configuración
-        config = AppointmentConfiguration.get_config()
+        # Verificar configuración (con organización)
+        config = AppointmentConfiguration.get_config(organization)
+        if not config:
+            # Si no hay configuración, crear una por defecto
+            if organization:
+                config = AppointmentConfiguration.objects.create(organization=organization)
+            else:
+                raise serializers.ValidationError("No se puede agendar sin una organización válida.")
+        
         if not config.is_open:
             raise serializers.ValidationError("El sistema de agendamiento está cerrado temporalmente.")
         
@@ -104,25 +121,35 @@ class AppointmentCreateSerializer(serializers.ModelSerializer):
                 f"Solo se pueden agendar citas con {config.advance_booking_days} días de anticipación."
             )
         
-        # Verificar que la fecha no esté bloqueada
-        if BlockedDate.objects.filter(date=appointment_date).exists():
+        # Verificar que la fecha no esté bloqueada (filtrar por organización)
+        blocked_query = BlockedDate.objects.filter(date=appointment_date)
+        if organization:
+            blocked_query = blocked_query.filter(organization=organization)
+        if blocked_query.exists():
             raise serializers.ValidationError("La fecha seleccionada no está disponible.")
         
-        # Verificar que el horario no esté ocupado
-        if Appointment.objects.filter(
+        # Verificar que el horario no esté ocupado (filtrar por organización)
+        appointment_query = Appointment.objects.filter(
             appointment_date=appointment_date,
             appointment_time=appointment_time
-        ).exclude(status='cancelled').exists():
+        ).exclude(status='cancelled')
+        
+        if organization:
+            appointment_query = appointment_query.filter(organization=organization)
+        
+        if appointment_query.exists():
             raise serializers.ValidationError("Este horario ya está ocupado.")
         
         # Verificar horarios de trabajo (priorizar horarios específicos)
         from .models import SpecificDateSchedule
         
-        # Primero verificar si hay horarios específicos para esta fecha
+        # Primero verificar si hay horarios específicos para esta fecha y organización
         specific_schedules = SpecificDateSchedule.objects.filter(
             date=appointment_date,
             is_active=True
         )
+        if organization:
+            specific_schedules = specific_schedules.filter(organization=organization)
         
         if specific_schedules.exists():
             # Si hay horarios específicos, validar contra ellos
@@ -142,6 +169,9 @@ class AppointmentCreateSerializer(serializers.ModelSerializer):
                 is_active=True
             )
             
+            if organization:
+                working_hours = working_hours.filter(organization=organization)
+            
             if not working_hours.exists():
                 raise serializers.ValidationError("No hay atención disponible en este día.")
             
@@ -160,6 +190,8 @@ class AppointmentCreateSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         """Crear cita y buscar/crear paciente si existe el teléfono"""
         from apps.organizations.models import Organization
+        import logging
+        logger = logging.getLogger(__name__)
         
         phone_number = validated_data.get('phone_number')
         organization_id = validated_data.pop('organization_id', None)
@@ -170,7 +202,7 @@ class AppointmentCreateSerializer(serializers.ModelSerializer):
                 organization = Organization.objects.get(id=organization_id)
                 validated_data['organization'] = organization
             except Organization.DoesNotExist:
-                pass
+                logger.warning(f"Organization {organization_id} not found")
         
         # Buscar si ya existe un paciente con ese teléfono en la misma organización
         try:
@@ -184,24 +216,13 @@ class AppointmentCreateSerializer(serializers.ModelSerializer):
             
             if patient:
                 validated_data['patient'] = patient
-        except Patient.DoesNotExist:
-            pass
+        except Exception as e:
+            logger.warning(f"Error buscando paciente: {e}")
         
+        # Crear la cita
         appointment = super().create(validated_data)
         
-        # Notificar nueva cita en tiempo real (WebSocket)
-        from .signals import notify_new_appointment
-        notify_new_appointment(appointment)
-        
-        # Enviar notificación por WhatsApp (Bot local gratuito)
-        from .whatsapp_local import notify_new_appointment as send_whatsapp
-        try:
-            send_whatsapp(appointment)
-        except Exception as e:
-            # No fallar si WhatsApp no funciona
-            import logging
-            logging.error(f"Error enviando WhatsApp: {e}")
-        
+        # Las notificaciones se manejan en la vista para no hacer fallar el create
         return appointment
 
 

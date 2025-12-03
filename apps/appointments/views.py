@@ -209,34 +209,50 @@ def book_appointment(request):
         "full_name": "Juan Pérez",
         "phone_number": "3001234567",
         "appointment_date": "2025-12-01",
-        "appointment_time": "10:00:00"
+        "appointment_time": "10:00:00",
+        "organization_id": 1
     }
     """
-    serializer = AppointmentCreateSerializer(data=request.data)
+    import logging
+    logger = logging.getLogger(__name__)
     
-    if serializer.is_valid():
-        appointment = serializer.save()
+    try:
+        serializer = AppointmentCreateSerializer(data=request.data)
         
-        # Enviar notificación automáticamente (WhatsApp/Email según entorno)
-        from apps.appointments.signals import notify_new_appointment
-        notify_new_appointment(appointment)
+        if serializer.is_valid():
+            appointment = serializer.save()
+            
+            # Enviar notificación automáticamente (no fallar si hay error)
+            try:
+                from apps.appointments.signals import notify_new_appointment
+                notify_new_appointment(appointment)
+            except Exception as e:
+                logger.error(f"Error enviando notificación: {e}")
+            
+            return Response({
+                'success': True,
+                'message': '¡Cita agendada exitosamente! Te enviaremos una confirmación.',
+                'appointment': {
+                    'id': appointment.id,
+                    'full_name': appointment.full_name,
+                    'date': appointment.appointment_date,
+                    'time': appointment.appointment_time,
+                    'status': appointment.status
+                }
+            }, status=status.HTTP_201_CREATED)
         
         return Response({
-            'success': True,
-            'message': '¡Cita agendada exitosamente! Te enviaremos una confirmación.',
-            'appointment': {
-                'id': appointment.id,
-                'full_name': appointment.full_name,
-                'date': appointment.appointment_date,
-                'time': appointment.appointment_time,
-                'status': appointment.status
-            }
-        }, status=status.HTTP_201_CREATED)
-    
-    return Response({
-        'success': False,
-        'errors': serializer.errors
-    }, status=status.HTTP_400_BAD_REQUEST)
+            'success': False,
+            'errors': serializer.errors
+        }, status=status.HTTP_400_BAD_REQUEST)
+        
+    except Exception as e:
+        logger.error(f"Error en book_appointment: {str(e)}", exc_info=True)
+        return Response({
+            'success': False,
+            'error': 'Error interno del servidor',
+            'detail': str(e) if request.user.is_authenticated else 'Por favor contacta al administrador'
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 @api_view(['GET'])
