@@ -1382,6 +1382,7 @@ def doctor_create(request):
             doctor = Doctor(
                 organization=org_member.organization,
                 full_name=request.POST.get('full_name'),
+                identification_type=request.POST.get('identification_type', 'CC'),
                 identification=request.POST.get('identification'),
                 specialty=request.POST.get('specialty'),
                 professional_card=request.POST.get('professional_card', ''),
@@ -1448,6 +1449,7 @@ def doctor_edit(request, pk):
         try:
             # Actualizar datos básicos
             doctor.full_name = request.POST.get('full_name')
+            doctor.identification_type = request.POST.get('identification_type', 'CC')
             doctor.identification = request.POST.get('identification')
             doctor.specialty = request.POST.get('specialty')
             doctor.professional_card = request.POST.get('professional_card', '')

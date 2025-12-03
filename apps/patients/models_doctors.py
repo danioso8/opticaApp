@@ -12,8 +12,25 @@ class Doctor(TenantModel):
         ('other', 'Otro'),
     ]
     
+    ID_TYPE_CHOICES = [
+        ('CC', 'Cédula de Ciudadanía'),
+        ('CE', 'Cédula de Extranjería'),
+        ('TI', 'Tarjeta de Identidad'),
+        ('PA', 'Pasaporte'),
+        ('RC', 'Registro Civil'),
+        ('NIT', 'NIT'),
+        ('OTRO', 'Otro'),
+    ]
+    
     # Información Personal
     full_name = models.CharField(max_length=200, verbose_name='Nombre Completo')
+    identification_type = models.CharField(
+        max_length=10,
+        choices=ID_TYPE_CHOICES,
+        blank=True,
+        default='CC',
+        verbose_name='Tipo de identificación'
+    )
     identification = models.CharField(max_length=50, verbose_name='Cédula/ID', unique=True)
     specialty = models.CharField(max_length=50, choices=SPECIALTY_CHOICES, default='optometrist', verbose_name='Especialidad')
     
