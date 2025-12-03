@@ -4,18 +4,6 @@ from django.db import migrations, models
 import django.db.models.deletion
 
 
-def clear_doctor_field(apps, schema_editor):
-    """
-    Limpia el campo doctor de todas las historias clínicas existentes
-    antes de cambiar su tipo de CharField a ForeignKey.
-    Establece NULL en lugar de cadena vacía.
-    """
-    # Usar SQL directo para establecer el campo como NULL
-    from django.db import connection
-    with connection.cursor() as cursor:
-        cursor.execute("UPDATE patients_clinicalhistory SET doctor = NULL")
-
-
 class Migration(migrations.Migration):
 
     dependencies = [
@@ -23,11 +11,21 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        # Primero limpiamos los datos existentes
-        migrations.RunPython(clear_doctor_field, migrations.RunPython.noop),
-        
-        # Luego cambiamos el tipo de campo
+        # Paso 1: Hacer el campo nullable primero
         migrations.AlterField(
+            model_name='clinicalhistory',
+            name='doctor',
+            field=models.CharField(max_length=200, verbose_name='Médico/Optómetra', blank=True, null=True),
+        ),
+        
+        # Paso 2: Eliminar la columna antigua
+        migrations.RemoveField(
+            model_name='clinicalhistory',
+            name='doctor',
+        ),
+        
+        # Paso 3: Agregar la nueva columna como ForeignKey
+        migrations.AddField(
             model_name='clinicalhistory',
             name='doctor',
             field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='clinical_histories', to='patients.doctor', verbose_name='Médico/Optómetra'),
