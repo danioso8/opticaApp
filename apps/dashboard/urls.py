@@ -54,6 +54,13 @@ urlpatterns = [
     # Calendario
     path('calendar/', views.calendar_view, name='calendar'),
     
+    # Doctores / Optómetras
+    path('doctors/', views.doctors_list, name='doctors_list'),
+    path('doctors/create/', views.doctor_create, name='doctor_create'),
+    path('doctors/<int:pk>/', views.doctor_detail, name='doctor_detail'),
+    path('doctors/<int:pk>/edit/', views.doctor_edit, name='doctor_edit'),
+    path('doctors/<int:pk>/delete/', views.doctor_delete, name='doctor_delete'),
+    
     # WhatsApp API
     path('api/whatsapp/status/', views.whatsapp_status_api, name='whatsapp_status'),
     path('api/whatsapp/test-send/', views.whatsapp_test_send, name='whatsapp_test_send'),

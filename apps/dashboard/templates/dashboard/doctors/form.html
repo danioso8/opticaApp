@@ -1,0 +1,367 @@
+{% extends 'dashboard/base.html' %}
+{% load static %}
+
+{% block title %}{% if is_edit %}Editar Doctor{% else %}Nuevo Doctor{% endif %}{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-6 max-w-5xl">
+    <!-- Header -->
+    <div class="mb-6">
+        <a href="{% url 'dashboard:doctors_list' %}" 
+           class="text-indigo-600 hover:text-indigo-800 font-medium mb-3 inline-block">
+            <i class="fas fa-arrow-left mr-2"></i>Volver a Doctores
+        </a>
+        <h1 class="text-3xl font-bold text-gray-800 flex items-center">
+            <i class="fas fa-{% if is_edit %}edit{% else %}plus{% endif %} text-indigo-600 mr-3"></i>
+            {% if is_edit %}Editar Doctor{% else %}Nuevo Doctor{% endif %}
+        </h1>
+        <p class="text-gray-600 mt-1">
+            {% if is_edit %}
+            Actualiza la información del doctor
+            {% else %}
+            Completa los datos del nuevo profesional
+            {% endif %}
+        </p>
+    </div>
+
+    <!-- Formulario -->
+    <form method="POST" enctype="multipart/form-data" class="bg-white rounded-xl shadow-lg">
+        {% csrf_token %}
+        
+        <!-- Tabs navegación -->
+        <div class="border-b border-gray-200">
+            <nav class="flex -mb-px">
+                <button type="button" onclick="showTab('basic')" 
+                        class="tab-button active px-6 py-4 text-sm font-medium border-b-2 border-indigo-600 text-indigo-600">
+                    <i class="fas fa-user mr-2"></i>Información Básica
+                </button>
+                <button type="button" onclick="showTab('professional')" 
+                        class="tab-button px-6 py-4 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300">
+                    <i class="fas fa-id-card mr-2"></i>Datos Profesionales
+                </button>
+                <button type="button" onclick="showTab('contact')" 
+                        class="tab-button px-6 py-4 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300">
+                    <i class="fas fa-address-book mr-2"></i>Contacto
+                </button>
+                <button type="button" onclick="showTab('schedule')" 
+                        class="tab-button px-6 py-4 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300">
+                    <i class="fas fa-calendar-alt mr-2"></i>Horarios
+                </button>
+                <button type="button" onclick="showTab('additional')" 
+                        class="tab-button px-6 py-4 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300">
+                    <i class="fas fa-file-alt mr-2"></i>Adicional
+                </button>
+            </nav>
+        </div>
+
+        <div class="p-8">
+            <!-- Tab 1: Información Básica -->
+            <div id="tab-basic" class="tab-content">
+                <h3 class="text-lg font-semibold text-gray-800 mb-4">Información Personal</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="md:col-span-2">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            Nombre Completo <span class="text-red-500">*</span>
+                        </label>
+                        <input type="text" name="full_name" required
+                               value="{% if doctor %}{{ doctor.full_name }}{% endif %}"
+                               class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                               placeholder="Ej: Dr. Juan Carlos Pérez">
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            Identificación <span class="text-red-500">*</span>
+                        </label>
+                        <input type="text" name="identification" required
+                               value="{% if doctor %}{{ doctor.identification }}{% endif %}"
+                               class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                               placeholder="Ej: 1234567890">
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            Especialidad <span class="text-red-500">*</span>
+                        </label>
+                        <select name="specialty" required
+                                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
+                            <option value="">Seleccionar...</option>
+                            {% for value, label in specialty_choices %}
+                            <option value="{{ value }}" {% if doctor and doctor.specialty == value %}selected{% endif %}>
+                                {{ label }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="md:col-span-2">
+                        <label class="flex items-center">
+                            <input type="checkbox" name="is_active" 
+                                   {% if not doctor or doctor.is_active %}checked{% endif %}
+                                   class="w-5 h-5 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500">
+                            <span class="ml-3 text-sm font-medium text-gray-700">Doctor activo</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab 2: Datos Profesionales -->
+            <div id="tab-professional" class="tab-content hidden">
+                <h3 class="text-lg font-semibold text-gray-800 mb-4">Credenciales Profesionales</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            Tarjeta Profesional
+                        </label>
+                        <input type="text" name="professional_card"
+                               value="{% if doctor %}{{ doctor.professional_card }}{% endif %}"
+                               class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                               placeholder="Ej: TP-12345">
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            RETHUS
+                        </label>
+                        <input type="text" name="rethus"
+                               value="{% if doctor %}{{ doctor.rethus }}{% endif %}"
+                               class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                               placeholder="Ej: RETHUS-12345">
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            Fecha de Graduación
+                        </label>
+                        <input type="date" name="graduation_date"
+                               value="{% if doctor and doctor.graduation_date %}{{ doctor.graduation_date|date:'Y-m-d' }}{% endif %}"
+                               class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            Universidad
+                        </label>
+                        <input type="text" name="university"
+                               value="{% if doctor %}{{ doctor.university }}{% endif %}"
+                               class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                               placeholder="Ej: Universidad Nacional">
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            Firma Digital
+                        </label>
+                        <input type="file" name="signature" accept="image/*"
+                               class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
+                        {% if doctor and doctor.signature %}
+                        <img src="{{ doctor.signature.url }}" alt="Firma actual" class="mt-2 h-16 border">
+                        {% endif %}
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            Foto de Perfil
+                        </label>
+                        <input type="file" name="photo" accept="image/*"
+                               class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
+                        {% if doctor and doctor.photo %}
+                        <img src="{{ doctor.photo.url }}" alt="Foto actual" class="mt-2 h-24 w-24 rounded-full object-cover border">
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab 3: Contacto -->
+            <div id="tab-contact" class="tab-content hidden">
+                <h3 class="text-lg font-semibold text-gray-800 mb-4">Información de Contacto</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            Correo Electrónico
+                        </label>
+                        <input type="email" name="email"
+                               value="{% if doctor %}{{ doctor.email }}{% endif %}"
+                               class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                               placeholder="doctor@ejemplo.com">
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            Teléfono Fijo
+                        </label>
+                        <input type="tel" name="phone"
+                               value="{% if doctor %}{{ doctor.phone }}{% endif %}"
+                               class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                               placeholder="Ej: 6012345678">
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            Celular
+                        </label>
+                        <input type="tel" name="mobile"
+                               value="{% if doctor %}{{ doctor.mobile }}{% endif %}"
+                               class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                               placeholder="Ej: 3001234567">
+                    </div>
+
+                    <div class="md:col-span-2">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            Dirección
+                        </label>
+                        <input type="text" name="address"
+                               value="{% if doctor %}{{ doctor.address }}{% endif %}"
+                               class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                               placeholder="Ej: Calle 123 #45-67, Bogotá">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab 4: Horarios -->
+            <div id="tab-schedule" class="tab-content hidden">
+                <h3 class="text-lg font-semibold text-gray-800 mb-4">Horarios de Atención</h3>
+                <p class="text-sm text-gray-600 mb-6">Ingresa los horarios en formato: 8:00-12:00, 14:00-18:00</p>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            <i class="fas fa-calendar-day text-indigo-600 mr-2"></i>Lunes
+                        </label>
+                        <input type="text" name="monday_schedule"
+                               value="{% if doctor %}{{ doctor.monday_schedule }}{% endif %}"
+                               class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                               placeholder="8:00-12:00, 14:00-18:00">
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            <i class="fas fa-calendar-day text-indigo-600 mr-2"></i>Martes
+                        </label>
+                        <input type="text" name="tuesday_schedule"
+                               value="{% if doctor %}{{ doctor.tuesday_schedule }}{% endif %}"
+                               class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                               placeholder="8:00-12:00, 14:00-18:00">
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            <i class="fas fa-calendar-day text-indigo-600 mr-2"></i>Miércoles
+                        </label>
+                        <input type="text" name="wednesday_schedule"
+                               value="{% if doctor %}{{ doctor.wednesday_schedule }}{% endif %}"
+                               class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                               placeholder="8:00-12:00, 14:00-18:00">
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            <i class="fas fa-calendar-day text-indigo-600 mr-2"></i>Jueves
+                        </label>
+                        <input type="text" name="thursday_schedule"
+                               value="{% if doctor %}{{ doctor.thursday_schedule }}{% endif %}"
+                               class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                               placeholder="8:00-12:00, 14:00-18:00">
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            <i class="fas fa-calendar-day text-indigo-600 mr-2"></i>Viernes
+                        </label>
+                        <input type="text" name="friday_schedule"
+                               value="{% if doctor %}{{ doctor.friday_schedule }}{% endif %}"
+                               class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                               placeholder="8:00-12:00, 14:00-18:00">
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            <i class="fas fa-calendar-day text-indigo-600 mr-2"></i>Sábado
+                        </label>
+                        <input type="text" name="saturday_schedule"
+                               value="{% if doctor %}{{ doctor.saturday_schedule }}{% endif %}"
+                               class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                               placeholder="8:00-12:00">
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            <i class="fas fa-calendar-day text-indigo-600 mr-2"></i>Domingo
+                        </label>
+                        <input type="text" name="sunday_schedule"
+                               value="{% if doctor %}{{ doctor.sunday_schedule }}{% endif %}"
+                               class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                               placeholder="Cerrado">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab 5: Adicional -->
+            <div id="tab-additional" class="tab-content hidden">
+                <h3 class="text-lg font-semibold text-gray-800 mb-4">Información Adicional</h3>
+                <div class="space-y-6">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            Biografía Profesional
+                        </label>
+                        <textarea name="bio" rows="5"
+                                  class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                                  placeholder="Describe la experiencia y especialidades del doctor...">{% if doctor %}{{ doctor.bio }}{% endif %}</textarea>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            Notas Internas
+                        </label>
+                        <textarea name="notes" rows="4"
+                                  class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                                  placeholder="Notas de uso interno (no visible para pacientes)...">{% if doctor %}{{ doctor.notes }}{% endif %}</textarea>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Botones de acción -->
+        <div class="px-8 py-6 bg-gray-50 rounded-b-xl border-t border-gray-200">
+            <div class="flex justify-between items-center">
+                <a href="{% url 'dashboard:doctors_list' %}" 
+                   class="text-gray-600 hover:text-gray-800 font-medium">
+                    <i class="fas fa-times mr-2"></i>Cancelar
+                </a>
+                <button type="submit" 
+                        class="bg-indigo-600 hover:bg-indigo-700 text-white px-8 py-3 rounded-lg shadow-lg transition duration-200 font-medium">
+                    <i class="fas fa-save mr-2"></i>
+                    {% if is_edit %}Actualizar Doctor{% else %}Crear Doctor{% endif %}
+                </button>
+            </div>
+        </div>
+    </form>
+</div>
+
+<script>
+function showTab(tabName) {
+    // Ocultar todos los tabs
+    document.querySelectorAll('.tab-content').forEach(tab => {
+        tab.classList.add('hidden');
+    });
+    
+    // Remover clase activa de todos los botones
+    document.querySelectorAll('.tab-button').forEach(btn => {
+        btn.classList.remove('border-indigo-600', 'text-indigo-600', 'active');
+        btn.classList.add('border-transparent', 'text-gray-500');
+    });
+    
+    // Mostrar tab seleccionado
+    document.getElementById('tab-' + tabName).classList.remove('hidden');
+    
+    // Activar botón correspondiente
+    event.target.classList.remove('border-transparent', 'text-gray-500');
+    event.target.classList.add('border-indigo-600', 'text-indigo-600', 'active');
+}
+</script>
+
+<style>
+    .tab-button.active {
+        border-bottom-width: 2px;
+    }
+</style>
+{% endblock %}

@@ -23,7 +23,15 @@
                 <p class="text-sm text-gray-600"><strong>Identificación:</strong> {{ patient.identification }}</p>
                 {% endif %}
                 {% if history.doctor %}
-                <p class="text-sm text-gray-600"><strong>Atendido por:</strong> {{ history.doctor }}</p>
+                <p class="text-sm text-gray-600">
+                    <strong>Atendido por:</strong> {{ history.doctor.full_name }}
+                    {% if history.doctor.specialty %}
+                    <span class="text-gray-500">({{ history.doctor.get_specialty_display }})</span>
+                    {% endif %}
+                    {% if history.doctor.professional_card %}
+                    <span class="text-gray-500">- T.P: {{ history.doctor.professional_card }}</span>
+                    {% endif %}
+                </p>
                 {% endif %}
             </div>
         </div>

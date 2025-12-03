@@ -8,7 +8,7 @@ from django.core.paginator import Paginator
 from django.db.models import Q
 from datetime import datetime
 
-from apps.patients.models import Patient, ClinicalHistory, ClinicalHistoryAttachment
+from apps.patients.models import Patient, ClinicalHistory, ClinicalHistoryAttachment, Doctor
 
 
 @login_required
@@ -36,14 +36,29 @@ def clinical_history_create(request, patient_id):
     org_filter = {'organization': request.organization} if hasattr(request, 'organization') and request.organization else {}
     patient = get_object_or_404(Patient, id=patient_id, **org_filter)
     
+    # Obtener doctores activos de la organización
+    doctors = Doctor.objects.filter(
+        organization=request.organization,
+        is_active=True
+    ).order_by('full_name')
+    
     if request.method == 'POST':
         try:
+            # Obtener el doctor seleccionado
+            doctor_id = request.POST.get('doctor')
+            doctor = None
+            if doctor_id:
+                try:
+                    doctor = Doctor.objects.get(id=doctor_id, organization=request.organization)
+                except Doctor.DoesNotExist:
+                    pass
+            
             # Crear historia clínica
             history = ClinicalHistory.objects.create(
                 organization=request.organization,
                 patient=patient,
                 date=request.POST.get('date') or datetime.now().date(),
-                doctor=request.POST.get('doctor', ''),
+                doctor=doctor,
                 
                 # Anamnesis
                 chief_complaint=request.POST.get('chief_complaint', ''),
@@ -215,6 +230,7 @@ def clinical_history_create(request, patient_id):
     context = {
         'patient': patient,
         'today': datetime.now().date(),
+        'doctors': doctors,
     }
     
     return render(request, 'dashboard/patients/clinical_history_form.html', context)
@@ -242,11 +258,26 @@ def clinical_history_edit(request, patient_id, history_id):
     patient = get_object_or_404(Patient, id=patient_id, **org_filter)
     history = get_object_or_404(ClinicalHistory, id=history_id, patient=patient, **org_filter)
     
+    # Obtener doctores activos de la organización
+    doctors = Doctor.objects.filter(
+        organization=request.organization,
+        is_active=True
+    ).order_by('full_name')
+    
     if request.method == 'POST':
         try:
+            # Obtener el doctor seleccionado
+            doctor_id = request.POST.get('doctor')
+            doctor = None
+            if doctor_id:
+                try:
+                    doctor = Doctor.objects.get(id=doctor_id, organization=request.organization)
+                except Doctor.DoesNotExist:
+                    pass
+            
             # Actualizar campos (similar a create)
             history.date = request.POST.get('date') or history.date
-            history.doctor = request.POST.get('doctor', '')
+            history.doctor = doctor
             history.chief_complaint = request.POST.get('chief_complaint', '')
             history.diagnosis = request.POST.get('diagnosis', '')
             history.treatment_plan = request.POST.get('treatment_plan', '')
@@ -272,6 +303,8 @@ def clinical_history_edit(request, patient_id, history_id):
     context = {
         'patient': patient,
         'history': history,
+        'doctors': doctors,
+        'is_edit': True,
     }
     
     return render(request, 'dashboard/patients/clinical_history_form.html', context)

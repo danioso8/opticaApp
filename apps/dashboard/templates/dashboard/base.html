@@ -122,6 +122,11 @@
                     <span>Pacientes</span>
                 </a>
                 
+                <a href="{% url 'dashboard:doctors_list' %}" class="flex items-center px-4 py-3 hover:bg-indigo-800 {% if 'doctors' in request.path %}bg-indigo-800{% endif %}">
+                    <i class="fas fa-user-md mr-3"></i>
+                    <span>Doctores / Optómetras</span>
+                </a>
+                
                 <!-- Configuración (Menú Desplegable) -->
                 <div class="configuration-menu">
                     <button onclick="toggleSubmenu('configuration-submenu')" class="flex items-center justify-between w-full px-4 py-3 hover:bg-indigo-800 {% if 'notifications' in request.path %}bg-indigo-800{% endif %}">

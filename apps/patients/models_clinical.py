@@ -16,7 +16,14 @@ class ClinicalHistory(TenantModel):
     )
     
     date = models.DateField(verbose_name='Fecha del Examen')
-    doctor = models.CharField(max_length=200, verbose_name='Médico/Optómetra', blank=True)
+    doctor = models.ForeignKey(
+        'patients.Doctor',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='clinical_histories',
+        verbose_name='Médico/Optómetra'
+    )
     
     # ==================== ANAMNESIS ====================
     chief_complaint = models.TextField(verbose_name='Motivo de Consulta', blank=True)

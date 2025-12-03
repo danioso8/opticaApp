@@ -1205,6 +1205,8 @@ def create_patient_from_appointment(request):
     """Crear un paciente desde el detalle de una cita"""
     if request.method == 'POST':
         try:
+            import traceback
+            
             # Obtener datos del formulario
             full_name = request.POST.get('full_name')
             phone_number = request.POST.get('phone_number')
@@ -1215,9 +1217,26 @@ def create_patient_from_appointment(request):
                     'message': 'Nombre y teléfono son requeridos'
                 }, status=400)
             
+            # Obtener la organización del usuario a través de OrganizationMember
+            from apps.organizations.models import OrganizationMember
+            
+            membership = OrganizationMember.objects.filter(user=request.user, is_active=True).first()
+            if not membership:
+                # Si no tiene membership, intentar obtener de organizaciones que posee
+                owned_org = request.user.owned_organizations.filter(is_active=True).first()
+                if owned_org:
+                    user_org = owned_org
+                else:
+                    return JsonResponse({
+                        'success': False,
+                        'message': 'Tu usuario no pertenece a ninguna organización. Contacta al administrador.'
+                    }, status=400)
+            else:
+                user_org = membership.organization
+            
             # Verificar si ya existe un paciente con ese teléfono
             existing_patient = Patient.objects.filter(
-                organization=request.user.organization,
+                organization=user_org,
                 phone_number=phone_number
             ).first()
             
@@ -1229,7 +1248,7 @@ def create_patient_from_appointment(request):
             
             # Crear el paciente
             patient = Patient.objects.create(
-                organization=request.user.organization,
+                organization=user_org,
                 full_name=full_name,
                 identification=request.POST.get('identification', ''),
                 date_of_birth=request.POST.get('date_of_birth') or None,
@@ -1243,6 +1262,10 @@ def create_patient_from_appointment(request):
                 occupation=request.POST.get('occupation', ''),
                 civil_status=request.POST.get('civil_status', ''),
                 residence_area=request.POST.get('residence_area', ''),
+                has_companion=request.POST.get('has_companion') == 'true',
+                companion_name=request.POST.get('companion_name', ''),
+                companion_relationship=request.POST.get('companion_relationship', ''),
+                companion_phone=request.POST.get('companion_phone', ''),
                 is_active=True
             )
             
@@ -1251,7 +1274,7 @@ def create_patient_from_appointment(request):
             if appointment_id:
                 appointment = Appointment.objects.get(
                     id=appointment_id,
-                    organization=request.user.organization
+                    organization=user_org
                 )
                 appointment.patient = patient
                 appointment.save()
@@ -1268,9 +1291,236 @@ def create_patient_from_appointment(request):
                 'message': 'Cita no encontrada'
             }, status=404)
         except Exception as e:
+            # Imprimir el traceback completo en consola
+            import traceback
+            traceback.print_exc()
             return JsonResponse({
                 'success': False,
                 'message': f'Error al crear paciente: {str(e)}'
             }, status=500)
     
     return JsonResponse({'success': False, 'message': 'Método no permitido'}, status=405)
+
+
+# ==================== DOCTORES / OPTÓMETRAS ====================
+
+@login_required
+def doctors_list(request):
+    """Vista para listar todos los doctores"""
+    from apps.patients.models import Doctor
+    from apps.organizations.models import OrganizationMember
+    
+    # Obtener la organización del usuario
+    try:
+        org_member = OrganizationMember.objects.filter(user=request.user).first()
+        if not org_member:
+            messages.error(request, 'No tienes una organización asignada')
+            return redirect('dashboard:home')
+        
+        organization = org_member.organization
+    except Exception as e:
+        messages.error(request, f'Error al obtener organización: {str(e)}')
+        return redirect('dashboard:home')
+    
+    # Obtener doctores de la organización
+    doctors = Doctor.objects.filter(
+        organization=organization,
+        is_active=True
+    ).order_by('-created_at')
+    
+    context = {
+        'doctors': doctors,
+        'total_doctors': doctors.count(),
+    }
+    
+    return render(request, 'dashboard/doctors/list.html', context)
+
+
+@login_required
+def doctor_detail(request, pk):
+    """Vista para ver detalles de un doctor"""
+    from apps.patients.models import Doctor
+    from apps.organizations.models import OrganizationMember
+    
+    # Obtener la organización del usuario
+    org_member = OrganizationMember.objects.filter(user=request.user).first()
+    if not org_member:
+        messages.error(request, 'No tienes una organización asignada')
+        return redirect('dashboard:home')
+    
+    # Obtener el doctor
+    doctor = get_object_or_404(
+        Doctor,
+        pk=pk,
+        organization=org_member.organization
+    )
+    
+    context = {
+        'doctor': doctor,
+    }
+    
+    return render(request, 'dashboard/doctors/detail.html', context)
+
+
+@login_required
+def doctor_create(request):
+    """Vista para crear un nuevo doctor"""
+    from apps.patients.models import Doctor
+    from apps.organizations.models import OrganizationMember
+    
+    # Obtener la organización del usuario
+    org_member = OrganizationMember.objects.filter(user=request.user).first()
+    if not org_member:
+        messages.error(request, 'No tienes una organización asignada')
+        return redirect('dashboard:home')
+    
+    if request.method == 'POST':
+        try:
+            # Crear el doctor
+            doctor = Doctor(
+                organization=org_member.organization,
+                full_name=request.POST.get('full_name'),
+                identification=request.POST.get('identification'),
+                specialty=request.POST.get('specialty'),
+                professional_card=request.POST.get('professional_card', ''),
+                rethus=request.POST.get('rethus', ''),
+                graduation_date=request.POST.get('graduation_date') or None,
+                university=request.POST.get('university', ''),
+                email=request.POST.get('email', ''),
+                phone=request.POST.get('phone', ''),
+                mobile=request.POST.get('mobile', ''),
+                address=request.POST.get('address', ''),
+                monday_schedule=request.POST.get('monday_schedule', ''),
+                tuesday_schedule=request.POST.get('tuesday_schedule', ''),
+                wednesday_schedule=request.POST.get('wednesday_schedule', ''),
+                thursday_schedule=request.POST.get('thursday_schedule', ''),
+                friday_schedule=request.POST.get('friday_schedule', ''),
+                saturday_schedule=request.POST.get('saturday_schedule', ''),
+                sunday_schedule=request.POST.get('sunday_schedule', ''),
+                bio=request.POST.get('bio', ''),
+                notes=request.POST.get('notes', ''),
+                is_active=request.POST.get('is_active') == 'on'
+            )
+            
+            # Manejar archivos
+            if 'signature' in request.FILES:
+                doctor.signature = request.FILES['signature']
+            if 'photo' in request.FILES:
+                doctor.photo = request.FILES['photo']
+            
+            doctor.save()
+            
+            messages.success(request, f'Doctor {doctor.full_name} creado exitosamente')
+            return redirect('dashboard:doctor_detail', pk=doctor.pk)
+            
+        except Exception as e:
+            messages.error(request, f'Error al crear doctor: {str(e)}')
+    
+    context = {
+        'specialty_choices': Doctor.SPECIALTY_CHOICES,
+    }
+    
+    return render(request, 'dashboard/doctors/form.html', context)
+
+
+@login_required
+def doctor_edit(request, pk):
+    """Vista para editar un doctor"""
+    from apps.patients.models import Doctor
+    from apps.organizations.models import OrganizationMember
+    
+    # Obtener la organización del usuario
+    org_member = OrganizationMember.objects.filter(user=request.user).first()
+    if not org_member:
+        messages.error(request, 'No tienes una organización asignada')
+        return redirect('dashboard:home')
+    
+    # Obtener el doctor
+    doctor = get_object_or_404(
+        Doctor,
+        pk=pk,
+        organization=org_member.organization
+    )
+    
+    if request.method == 'POST':
+        try:
+            # Actualizar datos básicos
+            doctor.full_name = request.POST.get('full_name')
+            doctor.identification = request.POST.get('identification')
+            doctor.specialty = request.POST.get('specialty')
+            doctor.professional_card = request.POST.get('professional_card', '')
+            doctor.rethus = request.POST.get('rethus', '')
+            doctor.graduation_date = request.POST.get('graduation_date') or None
+            doctor.university = request.POST.get('university', '')
+            doctor.email = request.POST.get('email', '')
+            doctor.phone = request.POST.get('phone', '')
+            doctor.mobile = request.POST.get('mobile', '')
+            doctor.address = request.POST.get('address', '')
+            
+            # Actualizar horarios
+            doctor.monday_schedule = request.POST.get('monday_schedule', '')
+            doctor.tuesday_schedule = request.POST.get('tuesday_schedule', '')
+            doctor.wednesday_schedule = request.POST.get('wednesday_schedule', '')
+            doctor.thursday_schedule = request.POST.get('thursday_schedule', '')
+            doctor.friday_schedule = request.POST.get('friday_schedule', '')
+            doctor.saturday_schedule = request.POST.get('saturday_schedule', '')
+            doctor.sunday_schedule = request.POST.get('sunday_schedule', '')
+            
+            # Actualizar información adicional
+            doctor.bio = request.POST.get('bio', '')
+            doctor.notes = request.POST.get('notes', '')
+            doctor.is_active = request.POST.get('is_active') == 'on'
+            
+            # Manejar archivos
+            if 'signature' in request.FILES:
+                doctor.signature = request.FILES['signature']
+            if 'photo' in request.FILES:
+                doctor.photo = request.FILES['photo']
+            
+            doctor.save()
+            
+            messages.success(request, f'Doctor {doctor.full_name} actualizado exitosamente')
+            return redirect('dashboard:doctor_detail', pk=doctor.pk)
+            
+        except Exception as e:
+            messages.error(request, f'Error al actualizar doctor: {str(e)}')
+    
+    context = {
+        'doctor': doctor,
+        'specialty_choices': Doctor.SPECIALTY_CHOICES,
+        'is_edit': True,
+    }
+    
+    return render(request, 'dashboard/doctors/form.html', context)
+
+
+@login_required
+def doctor_delete(request, pk):
+    """Vista para eliminar un doctor (soft delete)"""
+    from apps.patients.models import Doctor
+    from apps.organizations.models import OrganizationMember
+    
+    if request.method == 'POST':
+        # Obtener la organización del usuario
+        org_member = OrganizationMember.objects.filter(user=request.user).first()
+        if not org_member:
+            messages.error(request, 'No tienes una organización asignada')
+            return redirect('dashboard:home')
+        
+        # Obtener el doctor
+        doctor = get_object_or_404(
+            Doctor,
+            pk=pk,
+            organization=org_member.organization
+        )
+        
+        try:
+            # Soft delete
+            doctor.is_active = False
+            doctor.save()
+            
+            messages.success(request, f'Doctor {doctor.full_name} desactivado exitosamente')
+        except Exception as e:
+            messages.error(request, f'Error al desactivar doctor: {str(e)}')
+    
+    return redirect('dashboard:doctors_list')

@@ -5,6 +5,9 @@ from apps.organizations.base_models import TenantModel
 # Importar modelos de historia clínica
 from .models_clinical import ClinicalHistory, ClinicalHistoryAttachment
 
+# Importar modelo de doctores
+from .models_doctors import Doctor
+
 
 class Patient(TenantModel):
     """Modelo de Paciente/Cliente"""
@@ -55,6 +58,12 @@ class Patient(TenantModel):
     # Información bancaria
     bank_entity = models.CharField(max_length=200, blank=True, verbose_name="Entidad bancaria")
     account_number = models.CharField(max_length=50, blank=True, verbose_name="# Cuenta bancaria")
+
+    # Información de acompañante
+    has_companion = models.BooleanField(default=False, verbose_name="Viene con acompañante")
+    companion_name = models.CharField(max_length=200, blank=True, verbose_name="Nombre del acompañante")
+    companion_relationship = models.CharField(max_length=100, blank=True, verbose_name="Relación con el paciente")
+    companion_phone = models.CharField(max_length=17, blank=True, verbose_name="Teléfono del acompañante")
 
     # Metadatos
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="Fecha de registro")

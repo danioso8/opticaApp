@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Patient, ClinicalHistory, ClinicalHistoryAttachment
+from .models import Patient, ClinicalHistory, ClinicalHistoryAttachment, Doctor
 
 
 @admin.register(Patient)
@@ -103,3 +103,49 @@ class ClinicalHistoryAttachmentAdmin(admin.ModelAdmin):
     list_display = ['clinical_history', 'file_type', 'description', 'created_at']
     list_filter = ['file_type', 'created_at']
     search_fields = ['clinical_history__patient__full_name', 'description']
+
+
+@admin.register(Doctor)
+class DoctorAdmin(admin.ModelAdmin):
+    list_display = [
+        'full_name',
+        'identification',
+        'specialty',
+        'professional_card',
+        'rethus',
+        'is_active',
+        'created_at'
+    ]
+    list_filter = ['specialty', 'is_active', 'created_at']
+    search_fields = ['full_name', 'identification', 'professional_card', 'rethus', 'email']
+    readonly_fields = ['created_at', 'updated_at']
+    
+    fieldsets = (
+        ('Información Personal', {
+            'fields': ('full_name', 'identification', 'specialty', 'photo')
+        }),
+        ('Credenciales Profesionales', {
+            'fields': ('professional_card', 'rethus', 'graduation_date', 'university', 'signature')
+        }),
+        ('Información de Contacto', {
+            'fields': ('email', 'phone', 'mobile', 'address')
+        }),
+        ('Horarios de Atención', {
+            'fields': (
+                'monday_schedule', 'tuesday_schedule', 'wednesday_schedule',
+                'thursday_schedule', 'friday_schedule', 'saturday_schedule', 'sunday_schedule'
+            ),
+            'classes': ('collapse',)
+        }),
+        ('Información Adicional', {
+            'fields': ('bio', 'notes'),
+            'classes': ('collapse',)
+        }),
+        ('Estado', {
+            'fields': ('is_active',)
+        }),
+        ('Metadatos', {
+            'fields': ('created_at', 'updated_at'),
+            'classes': ('collapse',)
+        }),
+    )

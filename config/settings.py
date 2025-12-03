@@ -121,9 +121,11 @@ if DATABASE_URL:
             ssl_require=True,
         )
     }
-    # Configuración SSL para PostgreSQL (Render requiere SSL)
+    # Configuración SSL para PostgreSQL
+    # Render requiere SSL para conexiones a la base de datos
     DATABASES['default']['OPTIONS'] = {
         'sslmode': 'require',
+        'connect_timeout': 10,
     }
 else:
     DATABASES = {
