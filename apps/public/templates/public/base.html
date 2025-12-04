@@ -22,52 +22,99 @@
             background-color: #3b82f6;
             background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
         }
+        
+        .navbar-link:hover {
+            color: {% if landing_config %}{{ landing_config.navbar_hover_color }}{% else %}#2563eb{% endif %} !important;
+        }
     </style>
     
     {% block extra_head %}{% endblock %}
 </head>
 <body class="bg-gray-50">
     <!-- Header/Navigation -->
-    <nav class="bg-white shadow-md fixed w-full top-0 z-50">
+    {% if landing_config.navbar_style == 'modern' %}
+    <nav class="fixed w-full top-0 z-50 shadow-lg" style="background: linear-gradient(135deg, {{ landing_config.navbar_bg_color|default:'#2563eb' }} 0%, #4f46e5 100%);">
+    {% elif landing_config.navbar_style == 'minimal' %}
+    <nav class="fixed w-full top-0 z-50 bg-white/95 backdrop-blur-sm border-b-2" style="border-color: {% if landing_config %}{{ landing_config.navbar_hover_color }}{% else %}#e5e7eb{% endif %};">
+    {% elif landing_config.navbar_style == 'bold' %}
+    <nav class="fixed w-full top-0 z-50 shadow-2xl" style="background-color: {% if landing_config %}{{ landing_config.navbar_bg_color }}{% else %}#111827{% endif %};">
+    {% else %}
+    <nav class="shadow-md fixed w-full top-0 z-50" style="background-color: {% if landing_config %}{{ landing_config.navbar_bg_color }}{% else %}#ffffff{% endif %};">
+    {% endif %}
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between items-center h-16">
                 <div class="flex items-center">
                     <a href="{% url 'public:home' %}" class="flex items-center">
-                        <i class="fas fa-glasses text-blue-600 text-3xl mr-3"></i>
-                        <span class="text-2xl font-bold text-gray-800">
+                        {% if landing_config.navbar_style == 'modern' or landing_config.navbar_style == 'bold' %}
+                        <i class="fas fa-glasses text-3xl mr-3 text-white"></i>
+                        <span class="text-2xl font-bold text-white">
+                        {% else %}
+                        <i class="fas fa-glasses text-3xl mr-3" style="color: {% if landing_config %}{{ landing_config.navbar_hover_color }}{% else %}#2563eb{% endif %};"></i>
+                        <span class="text-2xl font-bold" style="color: {% if landing_config %}{{ landing_config.navbar_text_color }}{% else %}#1f2937{% endif %};">
+                        {% endif %}
                             {% if organization_data %}{{ organization_data.name|upper }}{% else %}OCEANO OPTICO{% endif %}
                         </span>
                     </a>
                 </div>
                 
                 <div class="hidden md:flex space-x-8">
-                    <a href="{% url 'public:home' %}" class="text-gray-700 hover:text-blue-600 font-medium transition">
+                    {% if landing_config.navbar_style == 'modern' or landing_config.navbar_style == 'bold' %}
+                    <a href="{% url 'public:home' %}" class="font-medium transition navbar-link text-white/90 hover:text-white">
                         Inicio
                     </a>
-                    <a href="{% url 'public:booking' %}" class="text-gray-700 hover:text-blue-600 font-medium transition">
+                    <a href="{% url 'public:booking' %}" class="font-medium transition navbar-link text-white/90 hover:text-white">
                         Agendar Cita
                     </a>
-                    <a href="{% url 'public:shop' %}" class="text-gray-700 hover:text-blue-600 font-medium transition">
+                    <a href="{% url 'public:shop' %}" class="font-medium transition navbar-link text-white/90 hover:text-white">
                         Tienda
                     </a>
-                    <a href="#servicios" class="text-gray-700 hover:text-blue-600 font-medium transition">
+                    <a href="#servicios" class="font-medium transition navbar-link text-white/90 hover:text-white">
                         Servicios
                     </a>
-                    <a href="#contacto" class="text-gray-700 hover:text-blue-600 font-medium transition">
+                    <a href="#contacto" class="font-medium transition navbar-link text-white/90 hover:text-white">
                         Contacto
                     </a>
+                    {% else %}
+                    <a href="{% url 'public:home' %}" class="font-medium transition navbar-link" style="color: {% if landing_config %}{{ landing_config.navbar_text_color }}{% else %}#1f2937{% endif %};">
+                        Inicio
+                    </a>
+                    <a href="{% url 'public:booking' %}" class="font-medium transition navbar-link" style="color: {% if landing_config %}{{ landing_config.navbar_text_color }}{% else %}#1f2937{% endif %};">
+                        Agendar Cita
+                    </a>
+                    <a href="{% url 'public:shop' %}" class="font-medium transition navbar-link" style="color: {% if landing_config %}{{ landing_config.navbar_text_color }}{% else %}#1f2937{% endif %};">
+                        Tienda
+                    </a>
+                    <a href="#servicios" class="font-medium transition navbar-link" style="color: {% if landing_config %}{{ landing_config.navbar_text_color }}{% else %}#1f2937{% endif %};">
+                        Servicios
+                    </a>
+                    <a href="#contacto" class="font-medium transition navbar-link" style="color: {% if landing_config %}{{ landing_config.navbar_text_color }}{% else %}#1f2937{% endif %};">
+                        Contacto
+                    </a>
+                    {% endif %}
                 </div>
                 
                 <div class="flex items-center space-x-4">
-                    <a href="/dashboard/login/" class="hidden md:block text-gray-700 hover:text-blue-600 font-medium transition">
+                    {% if landing_config.navbar_style == 'modern' or landing_config.navbar_style == 'bold' %}
+                    <a href="/dashboard/login/" class="hidden md:block font-medium transition navbar-link text-white/90 hover:text-white">
                         <i class="fas fa-sign-in-alt mr-2"></i>Iniciar Sesión
                     </a>
-                    <a href="{% url 'public:booking' %}" class="hidden md:block bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-full font-medium transition">
+                    <a href="{% url 'public:booking' %}" class="hidden md:block bg-white text-blue-600 px-6 py-2 rounded-full font-medium transition hover:bg-gray-100">
                         <i class="fas fa-calendar-plus mr-2"></i>Reservar
                     </a>
-                    <button class="md:hidden text-gray-700" onclick="toggleMobileMenu()">
+                    <button class="md:hidden text-white" onclick="toggleMobileMenu()">
                         <i class="fas fa-bars text-2xl"></i>
                     </button>
+                    {% else %}
+                    <a href="/dashboard/login/" class="hidden md:block font-medium transition navbar-link" style="color: {% if landing_config %}{{ landing_config.navbar_text_color }}{% else %}#1f2937{% endif %};">
+                        <i class="fas fa-sign-in-alt mr-2"></i>Iniciar Sesión
+                    </a>
+                    <a href="{% url 'public:booking' %}" class="hidden md:block text-white px-6 py-2 rounded-full font-medium transition hover:opacity-90" style="background-color: {% if landing_config %}{{ landing_config.primary_button_color }}{% else %}#2563eb{% endif %};">
+                        <i class="fas fa-calendar-plus mr-2"></i>Reservar
+                    </a>
+                    <button class="md:hidden" style="color: {% if landing_config %}{{ landing_config.navbar_text_color }}{% else %}#1f2937{% endif %};" onclick="toggleMobileMenu()">
+                        <i class="fas fa-bars text-2xl"></i>
+                    </button>
+                    {% endif %}
                 </div>
             </div>
         </div>
@@ -103,7 +150,7 @@
     </main>
     
     <!-- Footer -->
-    <footer class="bg-gray-900 text-white mt-20">
+    <footer class="text-white mt-20" style="background-color: {% if landing_config %}{{ landing_config.footer_bg_color }}{% else %}#111827{% endif %};">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
             <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
                 <div>

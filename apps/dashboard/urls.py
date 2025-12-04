@@ -31,6 +31,9 @@ urlpatterns = [
     path('notifications/settings/save/', views.save_notification_settings, name='save_notification_settings'),
     path('notifications/test/', views.test_notification, name='test_notification'),
     
+    # Configuración de Landing Page
+    path('configuration/landing-page/', views.landing_page_config, name='landing_page_config'),
+    
     # Horarios específicos
     path('configuration/add-specific-schedule/', views.add_specific_schedule, name='add_specific_schedule'),
     path('configuration/specific-schedule/<int:pk>/toggle/', views.toggle_specific_schedule, name='toggle_specific_schedule'),

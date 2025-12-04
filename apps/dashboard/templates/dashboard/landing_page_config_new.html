@@ -1,0 +1,654 @@
+{% extends 'dashboard/base.html' %}
+{% load static %}
+
+{% block title %}Configuración Landing Page{% endblock %}
+{% block page_title %}Configuración de Landing Page{% endblock %}
+{% block page_subtitle %}Personaliza completamente tu página pública - Dale vida a tu creatividad{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto">
+    <!-- Vista Previa Link -->
+    <div class="bg-gradient-to-r from-blue-50 to-indigo-50 border-2 border-blue-200 rounded-xl p-4 mb-6 shadow-sm">
+        <div class="flex items-center justify-between">
+            <div class="flex items-center">
+                <i class="fas fa-eye text-blue-600 text-3xl mr-4"></i>
+                <div>
+                    <h3 class="font-bold text-gray-800 text-lg">Vista Previa en Vivo</h3>
+                    <p class="text-sm text-gray-600">Todos los cambios se reflejan inmediatamente</p>
+                </div>
+            </div>
+            <a href="{% url 'public:home' %}" target="_blank" class="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-8 py-3 rounded-xl font-semibold transition shadow-lg hover:shadow-xl">
+                <i class="fas fa-external-link-alt mr-2"></i>Ver Landing Page
+            </a>
+        </div>
+    </div>
+
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        
+        <!-- Tabs Navigation -->
+        <div class="bg-white rounded-xl shadow-md mb-6 overflow-hidden">
+            <div class="flex overflow-x-auto border-b">
+                <button type="button" class="tab-btn active px-6 py-4 font-semibold text-gray-700 hover:bg-gray-50 border-b-2 border-blue-500 whitespace-nowrap" data-tab="navbar">
+                    <i class="fas fa-bars mr-2"></i>Navbar
+                </button>
+                <button type="button" class="tab-btn px-6 py-4 font-semibold text-gray-500 hover:bg-gray-50 border-b-2 border-transparent whitespace-nowrap" data-tab="hero">
+                    <i class="fas fa-star mr-2"></i>Hero Section
+                </button>
+                <button type="button" class="tab-btn px-6 py-4 font-semibold text-gray-500 hover:bg-gray-50 border-b-2 border-transparent whitespace-nowrap" data-tab="services">
+                    <i class="fas fa-th-large mr-2"></i>Servicios
+                </button>
+                <button type="button" class="tab-btn px-6 py-4 font-semibold text-gray-500 hover:bg-gray-50 border-b-2 border-transparent whitespace-nowrap" data-tab="design">
+                    <i class="fas fa-paint-brush mr-2"></i>Diseño
+                </button>
+                <button type="button" class="tab-btn px-6 py-4 font-semibold text-gray-500 hover:bg-gray-50 border-b-2 border-transparent whitespace-nowrap" data-tab="effects">
+                    <i class="fas fa-magic mr-2"></i>Efectos
+                </button>
+                <button type="button" class="tab-btn px-6 py-4 font-semibold text-gray-500 hover:bg-gray-50 border-b-2 border-transparent whitespace-nowrap" data-tab="extras">
+                    <i class="fas fa-plus-circle mr-2"></i>Extras
+                </button>
+            </div>
+        </div>
+
+        <!-- Tab Content -->
+        <div class="space-y-6">
+            
+            <!-- NAVBAR TAB -->
+            <div class="tab-content" id="navbar-tab">
+                <div class="bg-white rounded-xl shadow-md p-8">
+                    <h3 class="text-2xl font-bold text-gray-800 mb-6 flex items-center">
+                        <i class="fas fa-bars mr-3 text-indigo-600"></i>
+                        Estilo del Navbar
+                    </h3>
+                    
+                    <div class="mb-8">
+                        <label class="block text-sm font-semibold text-gray-700 mb-4">Diseño del Navbar:</label>
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                            {% for value, label in form.navbar_style.field.choices %}
+                            <label class="cursor-pointer transform hover:scale-105 transition">
+                                <input type="radio" name="navbar_style" value="{{ value }}" {% if form.navbar_style.value == value %}checked{% endif %} class="hidden style-radio">
+                                <div class="border-2 rounded-xl overflow-hidden transition hover:border-blue-500 style-option shadow-sm hover:shadow-md">
+                                    <div class="p-4">
+                                        <div class="flex items-center mb-2">
+                                            <i class="fas fa-check-circle text-blue-500 mr-2 check-icon hidden text-xl"></i>
+                                            <span class="font-bold text-gray-800">{{ label|slice:":20" }}</span>
+                                        </div>
+                                        <div class="h-16 bg-gray-100 rounded-lg flex items-center justify-center">
+                                            <span class="text-xs text-gray-500">Vista previa</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </label>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-2">Color de Fondo</label>
+                            <div class="flex items-center space-x-3">
+                                {{ form.navbar_bg_color }}
+                                <span class="text-sm text-gray-600">{{ form.navbar_bg_color.value }}</span>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-2">Color de Texto</label>
+                            <div class="flex items-center space-x-3">
+                                {{ form.navbar_text_color }}
+                                <span class="text-sm text-gray-600">{{ form.navbar_text_color.value }}</span>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-2">Color Hover</label>
+                            <div class="flex items-center space-x-3">
+                                {{ form.navbar_hover_color }}
+                                <span class="text-sm text-gray-600">{{ form.navbar_hover_color.value }}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- HERO TAB -->
+            <div class="tab-content hidden" id="hero-tab">
+                <div class="bg-white rounded-xl shadow-md p-8">
+                    <h3 class="text-2xl font-bold text-gray-800 mb-6 flex items-center">
+                        <i class="fas fa-star mr-3 text-indigo-600"></i>
+                        Hero Section
+                    </h3>
+                    
+                    <!-- Hero Style -->
+                    <div class="mb-8">
+                        <label class="block text-sm font-semibold text-gray-700 mb-4">Estilo del Hero:</label>
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            {% for value, label in form.hero_style.field.choices %}
+                            <label class="cursor-pointer transform hover:scale-105 transition">
+                                <input type="radio" name="hero_style" value="{{ value }}" {% if form.hero_style.value == value %}checked{% endif %} class="hidden style-radio">
+                                <div class="border-2 rounded-xl overflow-hidden transition hover:border-purple-500 style-option shadow-sm hover:shadow-md">
+                                    <div class="p-4">
+                                        <div class="flex items-center mb-2">
+                                            <i class="fas fa-check-circle text-purple-500 mr-2 check-icon hidden text-xl"></i>
+                                            <span class="font-bold text-gray-800">{{ label|slice:":20" }}</span>
+                                        </div>
+                                        <div class="h-20 bg-gradient-to-br from-purple-100 to-blue-100 rounded-lg"></div>
+                                        <p class="text-xs text-gray-500 mt-2">{{ label|slice:"23:" }}</p>
+                                    </div>
+                                </div>
+                            </label>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <!-- Hero Colors -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+                        <div class="bg-gradient-to-br from-blue-50 to-indigo-50 p-6 rounded-xl">
+                            <h4 class="font-bold text-gray-800 mb-4 flex items-center">
+                                <i class="fas fa-fill-drip mr-2 text-blue-600"></i>
+                                Gradiente de Fondo
+                            </h4>
+                            <div class="space-y-4">
+                                <div>
+                                    <label class="block text-sm font-semibold text-gray-700 mb-2">Color Inicial</label>
+                                    <div class="flex items-center space-x-3">
+                                        {{ form.hero_bg_gradient_start }}
+                                        <span class="text-sm text-gray-600">{{ form.hero_bg_gradient_start.value }}</span>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-semibold text-gray-700 mb-2">Color Final</label>
+                                    <div class="flex items-center space-x-3">
+                                        {{ form.hero_bg_gradient_end }}
+                                        <span class="text-sm text-gray-600">{{ form.hero_bg_gradient_end.value }}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="bg-gradient-to-br from-purple-50 to-pink-50 p-6 rounded-xl">
+                            <h4 class="font-bold text-gray-800 mb-4 flex items-center">
+                                <i class="fas fa-font mr-2 text-purple-600"></i>
+                                Colores de Texto
+                            </h4>
+                            <div class="space-y-4">
+                                <div>
+                                    <label class="block text-sm font-semibold text-gray-700 mb-2">Color Título</label>
+                                    <div class="flex items-center space-x-3">
+                                        {{ form.hero_title_color }}
+                                        <span class="text-sm text-gray-600">{{ form.hero_title_color.value }}</span>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-semibold text-gray-700 mb-2">Color Subtítulo</label>
+                                    <div class="flex items-center space-x-3">
+                                        {{ form.hero_subtitle_color }}
+                                        <span class="text-sm text-gray-600">{{ form.hero_subtitle_color.value }}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Hero Content -->
+                    <div class="space-y-6">
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-2">
+                                <i class="fas fa-heading mr-2"></i>Título Principal
+                            </label>
+                            {{ form.hero_title }}
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-2">
+                                <i class="fas fa-align-left mr-2"></i>Subtítulo
+                            </label>
+                            {{ form.hero_subtitle }}
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-2">
+                                <i class="fas fa-image mr-2"></i>Imagen de Fondo
+                            </label>
+                            {{ form.hero_image }}
+                            {% if form.hero_image.value %}
+                            <div class="mt-2">
+                                <img src="{{ form.hero_image.value.url }}" alt="Hero" class="w-48 h-32 object-cover rounded-lg shadow">
+                            </div>
+                            {% endif %}
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-2">
+                                <i class="fas fa-adjust mr-2"></i>Opacidad del Overlay ({{ form.hero_overlay_opacity.value }}%)
+                            </label>
+                            {{ form.hero_overlay_opacity }}
+                            <p class="text-xs text-gray-500 mt-1">Oscurece la imagen de fondo para mejorar la legibilidad</p>
+                        </div>
+                    </div>
+
+                    <!-- CTA Badge -->
+                    <div class="mt-8 bg-green-50 p-6 rounded-xl">
+                        <h4 class="font-bold text-gray-800 mb-4 flex items-center">
+                            <i class="fas fa-tag mr-2 text-green-600"></i>
+                            Badge Call-to-Action
+                        </h4>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-semibold text-gray-700 mb-2">Texto del Badge</label>
+                                {{ form.cta_badge_text }}
+                            </div>
+                            <div>
+                                <label class="block text-sm font-semibold text-gray-700 mb-2">Color del Badge</label>
+                                <div class="flex items-center space-x-3">
+                                    {{ form.cta_badge_color }}
+                                    <span class="text-sm text-gray-600">{{ form.cta_badge_color.value }}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SERVICES TAB -->
+            <div class="tab-content hidden" id="services-tab">
+                <div class="bg-white rounded-xl shadow-md p-8">
+                    <h3 class="text-2xl font-bold text-gray-800 mb-6 flex items-center">
+                        <i class="fas fa-th-large mr-3 text-indigo-600"></i>
+                        Sección de Servicios
+                    </h3>
+                    
+                    <!-- Services Layout -->
+                    <div class="mb-8">
+                        <label class="block text-sm font-semibold text-gray-700 mb-4">Layout de Servicios:</label>
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                            {% for value, label in form.services_layout.field.choices %}
+                            <label class="cursor-pointer transform hover:scale-105 transition">
+                                <input type="radio" name="services_layout" value="{{ value }}" {% if form.services_layout.value == value %}checked{% endif %} class="hidden style-radio">
+                                <div class="border-2 rounded-xl overflow-hidden transition hover:border-green-500 style-option shadow-sm hover:shadow-md">
+                                    <div class="p-4">
+                                        <div class="flex items-center mb-2">
+                                            <i class="fas fa-check-circle text-green-500 mr-2 check-icon hidden text-xl"></i>
+                                            <span class="font-bold text-gray-800">{{ label|slice:":20" }}</span>
+                                        </div>
+                                        <div class="h-16 bg-gray-100 rounded-lg"></div>
+                                    </div>
+                                </div>
+                            </label>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <!-- Services Colors & Titles -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-2">Color de Fondo</label>
+                            <div class="flex items-center space-x-3">
+                                {{ form.services_bg_color }}
+                                <span class="text-sm text-gray-600">{{ form.services_bg_color.value }}</span>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-2">Título Servicios</label>
+                            {{ form.services_title }}
+                        </div>
+                    </div>
+
+                    <!-- Individual Services -->
+                    <div class="space-y-8">
+                        {% for i in "1234" %}
+                        <div class="bg-gray-50 p-6 rounded-xl">
+                            <h4 class="font-bold text-gray-800 mb-4 flex items-center">
+                                <i class="fas fa-briefcase mr-2 text-blue-600"></i>
+                                Servicio {{ i }}
+                            </h4>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Título</label>
+                                    {{ form|attr:"service_"|add:i|add:"_title" }}
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Imagen</label>
+                                    {{ form|attr:"service_image_"|add:i }}
+                                </div>
+                                <div class="md:col-span-2">
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Descripción</label>
+                                    {{ form|attr:"service_"|add:i|add:"_description" }}
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- DESIGN TAB -->
+            <div class="tab-content hidden" id="design-tab">
+                <div class="bg-white rounded-xl shadow-md p-8">
+                    <h3 class="text-2xl font-bold text-gray-800 mb-6 flex items-center">
+                        <i class="fas fa-paint-brush mr-3 text-indigo-600"></i>
+                        Diseño y Tipografía
+                    </h3>
+                    
+                    <!-- Typography -->
+                    <div class="mb-8">
+                        <label class="block text-sm font-semibold text-gray-700 mb-4">Familia de Fuente:</label>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            {% for value, label in form.font_family.field.choices %}
+                            <label class="cursor-pointer transform hover:scale-105 transition">
+                                <input type="radio" name="font_family" value="{{ value }}" {% if form.font_family.value == value %}checked{% endif %} class="hidden style-radio">
+                                <div class="border-2 rounded-xl overflow-hidden transition hover:border-purple-500 style-option shadow-sm hover:shadow-md">
+                                    <div class="p-4">
+                                        <div class="flex items-center mb-2">
+                                            <i class="fas fa-check-circle text-purple-500 mr-2 check-icon hidden text-xl"></i>
+                                            <span class="font-bold text-gray-800">{{ label|slice:":20" }}</span>
+                                        </div>
+                                        <p class="text-sm text-gray-600" style="font-family: {{ value }};">Ejemplo de texto</p>
+                                    </div>
+                                </div>
+                            </label>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <!-- Buttons -->
+                    <div class="bg-blue-50 p-6 rounded-xl mb-8">
+                        <h4 class="font-bold text-gray-800 mb-4 flex items-center">
+                            <i class="fas fa-mouse-pointer mr-2 text-blue-600"></i>
+                            Botones
+                        </h4>
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            <div>
+                                <label class="block text-sm font-semibold text-gray-700 mb-2">Color Primario</label>
+                                <div class="flex items-center space-x-3">
+                                    {{ form.primary_button_color }}
+                                    <span class="text-sm text-gray-600">{{ form.primary_button_color.value }}</span>
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-semibold text-gray-700 mb-2">Radio de Borde</label>
+                                {{ form.button_border_radius }}
+                                <p class="text-xs text-gray-500 mt-1">{{ form.button_border_radius.value }}px</p>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-semibold text-gray-700 mb-2">Sombra</label>
+                                <div class="flex items-center">
+                                    {{ form.button_shadow }}
+                                    <span class="ml-2 text-sm text-gray-600">Activar sombra</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Cards -->
+                    <div class="bg-green-50 p-6 rounded-xl mb-8">
+                        <h4 class="font-bold text-gray-800 mb-4 flex items-center">
+                            <i class="fas fa-square mr-2 text-green-600"></i>
+                            Tarjetas
+                        </h4>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label class="block text-sm font-semibold text-gray-700 mb-4">Intensidad de Sombra:</label>
+                                <div class="space-y-2">
+                                    {% for value, label in form.card_shadow_intensity.field.choices %}
+                                    <label class="flex items-center cursor-pointer">
+                                        <input type="radio" name="card_shadow_intensity" value="{{ value }}" {% if form.card_shadow_intensity.value == value %}checked{% endif %} class="form-radio text-blue-600">
+                                        <span class="ml-2 text-sm text-gray-700">{{ label }}</span>
+                                    </label>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-semibold text-gray-700 mb-2">Radio de Borde</label>
+                                {{ form.card_border_radius }}
+                                <p class="text-xs text-gray-500 mt-1">{{ form.card_border_radius.value }}px</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Spacing -->
+                    <div class="bg-purple-50 p-6 rounded-xl">
+                        <h4 class="font-bold text-gray-800 mb-4 flex items-center">
+                            <i class="fas fa-arrows-alt-v mr-2 text-purple-600"></i>
+                            Espaciado
+                        </h4>
+                        <div class="space-y-2">
+                            {% for value, label in form.section_spacing.field.choices %}
+                            <label class="flex items-center cursor-pointer">
+                                <input type="radio" name="section_spacing" value="{{ value }}" {% if form.section_spacing.value == value %}checked{% endif %} class="form-radio text-blue-600">
+                                <span class="ml-2 text-sm text-gray-700">{{ label }}</span>
+                            </label>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- EFFECTS TAB -->
+            <div class="tab-content hidden" id="effects-tab">
+                <div class="bg-white rounded-xl shadow-md p-8">
+                    <h3 class="text-2xl font-bold text-gray-800 mb-6 flex items-center">
+                        <i class="fas fa-magic mr-3 text-indigo-600"></i>
+                        Efectos y Animaciones
+                    </h3>
+                    
+                    <!-- Animation Speed -->
+                    <div class="mb-8">
+                        <label class="block text-sm font-semibold text-gray-700 mb-4">Velocidad de Animaciones:</label>
+                        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                            {% for value, label in form.animation_speed.field.choices %}
+                            <label class="cursor-pointer transform hover:scale-105 transition">
+                                <input type="radio" name="animation_speed" value="{{ value }}" {% if form.animation_speed.value == value %}checked{% endif %} class="hidden style-radio">
+                                <div class="border-2 rounded-xl overflow-hidden transition hover:border-pink-500 style-option shadow-sm hover:shadow-md">
+                                    <div class="p-4 text-center">
+                                        <i class="fas fa-check-circle text-pink-500 mb-2 check-icon hidden text-xl"></i>
+                                        <div class="font-bold text-gray-800">{{ label|slice:":20" }}</div>
+                                    </div>
+                                </div>
+                            </label>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <!-- Effect Toggles -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="bg-gradient-to-br from-pink-50 to-purple-50 p-6 rounded-xl">
+                            <div class="flex items-start">
+                                {{ form.enable_parallax }}
+                                <div class="ml-3">
+                                    <label class="font-bold text-gray-800 cursor-pointer">
+                                        <i class="fas fa-layer-group mr-2 text-purple-600"></i>
+                                        Efecto Parallax
+                                    </label>
+                                    <p class="text-sm text-gray-600 mt-1">Efecto de profundidad al hacer scroll</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="bg-gradient-to-br from-blue-50 to-cyan-50 p-6 rounded-xl">
+                            <div class="flex items-start">
+                                {{ form.enable_hover_effects }}
+                                <div class="ml-3">
+                                    <label class="font-bold text-gray-800 cursor-pointer">
+                                        <i class="fas fa-hand-pointer mr-2 text-blue-600"></i>
+                                        Efectos Hover
+                                    </label>
+                                    <p class="text-sm text-gray-600 mt-1">Efectos al pasar el mouse sobre elementos</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- EXTRAS TAB -->
+            <div class="tab-content hidden" id="extras-tab">
+                <div class="bg-white rounded-xl shadow-md p-8">
+                    <h3 class="text-2xl font-bold text-gray-800 mb-6 flex items-center">
+                        <i class="fas fa-plus-circle mr-3 text-indigo-600"></i>
+                        Elementos Adicionales
+                    </h3>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <div class="bg-gradient-to-br from-green-50 to-emerald-50 p-6 rounded-xl">
+                            <div class="flex items-start">
+                                {{ form.show_scroll_indicator }}
+                                <div class="ml-3">
+                                    <label class="font-bold text-gray-800 cursor-pointer">
+                                        <i class="fas fa-arrow-down mr-2 text-green-600"></i>
+                                        Indicador de Scroll
+                                    </label>
+                                    <p class="text-sm text-gray-600 mt-1">Flecha animada en hero section</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="bg-gradient-to-br from-yellow-50 to-orange-50 p-6 rounded-xl">
+                            <div class="flex items-start">
+                                {{ form.show_testimonials }}
+                                <div class="ml-3">
+                                    <label class="font-bold text-gray-800 cursor-pointer">
+                                        <i class="fas fa-quote-left mr-2 text-orange-600"></i>
+                                        Testimonios
+                                    </label>
+                                    <p class="text-sm text-gray-600 mt-1">Sección de testimonios de clientes</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="bg-gradient-to-br from-blue-50 to-indigo-50 p-6 rounded-xl">
+                            <div class="flex items-start">
+                                {{ form.show_stats }}
+                                <div class="ml-3">
+                                    <label class="font-bold text-gray-800 cursor-pointer">
+                                        <i class="fas fa-chart-line mr-2 text-indigo-600"></i>
+                                        Estadísticas
+                                    </label>
+                                    <p class="text-sm text-gray-600 mt-1">Números destacados y logros</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Footer -->
+                    <div class="mt-8 bg-gray-50 p-6 rounded-xl">
+                        <h4 class="font-bold text-gray-800 mb-4 flex items-center">
+                            <i class="fas fa-shoe-prints mr-2 text-gray-600"></i>
+                            Footer
+                        </h4>
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-2">Color de Fondo</label>
+                            <div class="flex items-center space-x-3">
+                                {{ form.footer_bg_color }}
+                                <span class="text-sm text-gray-600">{{ form.footer_bg_color.value }}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Submit Button -->
+        <div class="sticky bottom-6 mt-8">
+            <div class="bg-gradient-to-r from-blue-600 to-indigo-600 rounded-xl shadow-2xl p-6">
+                <div class="flex items-center justify-between">
+                    <div class="text-white">
+                        <h4 class="font-bold text-lg">¿Listo para aplicar los cambios?</h4>
+                        <p class="text-sm text-blue-100">Guarda tu configuración personalizada</p>
+                    </div>
+                    <button type="submit" class="bg-white text-blue-600 hover:bg-blue-50 px-10 py-4 rounded-xl font-bold shadow-lg hover:shadow-xl transition transform hover:scale-105 flex items-center space-x-2">
+                        <i class="fas fa-save text-xl"></i>
+                        <span>Guardar Configuración</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Tab switching
+    const tabBtns = document.querySelectorAll('.tab-btn');
+    const tabContents = document.querySelectorAll('.tab-content');
+    
+    tabBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            const tab = btn.dataset.tab;
+            
+            // Update buttons
+            tabBtns.forEach(b => {
+                b.classList.remove('active', 'border-blue-500', 'text-gray-700');
+                b.classList.add('text-gray-500', 'border-transparent');
+            });
+            btn.classList.add('active', 'border-blue-500', 'text-gray-700');
+            btn.classList.remove('text-gray-500', 'border-transparent');
+            
+            // Update content
+            tabContents.forEach(content => {
+                content.classList.add('hidden');
+            });
+            document.getElementById(tab + '-tab').classList.remove('hidden');
+        });
+    });
+    
+    // Radio button styling
+    document.querySelectorAll('.style-radio').forEach(radio => {
+        radio.addEventListener('change', function() {
+            const parent = this.closest('label');
+            const allOptions = parent.parentElement.querySelectorAll('.style-option');
+            const allChecks = parent.parentElement.querySelectorAll('.check-icon');
+            
+            allOptions.forEach(opt => {
+                opt.classList.remove('border-blue-500', 'border-purple-500', 'border-green-500', 'border-pink-500');
+                opt.classList.add('border-gray-200');
+            });
+            allChecks.forEach(check => check.classList.add('hidden'));
+            
+            const option = parent.querySelector('.style-option');
+            const check = parent.querySelector('.check-icon');
+            option.classList.add('border-blue-500');
+            option.classList.remove('border-gray-200');
+            check.classList.remove('hidden');
+        });
+    });
+    
+    // Initialize checked state
+    document.querySelectorAll('.style-radio:checked').forEach(radio => {
+        const parent = radio.closest('label');
+        const option = parent.querySelector('.style-option');
+        const check = parent.querySelector('.check-icon');
+        if (option && check) {
+            option.classList.add('border-blue-500');
+            check.classList.remove('hidden');
+        }
+    });
+});
+</script>
+
+<style>
+.tab-btn.active {
+    color: #1f2937;
+}
+
+.form-input {
+    width: 100%;
+}
+
+input[type="color"] {
+    height: 40px;
+    width: 80px;
+    border-radius: 8px;
+    border: 2px solid #e5e7eb;
+    cursor: pointer;
+}
+
+input[type="color"]:hover {
+    border-color: #3b82f6;
+}
+
+.style-option {
+    border-color: #e5e7eb;
+}
+
+.style-radio:checked + .style-option {
+    border-color: #3b82f6;
+}
+</style>
+{% endblock %}

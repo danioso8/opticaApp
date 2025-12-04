@@ -1586,3 +1586,39 @@ def doctor_delete(request, pk):
 def notifications_demo(request):
     """Vista de demostración del sistema de notificaciones moderno"""
     return render(request, 'dashboard/notifications_demo.html')
+
+
+@login_required
+def landing_page_config(request):
+    """Vista para configurar la landing page"""
+    from apps.organizations.models import LandingPageConfig
+    from apps.organizations.forms import LandingPageConfigForm
+    
+    org = request.organization if hasattr(request, 'organization') and request.organization else None
+    
+    if not org:
+        messages.error(request, 'Debes seleccionar una organización primero')
+        return redirect('organizations:list')
+    
+    # Obtener o crear configuración
+    config, created = LandingPageConfig.objects.get_or_create(organization=org)
+    
+    if request.method == 'POST':
+        form = LandingPageConfigForm(request.POST, request.FILES, instance=config)
+        if form.is_valid():
+            form.save()
+            messages.success(request, '✅ Configuración de landing page guardada correctamente')
+            return redirect('dashboard:landing_page_config')
+        else:
+            messages.error(request, 'Por favor corrige los errores del formulario')
+    else:
+        form = LandingPageConfigForm(instance=config)
+    
+    context = {
+        'form': form,
+        'config': config,
+        'page_title': 'Configuración de Landing Page',
+        'page_subtitle': 'Personaliza los colores e imágenes de tu página pública',
+    }
+    
+    return render(request, 'dashboard/landing_page_config.html', context)

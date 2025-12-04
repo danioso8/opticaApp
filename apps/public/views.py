@@ -8,6 +8,8 @@ from apps.appointments.utils import get_available_slots_for_date
 
 def home(request):
     """Página principal pública"""
+    from apps.organizations.models import LandingPageConfig
+    
     # Para vistas públicas, usar la organización del request si existe, sino la primera disponible
     organization = getattr(request, 'organization', None)
     
@@ -25,9 +27,18 @@ def home(request):
     
     config = AppointmentConfiguration.get_config(organization or first_organization)
     
+    # Obtener configuración de la landing page
+    landing_config = None
+    if first_organization:
+        try:
+            landing_config = LandingPageConfig.objects.get(organization=first_organization)
+        except LandingPageConfig.DoesNotExist:
+            pass
+    
     context = {
         'system_open': config.is_open if config else True,
         'organization_data': first_organization,
+        'landing_config': landing_config,
     }
     
     return render(request, 'public/home.html', context)
@@ -35,7 +46,7 @@ def home(request):
 
 def booking(request):
     """Página de agendamiento de citas"""
-    from apps.organizations.models import Organization
+    from apps.organizations.models import Organization, LandingPageConfig
     
     # Obtener todas las organizaciones activas que tienen horarios configurados
     from apps.appointments.models import SpecificDateSchedule
@@ -64,10 +75,19 @@ def booking(request):
         if first_membership:
             first_organization = first_membership.organization
     
+    # Obtener configuración de la landing page
+    landing_config = None
+    if first_organization:
+        try:
+            landing_config = LandingPageConfig.objects.get(organization=first_organization)
+        except LandingPageConfig.DoesNotExist:
+            pass
+    
     context = {
         'system_closed': False,
         'available_organizations': available_organizations,
         'organization_data': first_organization,
+        'landing_config': landing_config,
     }
     
     return render(request, 'public/booking.html', context)
@@ -75,6 +95,8 @@ def booking(request):
 
 def shop(request):
     """Tienda de monturas (placeholder)"""
+    from apps.organizations.models import LandingPageConfig
+    
     # Si el usuario está autenticado, obtener su primera organización
     first_organization = None
     if request.user.is_authenticated:
@@ -87,7 +109,16 @@ def shop(request):
         if first_membership:
             first_organization = first_membership.organization
     
+    # Obtener configuración de la landing page
+    landing_config = None
+    if first_organization:
+        try:
+            landing_config = LandingPageConfig.objects.get(organization=first_organization)
+        except LandingPageConfig.DoesNotExist:
+            pass
+    
     context = {
         'organization_data': first_organization,
+        'landing_config': landing_config,
     }
     return render(request, 'public/shop.html', context)

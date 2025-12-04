@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import SubscriptionPlan, Organization, Subscription, OrganizationMember
+from .models import SubscriptionPlan, Organization, Subscription, OrganizationMember, LandingPageConfig
 
 
 @admin.register(SubscriptionPlan)
@@ -44,3 +44,85 @@ class OrganizationMemberAdmin(admin.ModelAdmin):
     list_display = ['user', 'organization', 'role', 'is_active', 'joined_at']
     list_filter = ['role', 'is_active', 'joined_at']
     search_fields = ['user__username', 'user__email', 'organization__name']
+
+
+@admin.register(LandingPageConfig)
+class LandingPageConfigAdmin(admin.ModelAdmin):
+    list_display = ['organization', 'navbar_bg_color', 'primary_button_color', 'created_at', 'updated_at']
+    list_filter = ['created_at', 'updated_at']
+    search_fields = ['organization__name']
+    readonly_fields = ['created_at', 'updated_at']
+    
+    fieldsets = (
+        ('Organización', {
+            'fields': ('organization',)
+        }),
+        ('Estilos y Diseños', {
+            'fields': ('navbar_style', 'hero_style', 'services_layout', 'font_family'),
+            'description': 'Selecciona los estilos principales de tu landing page'
+        }),
+        ('Navbar', {
+            'fields': ('navbar_bg_color', 'navbar_text_color', 'navbar_hover_color')
+        }),
+        ('Sección Hero', {
+            'fields': (
+                'hero_bg_gradient_start', 'hero_bg_gradient_end', 
+                'hero_overlay_opacity', 'hero_image', 
+                'hero_title', 'hero_title_color', 
+                'hero_subtitle', 'hero_subtitle_color',
+                'heading_font_size'
+            )
+        }),
+        ('Badge CTA', {
+            'fields': ('cta_badge_text', 'cta_badge_color'),
+            'classes': ('collapse',)
+        }),
+        ('Sección Por Qué Elegirnos', {
+            'fields': ('why_choose_title', 'why_choose_subtitle')
+        }),
+        ('Sección Servicios', {
+            'fields': ('services_bg_color', 'services_title', 'services_subtitle')
+        }),
+        ('Servicio 1', {
+            'fields': ('service_image_1', 'service_1_title', 'service_1_description'),
+            'classes': ('collapse',)
+        }),
+        ('Servicio 2', {
+            'fields': ('service_image_2', 'service_2_title', 'service_2_description'),
+            'classes': ('collapse',)
+        }),
+        ('Servicio 3', {
+            'fields': ('service_image_3', 'service_3_title', 'service_3_description'),
+            'classes': ('collapse',)
+        }),
+        ('Servicio 4', {
+            'fields': ('service_image_4', 'service_4_title', 'service_4_description'),
+            'classes': ('collapse',)
+        }),
+        ('Sección Contacto', {
+            'fields': ('contact_title', 'contact_subtitle')
+        }),
+        ('Botones', {
+            'fields': ('primary_button_color', 'secondary_button_color', 'button_border_radius', 'button_shadow')
+        }),
+        ('Tarjetas y Contenedores', {
+            'fields': ('card_border_radius', 'card_shadow_intensity')
+        }),
+        ('Espaciado', {
+            'fields': ('section_spacing',)
+        }),
+        ('Efectos y Animaciones', {
+            'fields': ('animation_speed', 'enable_parallax', 'enable_hover_effects'),
+            'description': 'Agrega vida a tu página con efectos visuales'
+        }),
+        ('Elementos Adicionales', {
+            'fields': ('show_scroll_indicator', 'show_testimonials', 'show_stats')
+        }),
+        ('Footer', {
+            'fields': ('footer_bg_color',)
+        }),
+        ('Información del Sistema', {
+            'fields': ('created_at', 'updated_at'),
+            'classes': ('collapse',)
+        }),
+    )

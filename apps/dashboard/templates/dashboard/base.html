@@ -28,6 +28,97 @@
         .rotate-180 {
             transform: rotate(180deg);
         }
+        
+        /* Estilos para mini-sidebar */
+        #sidebar {
+            transition: width 0.3s ease-in-out;
+        }
+        
+        #sidebar.mini {
+            width: 4rem;
+        }
+        
+        #sidebar.mini .sidebar-text,
+        #sidebar.mini .sidebar-brand-text,
+        #sidebar.mini .user-info {
+            opacity: 0;
+            display: none;
+        }
+        
+        #sidebar.mini .submenu-icon {
+            display: none;
+        }
+        
+        #sidebar.mini .sidebar-submenu {
+            display: none !important;
+        }
+        
+        #sidebar.mini .sidebar-brand {
+            justify-content: center;
+        }
+        
+        #sidebar.mini nav a,
+        #sidebar.mini nav button {
+            justify-content: center;
+            padding-left: 1rem;
+            padding-right: 1rem;
+        }
+        
+        #sidebar.mini .user-section {
+            padding-left: 1rem;
+            padding-right: 1rem;
+            width: 4rem;
+        }
+        
+        #sidebar.mini .user-avatar {
+            margin-left: 0;
+        }
+        
+        /* Ocultar el mensaje cuando no hay organización en mini sidebar */
+        #sidebar.mini nav > div:not(.appointments-menu):not(.configuration-menu) {
+            display: block;
+        }
+        
+        /* Tooltip para mini sidebar */
+        .sidebar-tooltip {
+            position: absolute;
+            left: 100%;
+            top: 50%;
+            transform: translateY(-50%);
+            background-color: #1e1b4b;
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 0.375rem;
+            margin-left: 0.5rem;
+            white-space: nowrap;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s;
+            z-index: 50;
+            font-size: 0.875rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        #sidebar.mini nav a:hover .sidebar-tooltip,
+        #sidebar.mini nav button:hover .sidebar-tooltip {
+            opacity: 1;
+        }
+        
+        /* Ocultar tooltips en sidebar normal */
+        #sidebar:not(.mini) .sidebar-tooltip {
+            display: none;
+        }
+        
+        /* Ajustar iconos en mini sidebar */
+        #sidebar.mini i.fas,
+        #sidebar.mini i.fab {
+            margin-right: 0;
+        }
+        
+        #sidebar:not(.mini) i.fas,
+        #sidebar:not(.mini) i.fab {
+            margin-right: 0.75rem;
+        }
     </style>
     
     {% block extra_css %}{% endblock %}
@@ -64,82 +155,104 @@
     <div class="flex h-screen pt-16 md:pt-0">
         <!-- Sidebar -->
         <aside id="sidebar" class="sidebar-mobile sidebar-hidden md:sidebar-mobile md:translate-x-0 fixed md:relative w-64 bg-indigo-900 text-white flex-shrink-0 h-full z-40 overflow-y-auto">
-            <div class="p-4">
-                <h1 class="text-2xl font-bold">
-                    <i class="fas fa-glasses mr-2"></i>OCEANO OPTICO
-                </h1>
-                <p class="text-indigo-300 text-sm">Panel Administrativo</p>
+            <div class="p-4 sidebar-brand flex items-center justify-between">
+                <div>
+                    <h1 class="text-2xl font-bold">
+                        <i class="fas fa-glasses mr-2"></i><span class="sidebar-brand-text">OCEANO OPTICO</span>
+                    </h1>
+                    <p class="text-indigo-300 text-sm sidebar-brand-text">Panel Administrativo</p>
+                </div>
+                <!-- Botón toggle mini-sidebar (solo visible en desktop) -->
+                <button onclick="toggleMiniSidebar()" class="hidden md:block text-white hover:bg-indigo-800 rounded p-2 focus:outline-none">
+                    <i id="toggle-mini-icon" class="fas fa-bars"></i>
+                </button>
             </div>
             
             <nav class="mt-6">
                 <!-- Siempre visible: Mis Empresas -->
-                <a href="{% url 'organizations:list' %}" class="flex items-center px-4 py-3 hover:bg-indigo-800 {% if 'organizations' in request.path %}bg-indigo-800{% endif %}">
+                <a href="{% url 'organizations:list' %}" class="flex items-center px-4 py-3 hover:bg-indigo-800 {% if 'organizations' in request.path %}bg-indigo-800{% endif %} relative">
                     <i class="fas fa-building mr-3"></i>
-                    <span>Mis Empresas</span>
+                    <span class="sidebar-text">Mis Empresas</span>
+                    <span class="sidebar-tooltip">Mis Empresas</span>
                 </a>
                 
                 {% if request.organization %}
                 <!-- Solo visible si hay organización seleccionada -->
                 <div class="border-t border-indigo-800 my-2"></div>
                 
-                <a href="{% url 'dashboard:home' %}" class="flex items-center px-4 py-3 hover:bg-indigo-800 {% if request.resolver_match.url_name == 'home' %}bg-indigo-800{% endif %}">
+                <a href="{% url 'dashboard:home' %}" class="flex items-center px-4 py-3 hover:bg-indigo-800 {% if request.resolver_match.url_name == 'home' %}bg-indigo-800{% endif %} relative">
                     <i class="fas fa-home mr-3"></i>
-                    <span>Dashboard</span>
+                    <span class="sidebar-text">Dashboard</span>
+                    <span class="sidebar-tooltip">Dashboard</span>
                 </a>
                 
-                <a href="{% url 'sales:dashboard' %}" class="flex items-center px-4 py-3 hover:bg-indigo-800 {% if 'sales' in request.path %}bg-indigo-800{% endif %}">
+                <a href="{% url 'sales:dashboard' %}" class="flex items-center px-4 py-3 hover:bg-indigo-800 {% if 'sales' in request.path %}bg-indigo-800{% endif %} relative">
                     <i class="fas fa-chart-line mr-3"></i>
-                    <span>Panel de Ventas</span>
+                    <span class="sidebar-text">Panel de Ventas</span>
+                    <span class="sidebar-tooltip">Panel de Ventas</span>
                 </a>
                 
                 <!-- Gestión de Citas (Menú Desplegable) -->
                 <div class="appointments-menu">
-                    <button onclick="toggleSubmenu('appointments-submenu')" class="flex items-center justify-between w-full px-4 py-3 hover:bg-indigo-800 {% if 'appointments' in request.path or 'calendar' in request.path or 'configuration' in request.path %}bg-indigo-800{% endif %}">
+                    <button onclick="toggleSubmenu('appointments-submenu')" class="flex items-center justify-between w-full px-4 py-3 hover:bg-indigo-800 {% if 'appointments' in request.path or 'calendar' in request.path or 'configuration' in request.path %}bg-indigo-800{% endif %} relative">
                         <div class="flex items-center">
                             <i class="fas fa-calendar-check mr-3"></i>
-                            <span>Gestión de Citas</span>
+                            <span class="sidebar-text">Gestión de Citas</span>
                         </div>
-                        <i class="fas fa-chevron-down text-sm transition-transform duration-200" id="appointments-submenu-icon"></i>
+                        <i class="fas fa-chevron-down text-sm transition-transform duration-200 submenu-icon" id="appointments-submenu-icon"></i>
+                        <span class="sidebar-tooltip">Gestión de Citas</span>
                     </button>
-                    <div id="appointments-submenu" class="bg-indigo-950 hidden">
-                        <a href="{% url 'dashboard:appointments_list' %}" class="flex items-center px-8 py-2 hover:bg-indigo-800 text-sm {% if 'appointments' in request.path and 'calendar' not in request.path %}bg-indigo-800{% endif %}">
+                    <div id="appointments-submenu" class="bg-indigo-950 hidden sidebar-submenu">
+                        <a href="{% url 'dashboard:appointments_list' %}" class="flex items-center px-8 py-2 hover:bg-indigo-800 text-sm {% if 'appointments' in request.path and 'calendar' not in request.path %}bg-indigo-800{% endif %} relative">
                             <i class="fas fa-list mr-3"></i>
-                            <span>Lista de Citas</span>
+                            <span class="sidebar-text">Lista de Citas</span>
+                            <span class="sidebar-tooltip">Lista de Citas</span>
                         </a>
-                        <a href="{% url 'dashboard:calendar' %}" class="flex items-center px-8 py-2 hover:bg-indigo-800 text-sm {% if 'calendar' in request.path %}bg-indigo-800{% endif %}">
+                        <a href="{% url 'dashboard:calendar' %}" class="flex items-center px-8 py-2 hover:bg-indigo-800 text-sm {% if 'calendar' in request.path %}bg-indigo-800{% endif %} relative">
                             <i class="fas fa-calendar mr-3"></i>
-                            <span>Calendario</span>
+                            <span class="sidebar-text">Calendario</span>
+                            <span class="sidebar-tooltip">Calendario</span>
                         </a>
-                        <a href="{% url 'dashboard:configuration' %}" class="flex items-center px-8 py-2 hover:bg-indigo-800 text-sm {% if 'configuration' in request.path and 'notifications' not in request.path %}bg-indigo-800{% endif %}">
+                        <a href="{% url 'dashboard:configuration' %}" class="flex items-center px-8 py-2 hover:bg-indigo-800 text-sm {% if 'configuration' in request.path and 'notifications' not in request.path %}bg-indigo-800{% endif %} relative">
                             <i class="fas fa-clock mr-3"></i>
-                            <span>Horarios y Fechas</span>
+                            <span class="sidebar-text">Horarios y Fechas</span>
+                            <span class="sidebar-tooltip">Horarios y Fechas</span>
                         </a>
                     </div>
                 </div>
                 
-                <a href="{% url 'dashboard:patients_list' %}" class="flex items-center px-4 py-3 hover:bg-indigo-800 {% if 'patients' in request.path %}bg-indigo-800{% endif %}">
+                <a href="{% url 'dashboard:patients_list' %}" class="flex items-center px-4 py-3 hover:bg-indigo-800 {% if 'patients' in request.path %}bg-indigo-800{% endif %} relative">
                     <i class="fas fa-users mr-3"></i>
-                    <span>Pacientes</span>
+                    <span class="sidebar-text">Pacientes</span>
+                    <span class="sidebar-tooltip">Pacientes</span>
                 </a>
                 
-                <a href="{% url 'dashboard:doctors_list' %}" class="flex items-center px-4 py-3 hover:bg-indigo-800 {% if 'doctors' in request.path %}bg-indigo-800{% endif %}">
+                <a href="{% url 'dashboard:doctors_list' %}" class="flex items-center px-4 py-3 hover:bg-indigo-800 {% if 'doctors' in request.path %}bg-indigo-800{% endif %} relative">
                     <i class="fas fa-user-md mr-3"></i>
-                    <span>Doctores / Optómetras</span>
+                    <span class="sidebar-text">Doctores / Optómetras</span>
+                    <span class="sidebar-tooltip">Doctores / Optómetras</span>
                 </a>
                 
                 <!-- Configuración (Menú Desplegable) -->
                 <div class="configuration-menu">
-                    <button onclick="toggleSubmenu('configuration-submenu')" class="flex items-center justify-between w-full px-4 py-3 hover:bg-indigo-800 {% if 'notifications' in request.path %}bg-indigo-800{% endif %}">
+                    <button onclick="toggleSubmenu('configuration-submenu')" class="flex items-center justify-between w-full px-4 py-3 hover:bg-indigo-800 {% if 'notifications' in request.path or 'landing-page' in request.path %}bg-indigo-800{% endif %} relative">
                         <div class="flex items-center">
                             <i class="fas fa-cog mr-3"></i>
-                            <span>Configuración</span>
+                            <span class="sidebar-text">Configuración</span>
                         </div>
-                        <i class="fas fa-chevron-down text-sm transition-transform duration-200" id="configuration-submenu-icon"></i>
+                        <i class="fas fa-chevron-down text-sm transition-transform duration-200 submenu-icon" id="configuration-submenu-icon"></i>
+                        <span class="sidebar-tooltip">Configuración</span>
                     </button>
-                    <div id="configuration-submenu" class="bg-indigo-950 hidden">
-                        <a href="{% url 'dashboard:notification_settings' %}" class="flex items-center px-8 py-2 hover:bg-indigo-800 text-sm {% if 'notifications' in request.path %}bg-indigo-800{% endif %}">
+                    <div id="configuration-submenu" class="bg-indigo-950 hidden sidebar-submenu">
+                        <a href="{% url 'dashboard:notification_settings' %}" class="flex items-center px-8 py-2 hover:bg-indigo-800 text-sm {% if 'notifications' in request.path %}bg-indigo-800{% endif %} relative">
                             <i class="fab fa-whatsapp mr-3"></i>
-                            <span>WhatsApp Twilio</span>
+                            <span class="sidebar-text">WhatsApp Twilio</span>
+                            <span class="sidebar-tooltip">WhatsApp Twilio</span>
+                        </a>
+                        <a href="{% url 'dashboard:landing_page_config' %}" class="flex items-center px-8 py-2 hover:bg-indigo-800 text-sm {% if 'landing-page' in request.path %}bg-indigo-800{% endif %} relative">
+                            <i class="fas fa-paint-brush mr-3"></i>
+                            <span class="sidebar-text">Landing Page</span>
+                            <span class="sidebar-tooltip">Landing Page</span>
                         </a>
                     </div>
                 </div>
@@ -155,12 +268,12 @@
                 {% endif %}
             </nav>
             
-            <div class="absolute bottom-0 w-64 p-4 bg-indigo-950">
+            <div class="absolute bottom-0 w-64 p-4 bg-indigo-950 user-section">
                 <div class="flex items-center">
-                    <div class="w-10 h-10 bg-indigo-700 rounded-full flex items-center justify-center">
+                    <div class="w-10 h-10 bg-indigo-700 rounded-full flex items-center justify-center user-avatar">
                         <i class="fas fa-user"></i>
                     </div>
-                    <div class="ml-3">
+                    <div class="ml-3 user-info">
                         <p class="font-semibold">{{ user.username }}</p>
                         <a href="{% url 'dashboard:logout' %}" class="text-sm text-indigo-300 hover:text-white">
                             <i class="fas fa-sign-out-alt mr-1"></i>Salir
@@ -251,8 +364,42 @@
             overlay.classList.toggle('hidden');
         }
         
+        // Toggle mini sidebar (desktop)
+        function toggleMiniSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const toggleIcon = document.getElementById('toggle-mini-icon');
+            const isMini = sidebar.classList.toggle('mini');
+            
+            // Cambiar icono
+            if (isMini) {
+                toggleIcon.classList.remove('fa-bars');
+                toggleIcon.classList.add('fa-chevron-right');
+                // Cerrar todos los submenús cuando se minimiza
+                document.querySelectorAll('.sidebar-submenu').forEach(submenu => {
+                    submenu.classList.add('hidden');
+                });
+                document.querySelectorAll('.submenu-icon').forEach(icon => {
+                    icon.classList.remove('rotate-180');
+                });
+                // Guardar preferencia
+                localStorage.setItem('miniSidebar', 'true');
+            } else {
+                toggleIcon.classList.remove('fa-chevron-right');
+                toggleIcon.classList.add('fa-bars');
+                // Guardar preferencia
+                localStorage.setItem('miniSidebar', 'false');
+            }
+        }
+        
         // Toggle submenu
         function toggleSubmenu(submenuId) {
+            const sidebar = document.getElementById('sidebar');
+            
+            // Si el sidebar está minimizado, no hacer nada
+            if (sidebar.classList.contains('mini')) {
+                return;
+            }
+            
             const submenu = document.getElementById(submenuId);
             const icon = document.getElementById(submenuId + '-icon');
             
@@ -263,19 +410,33 @@
         // Abrir submenu automáticamente si estamos en una página del submenu
         document.addEventListener('DOMContentLoaded', function() {
             const currentPath = window.location.pathname;
+            const sidebar = document.getElementById('sidebar');
             
-            // Submenu de Gestión de Citas
-            if (currentPath.includes('appointments') || currentPath.includes('calendar') || currentPath.includes('configuration')) {
-                const appointmentsSubmenu = document.getElementById('appointments-submenu');
-                appointmentsSubmenu.classList.remove('hidden');
-                document.getElementById('appointments-submenu-icon').classList.add('rotate-180');
+            // Restaurar preferencia de mini sidebar
+            const isMiniSaved = localStorage.getItem('miniSidebar') === 'true';
+            if (isMiniSaved && window.innerWidth >= 768) {
+                sidebar.classList.add('mini');
+                const toggleIcon = document.getElementById('toggle-mini-icon');
+                if (toggleIcon) {
+                    toggleIcon.classList.remove('fa-bars');
+                    toggleIcon.classList.add('fa-chevron-right');
+                }
             }
             
-            // Submenu de Configuración
-            if (currentPath.includes('notifications')) {
-                const configurationSubmenu = document.getElementById('configuration-submenu');
-                configurationSubmenu.classList.remove('hidden');
-                document.getElementById('configuration-submenu-icon').classList.add('rotate-180');
+            // Submenu de Gestión de Citas (solo si no está minimizado)
+            if (!sidebar.classList.contains('mini')) {
+                if (currentPath.includes('appointments') || currentPath.includes('calendar') || currentPath.includes('configuration')) {
+                    const appointmentsSubmenu = document.getElementById('appointments-submenu');
+                    appointmentsSubmenu.classList.remove('hidden');
+                    document.getElementById('appointments-submenu-icon').classList.add('rotate-180');
+                }
+                
+                // Submenu de Configuración
+                if (currentPath.includes('notifications') || currentPath.includes('landing-page')) {
+                    const configurationSubmenu = document.getElementById('configuration-submenu');
+                    configurationSubmenu.classList.remove('hidden');
+                    document.getElementById('configuration-submenu-icon').classList.add('rotate-180');
+                }
             }
         });
         

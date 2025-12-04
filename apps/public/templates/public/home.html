@@ -8,9 +8,15 @@
 <section class="relative min-h-screen flex items-center overflow-hidden">
     <!-- Background Image with Overlay -->
     <div class="absolute inset-0 z-0">
-        <img src="{% static 'img/beautiful-smiling-brunette-woman-trying-260nw-2627315263.webp' %}" 
-             alt="Mujer eligiendo monturas" 
-             class="w-full h-full object-cover">
+        {% if landing_config and landing_config.hero_image %}
+            <img src="{{ landing_config.hero_image.url }}" 
+                 alt="Hero Image" 
+                 class="w-full h-full object-cover">
+        {% else %}
+            <img src="{% static 'img/beautiful-smiling-brunette-woman-trying-260nw-2627315263.webp' %}" 
+                 alt="Mujer eligiendo monturas" 
+                 class="w-full h-full object-cover">
+        {% endif %}
         <div class="absolute inset-0 bg-gradient-to-r from-blue-900/90 via-blue-800/80 to-transparent"></div>
     </div>
     
@@ -24,17 +30,25 @@
                     </p>
                 </div>
                 {% endif %}
-                <h1 class="text-5xl md:text-6xl font-bold mb-6 leading-tight">
-                    Cuida tu Salud Visual
+                <h1 class="text-5xl md:text-6xl font-bold mb-6 leading-tight" style="color: {% if landing_config %}{{ landing_config.hero_title_color }}{% else %}#ffffff{% endif %};">
+                    {% if landing_config and landing_config.hero_title %}
+                        {{ landing_config.hero_title }}
+                    {% else %}
+                        Cuida tu Salud Visual
+                    {% endif %}
                 </h1>
-                <p class="text-xl mb-8 text-blue-100">
-                    Tecnología de última generación y atención personalizada para el cuidado de tus ojos.
+                <p class="text-xl mb-8" style="color: {% if landing_config %}{{ landing_config.hero_subtitle_color }}{% else %}#bfdbfe{% endif %};">
+                    {% if landing_config and landing_config.hero_subtitle %}
+                        {{ landing_config.hero_subtitle }}
+                    {% else %}
+                        Tecnología de última generación y atención personalizada para el cuidado de tus ojos.
+                    {% endif %}
                 </p>
                 <div class="flex flex-col sm:flex-row gap-4">
-                    <a href="{% url 'public:booking' %}" class="inline-block bg-white text-blue-600 px-8 py-4 rounded-full font-semibold text-lg hover:bg-blue-50 transition shadow-lg">
+                    <a href="{% url 'public:booking' %}" class="inline-block text-white px-8 py-4 rounded-full font-semibold text-lg transition shadow-lg hover:opacity-90" style="background-color: {% if landing_config %}{{ landing_config.primary_button_color }}{% else %}#2563eb{% endif %};">
                         <i class="fas fa-calendar-plus mr-2"></i>Agendar Cita
                     </a>
-                    <a href="{% url 'public:shop' %}" class="inline-block bg-transparent border-2 border-white text-white px-8 py-4 rounded-full font-semibold text-lg hover:bg-white hover:text-blue-600 transition">
+                    <a href="{% url 'public:shop' %}" class="inline-block bg-transparent border-2 text-white px-8 py-4 rounded-full font-semibold text-lg transition hover:bg-white" style="border-color: {% if landing_config %}{{ landing_config.secondary_button_color }}{% else %}#ffffff{% endif %}; color: {% if landing_config %}{{ landing_config.secondary_button_color }}{% else %}#ffffff{% endif %};" onmouseover="this.style.color='{% if landing_config %}{{ landing_config.primary_button_color }}{% else %}#2563eb{% endif %}'" onmouseout="this.style.color='{% if landing_config %}{{ landing_config.secondary_button_color }}{% else %}#ffffff{% endif %}'">
                         <i class="fas fa-shopping-bag mr-2"></i>Ver Tienda
                     </a>
                 </div>
@@ -63,8 +77,20 @@
 <section class="py-20 bg-white">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="text-center mb-16">
-            <h2 class="text-4xl font-bold text-gray-800 mb-4">¿Por qué elegirnos?</h2>
-            <p class="text-xl text-gray-600">La mejor atención para tus ojos</p>
+            <h2 class="text-4xl font-bold text-gray-800 mb-4">
+                {% if landing_config and landing_config.why_choose_title %}
+                    {{ landing_config.why_choose_title }}
+                {% else %}
+                    ¿Por qué elegirnos?
+                {% endif %}
+            </h2>
+            <p class="text-xl text-gray-600">
+                {% if landing_config and landing_config.why_choose_subtitle %}
+                    {{ landing_config.why_choose_subtitle }}
+                {% else %}
+                    La mejor atención para tus ojos
+                {% endif %}
+            </p>
         </div>
         
         <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -99,56 +125,140 @@
 <section id="servicios" class="py-20 bg-gray-50">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="text-center mb-16">
-            <h2 class="text-4xl font-bold text-gray-800 mb-4">Nuestros Servicios</h2>
-            <p class="text-xl text-gray-600">Cuidado integral para tu salud visual</p>
+            <h2 class="text-4xl font-bold text-gray-800 mb-4">
+                {% if landing_config and landing_config.services_title %}
+                    {{ landing_config.services_title }}
+                {% else %}
+                    Nuestros Servicios
+                {% endif %}
+            </h2>
+            <p class="text-xl text-gray-600">
+                {% if landing_config and landing_config.services_subtitle %}
+                    {{ landing_config.services_subtitle }}
+                {% else %}
+                    Cuidado integral para tu salud visual
+                {% endif %}
+            </p>
         </div>
         
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             <div class="bg-white rounded-xl overflow-hidden shadow-md hover:shadow-xl transition">
                 <div class="h-48 overflow-hidden">
-                    <img src="{% static 'img/examen visual.jpeg' %}" 
-                         alt="Examen Visual" 
-                         class="w-full h-full object-cover hover:scale-110 transition-transform duration-300">
+                    {% if landing_config and landing_config.service_image_1 %}
+                        <img src="{{ landing_config.service_image_1.url }}" 
+                             alt="Examen Visual" 
+                             class="w-full h-full object-cover hover:scale-110 transition-transform duration-300">
+                    {% else %}
+                        <img src="{% static 'img/examen visual.jpeg' %}" 
+                             alt="Examen Visual" 
+                             class="w-full h-full object-cover hover:scale-110 transition-transform duration-300">
+                    {% endif %}
                 </div>
                 <div class="p-6">
-                    <h3 class="text-lg font-bold text-gray-800 mb-2">Examen Visual Completo</h3>
-                    <p class="text-gray-600 text-sm">Evaluación exhaustiva de tu salud visual con equipos de última generación.</p>
+                    <h3 class="text-lg font-bold text-gray-800 mb-2">
+                        {% if landing_config and landing_config.service_1_title %}
+                            {{ landing_config.service_1_title }}
+                        {% else %}
+                            Examen Visual Completo
+                        {% endif %}
+                    </h3>
+                    <p class="text-gray-600 text-sm">
+                        {% if landing_config and landing_config.service_1_description %}
+                            {{ landing_config.service_1_description }}
+                        {% else %}
+                            Evaluación exhaustiva de tu salud visual con equipos de última generación.
+                        {% endif %}
+                    </p>
                 </div>
             </div>
             
             <div class="bg-white rounded-xl overflow-hidden shadow-md hover:shadow-xl transition">
                 <div class="h-48 overflow-hidden">
-                    <img src="{% static 'img/istockphoto-1445394168-612x612.jpg' %}" 
-                         alt="Monturas y Lentes" 
-                         class="w-full h-full object-cover hover:scale-110 transition-transform duration-300">
+                    {% if landing_config and landing_config.service_image_2 %}
+                        <img src="{{ landing_config.service_image_2.url }}" 
+                             alt="Monturas y Lentes" 
+                             class="w-full h-full object-cover hover:scale-110 transition-transform duration-300">
+                    {% else %}
+                        <img src="{% static 'img/istockphoto-1445394168-612x612.jpg' %}" 
+                             alt="Monturas y Lentes" 
+                             class="w-full h-full object-cover hover:scale-110 transition-transform duration-300">
+                    {% endif %}
                 </div>
                 <div class="p-6">
-                    <h3 class="text-lg font-bold text-gray-800 mb-2">Monturas y Lentes</h3>
-                    <p class="text-gray-600 text-sm">Amplio catálogo de monturas y lentes de las mejores marcas.</p>
+                    <h3 class="text-lg font-bold text-gray-800 mb-2">
+                        {% if landing_config and landing_config.service_2_title %}
+                            {{ landing_config.service_2_title }}
+                        {% else %}
+                            Monturas y Lentes
+                        {% endif %}
+                    </h3>
+                    <p class="text-gray-600 text-sm">
+                        {% if landing_config and landing_config.service_2_description %}
+                            {{ landing_config.service_2_description }}
+                        {% else %}
+                            Amplio catálogo de monturas y lentes de las mejores marcas.
+                        {% endif %}
+                    </p>
                 </div>
             </div>
             
             <div class="bg-white rounded-xl overflow-hidden shadow-md hover:shadow-xl transition">
                 <div class="h-48 overflow-hidden">
-                    <img src="{% static 'img/istockphoto-1189362136-612x612.jpg' %}" 
-                         alt="Lentes de Contacto" 
-                         class="w-full h-full object-cover hover:scale-110 transition-transform duration-300">
+                    {% if landing_config and landing_config.service_image_3 %}
+                        <img src="{{ landing_config.service_image_3.url }}" 
+                             alt="Lentes de Contacto" 
+                             class="w-full h-full object-cover hover:scale-110 transition-transform duration-300">
+                    {% else %}
+                        <img src="{% static 'img/istockphoto-1189362136-612x612.jpg' %}" 
+                             alt="Lentes de Contacto" 
+                             class="w-full h-full object-cover hover:scale-110 transition-transform duration-300">
+                    {% endif %}
                 </div>
                 <div class="p-6">
-                    <h3 class="text-lg font-bold text-gray-800 mb-2">Lentes de Contacto</h3>
-                    <p class="text-gray-600 text-sm">Adaptación profesional y variedad de lentes de contacto.</p>
+                    <h3 class="text-lg font-bold text-gray-800 mb-2">
+                        {% if landing_config and landing_config.service_3_title %}
+                            {{ landing_config.service_3_title }}
+                        {% else %}
+                            Lentes de Contacto
+                        {% endif %}
+                    </h3>
+                    <p class="text-gray-600 text-sm">
+                        {% if landing_config and landing_config.service_3_description %}
+                            {{ landing_config.service_3_description }}
+                        {% else %}
+                            Adaptación profesional y variedad de lentes de contacto.
+                        {% endif %}
+                    </p>
                 </div>
             </div>
             
             <div class="bg-white rounded-xl overflow-hidden shadow-md hover:shadow-xl transition">
                 <div class="h-48 overflow-hidden">
-                    <img src="{% static 'img/istockphoto-1489731410-612x612.jpg' %}" 
-                         alt="Lentes de Sol" 
-                         class="w-full h-full object-cover hover:scale-110 transition-transform duration-300">
+                    {% if landing_config and landing_config.service_image_4 %}
+                        <img src="{{ landing_config.service_image_4.url }}" 
+                             alt="Lentes de Sol" 
+                             class="w-full h-full object-cover hover:scale-110 transition-transform duration-300">
+                    {% else %}
+                        <img src="{% static 'img/istockphoto-1489731410-612x612.jpg' %}" 
+                             alt="Lentes de Sol" 
+                             class="w-full h-full object-cover hover:scale-110 transition-transform duration-300">
+                    {% endif %}
                 </div>
                 <div class="p-6">
-                    <h3 class="text-lg font-bold text-gray-800 mb-2">Lentes de Sol</h3>
-                    <p class="text-gray-600 text-sm">Protección UV total con estilo y calidad garantizada.</p>
+                    <h3 class="text-lg font-bold text-gray-800 mb-2">
+                        {% if landing_config and landing_config.service_4_title %}
+                            {{ landing_config.service_4_title }}
+                        {% else %}
+                            Lentes de Sol
+                        {% endif %}
+                    </h3>
+                    <p class="text-gray-600 text-sm">
+                        {% if landing_config and landing_config.service_4_description %}
+                            {{ landing_config.service_4_description }}
+                        {% else %}
+                            Protección UV total con estilo y calidad garantizada.
+                        {% endif %}
+                    </p>
                 </div>
             </div>
         </div>
@@ -202,8 +312,20 @@
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-12">
             <div>
-                <h2 class="text-4xl font-bold mb-6">¿Tienes Preguntas?</h2>
-                <p class="text-xl mb-8 text-blue-100">Estamos aquí para ayudarte. Contáctanos por cualquiera de nuestros canales.</p>
+                <h2 class="text-4xl font-bold mb-6">
+                    {% if landing_config and landing_config.contact_title %}
+                        {{ landing_config.contact_title }}
+                    {% else %}
+                        ¿Tienes Preguntas?
+                    {% endif %}
+                </h2>
+                <p class="text-xl mb-8 text-blue-100">
+                    {% if landing_config and landing_config.contact_subtitle %}
+                        {{ landing_config.contact_subtitle }}
+                    {% else %}
+                        Estamos aquí para ayudarte. Contáctanos por cualquiera de nuestros canales.
+                    {% endif %}
+                </p>
                 
                 <div class="space-y-6">
                     <div class="flex items-start">

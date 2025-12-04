@@ -223,3 +223,410 @@ class OrganizationMember(models.Model):
     
     def __str__(self):
         return f"{self.user.get_full_name() or self.user.username} - {self.organization.name} ({self.get_role_display()})"
+
+
+class LandingPageConfig(models.Model):
+    """Configuración personalizada de la landing page"""
+    
+    NAVBAR_STYLES = [
+        ('classic', 'Clásico - Navbar blanco con sombra'),
+        ('modern', 'Moderno - Navbar con gradiente y transparencia'),
+        ('minimal', 'Minimalista - Navbar transparente con línea inferior'),
+        ('bold', 'Bold - Navbar oscuro con contraste alto'),
+    ]
+    
+    HERO_STYLES = [
+        ('gradient', 'Gradiente - Fondo con degradado de colores'),
+        ('image', 'Imagen - Imagen de fondo con overlay'),
+        ('split', 'Split - Contenido dividido 50/50'),
+        ('centered', 'Centrado - Contenido al centro con imagen de fondo'),
+        ('video', 'Video - Fondo de video (próximamente)'),
+    ]
+    
+    SERVICES_LAYOUT = [
+        ('grid', 'Grid - Tarjetas en cuadrícula'),
+        ('carousel', 'Carrusel - Deslizable horizontal'),
+        ('list', 'Lista - Vista vertical detallada'),
+        ('masonry', 'Masonry - Diseño tipo Pinterest'),
+    ]
+    
+    FONT_FAMILIES = [
+        ('inter', 'Inter - Moderna y limpia'),
+        ('roboto', 'Roboto - Profesional y versátil'),
+        ('poppins', 'Poppins - Redondeada y amigable'),
+        ('playfair', 'Playfair Display - Elegante y serif'),
+        ('montserrat', 'Montserrat - Bold y geométrica'),
+        ('lato', 'Lato - Clásica y legible'),
+    ]
+    
+    ANIMATION_SPEEDS = [
+        ('none', 'Sin animaciones'),
+        ('slow', 'Lentas - Suaves y sutiles'),
+        ('normal', 'Normales - Balance perfecto'),
+        ('fast', 'Rápidas - Dinámicas y enérgicas'),
+    ]
+    
+    organization = models.OneToOneField(
+        Organization, 
+        on_delete=models.CASCADE, 
+        related_name='landing_config',
+        verbose_name='Organización'
+    )
+    
+    # Estilo del navbar
+    navbar_style = models.CharField(
+        max_length=20,
+        choices=NAVBAR_STYLES,
+        default='classic',
+        verbose_name='Estilo del Navbar',
+        help_text='Selecciona el diseño del navbar'
+    )
+    
+    # Estilo de la sección Hero
+    hero_style = models.CharField(
+        max_length=20,
+        choices=HERO_STYLES,
+        default='gradient',
+        verbose_name='Estilo del Hero',
+        help_text='Diseño de la sección principal'
+    )
+    hero_bg_gradient_start = models.CharField(
+        max_length=7,
+        default='#3b82f6',
+        verbose_name='Color inicio degradado',
+        help_text='Color inicial del gradiente'
+    )
+    hero_bg_gradient_end = models.CharField(
+        max_length=7,
+        default='#8b5cf6',
+        verbose_name='Color fin degradado',
+        help_text='Color final del gradiente'
+    )
+    hero_overlay_opacity = models.IntegerField(
+        default=50,
+        verbose_name='Opacidad del overlay',
+        help_text='0-100, aplica a imagen de fondo'
+    )
+    
+    # Layout de servicios
+    services_layout = models.CharField(
+        max_length=20,
+        choices=SERVICES_LAYOUT,
+        default='grid',
+        verbose_name='Layout de Servicios',
+        help_text='Diseño de la sección de servicios'
+    )
+    services_bg_color = models.CharField(
+        max_length=7,
+        default='#f9fafb',
+        verbose_name='Color de fondo Servicios',
+        help_text='Color en formato hexadecimal'
+    )
+    
+    # Tipografía
+    font_family = models.CharField(
+        max_length=20,
+        choices=FONT_FAMILIES,
+        default='inter',
+        verbose_name='Familia de fuente',
+        help_text='Tipografía principal del sitio'
+    )
+    heading_font_size = models.IntegerField(
+        default=48,
+        verbose_name='Tamaño título principal',
+        help_text='Tamaño en píxeles'
+    )
+    
+    # Animaciones
+    animation_speed = models.CharField(
+        max_length=20,
+        choices=ANIMATION_SPEEDS,
+        default='normal',
+        verbose_name='Velocidad de animaciones',
+        help_text='Controla las animaciones del sitio'
+    )
+    enable_parallax = models.BooleanField(
+        default=False,
+        verbose_name='Efecto Parallax',
+        help_text='Efecto de profundidad en scroll'
+    )
+    enable_hover_effects = models.BooleanField(
+        default=True,
+        verbose_name='Efectos Hover',
+        help_text='Efectos al pasar el mouse'
+    )
+    
+    # Colores del navbar
+    navbar_bg_color = models.CharField(
+        max_length=7, 
+        default='#ffffff',
+        verbose_name='Color de fondo del Navbar',
+        help_text='Color en formato hexadecimal (ej: #ffffff)'
+    )
+    navbar_text_color = models.CharField(
+        max_length=7, 
+        default='#1f2937',
+        verbose_name='Color del texto del Navbar',
+        help_text='Color en formato hexadecimal (ej: #1f2937)'
+    )
+    navbar_hover_color = models.CharField(
+        max_length=7, 
+        default='#2563eb',
+        verbose_name='Color hover del Navbar',
+        help_text='Color en formato hexadecimal (ej: #2563eb)'
+    )
+    
+    # Imágenes de la landing page
+    hero_image = models.ImageField(
+        upload_to='landing/hero/', 
+        blank=True, 
+        null=True,
+        verbose_name='Imagen Principal (Hero)',
+        help_text='Recomendado: 1920x1080px'
+    )
+    service_image_1 = models.ImageField(
+        upload_to='landing/services/', 
+        blank=True, 
+        null=True,
+        verbose_name='Imagen Servicio 1 (Examen Visual)',
+        help_text='Recomendado: 612x612px'
+    )
+    service_image_2 = models.ImageField(
+        upload_to='landing/services/', 
+        blank=True, 
+        null=True,
+        verbose_name='Imagen Servicio 2 (Monturas)',
+        help_text='Recomendado: 612x612px'
+    )
+    service_image_3 = models.ImageField(
+        upload_to='landing/services/', 
+        blank=True, 
+        null=True,
+        verbose_name='Imagen Servicio 3 (Lentes de Contacto)',
+        help_text='Recomendado: 612x612px'
+    )
+    service_image_4 = models.ImageField(
+        upload_to='landing/services/', 
+        blank=True, 
+        null=True,
+        verbose_name='Imagen Servicio 4 (Lentes de Sol)',
+        help_text='Recomendado: 612x612px'
+    )
+    
+    # Textos personalizables
+    hero_title = models.CharField(
+        max_length=200, 
+        default='Cuida tu Salud Visual',
+        verbose_name='Título Principal',
+        blank=True
+    )
+    hero_subtitle = models.TextField(
+        default='Tecnología de última generación y atención personalizada para el cuidado de tus ojos.',
+        verbose_name='Subtítulo Principal',
+        blank=True
+    )
+    hero_title_color = models.CharField(
+        max_length=7, 
+        default='#ffffff',
+        verbose_name='Color del Título Principal',
+        help_text='Color en formato hexadecimal (ej: #ffffff)'
+    )
+    hero_subtitle_color = models.CharField(
+        max_length=7, 
+        default='#bfdbfe',
+        verbose_name='Color del Subtítulo Principal',
+        help_text='Color en formato hexadecimal (ej: #bfdbfe)'
+    )
+    
+    # Sección "Por qué elegirnos"
+    why_choose_title = models.CharField(
+        max_length=200, 
+        default='¿Por qué elegirnos?',
+        verbose_name='Título "Por qué elegirnos"',
+        blank=True
+    )
+    why_choose_subtitle = models.CharField(
+        max_length=200, 
+        default='La mejor atención para tus ojos',
+        verbose_name='Subtítulo "Por qué elegirnos"',
+        blank=True
+    )
+    
+    # Sección Servicios
+    services_title = models.CharField(
+        max_length=200, 
+        default='Nuestros Servicios',
+        verbose_name='Título Servicios',
+        blank=True
+    )
+    services_subtitle = models.CharField(
+        max_length=200, 
+        default='Cuidado integral para tu salud visual',
+        verbose_name='Subtítulo Servicios',
+        blank=True
+    )
+    
+    service_1_title = models.CharField(
+        max_length=100, 
+        default='Examen Visual Completo',
+        verbose_name='Título Servicio 1',
+        blank=True
+    )
+    service_1_description = models.TextField(
+        default='Evaluación exhaustiva de tu salud visual con equipos de última generación.',
+        verbose_name='Descripción Servicio 1',
+        blank=True
+    )
+    
+    service_2_title = models.CharField(
+        max_length=100, 
+        default='Monturas y Lentes',
+        verbose_name='Título Servicio 2',
+        blank=True
+    )
+    service_2_description = models.TextField(
+        default='Amplio catálogo de monturas y lentes de las mejores marcas.',
+        verbose_name='Descripción Servicio 2',
+        blank=True
+    )
+    
+    service_3_title = models.CharField(
+        max_length=100, 
+        default='Lentes de Contacto',
+        verbose_name='Título Servicio 3',
+        blank=True
+    )
+    service_3_description = models.TextField(
+        default='Adaptación profesional y variedad de lentes de contacto.',
+        verbose_name='Descripción Servicio 3',
+        blank=True
+    )
+    
+    service_4_title = models.CharField(
+        max_length=100, 
+        default='Lentes de Sol',
+        verbose_name='Título Servicio 4',
+        blank=True
+    )
+    service_4_description = models.TextField(
+        default='Protección UV total con estilo y calidad garantizada.',
+        verbose_name='Descripción Servicio 4',
+        blank=True
+    )
+    
+    # Sección Contacto
+    contact_title = models.CharField(
+        max_length=200, 
+        default='¿Tienes Preguntas?',
+        verbose_name='Título Contacto',
+        blank=True
+    )
+    contact_subtitle = models.TextField(
+        default='Estamos aquí para ayudarte. Contáctanos por cualquiera de nuestros canales.',
+        verbose_name='Subtítulo Contacto',
+        blank=True
+    )
+    
+    # Configuración de botones
+    primary_button_color = models.CharField(
+        max_length=7, 
+        default='#2563eb',
+        verbose_name='Color Botón Primario',
+        help_text='Color en formato hexadecimal (ej: #2563eb)'
+    )
+    secondary_button_color = models.CharField(
+        max_length=7, 
+        default='#ffffff',
+        verbose_name='Color Botón Secundario',
+        help_text='Color en formato hexadecimal (ej: #ffffff)'
+    )
+    button_border_radius = models.IntegerField(
+        default=8,
+        verbose_name='Radio de borde botones',
+        help_text='En píxeles (0 = cuadrado, 999 = circular)'
+    )
+    button_shadow = models.BooleanField(
+        default=True,
+        verbose_name='Sombra en botones',
+        help_text='Agrega sombra a los botones'
+    )
+    
+    # Tarjetas y contenedores
+    card_border_radius = models.IntegerField(
+        default=12,
+        verbose_name='Radio de borde tarjetas',
+        help_text='En píxeles para tarjetas de servicios'
+    )
+    card_shadow_intensity = models.CharField(
+        max_length=20,
+        choices=[
+            ('none', 'Sin sombra'),
+            ('sm', 'Suave'),
+            ('md', 'Media'),
+            ('lg', 'Fuerte'),
+            ('xl', 'Extra fuerte'),
+        ],
+        default='md',
+        verbose_name='Intensidad de sombra',
+        help_text='Sombra de tarjetas y elementos'
+    )
+    
+    # Espaciado
+    section_spacing = models.CharField(
+        max_length=20,
+        choices=[
+            ('compact', 'Compacto - Espacios pequeños'),
+            ('normal', 'Normal - Balance estándar'),
+            ('spacious', 'Espacioso - Espacios amplios'),
+        ],
+        default='normal',
+        verbose_name='Espaciado de secciones',
+        help_text='Espaciado vertical entre secciones'
+    )
+    
+    # Elementos adicionales
+    show_scroll_indicator = models.BooleanField(
+        default=True,
+        verbose_name='Indicador de scroll',
+        help_text='Flecha animada en hero section'
+    )
+    show_testimonials = models.BooleanField(
+        default=False,
+        verbose_name='Mostrar testimonios',
+        help_text='Sección de testimonios de clientes'
+    )
+    show_stats = models.BooleanField(
+        default=False,
+        verbose_name='Mostrar estadísticas',
+        help_text='Números destacados (años, clientes, etc)'
+    )
+    cta_badge_text = models.CharField(
+        max_length=50,
+        blank=True,
+        verbose_name='Texto badge CTA',
+        help_text='Pequeño badge sobre título (ej: "Nuevo", "Popular")'
+    )
+    cta_badge_color = models.CharField(
+        max_length=7,
+        default='#10b981',
+        verbose_name='Color badge CTA',
+        help_text='Color del badge en hexadecimal'
+    )
+    
+    # Footer
+    footer_bg_color = models.CharField(
+        max_length=7, 
+        default='#111827',
+        verbose_name='Color de fondo del Footer',
+        help_text='Color en formato hexadecimal (ej: #111827)'
+    )
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        verbose_name = 'Configuración de Landing Page'
+        verbose_name_plural = 'Configuraciones de Landing Page'
+    
+    def __str__(self):
+        return f"Landing Page Config - {self.organization.name}"
