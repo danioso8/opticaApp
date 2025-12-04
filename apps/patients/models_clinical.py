@@ -35,8 +35,23 @@ class ClinicalHistory(TenantModel):
     # Condición Clínica Actual
     current_clinical_condition = models.TextField(verbose_name='Condición Clínica Actual', blank=True)
     
-    # Antecedentes Generales
-    medical_history = models.TextField(verbose_name='Antecedentes Médicos', blank=True, help_text='Enfermedades sistémicas, cirugías previas, etc.')
+    # ==================== ANTECEDENTES GENERALES ====================
+    pathological_history = models.TextField(verbose_name='Patológicos', blank=True, help_text='Enfermedades crónicas, patologías')
+    pharmacological_history = models.TextField(verbose_name='Farmacológicos', blank=True, help_text='Medicamentos actuales')
+    surgical_history = models.TextField(verbose_name='Quirúrgicos', blank=True, help_text='Cirugías previas generales')
+    allergic_history = models.TextField(verbose_name='Alérgicos', blank=True, help_text='Alergias conocidas')
+    trauma_history = models.TextField(verbose_name='Traumatológicos', blank=True, help_text='Traumatismos previos')
+    other_general_history = models.TextField(verbose_name='Otros Generales', blank=True)
+    
+    # Backward compatibility
+    medical_history = models.TextField(verbose_name='Antecedentes Médicos (Legacy)', blank=True, help_text='Campo antiguo - usar los específicos')
+    
+    # ==================== ANTECEDENTES OCULARES ====================
+    ocular_pathological_history = models.TextField(verbose_name='Patológicos Oculares', blank=True)
+    ocular_pharmacological_history = models.TextField(verbose_name='Farmacológicos Oculares', blank=True)
+    ocular_surgical_history = models.TextField(verbose_name='Quirúrgicos Oculares', blank=True)
+    ocular_trauma_history = models.TextField(verbose_name='Traumatológicos Oculares', blank=True)
+    ocular_therapeutic_history = models.TextField(verbose_name='Terapéuticos Oculares', blank=True)
     
     # Signos y Síntomas (Semiología Clínica)
     blurred_vision = models.BooleanField(default=False, verbose_name='Visión Borrosa')
@@ -59,13 +74,25 @@ class ClinicalHistory(TenantModel):
     glasses_since = models.CharField(max_length=50, verbose_name='Usa Lentes Desde', blank=True)
     previous_contact_lenses = models.BooleanField(default=False, verbose_name='Uso de Lentes de Contacto')
     
-    # Antecedentes Familiares
+    # ==================== ANTECEDENTES FAMILIARES ====================
+    # Generales
+    family_diabetes = models.BooleanField(default=False, verbose_name='Diabetes (Familiar)')
+    family_hypertension = models.BooleanField(default=False, verbose_name='Hipertensión (Familiar)')
+    family_heart_disease = models.BooleanField(default=False, verbose_name='Cardiopatías (Familiar)')
+    family_cancer = models.BooleanField(default=False, verbose_name='Cáncer (Familiar)')
+    family_general_notes = models.TextField(verbose_name='Notas Familiares Generales', blank=True)
+    
+    # Oculares
     family_glaucoma = models.BooleanField(default=False, verbose_name='Glaucoma (Familiar)')
     family_cataracts = models.BooleanField(default=False, verbose_name='Cataratas (Familiar)')
     family_macular_degeneration = models.BooleanField(default=False, verbose_name='Degeneración Macular (Familiar)')
-    family_diabetes = models.BooleanField(default=False, verbose_name='Diabetes (Familiar)')
-    family_hypertension = models.BooleanField(default=False, verbose_name='Hipertensión (Familiar)')
-    family_history_notes = models.TextField(verbose_name='Notas Antecedentes Familiares', blank=True)
+    family_retinal_detachment = models.BooleanField(default=False, verbose_name='Desprendimiento de Retina (Familiar)')
+    family_myopia = models.BooleanField(default=False, verbose_name='Miopía (Familiar)')
+    family_strabismus = models.BooleanField(default=False, verbose_name='Estrabismo (Familiar)')
+    family_ocular_notes = models.TextField(verbose_name='Notas Familiares Oculares', blank=True)
+    
+    # Backward compatibility
+    family_history_notes = models.TextField(verbose_name='Notas Antecedentes Familiares (Legacy)', blank=True)
     
     # Hábitos
     occupation_visual_demand = models.CharField(

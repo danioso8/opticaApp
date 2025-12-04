@@ -68,94 +68,260 @@
             </div>
         </div>
 
-        <!-- Motivo de Consulta -->
-        <div class="bg-blue-50 border-l-4 border-blue-600 rounded-lg p-5 mb-6">
-            <h3 class="text-lg font-bold text-gray-800 mb-4 flex items-center">
-                <i class="fas fa-comment-medical text-blue-600 mr-2"></i>
-                MOTIVO DE CONSULTA
+        <!-- ANAMNESIS -->
+        <div class="bg-gradient-to-r from-blue-50 to-blue-100 border-l-4 border-blue-600 rounded-lg p-6 mb-6 shadow-sm">
+            <h3 class="text-xl font-bold text-gray-800 mb-5 flex items-center uppercase tracking-wide">
+                <i class="fas fa-file-medical-alt text-blue-600 mr-2"></i>
+                ANAMNESIS
             </h3>
             
-            <div>
-                <textarea name="chief_complaint" rows="2" required
-                          class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                          placeholder="Ej: Control de rutina, disminución de la visión, dolor ocular...">{% if history %}{{ history.chief_complaint }}{% endif %}</textarea>
+            <div class="space-y-4">
+                <!-- Motivo de Consulta -->
+                <div class="bg-white rounded-lg p-4 shadow-sm">
+                    <label class="block text-sm font-bold text-gray-800 mb-2 uppercase">
+                        Motivo de Consulta
+                    </label>
+                    <textarea name="chief_complaint" rows="2" required
+                              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                              placeholder="Ej: Control visual, Paciente no usaría de corrección óptica que asiste a consulta para control visual">{% if history %}{{ history.chief_complaint }}{% endif %}</textarea>
+                </div>
+
+                <!-- Enfermedad Actual -->
+                <div class="bg-white rounded-lg p-4 shadow-sm">
+                    <label class="block text-sm font-bold text-gray-800 mb-2 uppercase">
+                        Enfermedad Actual
+                    </label>
+                    <textarea name="current_illness" rows="2"
+                              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                              placeholder="Ej: Paciente no usaría de corrección óptica que asiste a consulta para control visual">{% if history %}{{ history.current_illness }}{% endif %}</textarea>
+                </div>
             </div>
         </div>
 
-        <!-- Antecedentes -->
-        <div class="bg-amber-50 border-l-4 border-amber-600 rounded-lg p-5 mb-6">
-            <h3 class="text-lg font-bold text-gray-800 mb-4 flex items-center">
-                <i class="fas fa-history text-amber-600 mr-2"></i>
-                ANTECEDENTES
+        <!-- ANTECEDENTES GENERALES -->
+        <div class="bg-gradient-to-r from-amber-50 to-amber-100 border-l-4 border-amber-600 rounded-lg p-6 mb-6 shadow-sm">
+            <h3 class="text-xl font-bold text-gray-800 mb-5 flex items-center uppercase tracking-wide">
+                <i class="fas fa-notes-medical text-amber-600 mr-2"></i>
+                ANTECEDENTES GENERALES
             </h3>
             
-            <div class="space-y-5">
-                <!-- Antecedentes Personales -->
-                <div>
-                    <h4 class="font-semibold text-gray-700 mb-2">Personales</h4>
-                    <textarea name="medical_history" rows="2"
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <!-- Patológicos -->
+                <div class="bg-white rounded-lg p-4 shadow-sm">
+                    <label class="block text-sm font-bold text-gray-800 mb-2">
+                        <i class="fas fa-disease text-red-600 mr-1"></i> Patológicos
+                    </label>
+                    <textarea name="pathological_history" rows="2"
                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500"
-                              placeholder="Diabetes, hipertensión, cirugías previas, alergias...">{% if history %}{{ history.medical_history }}{% endif %}</textarea>
+                              placeholder="Diabetes, hipertensión, enfermedades crónicas... o escriba N/A">{% if history %}{{ history.pathological_history }}{% endif %}</textarea>
                 </div>
 
-                <!-- Antecedentes Oftalmológicos -->
-                <div>
-                    <h4 class="font-semibold text-gray-700 mb-2">Oftalmológicos</h4>
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-2">
-                        <label class="flex items-center space-x-2 cursor-pointer">
-                            <input type="checkbox" name="previous_glasses" {% if history.previous_glasses %}checked{% endif %}
-                                   class="w-4 h-4 text-amber-600 border-gray-300 rounded focus:ring-amber-500">
-                            <span class="text-sm text-gray-700">Usa Lentes</span>
-                        </label>
-                        <label class="flex items-center space-x-2 cursor-pointer">
-                            <input type="checkbox" name="previous_contact_lenses" {% if history.previous_contact_lenses %}checked{% endif %}
-                                   class="w-4 h-4 text-amber-600 border-gray-300 rounded focus:ring-amber-500">
-                            <span class="text-sm text-gray-700">Lentes de Contacto</span>
-                        </label>
-                        <label class="flex items-center space-x-2 cursor-pointer">
-                            <input type="checkbox" name="previous_eye_surgery" {% if history.previous_eye_surgery %}checked{% endif %}
-                                   class="w-4 h-4 text-amber-600 border-gray-300 rounded focus:ring-amber-500">
-                            <span class="text-sm text-gray-700">Cirugía Ocular</span>
-                        </label>
+                <!-- Farmacológicos -->
+                <div class="bg-white rounded-lg p-4 shadow-sm">
+                    <label class="block text-sm font-bold text-gray-800 mb-2">
+                        <i class="fas fa-pills text-green-600 mr-1"></i> Farmacológicos
+                    </label>
+                    <textarea name="pharmacological_history" rows="2"
+                              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500"
+                              placeholder="Medicamentos que toma actualmente... o escriba N/A">{% if history %}{{ history.pharmacological_history }}{% endif %}</textarea>
+                </div>
+
+                <!-- Quirúrgicos -->
+                <div class="bg-white rounded-lg p-4 shadow-sm">
+                    <label class="block text-sm font-bold text-gray-800 mb-2">
+                        <i class="fas fa-procedures text-blue-600 mr-1"></i> Quirúrgicos
+                    </label>
+                    <textarea name="surgical_history" rows="2"
+                              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500"
+                              placeholder="Cirugías previas generales... o escriba N/A">{% if history %}{{ history.surgical_history }}{% endif %}</textarea>
+                </div>
+
+                <!-- Alérgicos -->
+                <div class="bg-white rounded-lg p-4 shadow-sm">
+                    <label class="block text-sm font-bold text-gray-800 mb-2">
+                        <i class="fas fa-allergies text-orange-600 mr-1"></i> Alérgicos
+                    </label>
+                    <textarea name="allergic_history" rows="2"
+                              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500"
+                              placeholder="Alergias conocidas... o escriba N/A">{% if history %}{{ history.allergic_history }}{% endif %}</textarea>
+                </div>
+
+                <!-- Traumatológicos -->
+                <div class="bg-white rounded-lg p-4 shadow-sm">
+                    <label class="block text-sm font-bold text-gray-800 mb-2">
+                        <i class="fas fa-band-aid text-purple-600 mr-1"></i> Traumatológicos
+                    </label>
+                    <textarea name="trauma_history" rows="2"
+                              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500"
+                              placeholder="Traumatismos previos... o escriba N/A">{% if history %}{{ history.trauma_history }}{% endif %}</textarea>
+                </div>
+
+                <!-- Otros -->
+                <div class="bg-white rounded-lg p-4 shadow-sm">
+                    <label class="block text-sm font-bold text-gray-800 mb-2">
+                        <i class="fas fa-notes-medical text-gray-600 mr-1"></i> Otros
+                    </label>
+                    <textarea name="other_general_history" rows="2"
+                              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500"
+                              placeholder="Otros antecedentes generales... o escriba N/A">{% if history %}{{ history.other_general_history }}{% endif %}</textarea>
+                </div>
+            </div>
+        </div>
+
+        <!-- ANTECEDENTES OCULARES -->
+        <div class="bg-gradient-to-r from-teal-50 to-teal-100 border-l-4 border-teal-600 rounded-lg p-6 mb-6 shadow-sm">
+            <h3 class="text-xl font-bold text-gray-800 mb-5 flex items-center uppercase tracking-wide">
+                <i class="fas fa-eye text-teal-600 mr-2"></i>
+                ANTECEDENTES OCULARES
+            </h3>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <!-- Patológicos Oculares -->
+                <div class="bg-white rounded-lg p-4 shadow-sm">
+                    <label class="block text-sm font-bold text-gray-800 mb-2">
+                        <i class="fas fa-eye-slash text-red-600 mr-1"></i> Patológicos Oculares
+                    </label>
+                    <textarea name="ocular_pathological_history" rows="2"
+                              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500"
+                              placeholder="Glaucoma, cataratas, enfermedades oculares previas... o escriba N/A">{% if history %}{{ history.ocular_pathological_history }}{% endif %}</textarea>
+                </div>
+
+                <!-- Farmacológicos Oculares -->
+                <div class="bg-white rounded-lg p-4 shadow-sm">
+                    <label class="block text-sm font-bold text-gray-800 mb-2">
+                        <i class="fas fa-eye-dropper text-green-600 mr-1"></i> Farmacológicos Oculares
+                    </label>
+                    <textarea name="ocular_pharmacological_history" rows="2"
+                              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500"
+                              placeholder="Gotas, medicamentos oculares actuales... o escriba N/A">{% if history %}{{ history.ocular_pharmacological_history }}{% endif %}</textarea>
+                </div>
+
+                <!-- Quirúrgicos Oculares -->
+                <div class="bg-white rounded-lg p-4 shadow-sm">
+                    <label class="block text-sm font-bold text-gray-800 mb-2">
+                        <i class="fas fa-scalpel text-blue-600 mr-1"></i> Quirúrgicos Oculares
+                    </label>
+                    <textarea name="ocular_surgical_history" rows="2"
+                              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500"
+                              placeholder="LASIK, cirugía de cataratas, cirugías oculares previas... o escriba N/A">{% if history %}{{ history.ocular_surgical_history }}{% endif %}</textarea>
+                </div>
+
+                <!-- Traumatológicos Oculares -->
+                <div class="bg-white rounded-lg p-4 shadow-sm">
+                    <label class="block text-sm font-bold text-gray-800 mb-2">
+                        <i class="fas fa-user-injured text-purple-600 mr-1"></i> Traumatológicos Oculares
+                    </label>
+                    <textarea name="ocular_trauma_history" rows="2"
+                              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500"
+                              placeholder="Traumatismos oculares previos... o escriba N/A">{% if history %}{{ history.ocular_trauma_history }}{% endif %}</textarea>
+                </div>
+
+                <!-- Terapéuticos Oculares -->
+                <div class="bg-white rounded-lg p-4 shadow-sm">
+                    <label class="block text-sm font-bold text-gray-800 mb-2">
+                        <i class="fas fa-glasses text-indigo-600 mr-1"></i> Terapéuticos
+                    </label>
+                    <div class="space-y-2">
+                        <div class="flex items-center space-x-4">
+                            <label class="flex items-center space-x-2 cursor-pointer">
+                                <input type="checkbox" name="previous_glasses" {% if history.previous_glasses %}checked{% endif %}
+                                       class="w-4 h-4 text-teal-600 border-gray-300 rounded focus:ring-teal-500">
+                                <span class="text-sm text-gray-700 font-medium">Usa Lentes</span>
+                            </label>
+                            <label class="flex items-center space-x-2 cursor-pointer">
+                                <input type="checkbox" name="previous_contact_lenses" {% if history.previous_contact_lenses %}checked{% endif %}
+                                       class="w-4 h-4 text-teal-600 border-gray-300 rounded focus:ring-teal-500">
+                                <span class="text-sm text-gray-700 font-medium">Lentes de Contacto</span>
+                            </label>
+                        </div>
+                        <textarea name="ocular_therapeutic_history" rows="1"
+                                  class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500"
+                                  placeholder="Detalles de uso de lentes, terapias visuales... o escriba N/A">{% if history %}{{ history.ocular_therapeutic_history }}{% endif %}</textarea>
                     </div>
-                    <textarea name="surgery_details" rows="1"
-                              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500"
-                              placeholder="Detalles de cirugías o tratamientos previos...">{% if history %}{{ history.surgery_details }}{% endif %}</textarea>
                 </div>
+            </div>
+        </div>
 
-                <!-- Antecedentes Familiares -->
-                <div>
-                    <h4 class="font-semibold text-gray-700 mb-2">Familiares</h4>
-                    <div class="grid grid-cols-2 md:grid-cols-5 gap-3 mb-2">
-                        <label class="flex items-center space-x-2 cursor-pointer">
-                            <input type="checkbox" name="family_glaucoma" {% if history.family_glaucoma %}checked{% endif %}
-                                   class="w-4 h-4 text-amber-600 border-gray-300 rounded focus:ring-amber-500">
-                            <span class="text-sm text-gray-700">Glaucoma</span>
-                        </label>
-                        <label class="flex items-center space-x-2 cursor-pointer">
-                            <input type="checkbox" name="family_cataracts" {% if history.family_cataracts %}checked{% endif %}
-                                   class="w-4 h-4 text-amber-600 border-gray-300 rounded focus:ring-amber-500">
-                            <span class="text-sm text-gray-700">Cataratas</span>
-                        </label>
+        <!-- ANTECEDENTES FAMILIARES -->
+        <div class="bg-gradient-to-r from-pink-50 to-pink-100 border-l-4 border-pink-600 rounded-lg p-6 mb-6 shadow-sm">
+            <h3 class="text-xl font-bold text-gray-800 mb-5 flex items-center uppercase tracking-wide">
+                <i class="fas fa-users text-pink-600 mr-2"></i>
+                ANTECEDENTES FAMILIARES
+            </h3>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <!-- Generales -->
+                <div class="bg-white rounded-lg p-4 shadow-sm">
+                    <label class="block text-sm font-bold text-gray-800 mb-2">
+                        <i class="fas fa-heartbeat text-pink-600 mr-1"></i> Generales
+                    </label>
+                    <div class="grid grid-cols-2 gap-2 mb-2">
                         <label class="flex items-center space-x-2 cursor-pointer">
                             <input type="checkbox" name="family_diabetes" {% if history.family_diabetes %}checked{% endif %}
-                                   class="w-4 h-4 text-amber-600 border-gray-300 rounded focus:ring-amber-500">
+                                   class="w-4 h-4 text-pink-600 border-gray-300 rounded focus:ring-pink-500">
                             <span class="text-sm text-gray-700">Diabetes</span>
                         </label>
                         <label class="flex items-center space-x-2 cursor-pointer">
                             <input type="checkbox" name="family_hypertension" {% if history.family_hypertension %}checked{% endif %}
-                                   class="w-4 h-4 text-amber-600 border-gray-300 rounded focus:ring-amber-500">
+                                   class="w-4 h-4 text-pink-600 border-gray-300 rounded focus:ring-pink-500">
                             <span class="text-sm text-gray-700">Hipertensión</span>
                         </label>
                         <label class="flex items-center space-x-2 cursor-pointer">
-                            <input type="checkbox" name="family_macular_degeneration" {% if history.family_macular_degeneration %}checked{% endif %}
-                                   class="w-4 h-4 text-amber-600 border-gray-300 rounded focus:ring-amber-500">
-                            <span class="text-sm text-gray-700">Deg. Macular</span>
+                            <input type="checkbox" name="family_heart_disease" {% if history.family_heart_disease %}checked{% endif %}
+                                   class="w-4 h-4 text-pink-600 border-gray-300 rounded focus:ring-pink-500">
+                            <span class="text-sm text-gray-700">Cardiopatías</span>
+                        </label>
+                        <label class="flex items-center space-x-2 cursor-pointer">
+                            <input type="checkbox" name="family_cancer" {% if history.family_cancer %}checked{% endif %}
+                                   class="w-4 h-4 text-pink-600 border-gray-300 rounded focus:ring-pink-500">
+                            <span class="text-sm text-gray-700">Cáncer</span>
                         </label>
                     </div>
-                    <textarea name="family_history_notes" rows="1"
-                              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500"
-                              placeholder="Otros antecedentes familiares...">{% if history %}{{ history.family_history_notes }}{% endif %}</textarea>
+                    <textarea name="family_general_notes" rows="2"
+                              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500"
+                              placeholder="Otros antecedentes familiares generales... o escriba N/A">{% if history %}{{ history.family_general_notes }}{% endif %}</textarea>
+                </div>
+
+                <!-- Oculares -->
+                <div class="bg-white rounded-lg p-4 shadow-sm">
+                    <label class="block text-sm font-bold text-gray-800 mb-2">
+                        <i class="fas fa-eye text-pink-600 mr-1"></i> Oculares
+                    </label>
+                    <div class="grid grid-cols-2 gap-2 mb-2">
+                        <label class="flex items-center space-x-2 cursor-pointer">
+                            <input type="checkbox" name="family_glaucoma" {% if history.family_glaucoma %}checked{% endif %}
+                                   class="w-4 h-4 text-pink-600 border-gray-300 rounded focus:ring-pink-500">
+                            <span class="text-sm text-gray-700">Glaucoma</span>
+                        </label>
+                        <label class="flex items-center space-x-2 cursor-pointer">
+                            <input type="checkbox" name="family_cataracts" {% if history.family_cataracts %}checked{% endif %}
+                                   class="w-4 h-4 text-pink-600 border-gray-300 rounded focus:ring-pink-500">
+                            <span class="text-sm text-gray-700">Cataratas</span>
+                        </label>
+                        <label class="flex items-center space-x-2 cursor-pointer">
+                            <input type="checkbox" name="family_macular_degeneration" {% if history.family_macular_degeneration %}checked{% endif %}
+                                   class="w-4 h-4 text-pink-600 border-gray-300 rounded focus:ring-pink-500">
+                            <span class="text-sm text-gray-700">Deg. Macular</span>
+                        </label>
+                        <label class="flex items-center space-x-2 cursor-pointer">
+                            <input type="checkbox" name="family_retinal_detachment" {% if history.family_retinal_detachment %}checked{% endif %}
+                                   class="w-4 h-4 text-pink-600 border-gray-300 rounded focus:ring-pink-500">
+                            <span class="text-sm text-gray-700">Desp. Retina</span>
+                        </label>
+                        <label class="flex items-center space-x-2 cursor-pointer">
+                            <input type="checkbox" name="family_myopia" {% if history.family_myopia %}checked{% endif %}
+                                   class="w-4 h-4 text-pink-600 border-gray-300 rounded focus:ring-pink-500">
+                            <span class="text-sm text-gray-700">Miopía</span>
+                        </label>
+                        <label class="flex items-center space-x-2 cursor-pointer">
+                            <input type="checkbox" name="family_strabismus" {% if history.family_strabismus %}checked{% endif %}
+                                   class="w-4 h-4 text-pink-600 border-gray-300 rounded focus:ring-pink-500">
+                            <span class="text-sm text-gray-700">Estrabismo</span>
+                        </label>
+                    </div>
+                    <textarea name="family_ocular_notes" rows="2"
+                              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500"
+                              placeholder="Otros antecedentes familiares oculares... o escriba N/A">{% if history %}{{ history.family_ocular_notes }}{% endif %}</textarea>
                 </div>
             </div>
         </div>
