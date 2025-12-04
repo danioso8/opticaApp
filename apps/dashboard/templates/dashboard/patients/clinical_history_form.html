@@ -1316,10 +1316,16 @@ function saveMaterial() {
         method: 'POST',
         headers: {
             'X-CSRFToken': '{{ csrf_token }}',
+            'X-Requested-With': 'XMLHttpRequest'
         },
         body: formData
     })
-    .then(response => response.json())
+    .then(response => {
+        if (!response.ok) {
+            return response.json().then(err => Promise.reject(err));
+        }
+        return response.json();
+    })
     .then(data => {
         if (data.success) {
             // Agregar al select
@@ -1334,12 +1340,29 @@ function saveMaterial() {
             showMaterialDetails(select);
             alert('Material agregado exitosamente');
         } else {
-            alert('Error: ' + (data.message || 'No se pudo guardar'));
+            let errorMsg = 'Error: ' + (data.message || 'No se pudo guardar');
+            if (data.errors) {
+                errorMsg += '\n\nDetalles:\n';
+                for (let field in data.errors) {
+                    errorMsg += `${field}: ${data.errors[field]}\n`;
+                }
+            }
+            alert(errorMsg);
         }
     })
     .catch(error => {
         console.error('Error:', error);
-        alert('Error al guardar el material');
+        let errorMsg = 'Error al guardar el material';
+        if (error.message) {
+            errorMsg += '\n' + error.message;
+        }
+        if (error.errors) {
+            errorMsg += '\n\nDetalles:\n';
+            for (let field in error.errors) {
+                errorMsg += `${field}: ${error.errors[field]}\n`;
+            }
+        }
+        alert(errorMsg);
     })
     .finally(() => {
         submitBtn.disabled = false;
@@ -1360,10 +1383,16 @@ function saveTreatment() {
         method: 'POST',
         headers: {
             'X-CSRFToken': '{{ csrf_token }}',
+            'X-Requested-With': 'XMLHttpRequest'
         },
         body: formData
     })
-    .then(response => response.json())
+    .then(response => {
+        if (!response.ok) {
+            return response.json().then(err => Promise.reject(err));
+        }
+        return response.json();
+    })
     .then(data => {
         if (data.success) {
             // Agregar al select
@@ -1378,12 +1407,29 @@ function saveTreatment() {
             updateSelectedTreatments();
             alert('Tratamiento agregado exitosamente');
         } else {
-            alert('Error: ' + (data.message || 'No se pudo guardar'));
+            let errorMsg = 'Error: ' + (data.message || 'No se pudo guardar');
+            if (data.errors) {
+                errorMsg += '\n\nDetalles:\n';
+                for (let field in data.errors) {
+                    errorMsg += `${field}: ${data.errors[field]}\n`;
+                }
+            }
+            alert(errorMsg);
         }
     })
     .catch(error => {
         console.error('Error:', error);
-        alert('Error al guardar el tratamiento');
+        let errorMsg = 'Error al guardar el tratamiento';
+        if (error.message) {
+            errorMsg += '\n' + error.message;
+        }
+        if (error.errors) {
+            errorMsg += '\n\nDetalles:\n';
+            for (let field in error.errors) {
+                errorMsg += `${field}: ${error.errors[field]}\n`;
+            }
+        }
+        alert(errorMsg);
     })
     .finally(() => {
         submitBtn.disabled = false;
@@ -1404,10 +1450,16 @@ function saveMedication() {
         method: 'POST',
         headers: {
             'X-CSRFToken': '{{ csrf_token }}',
+            'X-Requested-With': 'XMLHttpRequest'
         },
         body: formData
     })
-    .then(response => response.json())
+    .then(response => {
+        if (!response.ok) {
+            return response.json().then(err => Promise.reject(err));
+        }
+        return response.json();
+    })
     .then(data => {
         if (data.success) {
             // Agregar al select
@@ -1426,12 +1478,29 @@ function saveMedication() {
             updateSelectedMedications();
             alert('Medicamento agregado exitosamente');
         } else {
-            alert('Error: ' + (data.message || 'No se pudo guardar'));
+            let errorMsg = 'Error: ' + (data.message || 'No se pudo guardar');
+            if (data.errors) {
+                errorMsg += '\n\nDetalles:\n';
+                for (let field in data.errors) {
+                    errorMsg += `${field}: ${data.errors[field]}\n`;
+                }
+            }
+            alert(errorMsg);
         }
     })
     .catch(error => {
         console.error('Error:', error);
-        alert('Error al guardar el medicamento');
+        let errorMsg = 'Error al guardar el medicamento';
+        if (error.message) {
+            errorMsg += '\n' + error.message;
+        }
+        if (error.errors) {
+            errorMsg += '\n\nDetalles:\n';
+            for (let field in error.errors) {
+                errorMsg += `${field}: ${error.errors[field]}\n`;
+            }
+        }
+        alert(errorMsg);
     })
     .finally(() => {
         submitBtn.disabled = false;
