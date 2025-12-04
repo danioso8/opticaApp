@@ -1622,3 +1622,239 @@ def landing_page_config(request):
     }
     
     return render(request, 'dashboard/landing_page_config.html', context)
+
+
+# ==================== PARÁMETROS CLÍNICOS ====================
+
+@login_required
+def clinical_parameters(request):
+    """Vista principal de parámetros clínicos"""
+    from apps.patients.models_clinical_config import ClinicalParameter
+    
+    org = request.organization if hasattr(request, 'organization') and request.organization else None
+    if not org:
+        messages.error(request, 'Debes seleccionar una organización primero')
+        return redirect('organizations:list')
+    
+    # Filtros
+    parameter_type = request.GET.get('type', '')
+    search_query = request.GET.get('q', '')
+    
+    # Obtener parámetros
+    parameters = ClinicalParameter.objects.filter(organization=org)
+    
+    if parameter_type:
+        parameters = parameters.filter(parameter_type=parameter_type)
+    
+    if search_query:
+        parameters = parameters.filter(
+            Q(name__icontains=search_query) |
+            Q(code__icontains=search_query) |
+            Q(description__icontains=search_query)
+        )
+    
+    parameters = parameters.order_by('parameter_type', 'display_order', 'name')
+    
+    # Estadísticas por tipo
+    stats = ClinicalParameter.objects.filter(
+        organization=org
+    ).values('parameter_type').annotate(
+        count=Count('id')
+    ).order_by('parameter_type')
+    
+    context = {
+        'parameters': parameters,
+        'parameter_types': ClinicalParameter.PARAMETER_TYPES,
+        'selected_type': parameter_type,
+        'search_query': search_query,
+        'stats': stats,
+        'page_title': 'Parámetros Clínicos',
+        'page_subtitle': 'Gestiona medicamentos, tratamientos, diagnósticos y más',
+    }
+    
+    return render(request, 'dashboard/clinical_parameters.html', context)
+
+
+@login_required
+def clinical_parameter_create(request):
+    """Crear nuevo parámetro clínico"""
+    from apps.patients.models_clinical_config import ClinicalParameter
+    from apps.patients.forms_clinical_config import ClinicalParameterForm
+    
+    org = request.organization if hasattr(request, 'organization') and request.organization else None
+    if not org:
+        messages.error(request, 'Debes seleccionar una organización primero')
+        return redirect('organizations:list')
+    
+    if request.method == 'POST':
+        form = ClinicalParameterForm(request.POST)
+        if form.is_valid():
+            parameter = form.save(commit=False)
+            parameter.organization = org
+            parameter.created_by = request.user
+            parameter.save()
+            messages.success(request, f'✅ Parámetro "{parameter.name}" creado exitosamente')
+            return redirect('dashboard:clinical_parameters')
+    else:
+        form = ClinicalParameterForm()
+    
+    context = {
+        'form': form,
+        'page_title': 'Nuevo Parámetro Clínico',
+        'page_subtitle': 'Agrega un nuevo medicamento, tratamiento o diagnóstico',
+    }
+    
+    return render(request, 'dashboard/clinical_parameter_form.html', context)
+
+
+@login_required
+def clinical_parameter_edit(request, pk):
+    """Editar parámetro clínico"""
+    from apps.patients.models_clinical_config import ClinicalParameter
+    from apps.patients.forms_clinical_config import ClinicalParameterForm
+    
+    org = request.organization if hasattr(request, 'organization') and request.organization else None
+    parameter = get_object_or_404(ClinicalParameter, pk=pk, organization=org)
+    
+    if request.method == 'POST':
+        form = ClinicalParameterForm(request.POST, instance=parameter)
+        if form.is_valid():
+            form.save()
+            messages.success(request, f'✅ Parámetro "{parameter.name}" actualizado exitosamente')
+            return redirect('dashboard:clinical_parameters')
+    else:
+        form = ClinicalParameterForm(instance=parameter)
+    
+    context = {
+        'form': form,
+        'parameter': parameter,
+        'page_title': 'Editar Parámetro Clínico',
+        'page_subtitle': f'Modificando: {parameter.name}',
+    }
+    
+    return render(request, 'dashboard/clinical_parameter_form.html', context)
+
+
+@login_required
+def clinical_parameter_delete(request, pk):
+    """Eliminar parámetro clínico"""
+    from apps.patients.models_clinical_config import ClinicalParameter
+    
+    org = request.organization if hasattr(request, 'organization') and request.organization else None
+    parameter = get_object_or_404(ClinicalParameter, pk=pk, organization=org)
+    
+    if request.method == 'POST':
+        name = parameter.name
+        parameter.delete()
+        messages.success(request, f'✅ Parámetro "{name}" eliminado exitosamente')
+    
+    return redirect('dashboard:clinical_parameters')
+
+
+@login_required
+def clinical_parameter_bulk_import(request):
+    """Importar parámetros en masa"""
+    from apps.patients.models_clinical_config import ClinicalParameter
+    from apps.patients.forms_clinical_config import BulkParameterImportForm
+    
+    org = request.organization if hasattr(request, 'organization') and request.organization else None
+    if not org:
+        messages.error(request, 'Debes seleccionar una organización primero')
+        return redirect('organizations:list')
+    
+    if request.method == 'POST':
+        form = BulkParameterImportForm(request.POST)
+        if form.is_valid():
+            parameter_type = form.cleaned_data['parameter_type']
+            parameters_text = form.cleaned_data['parameters_text']
+            set_active = form.cleaned_data['set_active']
+            
+            lines = parameters_text.strip().split('\n')
+            created_count = 0
+            
+            for line in lines:
+                line = line.strip()
+                if not line:
+                    continue
+                
+                # Separar código y nombre si existe guión
+                parts = line.split('-', 1)
+                if len(parts) == 2:
+                    name = parts[0].strip()
+                    description = parts[1].strip()
+                    code = ''
+                else:
+                    name = line.strip()
+                    description = ''
+                    code = ''
+                
+                # Crear parámetro si no existe
+                parameter, created = ClinicalParameter.objects.get_or_create(
+                    organization=org,
+                    parameter_type=parameter_type,
+                    name=name,
+                    defaults={
+                        'code': code,
+                        'description': description,
+                        'is_active': set_active,
+                        'created_by': request.user
+                    }
+                )
+                
+                if created:
+                    created_count += 1
+            
+            messages.success(request, f'✅ Se crearon {created_count} parámetros nuevos')
+            return redirect('dashboard:clinical_parameters')
+    else:
+        form = BulkParameterImportForm()
+    
+    context = {
+        'form': form,
+        'page_title': 'Importar Parámetros en Masa',
+        'page_subtitle': 'Agrega múltiples parámetros rápidamente',
+    }
+    
+    return render(request, 'dashboard/clinical_parameter_bulk_import.html', context)
+
+
+@login_required
+def medication_templates(request):
+    """Vista de plantillas de medicación"""
+    from apps.patients.models_clinical_config import MedicationTemplate
+    
+    org = request.organization if hasattr(request, 'organization') and request.organization else None
+    if not org:
+        messages.error(request, 'Debes seleccionar una organización primero')
+        return redirect('organizations:list')
+    
+    templates = MedicationTemplate.objects.filter(organization=org).order_by('-usage_count', 'name')
+    
+    context = {
+        'templates': templates,
+        'page_title': 'Plantillas de Medicación',
+        'page_subtitle': 'Prescripciones predefinidas para diagnósticos comunes',
+    }
+    
+    return render(request, 'dashboard/medication_templates.html', context)
+
+
+@login_required
+def treatment_protocols(request):
+    """Vista de protocolos de tratamiento"""
+    from apps.patients.models_clinical_config import TreatmentProtocol
+    
+    org = request.organization if hasattr(request, 'organization') and request.organization else None
+    if not org:
+        messages.error(request, 'Debes seleccionar una organización primero')
+        return redirect('organizations:list')
+    
+    protocols = TreatmentProtocol.objects.filter(organization=org).order_by('-usage_count', 'name')
+    
+    context = {
+        'protocols': protocols,
+        'page_title': 'Protocolos de Tratamiento',
+        'page_subtitle': 'Protocolos estandarizados para diferentes condiciones',
+    }
+    
+    return render(request, 'dashboard/treatment_protocols.html', context)

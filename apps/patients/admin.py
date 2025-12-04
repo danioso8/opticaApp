@@ -1,5 +1,11 @@
 from django.contrib import admin
 from .models import Patient, ClinicalHistory, ClinicalHistoryAttachment, Doctor
+from .models_clinical_config import (
+    ClinicalParameter,
+    MedicationTemplate,
+    TreatmentProtocol,
+    OpticalPrescriptionTemplate
+)
 
 
 @admin.register(Patient)
@@ -146,6 +152,168 @@ class DoctorAdmin(admin.ModelAdmin):
         }),
         ('Metadatos', {
             'fields': ('created_at', 'updated_at'),
+            'classes': ('collapse',)
+        }),
+    )
+
+
+@admin.register(ClinicalParameter)
+class ClinicalParameterAdmin(admin.ModelAdmin):
+    list_display = [
+        'name',
+        'parameter_type',
+        'code',
+        'category',
+        'usage_count',
+        'is_active',
+        'created_at'
+    ]
+    list_filter = ['parameter_type', 'is_active', 'administration_route', 'category']
+    search_fields = ['name', 'code', 'description', 'icd_10_code']
+    readonly_fields = ['usage_count', 'created_at', 'updated_at', 'created_by']
+    
+    fieldsets = (
+        ('Información Básica', {
+            'fields': ('parameter_type', 'name', 'code', 'description', 'category')
+        }),
+        ('Información de Medicamento', {
+            'fields': ('dosage', 'administration_route', 'frequency', 'duration'),
+            'classes': ('collapse',)
+        }),
+        ('Información de Diagnóstico', {
+            'fields': ('icd_10_code',),
+            'classes': ('collapse',)
+        }),
+        ('Configuración', {
+            'fields': ('is_active', 'is_default', 'display_order')
+        }),
+        ('Estadísticas', {
+            'fields': ('usage_count',),
+            'classes': ('collapse',)
+        }),
+        ('Metadatos', {
+            'fields': ('created_at', 'updated_at', 'created_by'),
+            'classes': ('collapse',)
+        }),
+    )
+
+
+@admin.register(MedicationTemplate)
+class MedicationTemplateAdmin(admin.ModelAdmin):
+    list_display = [
+        'name',
+        'diagnosis',
+        'duration_days',
+        'usage_count',
+        'is_active',
+        'created_at'
+    ]
+    list_filter = ['is_active', 'created_at']
+    search_fields = ['name', 'diagnosis', 'prescription_text']
+    readonly_fields = ['usage_count', 'created_at', 'updated_at', 'created_by']
+    filter_horizontal = ['medications']
+    
+    fieldsets = (
+        ('Información General', {
+            'fields': ('name', 'description', 'diagnosis')
+        }),
+        ('Prescripción', {
+            'fields': ('prescription_text', 'medications', 'instructions', 'duration_days')
+        }),
+        ('Configuración', {
+            'fields': ('is_active',)
+        }),
+        ('Estadísticas', {
+            'fields': ('usage_count',),
+            'classes': ('collapse',)
+        }),
+        ('Metadatos', {
+            'fields': ('created_at', 'updated_at', 'created_by'),
+            'classes': ('collapse',)
+        }),
+    )
+
+
+@admin.register(TreatmentProtocol)
+class TreatmentProtocolAdmin(admin.ModelAdmin):
+    list_display = [
+        'name',
+        'protocol_type',
+        'diagnosis_indication',
+        'usage_count',
+        'is_active',
+        'created_at'
+    ]
+    list_filter = ['protocol_type', 'is_active', 'created_at']
+    search_fields = ['name', 'diagnosis_indication', 'description']
+    readonly_fields = ['usage_count', 'created_at', 'updated_at', 'created_by']
+    filter_horizontal = ['medications']
+    
+    fieldsets = (
+        ('Información General', {
+            'fields': ('name', 'protocol_type', 'diagnosis_indication', 'description')
+        }),
+        ('Fases del Protocolo', {
+            'fields': ('phase_1', 'phase_2', 'phase_3')
+        }),
+        ('Medicamentos y Tratamientos', {
+            'fields': ('medications',)
+        }),
+        ('Seguimiento', {
+            'fields': ('follow_up_schedule', 'expected_duration', 'success_criteria')
+        }),
+        ('Precauciones', {
+            'fields': ('contraindications', 'precautions'),
+            'classes': ('collapse',)
+        }),
+        ('Configuración', {
+            'fields': ('is_active',)
+        }),
+        ('Estadísticas', {
+            'fields': ('usage_count',),
+            'classes': ('collapse',)
+        }),
+        ('Metadatos', {
+            'fields': ('created_at', 'updated_at', 'created_by'),
+            'classes': ('collapse',)
+        }),
+    )
+
+
+@admin.register(OpticalPrescriptionTemplate)
+class OpticalPrescriptionTemplateAdmin(admin.ModelAdmin):
+    list_display = [
+        'name',
+        'lens_type',
+        'lens_material',
+        'usage_count',
+        'is_active',
+        'created_at'
+    ]
+    list_filter = ['is_active', 'created_at']
+    search_fields = ['name', 'description', 'recommendations']
+    readonly_fields = ['usage_count', 'created_at', 'updated_at', 'created_by']
+    filter_horizontal = ['lens_coatings']
+    
+    fieldsets = (
+        ('Información General', {
+            'fields': ('name', 'description')
+        }),
+        ('Especificaciones Ópticas', {
+            'fields': ('lens_type', 'lens_material', 'lens_coatings')
+        }),
+        ('Recomendaciones', {
+            'fields': ('recommendations', 'notes')
+        }),
+        ('Configuración', {
+            'fields': ('is_active',)
+        }),
+        ('Estadísticas', {
+            'fields': ('usage_count',),
+            'classes': ('collapse',)
+        }),
+        ('Metadatos', {
+            'fields': ('created_at', 'updated_at', 'created_by'),
             'classes': ('collapse',)
         }),
     )

@@ -235,7 +235,7 @@
                 
                 <!-- Configuración (Menú Desplegable) -->
                 <div class="configuration-menu">
-                    <button onclick="toggleSubmenu('configuration-submenu')" class="flex items-center justify-between w-full px-4 py-3 hover:bg-indigo-800 {% if 'notifications' in request.path or 'landing-page' in request.path %}bg-indigo-800{% endif %} relative">
+                    <button onclick="toggleSubmenu('configuration-submenu')" class="flex items-center justify-between w-full px-4 py-3 hover:bg-indigo-800 {% if 'notifications' in request.path or 'landing-page' in request.path or 'clinical-parameters' in request.path %}bg-indigo-800{% endif %} relative">
                         <div class="flex items-center">
                             <i class="fas fa-cog mr-3"></i>
                             <span class="sidebar-text">Configuración</span>
@@ -248,6 +248,11 @@
                             <i class="fab fa-whatsapp mr-3"></i>
                             <span class="sidebar-text">WhatsApp Twilio</span>
                             <span class="sidebar-tooltip">WhatsApp Twilio</span>
+                        </a>
+                        <a href="{% url 'dashboard:clinical_parameters' %}" class="flex items-center px-8 py-2 hover:bg-indigo-800 text-sm {% if 'clinical-parameters' in request.path %}bg-indigo-800{% endif %} relative">
+                            <i class="fas fa-pills mr-3"></i>
+                            <span class="sidebar-text">Parámetros Clínicos</span>
+                            <span class="sidebar-tooltip">Parámetros Clínicos</span>
                         </a>
                         <a href="{% url 'dashboard:landing_page_config' %}" class="flex items-center px-8 py-2 hover:bg-indigo-800 text-sm {% if 'landing-page' in request.path %}bg-indigo-800{% endif %} relative">
                             <i class="fas fa-paint-brush mr-3"></i>
@@ -432,7 +437,7 @@
                 }
                 
                 // Submenu de Configuración
-                if (currentPath.includes('notifications') || currentPath.includes('landing-page')) {
+                if (currentPath.includes('notifications') || currentPath.includes('landing-page') || currentPath.includes('clinical-parameters')) {
                     const configurationSubmenu = document.getElementById('configuration-submenu');
                     configurationSubmenu.classList.remove('hidden');
                     document.getElementById('configuration-submenu-icon').classList.add('rotate-180');

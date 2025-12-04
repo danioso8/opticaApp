@@ -34,6 +34,19 @@ urlpatterns = [
     # Configuración de Landing Page
     path('configuration/landing-page/', views.landing_page_config, name='landing_page_config'),
     
+    # Parámetros Clínicos
+    path('configuration/clinical-parameters/', views.clinical_parameters, name='clinical_parameters'),
+    path('configuration/clinical-parameters/create/', views.clinical_parameter_create, name='clinical_parameter_create'),
+    path('configuration/clinical-parameters/<int:pk>/edit/', views.clinical_parameter_edit, name='clinical_parameter_edit'),
+    path('configuration/clinical-parameters/<int:pk>/delete/', views.clinical_parameter_delete, name='clinical_parameter_delete'),
+    path('configuration/clinical-parameters/bulk-import/', views.clinical_parameter_bulk_import, name='clinical_parameter_bulk_import'),
+    
+    # Plantillas de Medicación
+    path('configuration/medication-templates/', views.medication_templates, name='medication_templates'),
+    
+    # Protocolos de Tratamiento
+    path('configuration/treatment-protocols/', views.treatment_protocols, name='treatment_protocols'),
+    
     # Horarios específicos
     path('configuration/add-specific-schedule/', views.add_specific_schedule, name='add_specific_schedule'),
     path('configuration/specific-schedule/<int:pk>/toggle/', views.toggle_specific_schedule, name='toggle_specific_schedule'),

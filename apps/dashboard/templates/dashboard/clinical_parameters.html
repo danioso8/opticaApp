@@ -1,0 +1,236 @@
+{% extends 'dashboard/base.html' %}
+{% load static %}
+
+{% block title %}Parámetros Clínicos{% endblock %}
+{% block page_title %}Parámetros Clínicos{% endblock %}
+{% block page_subtitle %}Gestiona medicamentos, tratamientos, diagnósticos y más{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto">
+    
+    <!-- Header con acciones -->
+    <div class="bg-gradient-to-r from-blue-50 to-indigo-50 border-2 border-blue-200 rounded-xl p-6 mb-6 shadow-sm">
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+            <div class="flex items-center">
+                <i class="fas fa-flask text-blue-600 text-4xl mr-4"></i>
+                <div>
+                    <h3 class="font-bold text-gray-800 text-xl">Biblioteca de Parámetros</h3>
+                    <p class="text-sm text-gray-600">Personaliza las opciones disponibles en historias clínicas</p>
+                </div>
+            </div>
+            <div class="flex gap-3">
+                <a href="{% url 'dashboard:clinical_parameter_bulk_import' %}" class="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-xl font-semibold transition shadow hover:shadow-lg flex items-center">
+                    <i class="fas fa-file-import mr-2"></i>
+                    Importar en Masa
+                </a>
+                <a href="{% url 'dashboard:clinical_parameter_create' %}" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-semibold transition shadow hover:shadow-lg flex items-center">
+                    <i class="fas fa-plus mr-2"></i>
+                    Nuevo Parámetro
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Estadísticas rápidas -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+        {% for stat in stats %}
+        <div class="bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm text-gray-600 mb-1">{{ stat.parameter_type|title }}</p>
+                    <p class="text-3xl font-bold text-blue-600">{{ stat.count }}</p>
+                </div>
+                <i class="fas fa-pills text-4xl text-gray-200"></i>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Filtros y búsqueda -->
+    <div class="bg-white rounded-xl shadow-md p-6 mb-6">
+        <form method="get" class="space-y-4">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">
+                        <i class="fas fa-filter mr-2"></i>Tipo de Parámetro
+                    </label>
+                    <select name="type" class="form-select w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500" onchange="this.form.submit()">
+                        <option value="">Todos los tipos</option>
+                        {% for value, label in parameter_types %}
+                        <option value="{{ value }}" {% if selected_type == value %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="md:col-span-2">
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">
+                        <i class="fas fa-search mr-2"></i>Buscar
+                    </label>
+                    <div class="relative">
+                        <input type="text" name="q" value="{{ search_query }}" placeholder="Buscar por nombre, código o descripción..." class="form-input w-full px-4 py-2 pr-12 border rounded-lg focus:ring-2 focus:ring-blue-500">
+                        <button type="submit" class="absolute right-2 top-1/2 transform -translate-y-1/2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-1 rounded-lg transition">
+                            <i class="fas fa-search"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            {% if selected_type or search_query %}
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                    {% if selected_type %}
+                    <span class="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium">
+                        Tipo: {{ selected_type }}
+                    </span>
+                    {% endif %}
+                    {% if search_query %}
+                    <span class="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-medium">
+                        Búsqueda: "{{ search_query }}"
+                    </span>
+                    {% endif %}
+                </div>
+                <a href="{% url 'dashboard:clinical_parameters' %}" class="text-blue-600 hover:text-blue-800 font-medium">
+                    <i class="fas fa-times mr-1"></i>Limpiar filtros
+                </a>
+            </div>
+            {% endif %}
+        </form>
+    </div>
+
+    <!-- Lista de parámetros -->
+    <div class="bg-white rounded-xl shadow-md overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                            <i class="fas fa-tag mr-2"></i>Tipo
+                        </th>
+                        <th class="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                            <i class="fas fa-capsules mr-2"></i>Nombre
+                        </th>
+                        <th class="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                            <i class="fas fa-barcode mr-2"></i>Código
+                        </th>
+                        <th class="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                            <i class="fas fa-info-circle mr-2"></i>Descripción
+                        </th>
+                        <th class="px-6 py-4 text-center text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                            <i class="fas fa-chart-line mr-2"></i>Uso
+                        </th>
+                        <th class="px-6 py-4 text-center text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                            <i class="fas fa-toggle-on mr-2"></i>Estado
+                        </th>
+                        <th class="px-6 py-4 text-center text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                            <i class="fas fa-cog mr-2"></i>Acciones
+                        </th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    {% for parameter in parameters %}
+                    <tr class="hover:bg-gray-50 transition">
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                                {{ parameter.get_parameter_type_display }}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4">
+                            <div class="flex items-center">
+                                <i class="fas fa-pills text-blue-500 mr-2"></i>
+                                <div>
+                                    <div class="font-semibold text-gray-900">{{ parameter.name }}</div>
+                                    {% if parameter.dosage %}
+                                    <div class="text-xs text-gray-500">
+                                        <i class="fas fa-prescription-bottle mr-1"></i>{{ parameter.dosage }}
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            {% if parameter.code %}
+                            <code class="bg-gray-100 px-2 py-1 rounded text-sm">{{ parameter.code }}</code>
+                            {% else %}
+                            <span class="text-gray-400 text-sm">-</span>
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4">
+                            <div class="text-sm text-gray-600 max-w-xs truncate">
+                                {{ parameter.description|default:"Sin descripción" }}
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 text-center whitespace-nowrap">
+                            <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-blue-100 text-blue-800">
+                                <i class="fas fa-chart-bar mr-1"></i>
+                                {{ parameter.usage_count }}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 text-center whitespace-nowrap">
+                            {% if parameter.is_active %}
+                            <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-800">
+                                <i class="fas fa-check-circle mr-1"></i>Activo
+                            </span>
+                            {% else %}
+                            <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-gray-100 text-gray-600">
+                                <i class="fas fa-times-circle mr-1"></i>Inactivo
+                            </span>
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4 text-center whitespace-nowrap">
+                            <div class="flex items-center justify-center space-x-2">
+                                <a href="{% url 'dashboard:clinical_parameter_edit' parameter.pk %}" class="text-blue-600 hover:text-blue-800 transition" title="Editar">
+                                    <i class="fas fa-edit text-lg"></i>
+                                </a>
+                                <form method="post" action="{% url 'dashboard:clinical_parameter_delete' parameter.pk %}" class="inline" onsubmit="return confirm('¿Estás seguro de eliminar este parámetro?');">
+                                    {% csrf_token %}
+                                    <button type="submit" class="text-red-600 hover:text-red-800 transition" title="Eliminar">
+                                        <i class="fas fa-trash text-lg"></i>
+                                    </button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="7" class="px-6 py-12 text-center">
+                            <i class="fas fa-inbox text-6xl text-gray-300 mb-4"></i>
+                            <p class="text-gray-500 text-lg">No hay parámetros registrados</p>
+                            <a href="{% url 'dashboard:clinical_parameter_create' %}" class="inline-block mt-4 bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-semibold transition">
+                                <i class="fas fa-plus mr-2"></i>Crear primer parámetro
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Enlaces rápidos -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
+        <a href="{% url 'dashboard:medication_templates' %}" class="bg-gradient-to-br from-purple-500 to-indigo-600 rounded-xl shadow-lg p-6 hover:shadow-xl transition transform hover:scale-105 text-white">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h3 class="font-bold text-xl mb-2">
+                        <i class="fas fa-file-prescription mr-2"></i>
+                        Plantillas de Medicación
+                    </h3>
+                    <p class="text-purple-100">Prescripciones predefinidas rápidas</p>
+                </div>
+                <i class="fas fa-arrow-right text-3xl"></i>
+            </div>
+        </a>
+
+        <a href="{% url 'dashboard:treatment_protocols' %}" class="bg-gradient-to-br from-blue-500 to-cyan-600 rounded-xl shadow-lg p-6 hover:shadow-xl transition transform hover:scale-105 text-white">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h3 class="font-bold text-xl mb-2">
+                        <i class="fas fa-book-medical mr-2"></i>
+                        Protocolos de Tratamiento
+                    </h3>
+                    <p class="text-blue-100">Guías estandarizadas de manejo</p>
+                </div>
+                <i class="fas fa-arrow-right text-3xl"></i>
+            </div>
+        </a>
+    </div>
+</div>
+{% endblock %}

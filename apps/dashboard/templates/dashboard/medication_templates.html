@@ -1,0 +1,70 @@
+{% extends 'dashboard/base.html' %}
+{% load static %}
+
+{% block title %}Plantillas de Medicación{% endblock %}
+{% block page_title %}{{ page_title }}{% endblock %}
+{% block page_subtitle %}{{ page_subtitle }}{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto">
+    
+    <div class="bg-gradient-to-r from-purple-50 to-indigo-50 border-2 border-purple-200 rounded-xl p-6 mb-6">
+        <div class="flex justify-between items-center">
+            <div class="flex items-center">
+                <i class="fas fa-file-prescription text-purple-600 text-4xl mr-4"></i>
+                <div>
+                    <h3 class="font-bold text-gray-800 text-xl">Plantillas Predefinidas</h3>
+                    <p class="text-sm text-gray-600">Prescripciones rápidas para diagnósticos comunes</p>
+                </div>
+            </div>
+            <a href="{% url 'dashboard:clinical_parameters' %}" class="bg-purple-600 hover:bg-purple-700 text-white px-6 py-3 rounded-xl font-semibold transition shadow">
+                <i class="fas fa-arrow-left mr-2"></i>Volver a Parámetros
+            </a>
+        </div>
+    </div>
+
+    <!-- Lista de plantillas -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {% for template in templates %}
+        <div class="bg-white rounded-xl shadow-md hover:shadow-xl transition overflow-hidden">
+            <div class="bg-gradient-to-r from-purple-500 to-indigo-600 p-4 text-white">
+                <h3 class="font-bold text-lg mb-1">{{ template.name }}</h3>
+                <p class="text-sm text-purple-100">{{ template.diagnosis }}</p>
+            </div>
+            <div class="p-6">
+                <div class="space-y-3">
+                    <div class="flex items-center text-sm">
+                        <i class="fas fa-pills text-purple-500 mr-2"></i>
+                        <span class="text-gray-600">{{ template.medications.count }} medicamento(s)</span>
+                    </div>
+                    {% if template.duration_days %}
+                    <div class="flex items-center text-sm">
+                        <i class="fas fa-calendar-alt text-purple-500 mr-2"></i>
+                        <span class="text-gray-600">{{ template.duration_days }} días</span>
+                    </div>
+                    {% endif %}
+                    <div class="flex items-center text-sm">
+                        <i class="fas fa-chart-line text-purple-500 mr-2"></i>
+                        <span class="text-gray-600">Usado {{ template.usage_count }} veces</span>
+                    </div>
+                </div>
+                <div class="mt-4 pt-4 border-t">
+                    <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold {% if template.is_active %}bg-green-100 text-green-800{% else %}bg-gray-100 text-gray-600{% endif %}">
+                        {% if template.is_active %}
+                        <i class="fas fa-check-circle mr-1"></i>Activo
+                        {% else %}
+                        <i class="fas fa-times-circle mr-1"></i>Inactivo
+                        {% endif %}
+                    </span>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-span-full text-center py-12">
+            <i class="fas fa-inbox text-6xl text-gray-300 mb-4"></i>
+            <p class="text-gray-500 text-lg">No hay plantillas de medicación</p>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

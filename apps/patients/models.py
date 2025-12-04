@@ -8,6 +8,14 @@ from .models_clinical import ClinicalHistory, ClinicalHistoryAttachment
 # Importar modelo de doctores
 from .models_doctors import Doctor
 
+# Importar modelos de configuración clínica
+from .models_clinical_config import (
+    ClinicalParameter,
+    MedicationTemplate,
+    TreatmentProtocol,
+    OpticalPrescriptionTemplate
+)
+
 
 class Patient(TenantModel):
     """Modelo de Paciente/Cliente"""
