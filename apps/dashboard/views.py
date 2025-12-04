@@ -14,7 +14,8 @@ from .views_clinical import (
     clinical_history_detail,
     clinical_history_edit,
     clinical_history_delete,
-    clinical_history_pdf
+    clinical_history_pdf,
+    latest_fundoscopy
 )
 
 from apps.appointments.models import (
@@ -1683,6 +1684,8 @@ def clinical_parameter_create(request):
     
     org = request.organization if hasattr(request, 'organization') and request.organization else None
     if not org:
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return JsonResponse({'success': False, 'message': 'Debes seleccionar una organización primero'}, status=400)
         messages.error(request, 'Debes seleccionar una organización primero')
         return redirect('organizations:list')
     
@@ -1693,8 +1696,31 @@ def clinical_parameter_create(request):
             parameter.organization = org
             parameter.created_by = request.user
             parameter.save()
+            
+            # Si es una petición AJAX, retornar JSON
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return JsonResponse({
+                    'success': True,
+                    'message': f'Parámetro "{parameter.name}" creado exitosamente',
+                    'parameter': {
+                        'id': parameter.id,
+                        'name': parameter.name,
+                        'description': parameter.description or '',
+                        'dosage': parameter.dosage or '',
+                        'frequency': parameter.frequency or '',
+                        'duration': parameter.duration or '',
+                        'administration_route': parameter.get_administration_route_display() if parameter.administration_route else '',
+                        'category': parameter.category or '',
+                    }
+                })
+            
             messages.success(request, f'✅ Parámetro "{parameter.name}" creado exitosamente')
             return redirect('dashboard:clinical_parameters')
+        else:
+            # Si hay errores y es AJAX
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                errors = {field: error[0] for field, error in form.errors.items()}
+                return JsonResponse({'success': False, 'message': 'Errores en el formulario', 'errors': errors}, status=400)
     else:
         form = ClinicalParameterForm()
     

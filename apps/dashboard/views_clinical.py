@@ -43,6 +43,26 @@ def clinical_history_create(request, patient_id):
         is_active=True
     ).order_by('full_name')
     
+    # Obtener parámetros clínicos
+    from apps.patients.models import ClinicalParameter
+    lens_materials = ClinicalParameter.objects.filter(
+        organization=request.organization,
+        parameter_type='lens_material',
+        is_active=True
+    ).order_by('display_order', 'name')
+    
+    lens_coatings = ClinicalParameter.objects.filter(
+        organization=request.organization,
+        parameter_type='lens_coating',
+        is_active=True
+    ).order_by('display_order', 'name')
+    
+    medications = ClinicalParameter.objects.filter(
+        organization=request.organization,
+        parameter_type__in=['medication', 'topical_medication', 'systemic_medication'],
+        is_active=True
+    ).order_by('display_order', 'name')
+    
     if request.method == 'POST':
         try:
             # Obtener el doctor seleccionado
@@ -232,6 +252,9 @@ def clinical_history_create(request, patient_id):
         'patient': patient,
         'today': datetime.now().date(),
         'doctors': doctors,
+        'lens_materials': lens_materials,
+        'lens_coatings': lens_coatings,
+        'medications': medications,
     }
     
     return render(request, 'dashboard/patients/clinical_history_form.html', context)
@@ -264,6 +287,26 @@ def clinical_history_edit(request, patient_id, history_id):
         organization=request.organization,
         is_active=True
     ).order_by('full_name')
+    
+    # Obtener parámetros clínicos
+    from apps.patients.models import ClinicalParameter
+    lens_materials = ClinicalParameter.objects.filter(
+        organization=request.organization,
+        parameter_type='lens_material',
+        is_active=True
+    ).order_by('display_order', 'name')
+    
+    lens_coatings = ClinicalParameter.objects.filter(
+        organization=request.organization,
+        parameter_type='lens_coating',
+        is_active=True
+    ).order_by('display_order', 'name')
+    
+    medications = ClinicalParameter.objects.filter(
+        organization=request.organization,
+        parameter_type__in=['medication', 'topical_medication', 'systemic_medication'],
+        is_active=True
+    ).order_by('display_order', 'name')
     
     if request.method == 'POST':
         try:
@@ -305,6 +348,9 @@ def clinical_history_edit(request, patient_id, history_id):
         'patient': patient,
         'history': history,
         'doctors': doctors,
+        'lens_materials': lens_materials,
+        'lens_coatings': lens_coatings,
+        'medications': medications,
         'is_edit': True,
     }
     
@@ -333,6 +379,49 @@ def clinical_history_delete(request, patient_id, history_id):
             }, status=400)
     
     return JsonResponse({'success': False, 'message': 'Método no permitido'}, status=405)
+
+
+@login_required
+def latest_fundoscopy(request, patient_id):
+    """Obtener datos del último examen de fondo de ojo"""
+    org_filter = {'organization': request.organization} if hasattr(request, 'organization') and request.organization else {}
+    patient = get_object_or_404(Patient, id=patient_id, **org_filter)
+    
+    # Buscar la historia clínica más reciente con datos de fondo de ojo
+    latest_history = ClinicalHistory.objects.filter(
+        patient=patient,
+        **org_filter
+    ).exclude(
+        fundoscopy_od_vitreous='',
+        fundoscopy_od_optic_disc='',
+        fundoscopy_os_vitreous='',
+        fundoscopy_os_optic_disc=''
+    ).order_by('-date').first()
+    
+    if latest_history:
+        return JsonResponse({
+            'success': True,
+            'fundoscopy': {
+                'od_vitreous': latest_history.fundoscopy_od_vitreous or '',
+                'od_optic_disc': latest_history.fundoscopy_od_optic_disc or '',
+                'od_cup_disc_ratio': latest_history.fundoscopy_od_cup_disc_ratio or '',
+                'od_macula': latest_history.fundoscopy_od_macula or '',
+                'od_vessels': latest_history.fundoscopy_od_vessels or '',
+                'od_retina': latest_history.fundoscopy_od_retina or '',
+                'os_vitreous': latest_history.fundoscopy_os_vitreous or '',
+                'os_optic_disc': latest_history.fundoscopy_os_optic_disc or '',
+                'os_cup_disc_ratio': latest_history.fundoscopy_os_cup_disc_ratio or '',
+                'os_macula': latest_history.fundoscopy_os_macula or '',
+                'os_vessels': latest_history.fundoscopy_os_vessels or '',
+                'os_retina': latest_history.fundoscopy_os_retina or '',
+            },
+            'date': latest_history.date.strftime('%d/%m/%Y')
+        })
+    else:
+        return JsonResponse({
+            'success': False,
+            'message': 'No se encontraron registros previos de fondo de ojo'
+        })
 
 
 @login_required
