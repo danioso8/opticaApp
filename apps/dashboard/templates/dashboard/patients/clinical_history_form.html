@@ -1308,6 +1308,19 @@ function saveMaterial() {
     const form = document.getElementById('materialForm');
     const formData = new FormData(form);
     
+    // Eliminar campos vacíos excepto los requeridos
+    for (let [key, value] of [...formData.entries()]) {
+        if (value === '' && key !== 'name' && key !== 'parameter_type') {
+            formData.delete(key);
+        }
+    }
+    
+    // Debug
+    console.log('Material - Datos a enviar:');
+    for (let [key, value] of formData.entries()) {
+        console.log(`${key}: ${value}`);
+    }
+    
     const submitBtn = document.getElementById('saveMaterialBtn');
     submitBtn.disabled = true;
     submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Guardando...';
@@ -1375,6 +1388,19 @@ function saveTreatment() {
     const form = document.getElementById('treatmentForm');
     const formData = new FormData(form);
     
+    // Eliminar campos vacíos excepto los requeridos
+    for (let [key, value] of [...formData.entries()]) {
+        if (value === '' && key !== 'name' && key !== 'parameter_type') {
+            formData.delete(key);
+        }
+    }
+    
+    // Debug
+    console.log('Tratamiento - Datos a enviar:');
+    for (let [key, value] of formData.entries()) {
+        console.log(`${key}: ${value}`);
+    }
+    
     const submitBtn = document.getElementById('saveTreatmentBtn');
     submitBtn.disabled = true;
     submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Guardando...';
@@ -1441,6 +1467,19 @@ function saveTreatment() {
 function saveMedication() {
     const form = document.getElementById('medicationForm');
     const formData = new FormData(form);
+    
+    // Eliminar campos vacíos excepto los requeridos
+    for (let [key, value] of [...formData.entries()]) {
+        if (value === '' && key !== 'name' && key !== 'parameter_type') {
+            formData.delete(key);
+        }
+    }
+    
+    // Debug: mostrar lo que se está enviando
+    console.log('Datos a enviar:');
+    for (let [key, value] of formData.entries()) {
+        console.log(`${key}: ${value}`);
+    }
     
     const submitBtn = document.getElementById('saveMedicationBtn');
     submitBtn.disabled = true;
