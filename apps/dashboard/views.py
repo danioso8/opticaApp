@@ -112,6 +112,66 @@ def logout_view(request):
     return redirect('dashboard:login')
 
 
+@login_required
+def user_profile(request):
+    """Vista de perfil del usuario"""
+    if request.method == 'POST':
+        # Actualizar información del usuario
+        user = request.user
+        user.first_name = request.POST.get('first_name', '')
+        user.last_name = request.POST.get('last_name', '')
+        user.email = request.POST.get('email', '')
+        
+        try:
+            user.save()
+            messages.success(request, 'Perfil actualizado correctamente')
+            return redirect('dashboard:user_profile')
+        except Exception as e:
+            messages.error(request, f'Error al actualizar el perfil: {str(e)}')
+    
+    return render(request, 'dashboard/user/profile.html', {
+        'user': request.user
+    })
+
+
+@login_required
+def user_security(request):
+    """Vista de seguridad del usuario"""
+    from django.contrib.auth import update_session_auth_hash
+    
+    if request.method == 'POST':
+        current_password = request.POST.get('current_password')
+        new_password = request.POST.get('new_password')
+        confirm_password = request.POST.get('confirm_password')
+        
+        # Validar contraseña actual
+        if not request.user.check_password(current_password):
+            messages.error(request, 'La contraseña actual es incorrecta')
+            return redirect('dashboard:user_security')
+        
+        # Validar que las contraseñas coincidan
+        if new_password != confirm_password:
+            messages.error(request, 'Las contraseñas nuevas no coinciden')
+            return redirect('dashboard:user_security')
+        
+        # Validar longitud mínima
+        if len(new_password) < 8:
+            messages.error(request, 'La contraseña debe tener al menos 8 caracteres')
+            return redirect('dashboard:user_security')
+        
+        # Actualizar contraseña
+        try:
+            request.user.set_password(new_password)
+            request.user.save()
+            update_session_auth_hash(request, request.user)  # Mantener la sesión activa
+            messages.success(request, 'Contraseña actualizada correctamente')
+            return redirect('dashboard:user_security')
+        except Exception as e:
+            messages.error(request, f'Error al actualizar la contraseña: {str(e)}')
+    
+    return render(request, 'dashboard/user/security.html')
+
+
 # ==================== DASHBOARD PRINCIPAL ====================
 
 @login_required
