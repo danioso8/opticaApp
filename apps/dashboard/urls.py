@@ -116,6 +116,10 @@ urlpatterns = [
     path('patients/<int:patient_id>/clinical-history/<int:history_id>/pdf/', views.clinical_history_pdf, name='clinical_history_pdf'),
     path('patients/<int:patient_id>/clinical-history/latest-fundoscopy/', views.latest_fundoscopy, name='latest_fundoscopy'),
     
+    # Examen Visual Simplificado
+    path('patients/<int:patient_id>/visual-exam/create/', views.visual_exam_create, name='visual_exam_create'),
+    path('patients/<int:patient_id>/visual-exam/<int:history_id>/edit/', views.visual_exam_edit, name='visual_exam_edit'),
+    
     # Calendario
     path('calendar/', views.calendar_view, name='calendar'),
     

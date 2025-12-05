@@ -53,7 +53,7 @@ def clinical_history_create(request, patient_id):
     
     lens_coatings = ClinicalParameter.objects.filter(
         organization=request.organization,
-        parameter_type='lens_coating',
+        parameter_type='treatment',
         is_active=True
     ).order_by('display_order', 'name')
     
@@ -286,6 +286,12 @@ def clinical_history_create(request, patient_id):
                 }, status=400)
             return redirect('dashboard:clinical_history_list', patient_id=patient.id)
     
+    # Obtener el último examen visual del paciente para pre-cargar datos
+    last_exam = ClinicalHistory.objects.filter(
+        patient=patient,
+        **org_filter
+    ).order_by('-date').first()
+    
     context = {
         'patient': patient,
         'today': datetime.now().date(),
@@ -293,6 +299,7 @@ def clinical_history_create(request, patient_id):
         'lens_materials': lens_materials,
         'lens_coatings': lens_coatings,
         'medications': medications,
+        'last_exam': last_exam,  # Último examen para pre-cargar datos
     }
     
     return render(request, 'dashboard/patients/clinical_history_form.html', context)
@@ -336,7 +343,7 @@ def clinical_history_edit(request, patient_id, history_id):
     
     lens_coatings = ClinicalParameter.objects.filter(
         organization=request.organization,
-        parameter_type='lens_coating',
+        parameter_type='treatment',
         is_active=True
     ).order_by('display_order', 'name')
     
@@ -441,39 +448,63 @@ def clinical_history_edit(request, patient_id, history_id):
             history.va_os_cc_near = request.POST.get('va_os_cc_near', '')
             
             # Refracción Objetiva
-            history.refraction_od_sphere = request.POST.get('refraction_od_sphere', '')
-            history.refraction_od_cylinder = request.POST.get('refraction_od_cylinder', '')
-            history.refraction_od_axis = request.POST.get('refraction_od_axis', '')
-            history.refraction_od_add = request.POST.get('refraction_od_add', '')
+            refraction_od_sphere = request.POST.get('refraction_od_sphere', '').strip()
+            history.refraction_od_sphere = refraction_od_sphere if refraction_od_sphere else None
+            refraction_od_cylinder = request.POST.get('refraction_od_cylinder', '').strip()
+            history.refraction_od_cylinder = float(refraction_od_cylinder) if refraction_od_cylinder else None
+            refraction_od_axis = request.POST.get('refraction_od_axis', '').strip()
+            history.refraction_od_axis = int(refraction_od_axis) if refraction_od_axis else None
+            refraction_od_add = request.POST.get('refraction_od_add', '').strip()
+            history.refraction_od_add = float(refraction_od_add) if refraction_od_add else None
             
-            history.refraction_os_sphere = request.POST.get('refraction_os_sphere', '')
-            history.refraction_os_cylinder = request.POST.get('refraction_os_cylinder', '')
-            history.refraction_os_axis = request.POST.get('refraction_os_axis', '')
-            history.refraction_os_add = request.POST.get('refraction_os_add', '')
+            refraction_os_sphere = request.POST.get('refraction_os_sphere', '').strip()
+            history.refraction_os_sphere = refraction_os_sphere if refraction_os_sphere else None
+            refraction_os_cylinder = request.POST.get('refraction_os_cylinder', '').strip()
+            history.refraction_os_cylinder = float(refraction_os_cylinder) if refraction_os_cylinder else None
+            refraction_os_axis = request.POST.get('refraction_os_axis', '').strip()
+            history.refraction_os_axis = int(refraction_os_axis) if refraction_os_axis else None
+            refraction_os_add = request.POST.get('refraction_os_add', '').strip()
+            history.refraction_os_add = float(refraction_os_add) if refraction_os_add else None
             
             # Refracción Subjetiva
-            history.subjective_od_sphere = request.POST.get('subjective_od_sphere', '')
-            history.subjective_od_cylinder = request.POST.get('subjective_od_cylinder', '')
-            history.subjective_od_axis = request.POST.get('subjective_od_axis', '')
-            history.subjective_od_add = request.POST.get('subjective_od_add', '')
-            history.subjective_od_va = request.POST.get('subjective_od_va', '')
+            subjective_od_sphere = request.POST.get('subjective_od_sphere', '').strip()
+            history.subjective_od_sphere = subjective_od_sphere if subjective_od_sphere else None
+            subjective_od_cylinder = request.POST.get('subjective_od_cylinder', '').strip()
+            history.subjective_od_cylinder = float(subjective_od_cylinder) if subjective_od_cylinder else None
+            subjective_od_axis = request.POST.get('subjective_od_axis', '').strip()
+            history.subjective_od_axis = int(subjective_od_axis) if subjective_od_axis else None
+            subjective_od_add = request.POST.get('subjective_od_add', '').strip()
+            history.subjective_od_add = float(subjective_od_add) if subjective_od_add else None
+            history.subjective_od_va = request.POST.get('subjective_od_va', '').strip() or None
             
-            history.subjective_os_sphere = request.POST.get('subjective_os_sphere', '')
-            history.subjective_os_cylinder = request.POST.get('subjective_os_cylinder', '')
-            history.subjective_os_axis = request.POST.get('subjective_os_axis', '')
-            history.subjective_os_add = request.POST.get('subjective_os_add', '')
-            history.subjective_os_va = request.POST.get('subjective_os_va', '')
+            subjective_os_sphere = request.POST.get('subjective_os_sphere', '').strip()
+            history.subjective_os_sphere = subjective_os_sphere if subjective_os_sphere else None
+            subjective_os_cylinder = request.POST.get('subjective_os_cylinder', '').strip()
+            history.subjective_os_cylinder = float(subjective_os_cylinder) if subjective_os_cylinder else None
+            subjective_os_axis = request.POST.get('subjective_os_axis', '').strip()
+            history.subjective_os_axis = int(subjective_os_axis) if subjective_os_axis else None
+            subjective_os_add = request.POST.get('subjective_os_add', '').strip()
+            history.subjective_os_add = float(subjective_os_add) if subjective_os_add else None
+            history.subjective_os_va = request.POST.get('subjective_os_va', '').strip() or None
             
             # Queratometría
-            history.keratometry_od_k1 = request.POST.get('keratometry_od_k1', '')
-            history.keratometry_od_axis1 = request.POST.get('keratometry_od_axis1', '')
-            history.keratometry_od_k2 = request.POST.get('keratometry_od_k2', '')
-            history.keratometry_od_axis2 = request.POST.get('keratometry_od_axis2', '')
+            keratometry_od_k1 = request.POST.get('keratometry_od_k1')
+            history.keratometry_od_k1 = float(keratometry_od_k1) if keratometry_od_k1 else None
+            keratometry_od_k1_axis = request.POST.get('keratometry_od_k1_axis')
+            history.keratometry_od_k1_axis = int(keratometry_od_k1_axis) if keratometry_od_k1_axis else None
+            keratometry_od_k2 = request.POST.get('keratometry_od_k2')
+            history.keratometry_od_k2 = float(keratometry_od_k2) if keratometry_od_k2 else None
+            keratometry_od_k2_axis = request.POST.get('keratometry_od_k2_axis')
+            history.keratometry_od_k2_axis = int(keratometry_od_k2_axis) if keratometry_od_k2_axis else None
             
-            history.keratometry_os_k1 = request.POST.get('keratometry_os_k1', '')
-            history.keratometry_os_axis1 = request.POST.get('keratometry_os_axis1', '')
-            history.keratometry_os_k2 = request.POST.get('keratometry_os_k2', '')
-            history.keratometry_os_axis2 = request.POST.get('keratometry_os_axis2', '')
+            keratometry_os_k1 = request.POST.get('keratometry_os_k1')
+            history.keratometry_os_k1 = float(keratometry_os_k1) if keratometry_os_k1 else None
+            keratometry_os_k1_axis = request.POST.get('keratometry_os_k1_axis')
+            history.keratometry_os_k1_axis = int(keratometry_os_k1_axis) if keratometry_os_k1_axis else None
+            keratometry_os_k2 = request.POST.get('keratometry_os_k2')
+            history.keratometry_os_k2 = float(keratometry_os_k2) if keratometry_os_k2 else None
+            keratometry_os_k2_axis = request.POST.get('keratometry_os_k2_axis')
+            history.keratometry_os_k2_axis = int(keratometry_os_k2_axis) if keratometry_os_k2_axis else None
             
             # Pupilas
             history.pupil_od_size = request.POST.get('pupil_od_size', '')
@@ -1078,3 +1109,207 @@ def clinical_history_pdf(request, patient_id, history_id):
     response['Content-Disposition'] = f'attachment; filename="{filename}"'
     
     return response
+
+
+@login_required
+def visual_exam_create(request, patient_id):
+    """Crear examen visual simplificado (solo datos de examen de ojos)"""
+    org_filter = {'organization': request.organization} if hasattr(request, 'organization') and request.organization else {}
+    patient = get_object_or_404(Patient, id=patient_id, **org_filter)
+    
+    # Obtener doctores activos de la organización
+    doctors = Doctor.objects.filter(
+        organization=request.organization,
+        is_active=True
+    ).order_by('full_name')
+    
+    if request.method == 'POST':
+        try:
+            # Crear historia clínica con solo los datos del examen visual
+            history = ClinicalHistory.objects.create(
+                patient=patient,
+                organization=request.organization,
+                date=request.POST.get('date'),
+                doctor_id=request.POST.get('doctor') if request.POST.get('doctor') else None,
+                
+                # Agudeza Visual - usar los nombres correctos del template
+                va_od_sc_distance=request.POST.get('va_od_sc', ''),
+                va_os_sc_distance=request.POST.get('va_os_sc', ''),
+                va_ou_distance=request.POST.get('va_ou_sc', ''),
+                va_od_cc_distance=request.POST.get('va_od_cc', ''),
+                va_os_cc_distance=request.POST.get('va_os_cc', ''),
+                va_ou_near=request.POST.get('va_ou_cc', ''),
+                
+                # Refracción OD
+                refraction_od_sphere=request.POST.get('refraction_od_sphere', ''),
+                refraction_od_cylinder=float(request.POST.get('refraction_od_cylinder') or 0),
+                refraction_od_axis=int(request.POST.get('refraction_od_axis') or 0),
+                refraction_od_add=float(request.POST.get('refraction_od_add') or 0),
+                refraction_od_prism=request.POST.get('refraction_od_prism', ''),
+                
+                # Refracción OS
+                refraction_os_sphere=request.POST.get('refraction_os_sphere', ''),
+                refraction_os_cylinder=float(request.POST.get('refraction_os_cylinder') or 0),
+                refraction_os_axis=int(request.POST.get('refraction_os_axis') or 0),
+                refraction_os_add=float(request.POST.get('refraction_os_add') or 0),
+                refraction_os_prism=request.POST.get('refraction_os_prism', ''),
+                
+                # Distancia Pupilar
+                pd_od=float(request.POST.get('refraction_od_dnp') or 0) if request.POST.get('refraction_od_dnp') else None,
+                pd_os=float(request.POST.get('refraction_os_dnp') or 0) if request.POST.get('refraction_os_dnp') else None,
+                
+                # Queratometría OD
+                keratometry_od_k1=float(request.POST.get('keratometry_od_k1') or 0) if request.POST.get('keratometry_od_k1') else None,
+                keratometry_od_k2=float(request.POST.get('keratometry_od_k2') or 0) if request.POST.get('keratometry_od_k2') else None,
+                keratometry_od_k1_axis=int(request.POST.get('keratometry_od_axis') or 0) if request.POST.get('keratometry_od_axis') else None,
+                
+                # Queratometría OS
+                keratometry_os_k1=float(request.POST.get('keratometry_os_k1') or 0) if request.POST.get('keratometry_os_k1') else None,
+                keratometry_os_k2=float(request.POST.get('keratometry_os_k2') or 0) if request.POST.get('keratometry_os_k2') else None,
+                keratometry_os_k1_axis=int(request.POST.get('keratometry_os_axis') or 0) if request.POST.get('keratometry_os_axis') else None,
+                
+                # Observaciones
+                observations=request.POST.get('exam_notes', ''),
+                
+                # Motivo de consulta por defecto
+                chief_complaint='Examen visual de rutina'
+            )
+            
+            return JsonResponse({
+                'success': True,
+                'message': 'Examen visual guardado exitosamente',
+                'history_id': history.id
+            })
+            
+        except Exception as e:
+            import traceback
+            error_details = traceback.format_exc()
+            print(f"ERROR COMPLETO: {error_details}")
+            return JsonResponse({
+                'success': False,
+                'message': f'Error al guardar el examen: {str(e)}',
+                'details': error_details
+            }, status=400)
+    
+    # GET - Mostrar formulario
+    context = {
+        'patient': patient,
+        'doctors': doctors,
+        'today': datetime.now().date(),
+    }
+    
+    return render(request, 'dashboard/patients/visual_exam_form.html', context)
+
+
+@login_required
+def visual_exam_edit(request, patient_id, history_id):
+    """Editar examen visual simplificado"""
+    org_filter = {'organization': request.organization} if hasattr(request, 'organization') and request.organization else {}
+    patient = get_object_or_404(Patient, id=patient_id, **org_filter)
+    history = get_object_or_404(ClinicalHistory, id=history_id, patient=patient, **org_filter)
+    
+    # Obtener doctores activos de la organización
+    doctors = Doctor.objects.filter(
+        organization=request.organization,
+        is_active=True
+    ).order_by('full_name')
+    
+    if request.method == 'POST':
+        try:
+            # Actualizar historia clínica
+            history.date = request.POST.get('date')
+            history.doctor_id = request.POST.get('doctor') if request.POST.get('doctor') else None
+            
+            # Agudeza Visual
+            history.va_od_sc_distance = request.POST.get('va_od_sc', '')
+            history.va_os_sc_distance = request.POST.get('va_os_sc', '')
+            history.va_ou_distance = request.POST.get('va_ou_sc', '')
+            history.va_od_cc_distance = request.POST.get('va_od_cc', '')
+            history.va_os_cc_distance = request.POST.get('va_os_cc', '')
+            history.va_ou_near = request.POST.get('va_ou_cc', '')
+            
+            # Refracción OD
+            history.refraction_od_sphere = request.POST.get('refraction_od_sphere', '') or ''
+            
+            cyl_od = request.POST.get('refraction_od_cylinder', '').strip()
+            history.refraction_od_cylinder = float(cyl_od) if cyl_od else None
+            
+            axis_od = request.POST.get('refraction_od_axis', '').strip()
+            history.refraction_od_axis = int(axis_od) if axis_od else None
+            
+            add_od = request.POST.get('refraction_od_add', '').strip()
+            history.refraction_od_add = float(add_od) if add_od else None
+            
+            history.refraction_od_prism = request.POST.get('refraction_od_prism', '') or ''
+            
+            # Refracción OS
+            history.refraction_os_sphere = request.POST.get('refraction_os_sphere', '') or ''
+            
+            cyl_os = request.POST.get('refraction_os_cylinder', '').strip()
+            history.refraction_os_cylinder = float(cyl_os) if cyl_os else None
+            
+            axis_os = request.POST.get('refraction_os_axis', '').strip()
+            history.refraction_os_axis = int(axis_os) if axis_os else None
+            
+            add_os = request.POST.get('refraction_os_add', '').strip()
+            history.refraction_os_add = float(add_os) if add_os else None
+            
+            history.refraction_os_prism = request.POST.get('refraction_os_prism', '') or ''
+            
+            # Distancia Pupilar
+            pd_od_val = request.POST.get('refraction_od_dnp', '').strip()
+            history.pd_od = float(pd_od_val) if pd_od_val else None
+            
+            pd_os_val = request.POST.get('refraction_os_dnp', '').strip()
+            history.pd_os = float(pd_os_val) if pd_os_val else None
+            
+            # Queratometría OD
+            k1_od_val = request.POST.get('keratometry_od_k1', '').strip()
+            history.keratometry_od_k1 = float(k1_od_val) if k1_od_val else None
+            
+            k2_od_val = request.POST.get('keratometry_od_k2', '').strip()
+            history.keratometry_od_k2 = float(k2_od_val) if k2_od_val else None
+            
+            kaxis_od_val = request.POST.get('keratometry_od_axis', '').strip()
+            history.keratometry_od_k1_axis = int(kaxis_od_val) if kaxis_od_val else None
+            
+            # Queratometría OS
+            k1_os_val = request.POST.get('keratometry_os_k1', '').strip()
+            history.keratometry_os_k1 = float(k1_os_val) if k1_os_val else None
+            
+            k2_os_val = request.POST.get('keratometry_os_k2', '').strip()
+            history.keratometry_os_k2 = float(k2_os_val) if k2_os_val else None
+            
+            kaxis_os_val = request.POST.get('keratometry_os_axis', '').strip()
+            history.keratometry_os_k1_axis = int(kaxis_os_val) if kaxis_os_val else None
+            
+            # Observaciones
+            history.observations = request.POST.get('exam_notes', '')
+            
+            history.save()
+            
+            return JsonResponse({
+                'success': True,
+                'message': 'Examen visual actualizado exitosamente',
+                'history_id': history.id
+            })
+            
+        except Exception as e:
+            import traceback
+            error_details = traceback.format_exc()
+            print(f"ERROR COMPLETO: {error_details}")
+            return JsonResponse({
+                'success': False,
+                'message': f'Error al actualizar el examen: {str(e)}',
+                'details': error_details
+            }, status=400)
+    
+    # GET - Mostrar formulario con datos
+    context = {
+        'patient': patient,
+        'doctors': doctors,
+        'history': history,
+        'today': datetime.now().date(),
+    }
+    
+    return render(request, 'dashboard/patients/visual_exam_form.html', context)

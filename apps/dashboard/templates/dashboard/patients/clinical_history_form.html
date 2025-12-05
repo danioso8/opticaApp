@@ -3,6 +3,46 @@
 
 {% block title %}{% if history %}Editar{% else %}Nueva{% endif %} Historia Clínica - {{ patient.full_name }}{% endblock %}
 
+<style>
+    @keyframes fade-in-down {
+        0% {
+            opacity: 0;
+            transform: translateY(-20px);
+        }
+        100% {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    @keyframes fade-out {
+        0% {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        100% {
+            opacity: 0;
+            transform: translateY(-20px);
+        }
+    }
+    
+    .animate-fade-in-down {
+        animation: fade-in-down 0.5s ease-out;
+    }
+    
+    /* Resaltar campos pre-cargados */
+    input[data-preloaded="true"], textarea[data-preloaded="true"], select[data-preloaded="true"] {
+        background-color: #eff6ff !important;
+        border-color: #3b82f6 !important;
+        box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+        transition: all 0.3s ease;
+    }
+    
+    input[data-preloaded="true"]:hover, textarea[data-preloaded="true"]:hover {
+        background-color: #dbeafe !important;
+    }
+</style>
+
 {% block content %}
 <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
     <!-- Header -->
@@ -108,8 +148,11 @@
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <!-- Patológicos -->
                 <div class="bg-white rounded-lg p-4 shadow-sm">
-                    <label class="block text-sm font-bold text-gray-800 mb-2">
-                        <i class="fas fa-disease text-red-600 mr-1"></i> Patológicos
+                    <label class="block text-sm font-bold text-gray-800 mb-2 flex justify-between items-center">
+                        <span><i class="fas fa-disease text-red-600 mr-1"></i> Patológicos</span>
+                        <button type="button" onclick="fillWithNA('pathological_history')" class="text-xs px-2 py-1 bg-gray-200 hover:bg-gray-300 rounded" title="Rellenar con N/A">
+                            N/A
+                        </button>
                     </label>
                     <textarea name="pathological_history" rows="2"
                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500"
@@ -118,8 +161,11 @@
 
                 <!-- Farmacológicos -->
                 <div class="bg-white rounded-lg p-4 shadow-sm">
-                    <label class="block text-sm font-bold text-gray-800 mb-2">
-                        <i class="fas fa-pills text-green-600 mr-1"></i> Farmacológicos
+                    <label class="block text-sm font-bold text-gray-800 mb-2 flex justify-between items-center">
+                        <span><i class="fas fa-pills text-green-600 mr-1"></i> Farmacológicos</span>
+                        <button type="button" onclick="fillWithNA('pharmacological_history')" class="text-xs px-2 py-1 bg-gray-200 hover:bg-gray-300 rounded" title="Rellenar con N/A">
+                            N/A
+                        </button>
                     </label>
                     <textarea name="pharmacological_history" rows="2"
                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500"
@@ -128,8 +174,11 @@
 
                 <!-- Quirúrgicos -->
                 <div class="bg-white rounded-lg p-4 shadow-sm">
-                    <label class="block text-sm font-bold text-gray-800 mb-2">
-                        <i class="fas fa-procedures text-blue-600 mr-1"></i> Quirúrgicos
+                    <label class="block text-sm font-bold text-gray-800 mb-2 flex justify-between items-center">
+                        <span><i class="fas fa-procedures text-blue-600 mr-1"></i> Quirúrgicos</span>
+                        <button type="button" onclick="fillWithNA('surgical_history')" class="text-xs px-2 py-1 bg-gray-200 hover:bg-gray-300 rounded" title="Rellenar con N/A">
+                            N/A
+                        </button>
                     </label>
                     <textarea name="surgical_history" rows="2"
                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500"
@@ -138,8 +187,11 @@
 
                 <!-- Alérgicos -->
                 <div class="bg-white rounded-lg p-4 shadow-sm">
-                    <label class="block text-sm font-bold text-gray-800 mb-2">
-                        <i class="fas fa-allergies text-orange-600 mr-1"></i> Alérgicos
+                    <label class="block text-sm font-bold text-gray-800 mb-2 flex justify-between items-center">
+                        <span><i class="fas fa-allergies text-orange-600 mr-1"></i> Alérgicos</span>
+                        <button type="button" onclick="fillWithNA('allergic_history')" class="text-xs px-2 py-1 bg-gray-200 hover:bg-gray-300 rounded" title="Rellenar con N/A">
+                            N/A
+                        </button>
                     </label>
                     <textarea name="allergic_history" rows="2"
                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500"
@@ -148,8 +200,11 @@
 
                 <!-- Traumatológicos -->
                 <div class="bg-white rounded-lg p-4 shadow-sm">
-                    <label class="block text-sm font-bold text-gray-800 mb-2">
-                        <i class="fas fa-band-aid text-purple-600 mr-1"></i> Traumatológicos
+                    <label class="block text-sm font-bold text-gray-800 mb-2 flex justify-between items-center">
+                        <span><i class="fas fa-band-aid text-purple-600 mr-1"></i> Traumatológicos</span>
+                        <button type="button" onclick="fillWithNA('trauma_history')" class="text-xs px-2 py-1 bg-gray-200 hover:bg-gray-300 rounded" title="Rellenar con N/A">
+                            N/A
+                        </button>
                     </label>
                     <textarea name="trauma_history" rows="2"
                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500"
@@ -158,8 +213,11 @@
 
                 <!-- Otros -->
                 <div class="bg-white rounded-lg p-4 shadow-sm">
-                    <label class="block text-sm font-bold text-gray-800 mb-2">
-                        <i class="fas fa-notes-medical text-gray-600 mr-1"></i> Otros
+                    <label class="block text-sm font-bold text-gray-800 mb-2 flex justify-between items-center">
+                        <span><i class="fas fa-notes-medical text-gray-600 mr-1"></i> Otros</span>
+                        <button type="button" onclick="fillWithNA('other_general_history')" class="text-xs px-2 py-1 bg-gray-200 hover:bg-gray-300 rounded" title="Rellenar con N/A">
+                            N/A
+                        </button>
                     </label>
                     <textarea name="other_general_history" rows="2"
                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500"
@@ -178,8 +236,11 @@
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <!-- Patológicos Oculares -->
                 <div class="bg-white rounded-lg p-4 shadow-sm">
-                    <label class="block text-sm font-bold text-gray-800 mb-2">
-                        <i class="fas fa-eye-slash text-red-600 mr-1"></i> Patológicos Oculares
+                    <label class="block text-sm font-bold text-gray-800 mb-2 flex justify-between items-center">
+                        <span><i class="fas fa-eye-slash text-red-600 mr-1"></i> Patológicos Oculares</span>
+                        <button type="button" onclick="fillWithNA('ocular_pathological_history')" class="text-xs px-2 py-1 bg-gray-200 hover:bg-gray-300 rounded" title="Rellenar con N/A">
+                            N/A
+                        </button>
                     </label>
                     <textarea name="ocular_pathological_history" rows="2"
                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500"
@@ -188,8 +249,11 @@
 
                 <!-- Farmacológicos Oculares -->
                 <div class="bg-white rounded-lg p-4 shadow-sm">
-                    <label class="block text-sm font-bold text-gray-800 mb-2">
-                        <i class="fas fa-eye-dropper text-green-600 mr-1"></i> Farmacológicos Oculares
+                    <label class="block text-sm font-bold text-gray-800 mb-2 flex justify-between items-center">
+                        <span><i class="fas fa-eye-dropper text-green-600 mr-1"></i> Farmacológicos Oculares</span>
+                        <button type="button" onclick="fillWithNA('ocular_pharmacological_history')" class="text-xs px-2 py-1 bg-gray-200 hover:bg-gray-300 rounded" title="Rellenar con N/A">
+                            N/A
+                        </button>
                     </label>
                     <textarea name="ocular_pharmacological_history" rows="2"
                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500"
@@ -198,8 +262,11 @@
 
                 <!-- Quirúrgicos Oculares -->
                 <div class="bg-white rounded-lg p-4 shadow-sm">
-                    <label class="block text-sm font-bold text-gray-800 mb-2">
-                        <i class="fas fa-scalpel text-blue-600 mr-1"></i> Quirúrgicos Oculares
+                    <label class="block text-sm font-bold text-gray-800 mb-2 flex justify-between items-center">
+                        <span><i class="fas fa-scalpel text-blue-600 mr-1"></i> Quirúrgicos Oculares</span>
+                        <button type="button" onclick="fillWithNA('ocular_surgical_history')" class="text-xs px-2 py-1 bg-gray-200 hover:bg-gray-300 rounded" title="Rellenar con N/A">
+                            N/A
+                        </button>
                     </label>
                     <textarea name="ocular_surgical_history" rows="2"
                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500"
@@ -208,8 +275,11 @@
 
                 <!-- Traumatológicos Oculares -->
                 <div class="bg-white rounded-lg p-4 shadow-sm">
-                    <label class="block text-sm font-bold text-gray-800 mb-2">
-                        <i class="fas fa-user-injured text-purple-600 mr-1"></i> Traumatológicos Oculares
+                    <label class="block text-sm font-bold text-gray-800 mb-2 flex justify-between items-center">
+                        <span><i class="fas fa-user-injured text-purple-600 mr-1"></i> Traumatológicos Oculares</span>
+                        <button type="button" onclick="fillWithNA('ocular_trauma_history')" class="text-xs px-2 py-1 bg-gray-200 hover:bg-gray-300 rounded" title="Rellenar con N/A">
+                            N/A
+                        </button>
                     </label>
                     <textarea name="ocular_trauma_history" rows="2"
                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500"
@@ -472,15 +542,16 @@
                         <div class="grid grid-cols-4 gap-2">
                             <div>
                                 <label class="block text-xs font-medium text-gray-600 mb-1">Esf</label>
-                                <input type="number" step="0.25" name="refraction_od_sphere"
+                                <input type="text" name="refraction_od_sphere"
                                        value="{% if history %}{{ history.refraction_od_sphere }}{% endif %}"
                                        class="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-purple-500"
-                                       placeholder="±0.00">
+                                       placeholder="±0.00 o N/A"
+                                       oninput="validateSphereInput(this)">
                             </div>
                             <div>
                                 <label class="block text-xs font-medium text-gray-600 mb-1">Cil</label>
                                 <input type="number" step="0.25" name="refraction_od_cylinder"
-                                       value="{% if history %}{{ history.refraction_od_cylinder }}{% endif %}"
+                                       value="{% if history.refraction_od_cylinder %}{{ history.refraction_od_cylinder|stringformat:'g' }}{% endif %}"
                                        class="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-purple-500"
                                        placeholder="±0.00">
                             </div>
@@ -494,7 +565,7 @@
                             <div>
                                 <label class="block text-xs font-medium text-gray-600 mb-1">Add</label>
                                 <input type="number" step="0.25" name="refraction_od_add"
-                                       value="{% if history %}{{ history.refraction_od_add }}{% endif %}"
+                                       value="{% if history.refraction_od_add %}{{ history.refraction_od_add|stringformat:'g' }}{% endif %}"
                                        class="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-purple-500"
                                        placeholder="+0.00">
                             </div>
@@ -509,15 +580,16 @@
                         <div class="grid grid-cols-4 gap-2">
                             <div>
                                 <label class="block text-xs font-medium text-gray-600 mb-1">Esf</label>
-                                <input type="number" step="0.25" name="refraction_os_sphere"
+                                <input type="text" name="refraction_os_sphere"
                                        value="{% if history %}{{ history.refraction_os_sphere }}{% endif %}"
                                        class="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-purple-500"
-                                       placeholder="±0.00">
+                                       placeholder="±0.00 o N/A"
+                                       oninput="validateSphereInput(this)">
                             </div>
                             <div>
                                 <label class="block text-xs font-medium text-gray-600 mb-1">Cil</label>
                                 <input type="number" step="0.25" name="refraction_os_cylinder"
-                                       value="{% if history %}{{ history.refraction_os_cylinder }}{% endif %}"
+                                       value="{% if history.refraction_os_cylinder %}{{ history.refraction_os_cylinder|stringformat:'g' }}{% endif %}"
                                        class="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-purple-500"
                                        placeholder="±0.00">
                             </div>
@@ -531,7 +603,7 @@
                             <div>
                                 <label class="block text-xs font-medium text-gray-600 mb-1">Add</label>
                                 <input type="number" step="0.25" name="refraction_os_add"
-                                       value="{% if history %}{{ history.refraction_os_add }}{% endif %}"
+                                       value="{% if history.refraction_os_add %}{{ history.refraction_os_add|stringformat:'g' }}{% endif %}"
                                        class="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-purple-500"
                                        placeholder="+0.00">
                             </div>
@@ -547,28 +619,28 @@
                     <div>
                         <label class="block text-xs font-medium text-gray-600 mb-1">DP Lejos</label>
                         <input type="number" step="0.5" name="pd_distance"
-                               value="{% if history %}{{ history.pd_distance }}{% endif %}"
+                               value="{% if history.pd_distance %}{{ history.pd_distance|stringformat:'g' }}{% endif %}"
                                class="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-purple-500"
                                placeholder="63.0">
                     </div>
                     <div>
                         <label class="block text-xs font-medium text-gray-600 mb-1">DP Cerca</label>
                         <input type="number" step="0.5" name="pd_near"
-                               value="{% if history %}{{ history.pd_near }}{% endif %}"
+                               value="{% if history.pd_near %}{{ history.pd_near|stringformat:'g' }}{% endif %}"
                                class="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-purple-500"
                                placeholder="59.0">
                     </div>
                     <div>
                         <label class="block text-xs font-medium text-gray-600 mb-1">DP OD</label>
                         <input type="number" step="0.5" name="pd_od"
-                               value="{% if history %}{{ history.pd_od }}{% endif %}"
+                               value="{% if history.pd_od %}{{ history.pd_od|stringformat:'g' }}{% endif %}"
                                class="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-purple-500"
                                placeholder="31.5">
                     </div>
                     <div>
                         <label class="block text-xs font-medium text-gray-600 mb-1">DP OS</label>
                         <input type="number" step="0.5" name="pd_os"
-                               value="{% if history %}{{ history.pd_os }}{% endif %}"
+                               value="{% if history.pd_os %}{{ history.pd_os|stringformat:'g' }}{% endif %}"
                                class="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-purple-500"
                                placeholder="31.5">
                     </div>
@@ -1096,7 +1168,7 @@
                 <i class="fas fa-save mr-2"></i>
                 {% if history %}Actualizar Historia Clínica{% else %}Guardar Historia Clínica{% endif %}
             </button>
-            <button type="button" onclick="if(confirm('¿Desea eliminar el borrador guardado localmente?')) { clearLocalStorageDraft(); alert('Borrador eliminado'); }"
+            <button type="button" onclick="clearLocalStorageDraft(); showRestorationNotification('✓ Borrador eliminado');"
                     class="px-6 py-3 bg-yellow-500 hover:bg-yellow-600 text-white rounded-lg transition-colors font-medium" title="Limpiar borrador guardado">
                 <i class="fas fa-eraser mr-2"></i>Limpiar Borrador
             </button>
@@ -1116,6 +1188,147 @@
 </div>
 
 <script>
+// ============ PRE-CARGA DE DATOS DEL ÚLTIMO EXAMEN ============
+{% if last_exam and not history %}
+document.addEventListener('DOMContentLoaded', function() {
+    // Mostrar notificación de pre-carga
+    const notification = document.createElement('div');
+    notification.className = 'fixed top-4 right-4 bg-gradient-to-r from-blue-500 to-purple-600 text-white px-6 py-4 rounded-lg shadow-2xl z-50 animate-fade-in-down';
+    notification.innerHTML = `
+        <div class="flex items-center gap-3">
+            <i class="fas fa-history text-2xl"></i>
+            <div>
+                <p class="font-bold text-sm">Datos del último examen cargados</p>
+                <p class="text-xs opacity-90">Fecha: {{ last_exam.date|date:"d/m/Y" }}</p>
+            </div>
+            <button onclick="this.parentElement.parentElement.remove()" class="ml-4 hover:bg-white/20 rounded-full p-1">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+    `;
+    document.body.appendChild(notification);
+    
+    // Remover notificación después de 5 segundos
+    setTimeout(() => {
+        notification.style.animation = 'fade-out 0.5s ease-out';
+        setTimeout(() => notification.remove(), 500);
+    }, 5000);
+    
+    // Pre-cargar AGUDEZA VISUAL
+    {% if last_exam.va_od_sc_distance %}document.querySelector('input[name="va_od_sc_distance"]').value = "{{ last_exam.va_od_sc_distance }}";{% endif %}
+    {% if last_exam.va_od_cc_distance %}document.querySelector('input[name="va_od_cc_distance"]').value = "{{ last_exam.va_od_cc_distance }}";{% endif %}
+    {% if last_exam.va_od_sc_near %}document.querySelector('input[name="va_od_sc_near"]').value = "{{ last_exam.va_od_sc_near }}";{% endif %}
+    {% if last_exam.va_od_cc_near %}document.querySelector('input[name="va_od_cc_near"]').value = "{{ last_exam.va_od_cc_near }}";{% endif %}
+    
+    {% if last_exam.va_os_sc_distance %}document.querySelector('input[name="va_os_sc_distance"]').value = "{{ last_exam.va_os_sc_distance }}";{% endif %}
+    {% if last_exam.va_os_cc_distance %}document.querySelector('input[name="va_os_cc_distance"]').value = "{{ last_exam.va_os_cc_distance }}";{% endif %}
+    {% if last_exam.va_os_sc_near %}document.querySelector('input[name="va_os_sc_near"]').value = "{{ last_exam.va_os_sc_near }}";{% endif %}
+    {% if last_exam.va_os_cc_near %}document.querySelector('input[name="va_os_cc_near"]').value = "{{ last_exam.va_os_cc_near }}";{% endif %}
+    
+    // Pre-cargar REFRACCIÓN - OD
+    {% if last_exam.refraction_od_sphere is not None %}document.querySelector('input[name="refraction_od_sphere"]').value = {{ last_exam.refraction_od_sphere }};{% endif %}
+    {% if last_exam.refraction_od_cylinder is not None %}document.querySelector('input[name="refraction_od_cylinder"]').value = {{ last_exam.refraction_od_cylinder }};{% endif %}
+    {% if last_exam.refraction_od_axis is not None %}document.querySelector('input[name="refraction_od_axis"]').value = {{ last_exam.refraction_od_axis }};{% endif %}
+    {% if last_exam.refraction_od_add is not None %}document.querySelector('input[name="refraction_od_add"]').value = {{ last_exam.refraction_od_add }};{% endif %}
+    {% if last_exam.refraction_od_prism is not None %}
+        const odPrismInput = document.querySelector('input[name="refraction_od_prism"]');
+        if (odPrismInput) odPrismInput.value = {{ last_exam.refraction_od_prism }};
+    {% endif %}
+    {% if last_exam.refraction_od_base %}
+        const odBaseInput = document.querySelector('input[name="refraction_od_base"]');
+        if (odBaseInput) odBaseInput.value = "{{ last_exam.refraction_od_base }}";
+    {% endif %}
+    {% if last_exam.refraction_od_dnp is not None %}
+        const odDnpInput = document.querySelector('input[name="refraction_od_dnp"]');
+        if (odDnpInput) odDnpInput.value = {{ last_exam.refraction_od_dnp }};
+    {% endif %}
+    
+    // Pre-cargar REFRACCIÓN - OS
+    {% if last_exam.refraction_os_sphere is not None %}document.querySelector('input[name="refraction_os_sphere"]').value = {{ last_exam.refraction_os_sphere }};{% endif %}
+    {% if last_exam.refraction_os_cylinder is not None %}document.querySelector('input[name="refraction_os_cylinder"]').value = {{ last_exam.refraction_os_cylinder }};{% endif %}
+    {% if last_exam.refraction_os_axis is not None %}document.querySelector('input[name="refraction_os_axis"]').value = {{ last_exam.refraction_os_axis }};{% endif %}
+    {% if last_exam.refraction_os_add is not None %}document.querySelector('input[name="refraction_os_add"]').value = {{ last_exam.refraction_os_add }};{% endif %}
+    {% if last_exam.refraction_os_prism is not None %}
+        const osPrismInput = document.querySelector('input[name="refraction_os_prism"]');
+        if (osPrismInput) osPrismInput.value = {{ last_exam.refraction_os_prism }};
+    {% endif %}
+    {% if last_exam.refraction_os_base %}
+        const osBaseInput = document.querySelector('input[name="refraction_os_base"]');
+        if (osBaseInput) osBaseInput.value = "{{ last_exam.refraction_os_base }}";
+    {% endif %}
+    {% if last_exam.refraction_os_dnp is not None %}
+        const osDnpInput = document.querySelector('input[name="refraction_os_dnp"]');
+        if (osDnpInput) osDnpInput.value = {{ last_exam.refraction_os_dnp }};
+    {% endif %}
+    
+    // Pre-cargar DISTANCIA PUPILAR
+    {% if last_exam.pd_distance is not None %}
+        const pdDistInput = document.querySelector('input[name="pd_distance"]');
+        if (pdDistInput) pdDistInput.value = {{ last_exam.pd_distance }};
+    {% endif %}
+    {% if last_exam.pd_near is not None %}
+        const pdNearInput = document.querySelector('input[name="pd_near"]');
+        if (pdNearInput) pdNearInput.value = {{ last_exam.pd_near }};
+    {% endif %}
+    {% if last_exam.pd_od is not None %}
+        const pdOdInput = document.querySelector('input[name="pd_od"]');
+        if (pdOdInput) pdOdInput.value = {{ last_exam.pd_od }};
+    {% endif %}
+    {% if last_exam.pd_os is not None %}
+        const pdOsInput = document.querySelector('input[name="pd_os"]');
+        if (pdOsInput) pdOsInput.value = {{ last_exam.pd_os }};
+    {% endif %}
+    
+    // Pre-cargar KERATOMETRÍA - OD
+    {% if last_exam.keratometry_od_k1 is not None %}
+        const odK1Input = document.querySelector('input[name="keratometry_od_k1"]');
+        if (odK1Input) odK1Input.value = {{ last_exam.keratometry_od_k1 }};
+    {% endif %}
+    {% if last_exam.keratometry_od_k2 is not None %}
+        const odK2Input = document.querySelector('input[name="keratometry_od_k2"]');
+        if (odK2Input) odK2Input.value = {{ last_exam.keratometry_od_k2 }};
+    {% endif %}
+    {% if last_exam.keratometry_od_axis is not None %}
+        const odKAxisInput = document.querySelector('input[name="keratometry_od_axis"]');
+        if (odKAxisInput) odKAxisInput.value = {{ last_exam.keratometry_od_axis }};
+    {% endif %}
+    
+    // Pre-cargar KERATOMETRÍA - OS
+    {% if last_exam.keratometry_os_k1 is not None %}
+        const osK1Input = document.querySelector('input[name="keratometry_os_k1"]');
+        if (osK1Input) osK1Input.value = {{ last_exam.keratometry_os_k1 }};
+    {% endif %}
+    {% if last_exam.keratometry_os_k2 is not None %}
+        const osK2Input = document.querySelector('input[name="keratometry_os_k2"]');
+        if (osK2Input) osK2Input.value = {{ last_exam.keratometry_os_k2 }};
+    {% endif %}
+    {% if last_exam.keratometry_os_axis is not None %}
+        const osKAxisInput = document.querySelector('input[name="keratometry_os_axis"]');
+        if (osKAxisInput) osKAxisInput.value = {{ last_exam.keratometry_os_axis }};
+    {% endif %}
+    
+    // Marcar visualmente todos los campos pre-cargados
+    const preloadedFields = document.querySelectorAll('input[value]:not([value=""]), textarea:not(:empty)');
+    preloadedFields.forEach(field => {
+        if (field.value && field.value !== field.placeholder && field.name) {
+            field.setAttribute('data-preloaded', 'true');
+            // Quitar el resaltado después de que el usuario lo modifique
+            field.addEventListener('input', function() {
+                this.removeAttribute('data-preloaded');
+            }, { once: true });
+        }
+    });
+    
+    // Actualizar gráficos visuales si existen
+    if (typeof updateRefractionDisplay === 'function') {
+        updateRefractionDisplay();
+    }
+    
+    console.log('✅ Datos del último examen cargados exitosamente');
+    console.log('📊 Campos pre-cargados:', document.querySelectorAll('[data-preloaded="true"]').length);
+});
+{% endif %}
+
 // Variable para controlar si el formulario ya fue enviado
 let formSubmitting = false;
 
@@ -1138,27 +1351,59 @@ document.getElementById('clinicalHistoryForm').addEventListener('submit', functi
     return true;
 });
 
+// Validar entrada de esfera (permite números y N/A)
+function validateSphereInput(input) {
+    let value = input.value.toUpperCase().trim();
+    
+    // Permitir N/A
+    if (value === 'N/A' || value === 'N/' || value === 'N') {
+        input.value = value;
+        input.classList.remove('border-red-500');
+        updateRefractionDisplay();
+        return;
+    }
+    
+    // Validar números con formato ±X.XX
+    const numberPattern = /^[+-]?\d*\.?\d{0,2}$/;
+    if (!numberPattern.test(value) && value !== '' && value !== '+' && value !== '-') {
+        input.classList.add('border-red-500');
+        // No actualizar el valor, mantener el anterior válido
+        setTimeout(() => {
+            input.value = input.value.slice(0, -1);
+            input.classList.remove('border-red-500');
+        }, 100);
+    } else {
+        input.classList.remove('border-red-500');
+    }
+    
+    updateRefractionDisplay();
+}
+
 // Actualizar gráficos visuales en tiempo real
 function updateRefractionDisplay() {
     // OD (Ojo Derecho)
-    const odSphere = parseFloat(document.querySelector('input[name="refraction_od_sphere"]').value) || 0;
+    const odSphereInput = document.querySelector('input[name="refraction_od_sphere"]').value;
+    const odSphere = odSphereInput.toUpperCase() === 'N/A' ? 0 : (parseFloat(odSphereInput) || 0);
     const odCyl = parseFloat(document.querySelector('input[name="refraction_od_cylinder"]').value) || 0;
     const odAxis = parseFloat(document.querySelector('input[name="refraction_od_axis"]').value) || 0;
     const odAV = document.querySelector('input[name="va_od_cc_distance"]').value || '--';
     
     // OS (Ojo Izquierdo)
-    const osSphere = parseFloat(document.querySelector('input[name="refraction_os_sphere"]').value) || 0;
+    const osSphereInput = document.querySelector('input[name="refraction_os_sphere"]').value;
+    const osSphere = osSphereInput.toUpperCase() === 'N/A' ? 0 : (parseFloat(osSphereInput) || 0);
     const osCyl = parseFloat(document.querySelector('input[name="refraction_os_cylinder"]').value) || 0;
     const osAxis = parseFloat(document.querySelector('input[name="refraction_os_axis"]').value) || 0;
     const osAV = document.querySelector('input[name="va_os_cc_distance"]').value || '--';
     
     // Actualizar displays OD
-    document.getElementById('od-sphere-display').textContent = odSphere !== 0 ? (odSphere > 0 ? '+' : '') + odSphere.toFixed(2) : '--';
+    const odSphereDisplay = odSphereInput.toUpperCase() === 'N/A' ? 'N/A' : (odSphere !== 0 ? (odSphere > 0 ? '+' : '') + odSphere.toFixed(2) : '--');
+    document.getElementById('od-sphere-display').textContent = odSphereDisplay;
     document.getElementById('od-cyl-display').textContent = odCyl !== 0 ? 'Cil: ' + (odCyl > 0 ? '+' : '') + odCyl.toFixed(2) + ' x ' + odAxis + '°' : '--';
     document.getElementById('od-av-display').textContent = odAV;
     
     // Actualizar displays OS
-    document.getElementById('os-sphere-display').textContent = osSphere !== 0 ? (osSphere > 0 ? '+' : '') + osSphere.toFixed(2) : '--';
+    const osSphereDisplay = osSphereInput.toUpperCase() === 'N/A' ? 'N/A' : (osSphere !== 0 ? (osSphere > 0 ? '+' : '') + osSphere.toFixed(2) : '--');
+    document.getElementById('os-sphere-display').textContent = osSphereDisplay;
     document.getElementById('os-cyl-display').textContent = osCyl !== 0 ? 'Cil: ' + (osCyl > 0 ? '+' : '') + osCyl.toFixed(2) + ' x ' + osAxis + '°' : '--';
     document.getElementById('os-av-display').textContent = osAV;
     
@@ -1257,35 +1502,49 @@ function loadFormFromLocalStorage() {
         const data = JSON.parse(savedData);
         const form = document.getElementById('clinicalHistoryForm');
         
-        // Restaurar valores
+        // Verificar si ya hay datos en el formulario (desde la BD)
+        const hasExistingData = {% if history %}true{% else %}false{% endif %};
+        
+        // Solo cargar de localStorage si NO hay datos de la BD
+        if (hasExistingData) {
+            console.log('✓ Usando datos de la base de datos');
+            return false;
+        }
+        
+        // Restaurar valores solo en campos vacíos
+        let restoredCount = 0;
         Object.keys(data).forEach(key => {
             if (key === '_timestamp') return;
             
             const element = form.querySelector(`[name="${key}"]`);
             if (!element) return;
             
+            // Solo restaurar si el campo está vacío
             if (element.type === 'checkbox') {
-                element.checked = data[key] === true || data[key] === 'true';
+                if (!element.checked) {
+                    element.checked = data[key] === true || data[key] === 'true';
+                    restoredCount++;
+                }
             } else if (element.type === 'radio') {
-                if (element.value === data[key]) {
+                if (!element.checked && element.value === data[key]) {
                     element.checked = true;
+                    restoredCount++;
                 }
             } else {
-                element.value = data[key] || '';
+                if (!element.value || element.value === '') {
+                    element.value = data[key] || '';
+                    if (data[key]) restoredCount++;
+                }
             }
         });
         
-        // Mostrar mensaje de restauración
-        const timestamp = new Date(data._timestamp);
-        const message = `Se restauraron los datos guardados automáticamente (${timestamp.toLocaleString()})`;
-        
-        if (confirm(message + '\n\n¿Desea continuar con estos datos?')) {
-            console.log('✓ Datos restaurados');
+        if (restoredCount > 0) {
+            const timestamp = new Date(data._timestamp);
+            showRestorationNotification(`${restoredCount} campos restaurados del borrador (${timestamp.toLocaleTimeString()})`);
+            console.log(`✓ ${restoredCount} campos restaurados desde localStorage`);
             return true;
-        } else {
-            clearLocalStorageDraft();
-            return false;
         }
+        return false;
     } catch (e) {
         console.error('Error al restaurar datos:', e);
         return false;
@@ -1333,6 +1592,49 @@ function showAutosaveIndicator() {
     setTimeout(() => {
         indicator.style.opacity = '0';
     }, 2000);
+}
+
+// Mostrar notificación de restauración
+function showRestorationNotification(message) {
+    let indicator = document.getElementById('restoration-indicator');
+    if (!indicator) {
+        indicator = document.createElement('div');
+        indicator.id = 'restoration-indicator';
+        indicator.style.cssText = `
+            position: fixed;
+            top: 80px;
+            right: 20px;
+            background: #3b82f6;
+            color: white;
+            padding: 12px 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            z-index: 1000;
+            font-size: 14px;
+            opacity: 0;
+            transition: opacity 0.3s;
+            max-width: 300px;
+        `;
+        document.body.appendChild(indicator);
+    }
+    
+    indicator.innerHTML = `<i class="fas fa-info-circle mr-2"></i>${message}`;
+    indicator.style.opacity = '1';
+    
+    // Ocultar después de 4 segundos
+    setTimeout(() => {
+        indicator.style.opacity = '0';
+    }, 4000);
+}
+
+// Rellenar campo con N/A
+function fillWithNA(fieldName) {
+    const field = document.querySelector(`[name="${fieldName}"]`);
+    if (field && !field.value.trim()) {
+        field.value = 'N/A';
+        field.focus();
+        field.blur(); // Trigger autosave
+    }
 }
 
 // Configurar autoguardado automático
@@ -1517,9 +1819,6 @@ function removeMedication(value) {
 
 // Rellenar valores normales para Segmento Anterior (Biomicroscopía)
 function fillAnteriorSegmentDefaults() {
-    if (!confirm('¿Desea rellenar todos los campos vacíos del Segmento Anterior con valores normales?')) {
-        return;
-    }
     
     // Definir valores por defecto (del placeholder)
     const defaults = {
@@ -1556,17 +1855,12 @@ function fillAnteriorSegmentDefaults() {
     });
     
     if (filledCount > 0) {
-        alert(`✓ Se rellenaron ${filledCount} campos con valores normales`);
-    } else {
-        alert('Todos los campos ya tienen valores');
+        showRestorationNotification(`✓ ${filledCount} campos rellenados con valores normales`);
     }
 }
 
 // Rellenar valores normales para Segmento Posterior (Fondo de Ojo)
 function fillPosteriorSegmentDefaults() {
-    if (!confirm('¿Desea rellenar todos los campos vacíos del Segmento Posterior con valores normales?')) {
-        return;
-    }
     
     // Definir valores por defecto (del placeholder)
     const defaults = {
@@ -1601,17 +1895,12 @@ function fillPosteriorSegmentDefaults() {
     });
     
     if (filledCount > 0) {
-        alert(`✓ Se rellenaron ${filledCount} campos con valores normales`);
-    } else {
-        alert('Todos los campos ya tienen valores');
+        showRestorationNotification(`✓ ${filledCount} campos rellenados con valores normales`);
     }
 }
 
 // Cargar datos previos del fondo de ojo
 function loadPreviousFundoscopy() {
-    if (!confirm('¿Desea cargar los datos del último examen de fondo de ojo?')) {
-        return;
-    }
     
     fetch(`/dashboard/patients/{{ patient.id }}/clinical-history/latest-fundoscopy/`)
         .then(response => response.json())
@@ -1633,14 +1922,13 @@ function loadPreviousFundoscopy() {
                 if (data.fundoscopy.os_vessels) document.querySelector('input[name="fundoscopy_os_vessels"]').value = data.fundoscopy.os_vessels;
                 if (data.fundoscopy.os_retina) document.querySelector('input[name="fundoscopy_os_retina"]').value = data.fundoscopy.os_retina;
                 
-                alert('Datos del fondo de ojo cargados exitosamente');
+                showRestorationNotification('✓ Datos del fondo de ojo cargados exitosamente');
             } else {
-                alert(data.message || 'No hay registros previos de fondo de ojo');
+                console.log(data.message || 'No hay registros previos de fondo de ojo');
             }
         })
         .catch(error => {
             console.error('Error:', error);
-            alert('Error al cargar los datos previos');
         });
 }
 
@@ -1720,31 +2008,15 @@ function saveMaterial() {
             
             closeMaterialModal();
             showMaterialDetails(select);
-            alert('Material agregado exitosamente');
+            showRestorationNotification('✓ Material agregado exitosamente');
         } else {
             let errorMsg = 'Error: ' + (data.message || 'No se pudo guardar');
-            if (data.errors) {
-                errorMsg += '\n\nDetalles:\n';
-                for (let field in data.errors) {
-                    errorMsg += `${field}: ${data.errors[field]}\n`;
-                }
-            }
-            alert(errorMsg);
+            showRestorationNotification('⚠️ ' + errorMsg);
         }
     })
     .catch(error => {
         console.error('Error:', error);
-        let errorMsg = 'Error al guardar el material';
-        if (error.message) {
-            errorMsg += '\n' + error.message;
-        }
-        if (error.errors) {
-            errorMsg += '\n\nDetalles:\n';
-            for (let field in error.errors) {
-                errorMsg += `${field}: ${error.errors[field]}\n`;
-            }
-        }
-        alert(errorMsg);
+        showRestorationNotification('⚠️ Error al guardar el material');
     })
     .finally(() => {
         submitBtn.disabled = false;
@@ -1800,31 +2072,15 @@ function saveTreatment() {
             
             closeTreatmentModal();
             updateSelectedTreatments();
-            alert('Tratamiento agregado exitosamente');
+            showRestorationNotification('✓ Tratamiento agregado exitosamente');
         } else {
             let errorMsg = 'Error: ' + (data.message || 'No se pudo guardar');
-            if (data.errors) {
-                errorMsg += '\n\nDetalles:\n';
-                for (let field in data.errors) {
-                    errorMsg += `${field}: ${data.errors[field]}\n`;
-                }
-            }
-            alert(errorMsg);
+            showRestorationNotification('⚠️ ' + errorMsg);
         }
     })
     .catch(error => {
         console.error('Error:', error);
-        let errorMsg = 'Error al guardar el tratamiento';
-        if (error.message) {
-            errorMsg += '\n' + error.message;
-        }
-        if (error.errors) {
-            errorMsg += '\n\nDetalles:\n';
-            for (let field in error.errors) {
-                errorMsg += `${field}: ${error.errors[field]}\n`;
-            }
-        }
-        alert(errorMsg);
+        showRestorationNotification('⚠️ Error al guardar el tratamiento');
     })
     .finally(() => {
         submitBtn.disabled = false;
@@ -1884,31 +2140,15 @@ function saveMedication() {
             
             closeMedicationModal();
             updateSelectedMedications();
-            alert('Medicamento agregado exitosamente');
+            showRestorationNotification('✓ Medicamento agregado exitosamente');
         } else {
             let errorMsg = 'Error: ' + (data.message || 'No se pudo guardar');
-            if (data.errors) {
-                errorMsg += '\n\nDetalles:\n';
-                for (let field in data.errors) {
-                    errorMsg += `${field}: ${data.errors[field]}\n`;
-                }
-            }
-            alert(errorMsg);
+            showRestorationNotification('⚠️ ' + errorMsg);
         }
     })
     .catch(error => {
         console.error('Error:', error);
-        let errorMsg = 'Error al guardar el medicamento';
-        if (error.message) {
-            errorMsg += '\n' + error.message;
-        }
-        if (error.errors) {
-            errorMsg += '\n\nDetalles:\n';
-            for (let field in error.errors) {
-                errorMsg += `${field}: ${error.errors[field]}\n`;
-            }
-        }
-        alert(errorMsg);
+        showRestorationNotification('⚠️ Error al guardar el medicamento');
     })
     .finally(() => {
         submitBtn.disabled = false;

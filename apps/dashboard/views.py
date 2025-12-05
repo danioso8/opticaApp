@@ -15,7 +15,9 @@ from .views_clinical import (
     clinical_history_edit,
     clinical_history_delete,
     clinical_history_pdf,
-    latest_fundoscopy
+    latest_fundoscopy,
+    visual_exam_create,
+    visual_exam_edit
 )
 
 from apps.appointments.models import (

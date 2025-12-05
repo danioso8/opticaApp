@@ -1,0 +1,1365 @@
+{% extends 'dashboard/base.html' %}
+{% load static %}
+
+{% block title %}Nuevo Examen Visual - {{ patient.full_name }}{% endblock %}
+
+{% block extra_css %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
+<style>
+    .quick-btn {
+        padding: 0.25rem 0.5rem;
+        font-size: 0.75rem;
+        border-radius: 0.375rem;
+        transition: all 0.2s;
+    }
+    .quick-btn:hover {
+        transform: scale(1.05);
+    }
+    .value-indicator {
+        position: absolute;
+        right: 0.5rem;
+        top: 50%;
+        transform: translateY(-50%);
+        font-size: 0.75rem;
+    }
+    .field-group {
+        position: relative;
+    }
+    input[type="number"]::-webkit-inner-spin-button,
+    input[type="number"]::-webkit-outer-spin-button {
+        opacity: 1;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+    <!-- Header Mejorado -->
+    <div class="mb-6 pb-6 border-b">
+        <div class="flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <a href="{% url 'dashboard:patient_detail' patient.id %}" class="text-gray-600 hover:text-gray-800">
+                    <i class="fas fa-arrow-left"></i>
+                </a>
+                <div>
+                    <h1 class="text-2xl font-bold text-gray-800">
+                        <i class="fas fa-eye text-purple-600 mr-2"></i>
+                        Examen Visual Rápido
+                    </h1>
+                    <p class="text-sm text-gray-600 mt-1">
+                        <strong>{{ patient.full_name }}</strong>
+                        {% if patient.age %} | {{ patient.age }} años{% endif %}
+                        {% if patient.date_of_birth %} | {{ patient.date_of_birth|date:"d/m/Y" }}{% endif %}
+                    </p>
+                </div>
+            </div>
+            <!-- Atajos de teclado -->
+            <div class="text-xs text-gray-500 text-right">
+                <p><kbd class="px-2 py-1 bg-gray-100 rounded">Tab</kbd> Siguiente campo</p>
+                <p><kbd class="px-2 py-1 bg-gray-100 rounded">Ctrl+S</kbd> Guardar</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Formulario -->
+    <form id="visualExamForm" method="POST">
+        {% csrf_token %}
+        
+        <!-- Información General -->
+        <div class="bg-gray-50 rounded-lg p-5 mb-6">
+            <h3 class="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+                <i class="fas fa-info-circle text-blue-600 mr-2"></i>
+                Información General
+            </h3>
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">
+                        Fecha del Examen <span class="text-red-500">*</span>
+                    </label>
+                    <input type="date" name="date" required
+                           value="{% if history %}{{ history.date|date:'Y-m-d' }}{% else %}{{ today|date:'Y-m-d' }}{% endif %}"
+                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent">
+                </div>
+                
+                <div class="md:col-span-2">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">
+                        Médico/Optómetra <span class="text-red-500">*</span>
+                    </label>
+                    <select name="doctor" required
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent">
+                        <option value="">Seleccione un doctor...</option>
+                        {% for doctor in doctors %}
+                        <option value="{{ doctor.id }}" {% if history and history.doctor and history.doctor.id == doctor.id %}selected{% endif %}>
+                            {{ doctor.full_name }} - {{ doctor.get_specialty_display }}
+                            {% if doctor.professional_card %} (T.P: {{ doctor.professional_card }}){% endif %}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <!-- PANEL DE VISUALIZACIÓN MÉDICA AVANZADA -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+            <!-- GRÁFICO RADAR: COMPARACIÓN OD vs OI -->
+            <div class="bg-white border-2 border-blue-200 rounded-xl p-6 shadow-lg hover:shadow-xl transition-shadow">
+                <h3 class="text-lg font-bold text-gray-800 mb-4 flex items-center">
+                    <i class="fas fa-chart-area text-blue-600 mr-2"></i>
+                    Análisis Comparativo OD vs OI
+                </h3>
+                <div class="relative" style="height: 300px;">
+                    <canvas id="radarChart"></canvas>
+                </div>
+                <div class="mt-4 grid grid-cols-2 gap-2 text-xs">
+                    <div class="flex items-center">
+                        <span class="w-3 h-3 bg-red-500 rounded-full mr-2"></span>
+                        <span class="text-gray-600">Ojo Derecho (OD)</span>
+                    </div>
+                    <div class="flex items-center">
+                        <span class="w-3 h-3 bg-blue-500 rounded-full mr-2"></span>
+                        <span class="text-gray-600">Ojo Izquierdo (OI)</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- DIAGRAMA POLAR: EJE DE ASTIGMATISMO -->
+            <div class="bg-white border-2 border-purple-200 rounded-xl p-6 shadow-lg hover:shadow-xl transition-shadow">
+                <h3 class="text-lg font-bold text-gray-800 mb-4 flex items-center">
+                    <i class="fas fa-compass text-purple-600 mr-2"></i>
+                    Eje de Astigmatismo (0-180°)
+                </h3>
+                <div class="relative" style="height: 300px;">
+                    <canvas id="polarChart"></canvas>
+                </div>
+                <div class="mt-4 grid grid-cols-2 gap-2 text-xs">
+                    <div class="flex items-center">
+                        <span class="w-3 h-3 bg-red-500 rounded-full mr-2"></span>
+                        <span class="text-gray-600">OD: <span id="odAxisLabel">--°</span></span>
+                    </div>
+                    <div class="flex items-center">
+                        <span class="w-3 h-3 bg-blue-500 rounded-full mr-2"></span>
+                        <span class="text-gray-600">OI: <span id="oiAxisLabel">--°</span></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- INDICADORES VISUALES DE SEVERIDAD -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
+            <!-- Indicador Miopía/Hipermetropía -->
+            <div class="bg-gradient-to-br from-indigo-50 to-indigo-100 border-2 border-indigo-300 rounded-xl p-4 shadow-md">
+                <h4 class="text-sm font-bold text-gray-700 mb-3 flex items-center">
+                    <i class="fas fa-adjust text-indigo-600 mr-2"></i>
+                    Refracción Esférica
+                </h4>
+                <div class="space-y-2">
+                    <div>
+                        <div class="flex justify-between text-xs mb-1">
+                            <span class="text-gray-600">OD</span>
+                            <span id="odSphereStatus" class="font-semibold">Normal</span>
+                        </div>
+                        <div class="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
+                            <div id="odSphereBar" class="h-full bg-gradient-to-r from-green-400 to-green-500 transition-all duration-500" style="width: 50%"></div>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="flex justify-between text-xs mb-1">
+                            <span class="text-gray-600">OI</span>
+                            <span id="oiSphereStatus" class="font-semibold">Normal</span>
+                        </div>
+                        <div class="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
+                            <div id="oiSphereBar" class="h-full bg-gradient-to-r from-green-400 to-green-500 transition-all duration-500" style="width: 50%"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Indicador Astigmatismo -->
+            <div class="bg-gradient-to-br from-amber-50 to-amber-100 border-2 border-amber-300 rounded-xl p-4 shadow-md">
+                <h4 class="text-sm font-bold text-gray-700 mb-3 flex items-center">
+                    <i class="fas fa-wave-square text-amber-600 mr-2"></i>
+                    Astigmatismo
+                </h4>
+                <div class="space-y-2">
+                    <div>
+                        <div class="flex justify-between text-xs mb-1">
+                            <span class="text-gray-600">OD</span>
+                            <span id="odCylStatus" class="font-semibold">Sin astigmatismo</span>
+                        </div>
+                        <div class="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
+                            <div id="odCylBar" class="h-full bg-gradient-to-r from-green-400 to-green-500 transition-all duration-500" style="width: 0%"></div>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="flex justify-between text-xs mb-1">
+                            <span class="text-gray-600">OI</span>
+                            <span id="oiCylStatus" class="font-semibold">Sin astigmatismo</span>
+                        </div>
+                        <div class="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
+                            <div id="oiCylBar" class="h-full bg-gradient-to-r from-green-400 to-green-500 transition-all duration-500" style="width: 0%"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Indicador Agudeza Visual -->
+            <div class="bg-gradient-to-br from-emerald-50 to-emerald-100 border-2 border-emerald-300 rounded-xl p-4 shadow-md">
+                <h4 class="text-sm font-bold text-gray-700 mb-3 flex items-center">
+                    <i class="fas fa-eye text-emerald-600 mr-2"></i>
+                    Agudeza Visual CC
+                </h4>
+                <div class="space-y-2">
+                    <div>
+                        <div class="flex justify-between text-xs mb-1">
+                            <span class="text-gray-600">OD</span>
+                            <span id="odVaStatus" class="font-semibold">--</span>
+                        </div>
+                        <div class="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
+                            <div id="odVaBar" class="h-full bg-gradient-to-r from-blue-400 to-blue-500 transition-all duration-500" style="width: 0%"></div>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="flex justify-between text-xs mb-1">
+                            <span class="text-gray-600">OI</span>
+                            <span id="oiVaStatus" class="font-semibold">--</span>
+                        </div>
+                        <div class="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
+                            <div id="oiVaBar" class="h-full bg-gradient-to-r from-blue-400 to-blue-500 transition-all duration-500" style="width: 0%"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- AGUDEZA VISUAL CON BOTONES RÁPIDOS -->
+        <div class="bg-gradient-to-r from-green-50 to-green-100 border-l-4 border-green-600 rounded-lg p-6 mb-6 shadow-sm">
+            <div class="flex items-center justify-between mb-5">
+                <h3 class="text-xl font-bold text-gray-800 flex items-center uppercase tracking-wide">
+                    <i class="fas fa-eye text-green-600 mr-2"></i>
+                    AGUDEZA VISUAL
+                </h3>
+                <!-- BOTONES RÁPIDOS AQUÍ -->
+                <div class="flex gap-2">
+                    <button type="button" onclick="setAllVA('20/20')" class="quick-btn bg-green-600 text-white border-green-700 hover:bg-green-700">
+                        <i class="fas fa-bolt mr-1"></i>20/20 Todo
+                    </button>
+                    <button type="button" onclick="setAllVA('20/30')" class="quick-btn bg-yellow-500 text-white border-yellow-600 hover:bg-yellow-600">
+                        20/30 Todo
+                    </button>
+                    <button type="button" onclick="clearVA()" class="quick-btn bg-gray-500 text-white border-gray-600 hover:bg-gray-600">
+                        <i class="fas fa-eraser mr-1"></i>Limpiar
+                    </button>
+                </div>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Sin Corrección -->
+                <div class="bg-white rounded-lg p-4 shadow-sm border-2 border-red-200">
+                    <h4 class="font-bold text-gray-800 mb-3 flex items-center text-sm">
+                        <i class="fas fa-eye-slash text-red-600 mr-2"></i>
+                        Sin Corrección (SC)
+                    </h4>
+                    <div class="space-y-2">
+                        <div>
+                            <label class="block text-xs font-medium text-gray-700 mb-1">OD (Ojo Derecho)</label>
+                            <div class="flex gap-2">
+                                <input type="text" name="va_od_sc" id="va_od_sc" list="va_values"
+                                       class="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 text-sm"
+                                       placeholder="20/20"
+                                       value="{% if history %}{{ history.va_od_sc_distance }}{% endif %}">
+                                <button type="button" onclick="setValue('va_od_sc', '20/20')" class="quick-btn bg-green-100 text-green-700 border-green-300">20/20</button>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-gray-700 mb-1">OI (Ojo Izquierdo)</label>
+                            <div class="flex gap-2">
+                                <input type="text" name="va_os_sc" id="va_os_sc" list="va_values"
+                                       class="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 text-sm"
+                                       placeholder="20/20"
+                                       value="{% if history %}{{ history.va_os_sc_distance }}{% endif %}">
+                                <button type="button" onclick="setValue('va_os_sc', '20/20')" class="quick-btn bg-green-100 text-green-700 border-green-300">20/20</button>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-gray-700 mb-1">AO (Ambos Ojos)</label>
+                            <div class="flex gap-2">
+                                <input type="text" name="va_ou_sc" id="va_ou_sc" list="va_values"
+                                       class="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 text-sm"
+                                       placeholder="20/20"
+                                       value="{% if history %}{{ history.va_ou_distance }}{% endif %}">
+                                <button type="button" onclick="setValue('va_ou_sc', '20/20')" class="quick-btn bg-green-100 text-green-700 border-green-300">20/20</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Con Corrección -->
+                <div class="bg-white rounded-lg p-4 shadow-sm border-2 border-green-200">
+                    <h4 class="font-bold text-gray-800 mb-3 flex items-center text-sm">
+                        <i class="fas fa-glasses text-green-600 mr-2"></i>
+                        Con Corrección (CC)
+                    </h4>
+                    <div class="space-y-2">
+                        <div>
+                            <label class="block text-xs font-medium text-gray-700 mb-1">OD (Ojo Derecho)</label>
+                            <div class="flex gap-2">
+                                <input type="text" name="va_od_cc" id="va_od_cc" list="va_values"
+                                       class="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 text-sm"
+                                       placeholder="20/20"
+                                       value="{% if history %}{{ history.va_od_cc_distance }}{% endif %}">
+                                <button type="button" onclick="setValue('va_od_cc', '20/20')" class="quick-btn bg-green-100 text-green-700 border-green-300">20/20</button>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-gray-700 mb-1">OI (Ojo Izquierdo)</label>
+                            <div class="flex gap-2">
+                                <input type="text" name="va_os_cc" id="va_os_cc" list="va_values"
+                                       class="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 text-sm"
+                                       placeholder="20/20"
+                                       value="{% if history %}{{ history.va_os_cc_distance }}{% endif %}">
+                                <button type="button" onclick="setValue('va_os_cc', '20/20')" class="quick-btn bg-green-100 text-green-700 border-green-300">20/20</button>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-gray-700 mb-1">AO (Ambos Ojos)</label>
+                            <div class="flex gap-2">
+                                <input type="text" name="va_ou_cc" id="va_ou_cc" list="va_values"
+                                       class="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 text-sm"
+                                       placeholder="20/20"
+                                       value="{% if history %}{{ history.va_ou_near }}{% endif %}">
+                                <button type="button" onclick="setValue('va_ou_cc', '20/20')" class="quick-btn bg-green-100 text-green-700 border-green-300">20/20</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Datalist con valores comunes de agudeza visual -->
+            <datalist id="va_values">
+                <option value="20/15">
+                <option value="20/20">
+                <option value="20/25">
+                <option value="20/30">
+                <option value="20/40">
+                <option value="20/50">
+                <option value="20/60">
+                <option value="20/80">
+                <option value="20/100">
+                <option value="20/200">
+                <option value="CD">
+                <option value="MM">
+                <option value="PL">
+                <option value="NPL">
+            </datalist>
+        </div>
+
+        <!-- REFRACCIÓN CON BOTÓN COPIAR OD→OI -->
+        <div class="bg-gradient-to-r from-blue-50 to-blue-100 border-l-4 border-blue-600 rounded-lg p-6 mb-6 shadow-sm">
+            <div class="flex items-center justify-between mb-5">
+                <h3 class="text-xl font-bold text-gray-800 flex items-center uppercase tracking-wide">
+                    <i class="fas fa-eye-dropper text-blue-600 mr-2"></i>
+                    REFRACCIÓN
+                    <span class="ml-3 text-xs font-normal text-gray-600 bg-white px-2 py-1 rounded">
+                        <i class="fas fa-info-circle mr-1"></i>Rangos: -20.00 a +20.00 D
+                    </span>
+                </h3>
+                <!-- BOTONES RÁPIDOS DE REFRACCIÓN -->
+                <div class="flex gap-2">
+                    <button type="button" onclick="copyODtoOI()" class="quick-btn bg-blue-600 text-white border-blue-700 hover:bg-blue-700">
+                        <i class="fas fa-copy mr-1"></i>Copiar OD → OI
+                    </button>
+                    <button type="button" onclick="setPlano()" class="quick-btn bg-white text-blue-700 border-blue-300 hover:bg-blue-50">
+                        <i class="fas fa-minus mr-1"></i>Plano
+                    </button>
+                    <button type="button" onclick="clearRefraction()" class="quick-btn bg-gray-500 text-white border-gray-600 hover:bg-gray-600">
+                        <i class="fas fa-eraser mr-1"></i>Limpiar
+                    </button>
+                </div>
+            </div>
+            
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <!-- OD -->
+                <div class="bg-white rounded-lg p-4 shadow-sm">
+                    <h4 class="font-bold text-gray-800 mb-4 text-center">OD (Ojo Derecho)</h4>
+                    <div class="space-y-3">
+                        <div class="grid grid-cols-3 gap-2">
+                            <div>
+                                <label class="block text-xs font-medium text-gray-700 mb-1">Esfera</label>
+                                <input type="text" name="refraction_od_sphere" id="refraction_od_sphere"
+                                       class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500"
+                                       placeholder="±0.00 o N/A"
+                                       value="{% if history %}{{ history.refraction_od_sphere }}{% endif %}"
+                                       oninput="validateSphereInput(this)">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-gray-700 mb-1">Cilindro</label>
+                                <input type="number" step="0.25" name="refraction_od_cylinder" id="refraction_od_cylinder"
+                                       class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500"
+                                       placeholder="0.00"
+                                       value="{% if history.refraction_od_cylinder %}{{ history.refraction_od_cylinder|stringformat:'g' }}{% endif %}">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-gray-700 mb-1">Eje</label>
+                                <input type="number" min="0" max="180" name="refraction_od_axis" id="refraction_od_axis"
+                                       class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500"
+                                       placeholder="0"
+                                       value="{% if history.refraction_od_axis %}{{ history.refraction_od_axis }}{% endif %}">
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-2 gap-2">
+                            <div>
+                                <label class="block text-xs font-medium text-gray-700 mb-1">ADD</label>
+                                <input type="number" step="0.25" name="refraction_od_add" id="refraction_od_add"
+                                       class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500"
+                                       placeholder="0.00"
+                                       value="{% if history.refraction_od_add %}{{ history.refraction_od_add|stringformat:'g' }}{% endif %}">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-gray-700 mb-1">Prisma</label>
+                                <input type="text" name="refraction_od_prism" id="refraction_od_prism"
+                                       class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500"
+                                       placeholder="Ej: 2Δ Base In">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-gray-700 mb-1">DNP (mm)</label>
+                            <input type="number" step="0.5" name="refraction_od_dnp" id="refraction_od_dnp"
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500"
+                                   placeholder="32.0">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- OS -->
+                <div class="bg-white rounded-lg p-4 shadow-sm">
+                    <h4 class="font-bold text-gray-800 mb-4 text-center">OI (Ojo Izquierdo)</h4>
+                    <div class="space-y-3">
+                        <div class="grid grid-cols-3 gap-2">
+                            <div>
+                                <label class="block text-xs font-medium text-gray-700 mb-1">Esfera</label>
+                                <input type="text" name="refraction_os_sphere" id="refraction_os_sphere"
+                                       class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500"
+                                       placeholder="±0.00 o N/A"
+                                       value="{% if history %}{{ history.refraction_os_sphere }}{% endif %}"
+                                       oninput="validateSphereInput(this)">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-gray-700 mb-1">Cilindro</label>
+                                <input type="number" step="0.25" name="refraction_os_cylinder" id="refraction_os_cylinder"
+                                       class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500"
+                                       placeholder="0.00"
+                                       value="{% if history.refraction_os_cylinder %}{{ history.refraction_os_cylinder|stringformat:'g' }}{% endif %}">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-gray-700 mb-1">Eje</label>
+                                <input type="number" min="0" max="180" name="refraction_os_axis" id="refraction_os_axis"
+                                       class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500"
+                                       placeholder="0"
+                                       value="{% if history.refraction_os_axis %}{{ history.refraction_os_axis }}{% endif %}">
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-2 gap-2">
+                            <div>
+                                <label class="block text-xs font-medium text-gray-700 mb-1">ADD</label>
+                                <input type="number" step="0.25" name="refraction_os_add" id="refraction_os_add"
+                                       class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500"
+                                       placeholder="0.00"
+                                       value="{% if history.refraction_os_add %}{{ history.refraction_os_add|stringformat:'g' }}{% endif %}">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-gray-700 mb-1">Prisma</label>
+                                <input type="text" name="refraction_os_prism" id="refraction_os_prism"
+                                       class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500"
+                                       placeholder="Ej: 2Δ Base Out">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-gray-700 mb-1">DNP (mm)</label>
+                            <input type="number" step="0.5" name="refraction_os_dnp" id="refraction_os_dnp"
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500"
+                                   placeholder="32.0">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- QUERATOMETRÍA -->
+        <div class="bg-gradient-to-r from-purple-50 to-purple-100 border-l-4 border-purple-600 rounded-lg p-6 mb-6 shadow-sm">
+            <h3 class="text-xl font-bold text-gray-800 mb-5 flex items-center uppercase tracking-wide">
+                <i class="fas fa-circle-notch text-purple-600 mr-2"></i>
+                QUERATOMETRÍA
+            </h3>
+            
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <!-- OD -->
+                <div class="bg-white rounded-lg p-4 shadow-sm">
+                    <h4 class="font-bold text-gray-800 mb-4 text-center">OD (Ojo Derecho)</h4>
+                    <div class="space-y-3">
+                        <div class="grid grid-cols-2 gap-2">
+                            <div>
+                                <label class="block text-xs font-medium text-gray-700 mb-1">K1 (D)</label>
+                                <input type="number" step="0.25" name="keratometry_od_k1"
+                                       class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-purple-500"
+                                       placeholder="43.00"
+                                       value="{% if history.keratometry_od_k1 %}{{ history.keratometry_od_k1|stringformat:'g' }}{% endif %}">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-gray-700 mb-1">K2 (D)</label>
+                                <input type="number" step="0.25" name="keratometry_od_k2"
+                                       class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-purple-500"
+                                       placeholder="44.00"
+                                       value="{% if history.keratometry_od_k2 %}{{ history.keratometry_od_k2|stringformat:'g' }}{% endif %}">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-gray-700 mb-1">Eje</label>
+                            <input type="number" min="0" max="180" name="keratometry_od_axis"
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-purple-500"
+                                   placeholder="0"
+                                   value="{% if history.keratometry_od_k1_axis %}{{ history.keratometry_od_k1_axis }}{% endif %}">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- OS -->
+                <div class="bg-white rounded-lg p-4 shadow-sm">
+                    <h4 class="font-bold text-gray-800 mb-4 text-center">OI (Ojo Izquierdo)</h4>
+                    <div class="space-y-3">
+                        <div class="grid grid-cols-2 gap-2">
+                            <div>
+                                <label class="block text-xs font-medium text-gray-700 mb-1">K1 (D)</label>
+                                <input type="number" step="0.25" name="keratometry_os_k1"
+                                       class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-purple-500"
+                                       placeholder="43.00"
+                                       value="{% if history.keratometry_os_k1 %}{{ history.keratometry_os_k1|stringformat:'g' }}{% endif %}">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-gray-700 mb-1">K2 (D)</label>
+                                <input type="number" step="0.25" name="keratometry_os_k2"
+                                       class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-purple-500"
+                                       placeholder="44.00"
+                                       value="{% if history.keratometry_os_k2 %}{{ history.keratometry_os_k2|stringformat:'g' }}{% endif %}">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-gray-700 mb-1">Eje</label>
+                            <input type="number" min="0" max="180" name="keratometry_os_axis"
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-purple-500"
+                                   placeholder="0"
+                                   value="{% if history.keratometry_os_k1_axis %}{{ history.keratometry_os_k1_axis }}{% endif %}">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Observaciones del Examen -->
+        <div class="bg-gray-50 rounded-lg p-5 mb-6">
+            <h3 class="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+                <i class="fas fa-sticky-note text-yellow-600 mr-2"></i>
+                Observaciones del Examen
+            </h3>
+            <textarea name="exam_notes" rows="3"
+                      class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                      placeholder="Observaciones adicionales sobre el examen visual..."></textarea>
+        </div>
+
+        <!-- Botones -->
+        <div class="flex gap-3 justify-end">
+            <a href="{% url 'dashboard:patient_detail' patient.id %}" 
+               class="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
+                <i class="fas fa-times mr-2"></i>Cancelar
+            </a>
+            <button type="submit" 
+                    class="px-6 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors">
+                <i class="fas fa-save mr-2"></i>Guardar Examen
+            </button>
+        </div>
+    </form>
+</div>
+
+<script>
+// ============ PRE-CARGAR DATOS AL EDITAR ============
+{% if history %}
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('🔍 Pre-cargando datos del examen ID: {{ history.id }}');
+    console.log('📊 DEBUG - Objeto History completo:');
+    console.log('  - Doctor: {{ history.doctor }}');
+    console.log('  - Fecha: {{ history.date }}');
+    console.log('📊 Datos de Refracción en context:');
+    console.log('  - Esfera OD: "{{ history.refraction_od_sphere }}" (tipo: {{ history.refraction_od_sphere|default:"vacío" }})');
+    console.log('  - Esfera OI: "{{ history.refraction_os_sphere }}" (tipo: {{ history.refraction_os_sphere|default:"vacío" }})');
+    console.log('  - Cilindro OD: "{{ history.refraction_od_cylinder }}" (None? {% if history.refraction_od_cylinder is None %}SI{% else %}NO{% endif %})');
+    console.log('  - Cilindro OI: "{{ history.refraction_os_cylinder }}" (None? {% if history.refraction_os_cylinder is None %}SI{% else %}NO{% endif %})');
+    console.log('  - Eje OD: "{{ history.refraction_od_axis }}" (None? {% if history.refraction_od_axis is None %}SI{% else %}NO{% endif %})');
+    console.log('  - Eje OI: "{{ history.refraction_os_axis }}" (None? {% if history.refraction_os_axis is None %}SI{% else %}NO{% endif %})');
+    console.log('  - ADD OD: "{{ history.refraction_od_add }}" (None? {% if history.refraction_od_add is None %}SI{% else %}NO{% endif %})');
+    console.log('  - ADD OI: "{{ history.refraction_os_add }}" (None? {% if history.refraction_os_add is None %}SI{% else %}NO{% endif %})');
+    console.log('  - PD OD: "{{ history.pd_od }}"');
+    console.log('  - PD OI: "{{ history.pd_os }}"');
+    console.log('📊 Agudeza Visual:');
+    console.log('  - VA OD SC: "{{ history.va_od_sc_distance }}"');
+    console.log('  - VA OI SC: "{{ history.va_os_sc_distance }}"');
+    console.log('  - VA OD CC: "{{ history.va_od_cc_distance }}"');
+    console.log('  - VA OI CC: "{{ history.va_os_cc_distance }}"');
+    
+    // Esperar un momento adicional para asegurar que el DOM esté completamente listo
+    setTimeout(function() {
+        console.log('🔄 Iniciando carga de datos...');
+        
+        // Agudeza Visual
+        {% if history.va_od_sc_distance %}
+        var va_od_sc = document.getElementById('va_od_sc');
+        if (va_od_sc) va_od_sc.value = "{{ history.va_od_sc_distance }}";
+        {% endif %}
+        {% if history.va_os_sc_distance %}
+        var va_os_sc = document.getElementById('va_os_sc');
+        if (va_os_sc) va_os_sc.value = "{{ history.va_os_sc_distance }}";
+        {% endif %}
+        {% if history.va_ou_distance %}
+        var va_ou_sc = document.getElementById('va_ou_sc');
+        if (va_ou_sc) va_ou_sc.value = "{{ history.va_ou_distance }}";
+        {% endif %}
+        {% if history.va_od_cc_distance %}
+        var va_od_cc = document.getElementById('va_od_cc');
+        if (va_od_cc) va_od_cc.value = "{{ history.va_od_cc_distance }}";
+        {% endif %}
+        {% if history.va_os_cc_distance %}
+        var va_os_cc = document.getElementById('va_os_cc');
+        if (va_os_cc) va_os_cc.value = "{{ history.va_os_cc_distance }}";
+        {% endif %}
+        {% if history.va_ou_cc_distance %}
+        var va_ou_cc = document.getElementById('va_ou_cc');
+        if (va_ou_cc) va_ou_cc.value = "{{ history.va_ou_cc_distance }}";
+        {% endif %}
+        
+        // Refracción OD - Los valores ya están en el HTML con el atributo value, 
+        // solo forzamos la carga si por alguna razón no se cargaron
+        var sph_od = document.getElementById('refraction_od_sphere');
+        if (sph_od && !sph_od.value && "{{ history.refraction_od_sphere|default:'' }}") {
+            sph_od.value = "{{ history.refraction_od_sphere|default:'' }}";
+        }
+        
+        var cyl_od = document.getElementById('refraction_od_cylinder');
+        if (cyl_od && !cyl_od.value && "{{ history.refraction_od_cylinder|default:'' }}") {
+            cyl_od.value = "{{ history.refraction_od_cylinder|default:'' }}";
+        }
+        
+        var axis_od = document.getElementById('refraction_od_axis');
+        if (axis_od && !axis_od.value && "{{ history.refraction_od_axis|default:'' }}") {
+            axis_od.value = "{{ history.refraction_od_axis|default:'' }}";
+        }
+        
+        var add_od = document.getElementById('refraction_od_add');
+        if (add_od && !add_od.value && "{{ history.refraction_od_add|default:'' }}") {
+            add_od.value = "{{ history.refraction_od_add|default:'' }}";
+        }
+        
+        {% if history.refraction_od_prism %}
+        var prism_od = document.getElementById('refraction_od_prism');
+        if (prism_od && !prism_od.value) prism_od.value = "{{ history.refraction_od_prism }}";
+        {% endif %}
+        
+        {% if history.pd_od %}
+        var pd_od = document.getElementById('refraction_od_dnp');
+        if (pd_od && !pd_od.value) pd_od.value = "{{ history.pd_od }}";
+        {% endif %}
+        
+        // Refracción OS - Los valores ya están en el HTML con el atributo value
+        var sph_os = document.getElementById('refraction_os_sphere');
+        if (sph_os && !sph_os.value && "{{ history.refraction_os_sphere|default:'' }}") {
+            sph_os.value = "{{ history.refraction_os_sphere|default:'' }}";
+        }
+        
+        var cyl_os = document.getElementById('refraction_os_cylinder');
+        if (cyl_os && !cyl_os.value && "{{ history.refraction_os_cylinder|default:'' }}") {
+            cyl_os.value = "{{ history.refraction_os_cylinder|default:'' }}";
+        }
+        
+        var axis_os = document.getElementById('refraction_os_axis');
+        if (axis_os && !axis_os.value && "{{ history.refraction_os_axis|default:'' }}") {
+            axis_os.value = "{{ history.refraction_os_axis|default:'' }}";
+        }
+        
+        var add_os = document.getElementById('refraction_os_add');
+        if (add_os && !add_os.value && "{{ history.refraction_os_add|default:'' }}") {
+            add_os.value = "{{ history.refraction_os_add|default:'' }}";
+        }
+        
+        {% if history.refraction_os_prism %}
+        var prism_os = document.getElementById('refraction_os_prism');
+        if (prism_os && !prism_os.value) prism_os.value = "{{ history.refraction_os_prism }}";
+        {% endif %}
+        
+        {% if history.pd_os %}
+        var pd_os = document.getElementById('refraction_os_dnp');
+        if (pd_os && !pd_os.value) pd_os.value = "{{ history.pd_os }}";
+        {% endif %}
+        
+        // Queratometría OD
+        {% if history.keratometry_od_k1 %}
+        var k1_od = document.querySelector('input[name="keratometry_od_k1"]');
+        if (k1_od && !k1_od.value) k1_od.value = "{{ history.keratometry_od_k1 }}";
+        {% endif %}
+        {% if history.keratometry_od_k2 %}
+        var k2_od = document.querySelector('input[name="keratometry_od_k2"]');
+        if (k2_od && !k2_od.value) k2_od.value = "{{ history.keratometry_od_k2 }}";
+        {% endif %}
+        {% if history.keratometry_od_k1_axis %}
+        var kaxis_od = document.querySelector('input[name="keratometry_od_axis"]');
+        if (kaxis_od && !kaxis_od.value) kaxis_od.value = "{{ history.keratometry_od_k1_axis }}";
+        {% endif %}
+        
+        // Queratometría OS
+        {% if history.keratometry_os_k1 %}
+        var k1_os = document.querySelector('input[name="keratometry_os_k1"]');
+        if (k1_os && !k1_os.value) k1_os.value = "{{ history.keratometry_os_k1 }}";
+        {% endif %}
+        {% if history.keratometry_os_k2 %}
+        var k2_os = document.querySelector('input[name="keratometry_os_k2"]');
+        if (k2_os && !k2_os.value) k2_os.value = "{{ history.keratometry_os_k2 }}";
+        {% endif %}
+        {% if history.keratometry_os_k1_axis %}
+        var kaxis_os = document.querySelector('input[name="keratometry_os_axis"]');
+        if (kaxis_os && !kaxis_os.value) kaxis_os.value = "{{ history.keratometry_os_k1_axis }}";
+        {% endif %}
+        
+        // Observaciones
+        {% if history.observations %}
+        var obs = document.querySelector('textarea[name="exam_notes"]');
+        if (obs) obs.value = `{{ history.observations|escapejs }}`;
+        {% endif %}
+        
+        // Verificar valores cargados
+        console.log('🔍 Verificando valores cargados en campos:');
+        console.log('  - refraction_od_sphere:', document.getElementById('refraction_od_sphere')?.value);
+        console.log('  - refraction_os_sphere:', document.getElementById('refraction_os_sphere')?.value);
+        console.log('  - refraction_od_cylinder:', document.getElementById('refraction_od_cylinder')?.value);
+        console.log('  - refraction_os_cylinder:', document.getElementById('refraction_os_cylinder')?.value);
+        console.log('  - refraction_od_axis:', document.getElementById('refraction_od_axis')?.value);
+        console.log('  - refraction_os_axis:', document.getElementById('refraction_os_axis')?.value);
+        console.log('  - refraction_od_add:', document.getElementById('refraction_od_add')?.value);
+        console.log('  - refraction_os_add:', document.getElementById('refraction_os_add')?.value);
+        console.log('  - va_od_cc:', document.getElementById('va_od_cc')?.value);
+        console.log('  - va_os_cc:', document.getElementById('va_os_cc')?.value);
+        
+        // Actualizar gráficos después de cargar datos (con más delay)
+        setTimeout(function() {
+            try {
+                if (typeof updateRadarChart === 'function') updateRadarChart();
+                if (typeof updatePolarChart === 'function') updatePolarChart();
+                if (typeof updateSeverityIndicators === 'function') updateSeverityIndicators();
+                console.log('✅ Gráficos actualizados');
+            } catch (e) {
+                console.log('⚠️ Error actualizando gráficos:', e.message);
+            }
+        }, 500);
+        
+        console.log('✅ Pre-carga completada');
+    }, 100); // Delay de 100ms para asegurar que el DOM esté listo
+});
+{% endif %}
+
+// ============ FUNCIONES DE UTILIDAD ============
+
+// Validar entrada de esfera (permite números y N/A)
+function validateSphereInput(input) {
+    let value = input.value.toUpperCase().trim();
+    
+    // Permitir N/A
+    if (value === 'N/A' || value === 'N/' || value === 'N') {
+        input.value = value;
+        input.classList.remove('border-red-500');
+        return;
+    }
+    
+    // Validar números con formato ±X.XX
+    const numberPattern = /^[+-]?\d*\.?\d{0,2}$/;
+    if (!numberPattern.test(value) && value !== '' && value !== '+' && value !== '-') {
+        input.classList.add('border-red-500');
+        setTimeout(() => {
+            input.value = input.value.slice(0, -1);
+            input.classList.remove('border-red-500');
+        }, 100);
+    } else {
+        input.classList.remove('border-red-500');
+    }
+}
+
+// Establecer valor en un campo específico
+function setValue(fieldId, value) {
+    document.getElementById(fieldId).value = value;
+}
+
+// Establecer el mismo valor en todos los campos de agudeza visual
+function setAllVA(value) {
+    ['va_od_sc', 'va_os_sc', 'va_ou_sc', 'va_od_cc', 'va_os_cc', 'va_ou_cc'].forEach(id => {
+        document.getElementById(id).value = value;
+    });
+    showNotification('Agudeza visual establecida a ' + value, 'success');
+}
+
+// Limpiar todos los campos de agudeza visual
+function clearVA() {
+    ['va_od_sc', 'va_os_sc', 'va_ou_sc', 'va_od_cc', 'va_os_cc', 'va_ou_cc'].forEach(id => {
+        document.getElementById(id).value = '';
+    });
+    showNotification('Agudeza visual limpiada', 'info');
+}
+
+// Copiar valores de refracción de OD a OI
+function copyODtoOI() {
+    const odFields = ['refraction_od_sphere', 'refraction_od_cylinder', 'refraction_od_axis', 
+                      'refraction_od_add', 'refraction_od_dnp'];
+    const oiFields = ['refraction_os_sphere', 'refraction_os_cylinder', 'refraction_os_axis', 
+                      'refraction_os_add', 'refraction_os_dnp'];
+    
+    odFields.forEach((odField, index) => {
+        const odValue = document.getElementsByName(odField)[0].value;
+        if (odValue) {
+            document.getElementsByName(oiFields[index])[0].value = odValue;
+        }
+    });
+    
+    showNotification('Valores copiados de OD a OI', 'success');
+}
+
+// Establecer valores en Plano (0.00)
+function setPlano() {
+    ['refraction_od_sphere', 'refraction_od_cylinder', 'refraction_os_sphere', 'refraction_os_cylinder'].forEach(name => {
+        document.getElementsByName(name)[0].value = '0.00';
+    });
+    ['refraction_od_axis', 'refraction_os_axis'].forEach(name => {
+        document.getElementsByName(name)[0].value = '0';
+    });
+    showNotification('Refracción establecida en Plano', 'success');
+}
+
+// Limpiar todos los campos de refracción
+function clearRefraction() {
+    ['refraction_od_sphere', 'refraction_od_cylinder', 'refraction_od_axis', 'refraction_od_add', 'refraction_od_dnp',
+     'refraction_os_sphere', 'refraction_os_cylinder', 'refraction_os_axis', 'refraction_os_add', 'refraction_os_dnp'].forEach(name => {
+        document.getElementsByName(name)[0].value = '';
+    });
+    showNotification('Refracción limpiada', 'info');
+}
+
+// Mostrar notificación temporal
+function showNotification(message, type = 'info') {
+    const colors = {
+        success: 'bg-green-500',
+        error: 'bg-red-500',
+        info: 'bg-blue-500',
+        warning: 'bg-yellow-500'
+    };
+    
+    const notification = document.createElement('div');
+    notification.className = `fixed top-4 right-4 ${colors[type]} text-white px-6 py-3 rounded-lg shadow-lg z-50 animate-fade-in-out`;
+    notification.innerHTML = `<i class="fas fa-check-circle mr-2"></i>${message}`;
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+        notification.remove();
+    }, 2000);
+}
+
+// Atajos de teclado
+document.addEventListener('keydown', function(e) {
+    // Ctrl+S para guardar
+    if (e.ctrlKey && e.key === 's') {
+        e.preventDefault();
+        document.getElementById('visualExamForm').requestSubmit();
+    }
+    // Ctrl+D para copiar OD a OI
+    if (e.ctrlKey && e.key === 'd') {
+        e.preventDefault();
+        copyODtoOI();
+    }
+});
+
+// Submit del formulario con validación y feedback
+document.getElementById('visualExamForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const submitBtn = this.querySelector('button[type="submit"]');
+    const originalText = submitBtn.innerHTML;
+    
+    // Deshabilitar botón y mostrar loading
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Guardando...';
+    submitBtn.classList.add('opacity-75');
+    
+    const formData = new FormData(this);
+    
+    fetch('', {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-CSRFToken': formData.get('csrfmiddlewaretoken')
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            submitBtn.innerHTML = '<i class="fas fa-check mr-2"></i>¡Guardado!';
+            submitBtn.classList.remove('bg-purple-600');
+            submitBtn.classList.add('bg-green-600');
+            showNotification('Examen guardado exitosamente', 'success');
+            
+            setTimeout(() => {
+                window.location.href = '{% url "dashboard:patient_detail" patient.id %}';
+            }, 1000);
+        } else {
+            showNotification('Error: ' + (data.message || 'No se pudo guardar el examen'), 'error');
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = originalText;
+            submitBtn.classList.remove('opacity-75');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showNotification('Error al guardar el examen visual', 'error');
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = originalText;
+        submitBtn.classList.remove('opacity-75');
+    });
+});
+
+// ============ VISUALIZACIONES MÉDICAS AVANZADAS ============
+
+let radarChart = null;
+let polarChart = null;
+
+// Inicializar gráficos al cargar la página
+document.addEventListener('DOMContentLoaded', function() {
+    initRadarChart();
+    initPolarChart();
+    attachRealtimeListeners();
+});
+
+// Gráfico Radar: Comparación OD vs OI
+function initRadarChart() {
+    const ctx = document.getElementById('radarChart').getContext('2d');
+    
+    radarChart = new Chart(ctx, {
+        type: 'radar',
+        data: {
+            labels: ['Esfera', 'Cilindro', 'Add', 'Prism', 'DNP', 'Agudeza'],
+            datasets: [
+                {
+                    label: 'OD',
+                    data: [0, 0, 0, 0, 0, 0],
+                    backgroundColor: 'rgba(239, 68, 68, 0.2)',
+                    borderColor: 'rgba(239, 68, 68, 1)',
+                    borderWidth: 2,
+                    pointBackgroundColor: 'rgba(239, 68, 68, 1)',
+                    pointBorderColor: '#fff',
+                    pointHoverBackgroundColor: '#fff',
+                    pointHoverBorderColor: 'rgba(239, 68, 68, 1)',
+                    pointRadius: 5,
+                    pointHoverRadius: 7
+                },
+                {
+                    label: 'OI',
+                    data: [0, 0, 0, 0, 0, 0],
+                    backgroundColor: 'rgba(59, 130, 246, 0.2)',
+                    borderColor: 'rgba(59, 130, 246, 1)',
+                    borderWidth: 2,
+                    pointBackgroundColor: 'rgba(59, 130, 246, 1)',
+                    pointBorderColor: '#fff',
+                    pointHoverBackgroundColor: '#fff',
+                    pointHoverBorderColor: 'rgba(59, 130, 246, 1)',
+                    pointRadius: 5,
+                    pointHoverRadius: 7
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                r: {
+                    beginAtZero: true,
+                    max: 10,
+                    ticks: {
+                        stepSize: 2,
+                        font: { size: 10 }
+                    },
+                    pointLabels: {
+                        font: { size: 11, weight: 'bold' }
+                    },
+                    grid: {
+                        color: 'rgba(0, 0, 0, 0.1)'
+                    }
+                }
+            },
+            plugins: {
+                legend: {
+                    display: false
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return context.dataset.label + ': ' + context.parsed.r.toFixed(2);
+                        }
+                    }
+                }
+            },
+            animation: {
+                duration: 750,
+                easing: 'easeInOutQuart'
+            }
+        }
+    });
+}
+
+// Gráfico Polar: Eje de Astigmatismo
+function initPolarChart() {
+    const ctx = document.getElementById('polarChart').getContext('2d');
+    
+    polarChart = new Chart(ctx, {
+        type: 'polarArea',
+        data: {
+            labels: ['0°', '30°', '60°', '90°', '120°', '150°', '180°'],
+            datasets: [
+                {
+                    label: 'OD Eje',
+                    data: [0, 0, 0, 0, 0, 0, 0],
+                    backgroundColor: [
+                        'rgba(239, 68, 68, 0.6)',
+                        'rgba(239, 68, 68, 0.5)',
+                        'rgba(239, 68, 68, 0.4)',
+                        'rgba(239, 68, 68, 0.3)',
+                        'rgba(239, 68, 68, 0.2)',
+                        'rgba(239, 68, 68, 0.1)',
+                        'rgba(239, 68, 68, 0.05)'
+                    ],
+                    borderWidth: 2,
+                    borderColor: 'rgba(239, 68, 68, 0.8)'
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                r: {
+                    beginAtZero: true,
+                    max: 5,
+                    ticks: {
+                        display: false
+                    },
+                    pointLabels: {
+                        font: { size: 12, weight: 'bold' }
+                    }
+                }
+            },
+            plugins: {
+                legend: {
+                    display: false
+                },
+                tooltip: {
+                    enabled: false
+                }
+            },
+            animation: {
+                duration: 600,
+                easing: 'easeInOutCubic'
+            }
+        }
+    });
+}
+
+// Actualizar gráfico radar con valores reales
+function updateRadarChart() {
+    const odSphere = Math.abs(parseFloat(document.getElementById('refraction_od_sphere')?.value) || 0);
+    const oiSphere = Math.abs(parseFloat(document.getElementById('refraction_os_sphere')?.value) || 0);
+    const odCyl = Math.abs(parseFloat(document.getElementById('refraction_od_cylinder')?.value) || 0);
+    const oiCyl = Math.abs(parseFloat(document.getElementById('refraction_os_cylinder')?.value) || 0);
+    const odAdd = Math.abs(parseFloat(document.getElementById('refraction_od_add')?.value) || 0);
+    const oiAdd = Math.abs(parseFloat(document.getElementById('refraction_os_add')?.value) || 0);
+    const odPrism = Math.abs(parseFloat(document.getElementById('refraction_od_prism')?.value) || 0);
+    const oiPrism = Math.abs(parseFloat(document.getElementById('refraction_os_prism')?.value) || 0);
+    const odDnp = Math.abs(parseFloat(document.getElementById('refraction_od_dnp')?.value) || 0);
+    const oiDnp = Math.abs(parseFloat(document.getElementById('refraction_os_dnp')?.value) || 0);
+    
+    // Convertir agudeza visual a valor numérico
+    const odVa = convertVAtoNumber(document.getElementById('va_od_cc')?.value);
+    const oiVa = convertVAtoNumber(document.getElementById('va_os_cc')?.value);
+    
+    radarChart.data.datasets[0].data = [odSphere, odCyl, odAdd, odPrism, odDnp/10, odVa];
+    radarChart.data.datasets[1].data = [oiSphere, oiCyl, oiAdd, oiPrism, oiDnp/10, oiVa];
+    radarChart.update('none'); // Sin animación para actualizaciones en tiempo real
+}
+
+// Actualizar gráfico polar con ejes de astigmatismo
+function updatePolarChart() {
+    const odAxis = parseFloat(document.getElementById('refraction_od_axis')?.value) || 0;
+    const oiAxis = parseFloat(document.getElementById('refraction_os_axis')?.value) || 0;
+    const odCyl = Math.abs(parseFloat(document.getElementById('refraction_od_cylinder')?.value) || 0);
+    const oiCyl = Math.abs(parseFloat(document.getElementById('refraction_os_cylinder')?.value) || 0);
+    
+    // Actualizar labels
+    document.getElementById('odAxisLabel').textContent = odAxis ? odAxis + '°' : '--°';
+    document.getElementById('oiAxisLabel').textContent = oiAxis ? oiAxis + '°' : '--°';
+    
+    // Crear array de datos para visualizar el eje
+    const data = [0, 0, 0, 0, 0, 0, 0];
+    
+    // OD: Determinar en qué segmento cae el eje
+    if (odCyl > 0) {
+        const segment = Math.floor(odAxis / 30);
+        data[segment] = odCyl * 2; // Multiplicar para mejor visualización
+    }
+    
+    polarChart.data.datasets[0].data = data;
+    
+    // Actualizar colores basado en OI
+    if (oiCyl > 0) {
+        const oiSegment = Math.floor(oiAxis / 30);
+        polarChart.data.datasets[0].backgroundColor = data.map((val, idx) => {
+            if (idx === oiSegment) {
+                return 'rgba(59, 130, 246, 0.6)'; // Azul para OI
+            } else if (val > 0) {
+                return 'rgba(239, 68, 68, 0.6)'; // Rojo para OD
+            }
+            return 'rgba(200, 200, 200, 0.2)';
+        });
+    }
+    
+    polarChart.update('none');
+}
+
+// Convertir agudeza visual a valor numérico
+function convertVAtoNumber(va) {
+    if (!va) return 0;
+    if (va === 'NPL') return 0;
+    if (va === 'PL') return 1;
+    if (va === 'MM') return 2;
+    if (va === 'CD') return 3;
+    
+    // Formato 20/XX
+    const match = va.match(/20\/(\d+)/);
+    if (match) {
+        const denominator = parseInt(match[1]);
+        return Math.max(0, 10 - (denominator - 20) / 10);
+    }
+    return 0;
+}
+
+// Actualizar indicadores de severidad
+function updateSeverityIndicators() {
+    // Esfera OD - manejar "N/A" y valores de texto
+    const odSphereValue = document.getElementById('refraction_od_sphere')?.value || '';
+    const odSphere = odSphereValue.toUpperCase() === 'N/A' || odSphereValue === '' ? 0 : parseFloat(odSphereValue) || 0;
+    console.log('Actualizando Esfera OD:', odSphereValue, '→', odSphere);
+    updateSphereIndicator('od', odSphere);
+    
+    // Esfera OI - manejar "N/A" y valores de texto
+    const oiSphereValue = document.getElementById('refraction_os_sphere')?.value || '';
+    const oiSphere = oiSphereValue.toUpperCase() === 'N/A' || oiSphereValue === '' ? 0 : parseFloat(oiSphereValue) || 0;
+    console.log('Actualizando Esfera OI:', oiSphereValue, '→', oiSphere);
+    updateSphereIndicator('oi', oiSphere);
+    
+    // Cilindro OD
+    const odCyl = parseFloat(document.getElementById('refraction_od_cylinder')?.value) || 0;
+    console.log('Actualizando Cilindro OD:', document.getElementById('refraction_od_cylinder')?.value, '→', odCyl);
+    updateCylinderIndicator('od', Math.abs(odCyl)); // Usar valor absoluto para el indicador
+    
+    // Cilindro OI
+    const oiCyl = parseFloat(document.getElementById('refraction_os_cylinder')?.value) || 0;
+    console.log('Actualizando Cilindro OI:', document.getElementById('refraction_os_cylinder')?.value, '→', oiCyl);
+    updateCylinderIndicator('oi', Math.abs(oiCyl)); // Usar valor absoluto para el indicador
+    
+    // Agudeza Visual OD
+    const odVa = document.getElementById('va_od_cc')?.value;
+    updateVAIndicator('od', odVa);
+    
+    // Agudeza Visual OI
+    const oiVa = document.getElementById('va_os_cc')?.value;
+    updateVAIndicator('oi', oiVa);
+}
+
+// Actualizar indicador de esfera
+function updateSphereIndicator(eye, value) {
+    const bar = document.getElementById(eye + 'SphereBar');
+    const status = document.getElementById(eye + 'SphereStatus');
+    
+    if (!bar || !status) return;
+    
+    const absValue = Math.abs(value);
+    let percent, color, text;
+    
+    if (value === 0) {
+        // Sin datos o valor 0
+        percent = 0;
+        color = 'from-gray-300 to-gray-400';
+        text = '--';
+    } else if (value < -6) {
+        percent = 100;
+        color = 'from-red-600 to-red-700';
+        text = 'Miopía Alta';
+    } else if (value < -3) {
+        percent = 75;
+        color = 'from-orange-500 to-orange-600';
+        text = 'Miopía Moderada';
+    } else if (value < -0.5) {
+        percent = 60;
+        color = 'from-yellow-400 to-yellow-500';
+        text = 'Miopía Baja';
+    } else if (value > 5) {
+        percent = 100;
+        color = 'from-purple-600 to-purple-700';
+        text = 'Hipermetropía Alta';
+    } else if (value > 2) {
+        percent = 75;
+        color = 'from-blue-500 to-blue-600';
+        text = 'Hipermetropía Moderada';
+    } else if (value > 0.5) {
+        percent = 60;
+        color = 'from-cyan-400 to-cyan-500';
+        text = 'Hipermetropía Baja';
+    } else {
+        percent = 50;
+        color = 'from-green-400 to-green-500';
+        text = 'Normal';
+    }
+    
+    bar.style.width = percent + '%';
+    bar.className = 'h-full bg-gradient-to-r ' + color + ' transition-all duration-500';
+    status.textContent = text;
+}
+
+// Actualizar indicador de cilindro
+function updateCylinderIndicator(eye, value) {
+    const bar = document.getElementById(eye + 'CylBar');
+    const status = document.getElementById(eye + 'CylStatus');
+    
+    if (!bar || !status) return;
+    
+    const absValue = Math.abs(value);
+    let percent, color, text;
+    
+    if (absValue >= 4) {
+        percent = 100;
+        color = 'from-red-600 to-red-700';
+        text = 'Astigmatismo Alto';
+    } else if (absValue >= 2) {
+        percent = 75;
+        color = 'from-orange-500 to-orange-600';
+        text = 'Astigmatismo Moderado';
+    } else if (absValue >= 0.5) {
+        percent = 50;
+        color = 'from-yellow-400 to-yellow-500';
+        text = 'Astigmatismo Bajo';
+    } else if (absValue > 0.01) {
+        // Hay un valor pero es muy pequeño (menos de 0.5)
+        percent = 25;
+        color = 'from-lime-400 to-lime-500';
+        text = 'Astigmatismo Mínimo';
+    } else {
+        percent = 0;
+        color = 'from-gray-300 to-gray-400';
+        text = '--';
+    }
+    
+    bar.style.width = percent + '%';
+    bar.className = 'h-full bg-gradient-to-r ' + color + ' transition-all duration-500';
+    status.textContent = text;
+}
+
+// Actualizar indicador de agudeza visual
+function updateVAIndicator(eye, value) {
+    const bar = document.getElementById(eye + 'VaBar');
+    const status = document.getElementById(eye + 'VaStatus');
+    
+    if (!value) {
+        bar.style.width = '0%';
+        status.textContent = '--';
+        return;
+    }
+    
+    let percent, color;
+    
+    if (value === '20/15' || value === '20/20') {
+        percent = 100;
+        color = 'from-green-500 to-green-600';
+    } else if (value === '20/25' || value === '20/30') {
+        percent = 80;
+        color = 'from-lime-500 to-lime-600';
+    } else if (value === '20/40' || value === '20/50') {
+        percent = 60;
+        color = 'from-yellow-500 to-yellow-600';
+    } else if (value === '20/60' || value === '20/70') {
+        percent = 40;
+        color = 'from-orange-500 to-orange-600';
+    } else if (value === '20/80' || value === '20/100') {
+        percent = 30;
+        color = 'from-red-500 to-red-600';
+    } else if (value === '20/200' || value === '20/400') {
+        percent = 20;
+        color = 'from-red-600 to-red-700';
+    } else if (value === 'CD' || value === 'MM') {
+        percent = 10;
+        color = 'from-red-700 to-red-800';
+    } else if (value === 'PL' || value === 'NPL') {
+        percent = 5;
+        color = 'from-gray-700 to-gray-800';
+    } else {
+        percent = 50;
+        color = 'from-blue-400 to-blue-500';
+    }
+    
+    bar.style.width = percent + '%';
+    bar.className = 'h-full bg-gradient-to-r ' + color + ' transition-all duration-500';
+    status.textContent = value;
+}
+
+// Adjuntar listeners para actualización en tiempo real
+function attachRealtimeListeners() {
+    const fieldsToWatch = [
+        'refraction_od_sphere', 'refraction_os_sphere',
+        'refraction_od_cylinder', 'refraction_os_cylinder',
+        'refraction_od_axis', 'refraction_os_axis',
+        'refraction_od_add', 'refraction_os_add',
+        'refraction_od_prism', 'refraction_os_prism',
+        'refraction_od_dnp', 'refraction_os_dnp',
+        'va_od_cc', 'va_os_cc'
+    ];
+    
+    fieldsToWatch.forEach(fieldId => {
+        const field = document.getElementById(fieldId);
+        if (field) {
+            field.addEventListener('input', function() {
+                updateRadarChart();
+                updatePolarChart();
+                updateSeverityIndicators();
+            });
+        }
+    });
+}
+
+// Añadir animación CSS
+const style = document.createElement('style');
+style.textContent = `
+    @keyframes fade-in-out {
+        0% { opacity: 0; transform: translateY(-20px); }
+        10% { opacity: 1; transform: translateY(0); }
+        90% { opacity: 1; transform: translateY(0); }
+        100% { opacity: 0; transform: translateY(-20px); }
+    }
+    .animate-fade-in-out {
+        animation: fade-in-out 2s ease-in-out;
+    }
+    
+    @keyframes pulse-glow {
+        0%, 100% { box-shadow: 0 0 5px rgba(147, 51, 234, 0.5); }
+        50% { box-shadow: 0 0 20px rgba(147, 51, 234, 0.8); }
+    }
+`;
+document.head.appendChild(style);
+</script>
+{% endblock %}
