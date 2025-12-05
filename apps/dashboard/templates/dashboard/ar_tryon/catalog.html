@@ -1,0 +1,202 @@
+{% extends 'dashboard/base.html' %}
+
+{% block title %}Catálogo de Monturas - AR Try-On{% endblock %}
+
+{% block extra_css %}
+<style>
+    .filter-btn {
+        transition: all 0.3s ease;
+    }
+    .filter-btn.active {
+        background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+        color: white;
+    }
+    .frame-card {
+        transition: all 0.3s ease;
+    }
+    .frame-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 15px 30px rgba(0, 0, 0, 0.2);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="p-6">
+    <!-- Header -->
+    <div class="mb-6">
+        <div class="flex items-center justify-between">
+            <div>
+                <h1 class="text-3xl font-bold text-gray-800 flex items-center">
+                    <i class="fas fa-th-large text-indigo-600 mr-3"></i>
+                    Catálogo de Monturas
+                </h1>
+                <p class="text-gray-600 mt-1">Explora nuestra colección completa</p>
+            </div>
+            <a href="{% url 'dashboard:ar_tryon_home' %}" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors">
+                <i class="fas fa-arrow-left mr-2"></i>
+                Volver
+            </a>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="bg-white rounded-xl p-6 shadow-lg mb-6">
+        <h3 class="font-semibold text-gray-800 mb-4">Filtros</h3>
+        
+        <!-- Search -->
+        <form method="get" class="mb-4">
+            <div class="flex gap-2">
+                <input 
+                    type="text" 
+                    name="search" 
+                    value="{{ search_query|default:'' }}"
+                    placeholder="Buscar por nombre, código o marca..."
+                    class="flex-1 px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                >
+                <button type="submit" class="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">
+                    <i class="fas fa-search mr-2"></i>
+                    Buscar
+                </button>
+            </div>
+        </form>
+
+        <!-- Categories -->
+        <div class="mb-4">
+            <label class="block text-sm font-medium text-gray-700 mb-2">Categorías</label>
+            <div class="flex flex-wrap gap-2">
+                <a href="{% url 'dashboard:ar_tryon_catalog' %}" 
+                   class="filter-btn px-4 py-2 rounded-lg border {% if not selected_category %}active{% else %}bg-white text-gray-700 hover:bg-gray-50{% endif %}">
+                    Todas
+                </a>
+                {% for category in categories %}
+                <a href="?category={{ category.id }}{% if selected_gender %}&gender={{ selected_gender }}{% endif %}{% if search_query %}&search={{ search_query }}{% endif %}"
+                   class="filter-btn px-4 py-2 rounded-lg border {% if selected_category == category.id|stringformat:'s' %}active{% else %}bg-white text-gray-700 hover:bg-gray-50{% endif %}">
+                    <i class="fas {{ category.icon|default:'fa-glasses' }} mr-1"></i>
+                    {{ category.name }}
+                </a>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Gender -->
+        <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Género</label>
+            <div class="flex flex-wrap gap-2">
+                <a href="?{% if selected_category %}category={{ selected_category }}&{% endif %}{% if search_query %}search={{ search_query }}{% endif %}" 
+                   class="filter-btn px-4 py-2 rounded-lg border {% if not selected_gender %}active{% else %}bg-white text-gray-700 hover:bg-gray-50{% endif %}">
+                    Todos
+                </a>
+                <a href="?{% if selected_category %}category={{ selected_category }}&{% endif %}gender=unisex{% if search_query %}&search={{ search_query }}{% endif %}"
+                   class="filter-btn px-4 py-2 rounded-lg border {% if selected_gender == 'unisex' %}active{% else %}bg-white text-gray-700 hover:bg-gray-50{% endif %}">
+                    Unisex
+                </a>
+                <a href="?{% if selected_category %}category={{ selected_category }}&{% endif %}gender=male{% if search_query %}&search={{ search_query }}{% endif %}"
+                   class="filter-btn px-4 py-2 rounded-lg border {% if selected_gender == 'male' %}active{% else %}bg-white text-gray-700 hover:bg-gray-50{% endif %}">
+                    Hombre
+                </a>
+                <a href="?{% if selected_category %}category={{ selected_category }}&{% endif %}gender=female{% if search_query %}&search={{ search_query }}{% endif %}"
+                   class="filter-btn px-4 py-2 rounded-lg border {% if selected_gender == 'female' %}active{% else %}bg-white text-gray-700 hover:bg-gray-50{% endif %}">
+                    Mujer
+                </a>
+                <a href="?{% if selected_category %}category={{ selected_category }}&{% endif %}gender=kids{% if search_query %}&search={{ search_query }}{% endif %}"
+                   class="filter-btn px-4 py-2 rounded-lg border {% if selected_gender == 'kids' %}active{% else %}bg-white text-gray-700 hover:bg-gray-50{% endif %}">
+                    Niños
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Results -->
+    <div class="bg-white rounded-xl p-6 shadow-lg">
+        <div class="flex items-center justify-between mb-6">
+            <h3 class="text-lg font-semibold text-gray-800">
+                {{ frames.count }} monturas encontradas
+            </h3>
+        </div>
+
+        {% if frames %}
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            {% for frame in frames %}
+            <div class="frame-card bg-gray-50 rounded-lg overflow-hidden shadow">
+                <!-- Image -->
+                <div class="aspect-w-16 aspect-h-9 bg-white relative">
+                    {% if frame.front_image %}
+                    <img src="{{ frame.front_image.url }}" alt="{{ frame.name }}" class="w-full h-56 object-contain p-4">
+                    {% else %}
+                    <div class="w-full h-56 flex items-center justify-center">
+                        <i class="fas fa-glasses text-6xl text-gray-300"></i>
+                    </div>
+                    {% endif %}
+                    
+                    {% if frame.is_featured %}
+                    <div class="absolute top-2 right-2 bg-yellow-400 text-yellow-900 px-2 py-1 rounded-full text-xs font-bold">
+                        <i class="fas fa-star mr-1"></i>Destacado
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- Info -->
+                <div class="p-4">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-xs font-semibold px-2 py-1 bg-indigo-100 text-indigo-700 rounded">
+                            {{ frame.code }}
+                        </span>
+                        <div class="flex items-center gap-2 text-xs text-gray-500">
+                            <span title="Veces probado">
+                                <i class="fas fa-eye"></i> {{ frame.try_on_count }}
+                            </span>
+                            <span title="Favoritos">
+                                <i class="fas fa-heart"></i> {{ frame.favorite_count }}
+                            </span>
+                        </div>
+                    </div>
+
+                    <h3 class="font-semibold text-gray-800 mb-1 truncate" title="{{ frame.name }}">{{ frame.name }}</h3>
+                    <p class="text-sm text-gray-600 mb-1">{{ frame.brand }}</p>
+                    
+                    <!-- Specs -->
+                    <div class="flex items-center gap-2 text-xs text-gray-500 mb-3">
+                        <span class="px-2 py-1 bg-gray-200 rounded">{{ frame.color }}</span>
+                        <span class="px-2 py-1 bg-gray-200 rounded">{{ frame.get_material_display }}</span>
+                    </div>
+
+                    <!-- Dimensions -->
+                    <div class="text-xs text-gray-600 mb-3">
+                        <i class="fas fa-ruler-combined mr-1"></i>
+                        {{ frame.lens_width }}-{{ frame.bridge_width }}-{{ frame.temple_length }}mm
+                    </div>
+
+                    <!-- Price & Stock -->
+                    <div class="flex items-center justify-between mb-3">
+                        <span class="text-lg font-bold text-indigo-600">${{ frame.price }}</span>
+                        <span class="text-xs {% if frame.stock > 0 %}text-green-600{% else %}text-red-600{% endif %}">
+                            {% if frame.stock > 0 %}
+                                <i class="fas fa-check-circle mr-1"></i>Stock: {{ frame.stock }}
+                            {% else %}
+                                <i class="fas fa-times-circle mr-1"></i>Agotado
+                            {% endif %}
+                        </span>
+                    </div>
+
+                    <!-- Action -->
+                    <a href="{% url 'dashboard:ar_tryon_camera' %}?frame={{ frame.id }}" 
+                       class="block w-full text-center px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">
+                        <i class="fas fa-camera mr-2"></i>Probar Ahora
+                    </a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="text-center py-12">
+            <i class="fas fa-search text-6xl text-gray-300 mb-4"></i>
+            <p class="text-gray-600 text-lg">No se encontraron monturas con los filtros seleccionados</p>
+            <a href="{% url 'dashboard:ar_tryon_catalog' %}" class="inline-block mt-4 px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">
+                Limpiar Filtros
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

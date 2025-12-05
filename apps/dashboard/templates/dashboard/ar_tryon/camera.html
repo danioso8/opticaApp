@@ -1,0 +1,624 @@
+{% extends 'dashboard/base.html' %}
+
+{% block title %}Prueba Virtual - AR Try-On{% endblock %}
+
+{% block extra_css %}
+<style>
+    #video-container {
+        position: relative;
+        width: 100%;
+        max-width: 800px;
+        margin: 0 auto;
+    }
+    
+    #webcam {
+        width: 100%;
+        height: auto;
+        border-radius: 12px;
+        transform: scaleX(-1);
+    }
+    
+    #canvas-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+        transform: scaleX(-1);
+    }
+    
+    .frame-selector {
+        max-height: 500px;
+        overflow-y: auto;
+    }
+    
+    .frame-item {
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    
+    .frame-item:hover {
+        transform: scale(1.05);
+    }
+    
+    .frame-item.selected {
+        border: 3px solid #6366f1;
+        box-shadow: 0 0 20px rgba(99, 102, 241, 0.5);
+    }
+    
+    .control-btn {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 24px;
+        transition: all 0.3s ease;
+    }
+    
+    .control-btn:hover {
+        transform: scale(1.1);
+    }
+    
+    .detection-status {
+        position: absolute;
+        top: 10px;
+        left: 10px;
+        z-index: 10;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="p-6">
+    <!-- Header -->
+    <div class="flex items-center justify-between mb-6">
+        <div>
+            <h1 class="text-3xl font-bold text-gray-800 flex items-center">
+                <i class="fas fa-camera text-indigo-600 mr-3"></i>
+                Prueba Virtual AR
+            </h1>
+            <p class="text-gray-600 mt-1">
+                {% if patient %}
+                    Sesión para: <strong>{{ patient.full_name }}</strong>
+                {% else %}
+                    Sesión de prueba anónima
+                {% endif %}
+            </p>
+        </div>
+        <a href="{% url 'dashboard:ar_tryon_home' %}" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors">
+            <i class="fas fa-times mr-2"></i>
+            Salir
+        </a>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Video Feed -->
+        <div class="lg:col-span-2">
+            <div class="bg-white rounded-xl p-6 shadow-lg">
+                <div id="video-container" class="relative mb-4">
+                    <!-- Detection Status -->
+                    <div class="detection-status">
+                        <div id="face-detected" class="hidden px-3 py-2 bg-green-500 text-white rounded-lg text-sm font-semibold shadow-lg">
+                            <i class="fas fa-check-circle mr-2"></i>
+                            Rostro detectado
+                        </div>
+                        <div id="face-not-detected" class="px-3 py-2 bg-red-500 text-white rounded-lg text-sm font-semibold shadow-lg">
+                            <i class="fas fa-exclamation-circle mr-2"></i>
+                            Buscando rostro...
+                        </div>
+                        <div id="loading-models" class="px-3 py-2 bg-blue-500 text-white rounded-lg text-sm font-semibold shadow-lg">
+                            <i class="fas fa-spinner fa-spin mr-2"></i>
+                            Cargando modelos IA...
+                        </div>
+                    </div>
+                    
+                    <!-- Webcam -->
+                    <video id="webcam" autoplay playsinline></video>
+                    
+                    <!-- Canvas for overlays -->
+                    <canvas id="canvas-overlay"></canvas>
+                </div>
+
+                <!-- Controls -->
+                <div class="flex items-center justify-center gap-4">
+                    <button id="btn-capture" class="control-btn bg-indigo-600 text-white hover:bg-indigo-700 shadow-lg" title="Capturar foto">
+                        <i class="fas fa-camera"></i>
+                    </button>
+                    
+                    <button id="btn-favorite" class="control-btn bg-red-500 text-white hover:bg-red-600 shadow-lg" title="Marcar como favorito">
+                        <i class="fas fa-heart"></i>
+                    </button>
+                    
+                    <button id="btn-detect-face" class="control-btn bg-purple-600 text-white hover:bg-purple-700 shadow-lg" title="Analizar rostro">
+                        <i class="fas fa-user-circle"></i>
+                    </button>
+                    
+                    <button id="btn-toggle-overlay" class="control-btn bg-green-600 text-white hover:bg-green-700 shadow-lg" title="Activar/Desactivar overlay">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                </div>
+
+                <!-- Face Shape Info -->
+                <div id="face-shape-info" class="hidden mt-4 p-4 bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg">
+                    <h4 class="font-semibold text-gray-800 mb-2 flex items-center">
+                        <i class="fas fa-brain text-purple-600 mr-2"></i>
+                        Análisis de Rostro
+                    </h4>
+                    <div class="grid grid-cols-2 gap-3 text-sm">
+                        <div>
+                            <span class="text-gray-600">Forma detectada:</span>
+                            <span id="detected-shape" class="font-semibold text-purple-600 ml-1">-</span>
+                        </div>
+                        <div>
+                            <span class="text-gray-600">Confianza:</span>
+                            <span id="detection-confidence" class="font-semibold text-purple-600 ml-1">-</span>
+                        </div>
+                        <div class="col-span-2">
+                            <span class="text-gray-600">Recomendaciones:</span>
+                            <ul id="recommendations-list" class="list-disc list-inside text-purple-700 mt-1"></ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Captured Photos -->
+            <div id="captured-photos" class="hidden mt-6 bg-white rounded-xl p-6 shadow-lg">
+                <h3 class="text-lg font-semibold text-gray-800 mb-4">
+                    <i class="fas fa-images text-indigo-600 mr-2"></i>
+                    Fotos Capturadas
+                </h3>
+                <div id="photos-grid" class="grid grid-cols-3 gap-4"></div>
+            </div>
+        </div>
+
+        <!-- Frame Selector -->
+        <div class="lg:col-span-1">
+            <div class="bg-white rounded-xl p-6 shadow-lg">
+                <h3 class="text-lg font-semibold text-gray-800 mb-4">
+                    <i class="fas fa-glasses text-indigo-600 mr-2"></i>
+                    Selecciona una Montura
+                </h3>
+
+                <!-- Category Tabs -->
+                <div class="mb-4">
+                    <select id="category-filter" class="w-full px-3 py-2 border rounded-lg">
+                        <option value="">Todas las categorías</option>
+                        {% for category in categories %}
+                        <option value="{{ category.id }}">{{ category.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Frames List -->
+                <div class="frame-selector">
+                    {% for category_name, category_frames in frames_by_category.items %}
+                    <div class="mb-4 category-group" data-category="{{ category_name }}">
+                        <h4 class="font-semibold text-gray-700 mb-2 text-sm uppercase tracking-wide">{{ category_name }}</h4>
+                        <div class="space-y-2">
+                            {% for frame in category_frames %}
+                            <div class="frame-item p-3 bg-gray-50 rounded-lg border-2 border-transparent hover:border-indigo-200" 
+                                 data-frame-id="{{ frame.id }}"
+                                 data-frame-name="{{ frame.name }}"
+                                 data-frame-overlay="{{ frame.overlay_image.url|default:'' }}"
+                                 onclick="selectFrame({{ frame.id }})">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-16 h-16 bg-white rounded flex-shrink-0">
+                                        {% if frame.front_image %}
+                                        <img src="{{ frame.front_image.url }}" alt="{{ frame.name }}" class="w-full h-full object-contain p-1">
+                                        {% else %}
+                                        <div class="w-full h-full flex items-center justify-center">
+                                            <i class="fas fa-glasses text-2xl text-gray-300"></i>
+                                        </div>
+                                        {% endif %}
+                                    </div>
+                                    <div class="flex-1 min-w-0">
+                                        <p class="font-semibold text-sm text-gray-800 truncate">{{ frame.name }}</p>
+                                        <p class="text-xs text-gray-600">{{ frame.brand }}</p>
+                                        <p class="text-xs text-indigo-600 font-semibold">${{ frame.price }}</p>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Face-api.js -->
+<script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
+
+<script>
+// Variables globales
+let video, canvas, ctx;
+let modelsLoaded = false;
+let detectionActive = true;
+let overlayActive = true;
+let currentFrame = null;
+let currentRecordId = null;
+let capturedPhotos = [];
+let faceDetected = false;
+
+const sessionId = {{ session.id }};
+
+// Inicializar al cargar
+document.addEventListener('DOMContentLoaded', async function() {
+    video = document.getElementById('webcam');
+    canvas = document.getElementById('canvas-overlay');
+    ctx = canvas.getContext('2d');
+    
+    // Cargar modelos de Face-API
+    await loadFaceAPIModels();
+    
+    // Iniciar webcam
+    await startWebcam();
+    
+    // Iniciar detección
+    detectFaces();
+    
+    // Event listeners
+    setupEventListeners();
+});
+
+async function loadFaceAPIModels() {
+    try {
+        const MODEL_URL = 'https://cdn.jsdelivr.net/npm/@vladmandic/face-api/model/';
+        
+        await Promise.all([
+            faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL),
+            faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
+            faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL),
+        ]);
+        
+        modelsLoaded = true;
+        document.getElementById('loading-models').classList.add('hidden');
+        console.log('✅ Modelos de Face-API cargados');
+    } catch (error) {
+        console.error('Error cargando modelos:', error);
+        document.getElementById('loading-models').innerHTML = '<i class="fas fa-exclamation-triangle mr-2"></i>Error cargando IA';
+    }
+}
+
+async function startWebcam() {
+    try {
+        const stream = await navigator.mediaDevices.getUserMedia({ 
+            video: { 
+                width: 1280, 
+                height: 720,
+                facingMode: 'user'
+            } 
+        });
+        
+        video.srcObject = stream;
+        
+        video.addEventListener('loadedmetadata', () => {
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+        });
+        
+        console.log('✅ Webcam iniciada');
+    } catch (error) {
+        console.error('Error accediendo a la cámara:', error);
+        alert('No se pudo acceder a la cámara. Por favor, da permisos en tu navegador.');
+    }
+}
+
+async function detectFaces() {
+    if (!modelsLoaded || !detectionActive) {
+        setTimeout(detectFaces, 100);
+        return;
+    }
+    
+    try {
+        const detections = await faceapi
+            .detectAllFaces(video, new faceapi.TinyFaceDetectorOptions())
+            .withFaceLandmarks();
+        
+        // Limpiar canvas
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        
+        if (detections && detections.length > 0) {
+            if (!faceDetected) {
+                faceDetected = true;
+                document.getElementById('face-detected').classList.remove('hidden');
+                document.getElementById('face-not-detected').classList.add('hidden');
+            }
+            
+            // Dibujar landmarks si overlay está activo
+            if (overlayActive) {
+                const resizedDetections = faceapi.resizeResults(detections, {
+                    width: canvas.width,
+                    height: canvas.height
+                });
+                
+                // Dibujar puntos de referencia
+                resizedDetections.forEach(detection => {
+                    const landmarks = detection.landmarks;
+                    
+                    // Dibujar contorno del rostro
+                    ctx.strokeStyle = '#6366f1';
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    landmarks.getJawOutline().forEach((point, i) => {
+                        if (i === 0) ctx.moveTo(point.x, point.y);
+                        else ctx.lineTo(point.x, point.y);
+                    });
+                    ctx.stroke();
+                    
+                    // Dibujar ojos
+                    drawLandmarkPoints(landmarks.getLeftEye(), '#10b981');
+                    drawLandmarkPoints(landmarks.getRightEye(), '#10b981');
+                    
+                    // Dibujar nariz
+                    drawLandmarkPoints(landmarks.getNose(), '#f59e0b');
+                    
+                    // Dibujar boca
+                    drawLandmarkPoints(landmarks.getMouth(), '#ef4444');
+                });
+                
+                // Si hay frame seleccionado, superponer
+                if (currentFrame && currentFrame.overlay) {
+                    await overlayFrame(detections[0]);
+                }
+            }
+        } else {
+            if (faceDetected) {
+                faceDetected = false;
+                document.getElementById('face-detected').classList.add('hidden');
+                document.getElementById('face-not-detected').classList.remove('hidden');
+            }
+        }
+    } catch (error) {
+        console.error('Error en detección:', error);
+    }
+    
+    // Continuar detección
+    requestAnimationFrame(detectFaces);
+}
+
+function drawLandmarkPoints(points, color) {
+    ctx.fillStyle = color;
+    points.forEach(point => {
+        ctx.beginPath();
+        ctx.arc(point.x, point.y, 2, 0, 2 * Math.PI);
+        ctx.fill();
+    });
+}
+
+async function overlayFrame(detection) {
+    // TODO: Implementar overlay de montura
+    // Requiere cálculo de posición y escala basado en landmarks
+}
+
+function selectFrame(frameId) {
+    // Remover selección anterior
+    document.querySelectorAll('.frame-item').forEach(item => {
+        item.classList.remove('selected');
+    });
+    
+    // Seleccionar nuevo
+    const frameElement = document.querySelector(`[data-frame-id="${frameId}"]`);
+    frameElement.classList.add('selected');
+    
+    currentFrame = {
+        id: frameId,
+        name: frameElement.dataset.frameName,
+        overlay: frameElement.dataset.frameOverlay
+    };
+    
+    // Registrar prueba
+    recordTryOn(frameId);
+}
+
+async function recordTryOn(frameId) {
+    try {
+        const response = await fetch('{% url "dashboard:api_record_try_on" %}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token }}'
+            },
+            body: JSON.stringify({
+                session_id: sessionId,
+                frame_id: frameId
+            })
+        });
+        
+        const data = await response.json();
+        if (data.success) {
+            currentRecordId = data.record_id;
+            console.log('✅ Prueba registrada:', data.message);
+        }
+    } catch (error) {
+        console.error('Error registrando prueba:', error);
+    }
+}
+
+async function capturePhoto() {
+    if (!currentFrame) {
+        alert('Por favor selecciona una montura primero');
+        return;
+    }
+    
+    // Crear canvas temporal
+    const tempCanvas = document.createElement('canvas');
+    tempCanvas.width = video.videoWidth;
+    tempCanvas.height = video.videoHeight;
+    const tempCtx = tempCanvas.getContext('2d');
+    
+    // Dibujar video (espejado)
+    tempCtx.translate(tempCanvas.width, 0);
+    tempCtx.scale(-1, 1);
+    tempCtx.drawImage(video, 0, 0);
+    
+    // Convertir a base64
+    const photoData = tempCanvas.toDataURL('image/jpeg', 0.9);
+    
+    // Guardar foto
+    if (currentRecordId) {
+        try {
+            const response = await fetch('{% url "dashboard:api_save_photo" %}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+                body: JSON.stringify({
+                    record_id: currentRecordId,
+                    photo: photoData
+                })
+            });
+            
+            const data = await response.json();
+            if (data.success) {
+                // Agregar a galería
+                capturedPhotos.push({
+                    url: photoData,
+                    frame: currentFrame.name,
+                    recordId: currentRecordId
+                });
+                updatePhotosGallery();
+                
+                // Feedback visual
+                flashScreen();
+                console.log('✅ Foto guardada');
+            }
+        } catch (error) {
+            console.error('Error guardando foto:', error);
+        }
+    }
+}
+
+function updatePhotosGallery() {
+    const gallery = document.getElementById('photos-grid');
+    const container = document.getElementById('captured-photos');
+    
+    container.classList.remove('hidden');
+    gallery.innerHTML = '';
+    
+    capturedPhotos.forEach((photo, index) => {
+        const photoDiv = document.createElement('div');
+        photoDiv.className = 'relative group';
+        photoDiv.innerHTML = `
+            <img src="${photo.url}" class="w-full h-32 object-cover rounded-lg shadow">
+            <div class="absolute inset-0 bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg flex items-center justify-center">
+                <button onclick="deletePhoto(${index})" class="text-white hover:text-red-500">
+                    <i class="fas fa-trash text-2xl"></i>
+                </button>
+            </div>
+            <p class="text-xs text-gray-600 mt-1 text-center truncate">${photo.frame}</p>
+        `;
+        gallery.appendChild(photoDiv);
+    });
+}
+
+function deletePhoto(index) {
+    capturedPhotos.splice(index, 1);
+    updatePhotosGallery();
+}
+
+function flashScreen() {
+    const flash = document.createElement('div');
+    flash.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:white;z-index:9999;opacity:0.8;pointer-events:none;';
+    document.body.appendChild(flash);
+    setTimeout(() => flash.remove(), 100);
+}
+
+async function analyzeFaceShape() {
+    try {
+        const response = await fetch('{% url "dashboard:api_detect_face_shape" %}');
+        const data = await response.json();
+        
+        if (data.success) {
+            document.getElementById('face-shape-info').classList.remove('hidden');
+            document.getElementById('detected-shape').textContent = data.face_shape.toUpperCase();
+            document.getElementById('detection-confidence').textContent = Math.round(data.confidence * 100) + '%';
+            
+            const recList = document.getElementById('recommendations-list');
+            recList.innerHTML = '';
+            data.recommendations.forEach(rec => {
+                const li = document.createElement('li');
+                li.textContent = rec;
+                recList.appendChild(li);
+            });
+        }
+    } catch (error) {
+        console.error('Error analizando rostro:', error);
+    }
+}
+
+function toggleOverlay() {
+    overlayActive = !overlayActive;
+    const btn = document.getElementById('btn-toggle-overlay');
+    if (overlayActive) {
+        btn.classList.remove('bg-gray-400');
+        btn.classList.add('bg-green-600');
+    } else {
+        btn.classList.remove('bg-green-600');
+        btn.classList.add('bg-gray-400');
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+    }
+}
+
+function setupEventListeners() {
+    document.getElementById('btn-capture').addEventListener('click', capturePhoto);
+    document.getElementById('btn-detect-face').addEventListener('click', analyzeFaceShape);
+    document.getElementById('btn-toggle-overlay').addEventListener('click', toggleOverlay);
+    
+    document.getElementById('btn-favorite').addEventListener('click', async function() {
+        if (!currentRecordId) {
+            alert('Selecciona una montura primero');
+            return;
+        }
+        
+        try {
+            const response = await fetch('{% url "dashboard:api_rate_frame" %}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+                body: JSON.stringify({
+                    record_id: currentRecordId,
+                    is_favorite: true
+                })
+            });
+            
+            const data = await response.json();
+            if (data.success) {
+                this.classList.add('animate-pulse');
+                setTimeout(() => this.classList.remove('animate-pulse'), 1000);
+                console.log('✅ Marcado como favorito');
+            }
+        } catch (error) {
+            console.error('Error:', error);
+        }
+    });
+    
+    // Filtro de categorías
+    document.getElementById('category-filter').addEventListener('change', function(e) {
+        const categoryId = e.target.value;
+        document.querySelectorAll('.category-group').forEach(group => {
+            if (!categoryId || group.dataset.category === categoryId) {
+                group.style.display = 'block';
+            } else {
+                group.style.display = 'none';
+            }
+        });
+    });
+}
+
+// Limpiar al salir
+window.addEventListener('beforeunload', function() {
+    if (video.srcObject) {
+        video.srcObject.getTracks().forEach(track => track.stop());
+    }
+});
+</script>
+{% endblock %}

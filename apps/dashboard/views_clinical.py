@@ -84,6 +84,25 @@ def clinical_history_create(request, patient_id):
                 # Anamnesis
                 chief_complaint=request.POST.get('chief_complaint', ''),
                 current_illness=request.POST.get('current_illness', ''),
+                current_clinical_condition=request.POST.get('current_clinical_condition', ''),
+                
+                # Antecedentes Generales
+                pathological_history=request.POST.get('pathological_history', ''),
+                pharmacological_history=request.POST.get('pharmacological_history', ''),
+                surgical_history=request.POST.get('surgical_history', ''),
+                allergic_history=request.POST.get('allergic_history', ''),
+                trauma_history=request.POST.get('trauma_history', ''),
+                other_general_history=request.POST.get('other_general_history', ''),
+                medical_history=request.POST.get('medical_history', ''),
+                
+                # Antecedentes Oculares
+                ocular_pathological_history=request.POST.get('ocular_pathological_history', ''),
+                ocular_pharmacological_history=request.POST.get('ocular_pharmacological_history', ''),
+                ocular_surgical_history=request.POST.get('ocular_surgical_history', ''),
+                ocular_trauma_history=request.POST.get('ocular_trauma_history', ''),
+                ocular_therapeutic_history=request.POST.get('ocular_therapeutic_history', ''),
+                
+                # Signos y Síntomas
                 blurred_vision=request.POST.get('blurred_vision') == 'on',
                 eye_pain=request.POST.get('eye_pain') == 'on',
                 headaches=request.POST.get('headaches') == 'on',
@@ -103,11 +122,22 @@ def clinical_history_create(request, patient_id):
                 glasses_since=request.POST.get('glasses_since', ''),
                 previous_contact_lenses=request.POST.get('previous_contact_lenses') == 'on',
                 
+                # Antecedentes Familiares Generales
+                family_diabetes=request.POST.get('family_diabetes') == 'on',
+                family_hypertension=request.POST.get('family_hypertension') == 'on',
+                family_heart_disease=request.POST.get('family_heart_disease') == 'on',
+                family_cancer=request.POST.get('family_cancer') == 'on',
+                family_general_notes=request.POST.get('family_general_notes', ''),
+                
+                # Antecedentes Familiares Oculares
                 family_glaucoma=request.POST.get('family_glaucoma') == 'on',
                 family_cataracts=request.POST.get('family_cataracts') == 'on',
                 family_macular_degeneration=request.POST.get('family_macular_degeneration') == 'on',
-                family_diabetes=request.POST.get('family_diabetes') == 'on',
-                family_hypertension=request.POST.get('family_hypertension') == 'on',
+                family_retinal_detachment=request.POST.get('family_retinal_detachment') == 'on',
+                family_myopia=request.POST.get('family_myopia') == 'on',
+                family_hyperopia=request.POST.get('family_hyperopia') == 'on',
+                family_strabismus=request.POST.get('family_strabismus') == 'on',
+                family_ocular_notes=request.POST.get('family_ocular_notes', ''),
                 family_history_notes=request.POST.get('family_history_notes', ''),
                 
                 occupation_visual_demand=request.POST.get('occupation_visual_demand', ''),
@@ -115,6 +145,8 @@ def clinical_history_create(request, patient_id):
                 reading_hours_daily=request.POST.get('reading_hours_daily') or None,
                 
                 # Agudeza Visual
+                distance_chart=request.POST.get('distance_chart', ''),
+                near_chart=request.POST.get('near_chart', ''),
                 va_od_sc_distance=request.POST.get('va_od_sc_distance', ''),
                 va_od_sc_near=request.POST.get('va_od_sc_near', ''),
                 va_od_cc_distance=request.POST.get('va_od_cc_distance', ''),
@@ -160,6 +192,10 @@ def clinical_history_create(request, patient_id):
                 iop_os=request.POST.get('iop_os') or None,
                 iop_method=request.POST.get('iop_method', ''),
                 
+                # Examen Externo
+                external_exam_od=request.POST.get('external_exam_od', ''),
+                external_exam_os=request.POST.get('external_exam_os', ''),
+                
                 # Biomicroscopía
                 biomicroscopy_od_lids=request.POST.get('biomicroscopy_od_lids', ''),
                 biomicroscopy_od_conjunctiva=request.POST.get('biomicroscopy_od_conjunctiva', ''),
@@ -167,6 +203,7 @@ def clinical_history_create(request, patient_id):
                 biomicroscopy_od_anterior_chamber=request.POST.get('biomicroscopy_od_anterior_chamber', ''),
                 biomicroscopy_od_iris=request.POST.get('biomicroscopy_od_iris', ''),
                 biomicroscopy_od_lens=request.POST.get('biomicroscopy_od_lens', ''),
+                biomicroscopy_od_pupil=request.POST.get('biomicroscopy_od_pupil', ''),
                 
                 biomicroscopy_os_lids=request.POST.get('biomicroscopy_os_lids', ''),
                 biomicroscopy_os_conjunctiva=request.POST.get('biomicroscopy_os_conjunctiva', ''),
@@ -174,6 +211,7 @@ def clinical_history_create(request, patient_id):
                 biomicroscopy_os_anterior_chamber=request.POST.get('biomicroscopy_os_anterior_chamber', ''),
                 biomicroscopy_os_iris=request.POST.get('biomicroscopy_os_iris', ''),
                 biomicroscopy_os_lens=request.POST.get('biomicroscopy_os_lens', ''),
+                biomicroscopy_os_pupil=request.POST.get('biomicroscopy_os_pupil', ''),
                 
                 # Fondo de Ojo
                 fundoscopy_od_vitreous=request.POST.get('fundoscopy_od_vitreous', ''),
@@ -319,13 +357,214 @@ def clinical_history_edit(request, patient_id, history_id):
                 except Doctor.DoesNotExist:
                     pass
             
-            # Actualizar campos (similar a create)
+            # Actualizar campos básicos
             history.date = request.POST.get('date') or history.date
             history.doctor = doctor
             history.chief_complaint = request.POST.get('chief_complaint', '')
+            history.current_illness = request.POST.get('current_illness', '')
+            history.current_clinical_condition = request.POST.get('current_clinical_condition', '')
+            
+            # Antecedentes Generales
+            history.pathological_history = request.POST.get('pathological_history', '')
+            history.pharmacological_history = request.POST.get('pharmacological_history', '')
+            history.surgical_history = request.POST.get('surgical_history', '')
+            history.allergic_history = request.POST.get('allergic_history', '')
+            history.trauma_history = request.POST.get('trauma_history', '')
+            history.other_general_history = request.POST.get('other_general_history', '')
+            history.medical_history = request.POST.get('medical_history', '')
+            
+            # Antecedentes Oculares
+            history.ocular_pathological_history = request.POST.get('ocular_pathological_history', '')
+            history.ocular_pharmacological_history = request.POST.get('ocular_pharmacological_history', '')
+            history.ocular_surgical_history = request.POST.get('ocular_surgical_history', '')
+            history.ocular_trauma_history = request.POST.get('ocular_trauma_history', '')
+            history.ocular_therapeutic_history = request.POST.get('ocular_therapeutic_history', '')
+            
+            # Signos y Síntomas
+            history.blurred_vision = request.POST.get('blurred_vision') == 'on'
+            history.eye_pain = request.POST.get('eye_pain') == 'on'
+            history.headaches = request.POST.get('headaches') == 'on'
+            history.photophobia = request.POST.get('photophobia') == 'on'
+            history.diplopia = request.POST.get('diplopia') == 'on'
+            history.tearing = request.POST.get('tearing') == 'on'
+            history.redness = request.POST.get('redness') == 'on'
+            history.itching = request.POST.get('itching') == 'on'
+            history.floaters = request.POST.get('floaters') == 'on'
+            history.halos = request.POST.get('halos') == 'on'
+            history.symptoms_notes = request.POST.get('symptoms_notes', '')
+            
+            # Antecedentes Oftalmológicos
+            history.previous_eye_surgery = request.POST.get('previous_eye_surgery') == 'on'
+            history.surgery_details = request.POST.get('surgery_details', '')
+            history.previous_glasses = request.POST.get('previous_glasses') == 'on'
+            history.glasses_since = request.POST.get('glasses_since', '')
+            history.previous_contact_lenses = request.POST.get('previous_contact_lenses') == 'on'
+            
+            # Antecedentes Familiares Generales
+            history.family_diabetes = request.POST.get('family_diabetes') == 'on'
+            history.family_hypertension = request.POST.get('family_hypertension') == 'on'
+            history.family_heart_disease = request.POST.get('family_heart_disease') == 'on'
+            history.family_cancer = request.POST.get('family_cancer') == 'on'
+            history.family_general_notes = request.POST.get('family_general_notes', '')
+            
+            # Antecedentes Familiares Oculares
+            history.family_glaucoma = request.POST.get('family_glaucoma') == 'on'
+            history.family_cataracts = request.POST.get('family_cataracts') == 'on'
+            history.family_macular_degeneration = request.POST.get('family_macular_degeneration') == 'on'
+            history.family_retinal_detachment = request.POST.get('family_retinal_detachment') == 'on'
+            history.family_myopia = request.POST.get('family_myopia') == 'on'
+            history.family_hyperopia = request.POST.get('family_hyperopia') == 'on'
+            history.family_strabismus = request.POST.get('family_strabismus') == 'on'
+            history.family_ocular_notes = request.POST.get('family_ocular_notes', '')
+            history.family_history_notes = request.POST.get('family_history_notes', '')
+            
+            # Ocupación y Hábitos
+            history.occupation_visual_demand = request.POST.get('occupation_visual_demand', '')
+            history.screen_hours_daily = request.POST.get('screen_hours_daily') or None
+            history.reading_hours_daily = request.POST.get('reading_hours_daily') or None
+            
+            # Cartillas utilizadas
+            history.distance_chart = request.POST.get('distance_chart', '')
+            history.near_chart = request.POST.get('near_chart', '')
+            
+            # Agudeza Visual
+            history.va_od_sc_distance = request.POST.get('va_od_sc_distance', '')
+            history.va_od_cc_distance = request.POST.get('va_od_cc_distance', '')
+            history.va_od_ph_distance = request.POST.get('va_od_ph_distance', '')
+            history.va_od_sc_near = request.POST.get('va_od_sc_near', '')
+            history.va_od_cc_near = request.POST.get('va_od_cc_near', '')
+            
+            history.va_os_sc_distance = request.POST.get('va_os_sc_distance', '')
+            history.va_os_cc_distance = request.POST.get('va_os_cc_distance', '')
+            history.va_os_ph_distance = request.POST.get('va_os_ph_distance', '')
+            history.va_os_sc_near = request.POST.get('va_os_sc_near', '')
+            history.va_os_cc_near = request.POST.get('va_os_cc_near', '')
+            
+            # Refracción Objetiva
+            history.refraction_od_sphere = request.POST.get('refraction_od_sphere', '')
+            history.refraction_od_cylinder = request.POST.get('refraction_od_cylinder', '')
+            history.refraction_od_axis = request.POST.get('refraction_od_axis', '')
+            history.refraction_od_add = request.POST.get('refraction_od_add', '')
+            
+            history.refraction_os_sphere = request.POST.get('refraction_os_sphere', '')
+            history.refraction_os_cylinder = request.POST.get('refraction_os_cylinder', '')
+            history.refraction_os_axis = request.POST.get('refraction_os_axis', '')
+            history.refraction_os_add = request.POST.get('refraction_os_add', '')
+            
+            # Refracción Subjetiva
+            history.subjective_od_sphere = request.POST.get('subjective_od_sphere', '')
+            history.subjective_od_cylinder = request.POST.get('subjective_od_cylinder', '')
+            history.subjective_od_axis = request.POST.get('subjective_od_axis', '')
+            history.subjective_od_add = request.POST.get('subjective_od_add', '')
+            history.subjective_od_va = request.POST.get('subjective_od_va', '')
+            
+            history.subjective_os_sphere = request.POST.get('subjective_os_sphere', '')
+            history.subjective_os_cylinder = request.POST.get('subjective_os_cylinder', '')
+            history.subjective_os_axis = request.POST.get('subjective_os_axis', '')
+            history.subjective_os_add = request.POST.get('subjective_os_add', '')
+            history.subjective_os_va = request.POST.get('subjective_os_va', '')
+            
+            # Queratometría
+            history.keratometry_od_k1 = request.POST.get('keratometry_od_k1', '')
+            history.keratometry_od_axis1 = request.POST.get('keratometry_od_axis1', '')
+            history.keratometry_od_k2 = request.POST.get('keratometry_od_k2', '')
+            history.keratometry_od_axis2 = request.POST.get('keratometry_od_axis2', '')
+            
+            history.keratometry_os_k1 = request.POST.get('keratometry_os_k1', '')
+            history.keratometry_os_axis1 = request.POST.get('keratometry_os_axis1', '')
+            history.keratometry_os_k2 = request.POST.get('keratometry_os_k2', '')
+            history.keratometry_os_axis2 = request.POST.get('keratometry_os_axis2', '')
+            
+            # Pupilas
+            history.pupil_od_size = request.POST.get('pupil_od_size', '')
+            history.pupil_od_reaction = request.POST.get('pupil_od_reaction', '')
+            history.pupil_os_size = request.POST.get('pupil_os_size', '')
+            history.pupil_os_reaction = request.POST.get('pupil_os_reaction', '')
+            history.pupil_rapd = request.POST.get('pupil_rapd') == 'on'
+            
+            # Tonometría
+            iop_od = request.POST.get('iop_od')
+            history.iop_od = float(iop_od) if iop_od else None
+            iop_os = request.POST.get('iop_os')
+            history.iop_os = float(iop_os) if iop_os else None
+            history.iop_method = request.POST.get('iop_method', '')
+            
+            # Examen Externo
+            history.external_exam_od = request.POST.get('external_exam_od', '')
+            history.external_exam_os = request.POST.get('external_exam_os', '')
+            
+            # Biomicroscopía
+            history.biomicroscopy_od_lids = request.POST.get('biomicroscopy_od_lids', '')
+            history.biomicroscopy_od_conjunctiva = request.POST.get('biomicroscopy_od_conjunctiva', '')
+            history.biomicroscopy_od_cornea = request.POST.get('biomicroscopy_od_cornea', '')
+            history.biomicroscopy_od_anterior_chamber = request.POST.get('biomicroscopy_od_anterior_chamber', '')
+            history.biomicroscopy_od_iris = request.POST.get('biomicroscopy_od_iris', '')
+            history.biomicroscopy_od_lens = request.POST.get('biomicroscopy_od_lens', '')
+            history.biomicroscopy_od_pupil = request.POST.get('biomicroscopy_od_pupil', '')
+            
+            history.biomicroscopy_os_lids = request.POST.get('biomicroscopy_os_lids', '')
+            history.biomicroscopy_os_conjunctiva = request.POST.get('biomicroscopy_os_conjunctiva', '')
+            history.biomicroscopy_os_cornea = request.POST.get('biomicroscopy_os_cornea', '')
+            history.biomicroscopy_os_anterior_chamber = request.POST.get('biomicroscopy_os_anterior_chamber', '')
+            history.biomicroscopy_os_iris = request.POST.get('biomicroscopy_os_iris', '')
+            history.biomicroscopy_os_lens = request.POST.get('biomicroscopy_os_lens', '')
+            history.biomicroscopy_os_pupil = request.POST.get('biomicroscopy_os_pupil', '')
+            
+            # Fondo de Ojo
+            history.fundoscopy_od_vitreous = request.POST.get('fundoscopy_od_vitreous', '')
+            history.fundoscopy_od_optic_disc = request.POST.get('fundoscopy_od_optic_disc', '')
+            history.fundoscopy_od_macula = request.POST.get('fundoscopy_od_macula', '')
+            history.fundoscopy_od_vessels = request.POST.get('fundoscopy_od_vessels', '')
+            history.fundoscopy_od_periphery = request.POST.get('fundoscopy_od_periphery', '')
+            
+            history.fundoscopy_os_vitreous = request.POST.get('fundoscopy_os_vitreous', '')
+            history.fundoscopy_os_optic_disc = request.POST.get('fundoscopy_os_optic_disc', '')
+            history.fundoscopy_os_macula = request.POST.get('fundoscopy_os_macula', '')
+            history.fundoscopy_os_vessels = request.POST.get('fundoscopy_os_vessels', '')
+            history.fundoscopy_os_periphery = request.POST.get('fundoscopy_os_periphery', '')
+            
+            # Motilidad
+            history.motility_od = request.POST.get('motility_od', '')
+            history.motility_os = request.POST.get('motility_os', '')
+            history.cover_test = request.POST.get('cover_test', '')
+            history.convergence = request.POST.get('convergence', '')
+            
+            # Visión de Colores
+            history.color_vision_od = request.POST.get('color_vision_od', '')
+            history.color_vision_os = request.POST.get('color_vision_os', '')
+            history.color_vision_test = request.POST.get('color_vision_test', '')
+            
+            # Diagnóstico
             history.diagnosis = request.POST.get('diagnosis', '')
+            history.dx_myopia = request.POST.get('dx_myopia') == 'on'
+            history.dx_hyperopia = request.POST.get('dx_hyperopia') == 'on'
+            history.dx_astigmatism = request.POST.get('dx_astigmatism') == 'on'
+            history.dx_presbyopia = request.POST.get('dx_presbyopia') == 'on'
+            history.dx_amblyopia = request.POST.get('dx_amblyopia') == 'on'
+            history.dx_strabismus = request.POST.get('dx_strabismus') == 'on'
+            history.dx_cataracts = request.POST.get('dx_cataracts') == 'on'
+            history.dx_glaucoma = request.POST.get('dx_glaucoma') == 'on'
+            history.dx_dry_eye = request.POST.get('dx_dry_eye') == 'on'
+            history.dx_conjunctivitis = request.POST.get('dx_conjunctivitis') == 'on'
+            history.dx_keratoconus = request.POST.get('dx_keratoconus') == 'on'
+            
+            # Tratamiento
             history.treatment_plan = request.POST.get('treatment_plan', '')
-            # ... actualizar todos los campos necesarios ...
+            history.prescription_glasses = request.POST.get('prescription_glasses') == 'on'
+            history.prescription_contact_lenses = request.POST.get('prescription_contact_lenses') == 'on'
+            history.prescription_medication = request.POST.get('prescription_medication') == 'on'
+            history.medication_details = request.POST.get('medication_details', '')
+            
+            history.lens_type = request.POST.get('lens_type', '')
+            history.lens_material = request.POST.get('lens_material', '')
+            history.lens_coating = request.POST.get('lens_coating', '')
+            
+            # Seguimiento
+            follow_up_date = request.POST.get('follow_up_date')
+            history.follow_up_date = follow_up_date if follow_up_date else None
+            history.follow_up_notes = request.POST.get('follow_up_notes', '')
+            history.observations = request.POST.get('observations', '')
+            history.recommendations = request.POST.get('recommendations', '')
             
             history.save()
             

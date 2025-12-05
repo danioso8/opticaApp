@@ -1,5 +1,26 @@
 from django.urls import path
 from . import views
+from .views_analytics import (
+    analytics_dashboard,
+    api_realtime_metrics,
+    api_revenue_trend,
+    api_heatmap_data,
+    api_appointments_distribution,
+    api_top_products,
+    satisfaction_survey,
+)
+from .views_ar_tryon import (
+    ar_tryon_home,
+    ar_tryon_camera,
+    ar_tryon_catalog,
+    ar_tryon_sessions,
+    ar_tryon_session_detail,
+    api_record_try_on,
+    api_save_photo,
+    api_rate_frame,
+    api_frame_details,
+    api_detect_face_shape,
+)
 
 app_name = 'dashboard'
 
@@ -14,6 +35,27 @@ urlpatterns = [
     
     # Dashboard principal
     path('', views.dashboard_home, name='home'),
+    
+    # Analytics Dashboard
+    path('analytics/', analytics_dashboard, name='analytics_dashboard'),
+    path('analytics/api/realtime-metrics/', api_realtime_metrics, name='api_realtime_metrics'),
+    path('analytics/api/revenue-trend/', api_revenue_trend, name='api_revenue_trend'),
+    path('analytics/api/heatmap-data/', api_heatmap_data, name='api_heatmap_data'),
+    path('analytics/api/appointments-distribution/', api_appointments_distribution, name='api_appointments_distribution'),
+    path('analytics/api/top-products/', api_top_products, name='api_top_products'),
+    path('analytics/satisfaction-survey/', satisfaction_survey, name='satisfaction_survey'),
+    
+    # AR Virtual Try-On
+    path('ar-tryon/', ar_tryon_home, name='ar_tryon_home'),
+    path('ar-tryon/camera/', ar_tryon_camera, name='ar_tryon_camera'),
+    path('ar-tryon/catalog/', ar_tryon_catalog, name='ar_tryon_catalog'),
+    path('ar-tryon/sessions/', ar_tryon_sessions, name='ar_tryon_sessions'),
+    path('ar-tryon/sessions/<int:session_id>/', ar_tryon_session_detail, name='ar_tryon_session_detail'),
+    path('ar-tryon/api/record-try-on/', api_record_try_on, name='api_record_try_on'),
+    path('ar-tryon/api/save-photo/', api_save_photo, name='api_save_photo'),
+    path('ar-tryon/api/rate-frame/', api_rate_frame, name='api_rate_frame'),
+    path('ar-tryon/api/frame/<int:frame_id>/', api_frame_details, name='api_frame_details'),
+    path('ar-tryon/api/detect-face-shape/', api_detect_face_shape, name='api_detect_face_shape'),
     
     # Gestión de citas
     path('appointments/', views.appointments_list, name='appointments_list'),

@@ -1,0 +1,502 @@
+{% extends 'dashboard/base.html' %}
+
+{% block title %}Analytics Dashboard - OCEANO OPTICO{% endblock %}
+
+{% block extra_css %}
+<style>
+    .widget-card {
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    .widget-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15);
+    }
+    .metric-value {
+        font-size: 2.5rem;
+        font-weight: 700;
+        line-height: 1;
+    }
+    .trend-up {
+        color: #10B981;
+    }
+    .trend-down {
+        color: #EF4444;
+    }
+    .pulse-animation {
+        animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    }
+    @keyframes pulse {
+        0%, 100% {
+            opacity: 1;
+        }
+        50% {
+            opacity: .7;
+        }
+    }
+    .counter-animation {
+        animation: countUp 1s ease-out;
+    }
+    @keyframes countUp {
+        from {
+            transform: scale(0.5);
+            opacity: 0;
+        }
+        to {
+            transform: scale(1);
+            opacity: 1;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="p-6 space-y-6">
+    <!-- Header -->
+    <div class="flex items-center justify-between mb-6">
+        <div>
+            <h1 class="text-3xl font-bold text-gray-800 flex items-center">
+                <i class="fas fa-chart-line text-indigo-600 mr-3"></i>
+                Analytics Dashboard
+            </h1>
+            <p class="text-gray-600 mt-1">Métricas y estadísticas en tiempo real</p>
+        </div>
+        <div class="flex items-center gap-3">
+            <button onclick="refreshMetrics()" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">
+                <i class="fas fa-sync-alt mr-2"></i>
+                Actualizar
+            </button>
+            <div class="text-sm text-gray-600">
+                <i class="fas fa-clock mr-1 pulse-animation"></i>
+                <span id="last-update">Ahora</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- KPIs Principales -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <!-- Revenue Today -->
+        <div class="widget-card bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl p-6 text-white shadow-lg">
+            <div class="flex items-center justify-between mb-4">
+                <div>
+                    <p class="text-blue-100 text-sm font-medium">Ingresos Hoy</p>
+                    <div class="metric-value counter-animation" id="revenue-value">
+                        ${{ kpis.revenue_today.value|floatformat:0 }}
+                    </div>
+                </div>
+                <div class="w-16 h-16 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
+                    <i class="fas fa-dollar-sign text-3xl"></i>
+                </div>
+            </div>
+            <div class="flex items-center">
+                {% if kpis.revenue_today.trend == 'up' %}
+                <i class="fas fa-arrow-up mr-2"></i>
+                <span class="text-sm">+{{ kpis.revenue_today.change|floatformat:1 }}% vs ayer</span>
+                {% else %}
+                <i class="fas fa-arrow-down mr-2"></i>
+                <span class="text-sm">{{ kpis.revenue_today.change|floatformat:1 }}% vs ayer</span>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Appointments Today -->
+        <div class="widget-card bg-gradient-to-br from-green-500 to-green-600 rounded-xl p-6 text-white shadow-lg">
+            <div class="flex items-center justify-between mb-4">
+                <div>
+                    <p class="text-green-100 text-sm font-medium">Citas Hoy</p>
+                    <div class="metric-value counter-animation" id="appointments-value">
+                        {{ kpis.appointments_today.value }}
+                    </div>
+                </div>
+                <div class="w-16 h-16 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
+                    <i class="fas fa-calendar-check text-3xl"></i>
+                </div>
+            </div>
+            <div class="flex items-center">
+                {% if kpis.appointments_today.trend == 'up' %}
+                <i class="fas fa-arrow-up mr-2"></i>
+                <span class="text-sm">+{{ kpis.appointments_today.change|floatformat:1 }}% vs ayer</span>
+                {% else %}
+                <i class="fas fa-arrow-down mr-2"></i>
+                <span class="text-sm">{{ kpis.appointments_today.change|floatformat:1 }}% vs ayer</span>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- New Patients -->
+        <div class="widget-card bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl p-6 text-white shadow-lg">
+            <div class="flex items-center justify-between mb-4">
+                <div>
+                    <p class="text-purple-100 text-sm font-medium">Pacientes Nuevos</p>
+                    <div class="metric-value counter-animation" id="patients-value">
+                        {{ kpis.new_patients.value }}
+                    </div>
+                </div>
+                <div class="w-16 h-16 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
+                    <i class="fas fa-user-plus text-3xl"></i>
+                </div>
+            </div>
+            <div class="flex items-center">
+                {% if kpis.new_patients.trend == 'up' %}
+                <i class="fas fa-arrow-up mr-2"></i>
+                <span class="text-sm">+{{ kpis.new_patients.change|floatformat:1 }}% vs ayer</span>
+                {% else %}
+                <i class="fas fa-arrow-down mr-2"></i>
+                <span class="text-sm">{{ kpis.new_patients.change|floatformat:1 }}% vs ayer</span>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Conversion Rate -->
+        <div class="widget-card bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl p-6 text-white shadow-lg">
+            <div class="flex items-center justify-between mb-4">
+                <div>
+                    <p class="text-orange-100 text-sm font-medium">Tasa de Conversión</p>
+                    <div class="metric-value counter-animation" id="conversion-value">
+                        {{ kpis.conversion_rate.value|floatformat:1 }}%
+                    </div>
+                </div>
+                <div class="w-16 h-16 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
+                    <i class="fas fa-chart-pie text-3xl"></i>
+                </div>
+            </div>
+            <div class="flex items-center">
+                {% if kpis.conversion_rate.trend == 'up' %}
+                <i class="fas fa-arrow-up mr-2"></i>
+                <span class="text-sm">+{{ kpis.conversion_rate.change|floatformat:1 }}% vs ayer</span>
+                {% else %}
+                <i class="fas fa-arrow-down mr-2"></i>
+                <span class="text-sm">{{ kpis.conversion_rate.change|floatformat:1 }}% vs ayer</span>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts Row 1 -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Revenue Trend Chart -->
+        <div class="lg:col-span-2 bg-white rounded-xl shadow-lg p-6">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-semibold text-gray-800">
+                    <i class="fas fa-chart-area text-indigo-600 mr-2"></i>
+                    Tendencia de Ingresos (30 días)
+                </h3>
+                <select id="trend-period" onchange="updateRevenueTrend()" class="px-3 py-1 border rounded-lg text-sm">
+                    <option value="7">7 días</option>
+                    <option value="30" selected>30 días</option>
+                    <option value="90">90 días</option>
+                </select>
+            </div>
+            <canvas id="revenueTrendChart" height="80"></canvas>
+        </div>
+
+        <!-- Appointments Distribution -->
+        <div class="bg-white rounded-xl shadow-lg p-6">
+            <h3 class="text-lg font-semibold text-gray-800 mb-4">
+                <i class="fas fa-chart-pie text-purple-600 mr-2"></i>
+                Estado de Citas
+            </h3>
+            <canvas id="appointmentsChart" height="200"></canvas>
+        </div>
+    </div>
+
+    <!-- Charts Row 2 -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Top Products -->
+        <div class="bg-white rounded-xl shadow-lg p-6">
+            <h3 class="text-lg font-semibold text-gray-800 mb-4">
+                <i class="fas fa-trophy text-yellow-500 mr-2"></i>
+                Top 5 Productos del Mes
+            </h3>
+            {% if top_products %}
+            <div class="space-y-3">
+                {% for product in top_products %}
+                <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 bg-indigo-100 rounded-full flex items-center justify-center text-indigo-600 font-bold">
+                            {{ forloop.counter }}
+                        </div>
+                        <div>
+                            <p class="font-medium text-gray-800">{{ product.product__name }}</p>
+                            <p class="text-sm text-gray-600">{{ product.total_sold }} unidades</p>
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <p class="font-semibold text-green-600">${{ product.total_revenue|floatformat:0 }}</p>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <p class="text-gray-500 text-center py-8">No hay datos de ventas este mes</p>
+            {% endif %}
+        </div>
+
+        <!-- Satisfaction Score -->
+        {% if satisfaction %}
+        <div class="bg-white rounded-xl shadow-lg p-6">
+            <h3 class="text-lg font-semibold text-gray-800 mb-4">
+                <i class="fas fa-smile text-green-500 mr-2"></i>
+                Satisfacción del Cliente
+            </h3>
+            <div class="space-y-4">
+                <div class="text-center py-4">
+                    <div class="text-5xl font-bold text-indigo-600">{{ satisfaction.average_rating }}</div>
+                    <div class="flex justify-center items-center gap-1 mt-2">
+                        {% for i in "12345" %}
+                            {% if forloop.counter <= satisfaction.average_rating|floatformat:0 %}
+                            <i class="fas fa-star text-yellow-400 text-xl"></i>
+                            {% else %}
+                            <i class="far fa-star text-gray-300 text-xl"></i>
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+                    <p class="text-sm text-gray-600 mt-2">{{ satisfaction.total_responses }} respuestas</p>
+                </div>
+                
+                <div class="grid grid-cols-2 gap-3">
+                    <div class="bg-gray-50 rounded-lg p-3">
+                        <p class="text-xs text-gray-600">Servicio</p>
+                        <p class="text-lg font-semibold">{{ satisfaction.service_rating }}/5</p>
+                    </div>
+                    <div class="bg-gray-50 rounded-lg p-3">
+                        <p class="text-xs text-gray-600">Calidad</p>
+                        <p class="text-lg font-semibold">{{ satisfaction.quality_rating }}/5</p>
+                    </div>
+                    <div class="bg-gray-50 rounded-lg p-3">
+                        <p class="text-xs text-gray-600">Rapidez</p>
+                        <p class="text-lg font-semibold">{{ satisfaction.speed_rating }}/5</p>
+                    </div>
+                    <div class="bg-green-50 rounded-lg p-3">
+                        <p class="text-xs text-green-700">NPS Score</p>
+                        <p class="text-lg font-semibold text-green-600">{{ satisfaction.nps_score|floatformat:0 }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Monthly Comparison -->
+    <div class="bg-white rounded-xl shadow-lg p-6">
+        <h3 class="text-lg font-semibold text-gray-800 mb-4">
+            <i class="fas fa-calendar-alt text-blue-600 mr-2"></i>
+            Comparativa Mensual (Mes actual vs anterior)
+        </h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="border-r border-gray-200 pr-6">
+                <p class="text-sm text-gray-600 mb-2">Ingresos</p>
+                <div class="flex items-end gap-4">
+                    <div>
+                        <p class="text-xs text-gray-500">Mes actual</p>
+                        <p class="text-2xl font-bold text-gray-800">${{ monthly_comparison.revenue.current|floatformat:0 }}</p>
+                    </div>
+                    <div>
+                        <p class="text-xs text-gray-500">Mes anterior</p>
+                        <p class="text-xl font-semibold text-gray-600">${{ monthly_comparison.revenue.previous|floatformat:0 }}</p>
+                    </div>
+                    <div class="ml-auto">
+                        {% if monthly_comparison.revenue.change >= 0 %}
+                        <span class="text-green-600 font-semibold">
+                            <i class="fas fa-arrow-up"></i> +{{ monthly_comparison.revenue.change|floatformat:1 }}%
+                        </span>
+                        {% else %}
+                        <span class="text-red-600 font-semibold">
+                            <i class="fas fa-arrow-down"></i> {{ monthly_comparison.revenue.change|floatformat:1 }}%
+                        </span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            <div class="pl-6">
+                <p class="text-sm text-gray-600 mb-2">Citas</p>
+                <div class="flex items-end gap-4">
+                    <div>
+                        <p class="text-xs text-gray-500">Mes actual</p>
+                        <p class="text-2xl font-bold text-gray-800">{{ monthly_comparison.appointments.current }}</p>
+                    </div>
+                    <div>
+                        <p class="text-xs text-gray-500">Mes anterior</p>
+                        <p class="text-xl font-semibold text-gray-600">{{ monthly_comparison.appointments.previous }}</p>
+                    </div>
+                    <div class="ml-auto">
+                        {% if monthly_comparison.appointments.change >= 0 %}
+                        <span class="text-green-600 font-semibold">
+                            <i class="fas fa-arrow-up"></i> +{{ monthly_comparison.appointments.change|floatformat:1 }}%
+                        </span>
+                        {% else %}
+                        <span class="text-red-600 font-semibold">
+                            <i class="fas fa-arrow-down"></i> {{ monthly_comparison.appointments.change|floatformat:1 }}%
+                        </span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Active KPI Targets -->
+    {% if active_targets %}
+    <div class="bg-white rounded-xl shadow-lg p-6">
+        <h3 class="text-lg font-semibold text-gray-800 mb-4">
+            <i class="fas fa-bullseye text-red-600 mr-2"></i>
+            Objetivos Activos
+        </h3>
+        <div class="space-y-4">
+            {% for target in active_targets %}
+            <div class="border-l-4 {% if target.achieved %}border-green-500{% else %}border-orange-500{% endif %} pl-4 py-2">
+                <div class="flex items-center justify-between mb-2">
+                    <h4 class="font-semibold text-gray-800">{{ target.name }}</h4>
+                    <span class="text-sm text-gray-600">{{ target.period_start|date:"d/m/Y" }} - {{ target.period_end|date:"d/m/Y" }}</span>
+                </div>
+                <div class="relative pt-1">
+                    <div class="flex mb-2 items-center justify-between">
+                        <div>
+                            <span class="text-xs font-semibold inline-block text-indigo-600">
+                                {{ target.current_value }} / {{ target.target_value }}
+                            </span>
+                        </div>
+                        <div class="text-right">
+                            <span class="text-xs font-semibold inline-block {% if target.achieved %}text-green-600{% else %}text-orange-600{% endif %}">
+                                {{ target.progress_percentage|floatformat:0 }}%
+                            </span>
+                        </div>
+                    </div>
+                    <div class="overflow-hidden h-2 mb-4 text-xs flex rounded bg-gray-200">
+                        <div style="width:{{ target.progress_percentage }}%" class="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center {% if target.achieved %}bg-green-500{% else %}bg-indigo-500{% endif %}"></div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+<script>
+// Variables globales
+let revenueTrendChart;
+let appointmentsChart;
+
+// Inicializar al cargar la página
+document.addEventListener('DOMContentLoaded', function() {
+    initRevenueTrendChart();
+    initAppointmentsChart();
+    startRealtimeUpdates();
+});
+
+// Gráfico de tendencia de ingresos
+function initRevenueTrendChart() {
+    fetch('{% url "dashboard:api_revenue_trend" %}?days=30')
+        .then(response => response.json())
+        .then(data => {
+            const ctx = document.getElementById('revenueTrendChart');
+            revenueTrendChart = new Chart(ctx, {
+                type: 'line',
+                data: data,
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) {
+                                    return '$' + value.toLocaleString();
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        });
+}
+
+// Gráfico de distribución de citas
+function initAppointmentsChart() {
+    fetch('{% url "dashboard:api_appointments_distribution" %}')
+        .then(response => response.json())
+        .then(data => {
+            const ctx = document.getElementById('appointmentsChart');
+            appointmentsChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: data,
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+        });
+}
+
+// Actualizar tendencia de ingresos según período seleccionado
+function updateRevenueTrend() {
+    const days = document.getElementById('trend-period').value;
+    
+    fetch(`{% url "dashboard:api_revenue_trend" %}?days=${days}`)
+        .then(response => response.json())
+        .then(data => {
+            revenueTrendChart.data = data;
+            revenueTrendChart.update();
+        });
+}
+
+// Actualizar métricas en tiempo real
+function refreshMetrics() {
+    fetch('{% url "dashboard:api_realtime_metrics" %}')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Actualizar valores con animación
+                animateValue('revenue-value', data.metrics.revenue_today.value, '$');
+                animateValue('appointments-value', data.metrics.appointments_today.value);
+                animateValue('patients-value', data.metrics.new_patients.value);
+                animateValue('conversion-value', data.metrics.conversion_rate.value, '', '%');
+                
+                // Actualizar timestamp
+                document.getElementById('last-update').textContent = new Date(data.timestamp).toLocaleTimeString();
+            }
+        })
+        .catch(error => console.error('Error refreshing metrics:', error));
+}
+
+// Animación de contador
+function animateValue(elementId, endValue, prefix = '', suffix = '') {
+    const element = document.getElementById(elementId);
+    const startValue = parseInt(element.textContent.replace(/[^0-9.-]/g, '')) || 0;
+    const duration = 1000;
+    const startTime = Date.now();
+    
+    function update() {
+        const now = Date.now();
+        const progress = Math.min((now - startTime) / duration, 1);
+        const currentValue = startValue + (endValue - startValue) * progress;
+        
+        element.textContent = prefix + Math.round(currentValue).toLocaleString() + suffix;
+        
+        if (progress < 1) {
+            requestAnimationFrame(update);
+        }
+    }
+    
+    update();
+}
+
+// Actualizar métricas automáticamente cada 30 segundos
+function startRealtimeUpdates() {
+    setInterval(refreshMetrics, 30000); // 30 segundos
+}
+</script>
+{% endblock %}

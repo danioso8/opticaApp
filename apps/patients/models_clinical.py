@@ -110,25 +110,39 @@ class ClinicalHistory(TenantModel):
     
     # ==================== AGUDEZA VISUAL ====================
     
+    # Cartillas utilizadas
+    distance_chart = models.CharField(
+        max_length=50, 
+        verbose_name='Cartilla Visión Lejana', 
+        blank=True,
+        help_text='Cartilla utilizada para medir visión de lejos (ETDRS, Snellen, etc.)'
+    )
+    near_chart = models.CharField(
+        max_length=50, 
+        verbose_name='Cartilla Visión Próxima', 
+        blank=True,
+        help_text='Cartilla utilizada para medir visión de cerca (Jaeger, Rosenbaum, etc.)'
+    )
+    
     # Ojo Derecho (OD) - Sin Corrección
-    va_od_sc_distance = models.CharField(max_length=20, verbose_name='AV OD SC Lejos', blank=True, help_text='Ej: 20/20, 20/40')
-    va_od_sc_near = models.CharField(max_length=20, verbose_name='AV OD SC Cerca', blank=True)
+    va_od_sc_distance = models.CharField(max_length=20, verbose_name='AV OD SC Lejos', blank=True, help_text='Ej: 20/20, 20/40, 6/6')
+    va_od_sc_near = models.CharField(max_length=20, verbose_name='AV OD SC Cerca', blank=True, help_text='Ej: J1, N5, a 40cm')
     
     # Ojo Derecho (OD) - Con Corrección
-    va_od_cc_distance = models.CharField(max_length=20, verbose_name='AV OD CC Lejos', blank=True)
-    va_od_cc_near = models.CharField(max_length=20, verbose_name='AV OD CC Cerca', blank=True)
+    va_od_cc_distance = models.CharField(max_length=20, verbose_name='AV OD CC Lejos', blank=True, help_text='Ej: 20/20, 20/40, 6/6')
+    va_od_cc_near = models.CharField(max_length=20, verbose_name='AV OD CC Cerca', blank=True, help_text='Ej: J1, N5, a 40cm')
     
     # Ojo Izquierdo (OS) - Sin Corrección
-    va_os_sc_distance = models.CharField(max_length=20, verbose_name='AV OS SC Lejos', blank=True)
-    va_os_sc_near = models.CharField(max_length=20, verbose_name='AV OS SC Cerca', blank=True)
+    va_os_sc_distance = models.CharField(max_length=20, verbose_name='AV OS SC Lejos', blank=True, help_text='Ej: 20/20, 20/40, 6/6')
+    va_os_sc_near = models.CharField(max_length=20, verbose_name='AV OS SC Cerca', blank=True, help_text='Ej: J1, N5, a 40cm')
     
     # Ojo Izquierdo (OS) - Con Corrección
-    va_os_cc_distance = models.CharField(max_length=20, verbose_name='AV OS CC Lejos', blank=True)
-    va_os_cc_near = models.CharField(max_length=20, verbose_name='AV OS CC Cerca', blank=True)
+    va_os_cc_distance = models.CharField(max_length=20, verbose_name='AV OS CC Lejos', blank=True, help_text='Ej: 20/20, 20/40, 6/6')
+    va_os_cc_near = models.CharField(max_length=20, verbose_name='AV OS CC Cerca', blank=True, help_text='Ej: J1, N5, a 40cm')
     
     # Ambos Ojos (OU)
-    va_ou_distance = models.CharField(max_length=20, verbose_name='AV OU Lejos', blank=True)
-    va_ou_near = models.CharField(max_length=20, verbose_name='AV OU Cerca', blank=True)
+    va_ou_distance = models.CharField(max_length=20, verbose_name='AV OU Lejos', blank=True, help_text='Ej: 20/20, 6/6')
+    va_ou_near = models.CharField(max_length=20, verbose_name='AV OU Cerca', blank=True, help_text='Ej: J1, a 40cm')
     
     # ==================== REFRACCIÓN ====================
     

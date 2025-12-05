@@ -1,0 +1,224 @@
+{% extends 'dashboard/base.html' %}
+
+{% block title %}AR Virtual Try-On - OCEANO OPTICO{% endblock %}
+
+{% block extra_css %}
+<style>
+    .feature-card {
+        transition: all 0.3s ease;
+    }
+    .feature-card:hover {
+        transform: translateY(-8px);
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+    }
+    .frame-card {
+        transition: transform 0.3s ease;
+        cursor: pointer;
+    }
+    .frame-card:hover {
+        transform: scale(1.05);
+    }
+    .gradient-overlay {
+        background: linear-gradient(135deg, rgba(99, 102, 241, 0.9) 0%, rgba(168, 85, 247, 0.9) 100%);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 p-6">
+    <!-- Hero Section -->
+    <div class="gradient-overlay rounded-3xl p-12 mb-8 text-white shadow-2xl">
+        <div class="max-w-4xl mx-auto text-center">
+            <div class="inline-block mb-4">
+                <i class="fas fa-glasses text-6xl animate-pulse"></i>
+            </div>
+            <h1 class="text-5xl font-bold mb-4">Prueba Virtual de Monturas</h1>
+            <p class="text-xl text-blue-100 mb-8">
+                Usa la cámara para probar monturas en tiempo real con tecnología AR
+            </p>
+            <div class="flex justify-center gap-4">
+                <a href="{% url 'dashboard:ar_tryon_camera' %}" class="px-8 py-4 bg-white text-indigo-600 rounded-xl font-semibold text-lg hover:bg-gray-100 transition-colors shadow-lg">
+                    <i class="fas fa-camera mr-2"></i>
+                    Iniciar Prueba Virtual
+                </a>
+                <a href="{% url 'dashboard:ar_tryon_catalog' %}" class="px-8 py-4 bg-indigo-700 text-white rounded-xl font-semibold text-lg hover:bg-indigo-800 transition-colors shadow-lg">
+                    <i class="fas fa-th-large mr-2"></i>
+                    Ver Catálogo
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stats -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div class="bg-white rounded-xl p-6 shadow-lg">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm text-gray-600 mb-1">Total de Monturas</p>
+                    <p class="text-3xl font-bold text-indigo-600">{{ stats.total_frames }}</p>
+                </div>
+                <div class="w-14 h-14 bg-indigo-100 rounded-full flex items-center justify-center">
+                    <i class="fas fa-glasses text-2xl text-indigo-600"></i>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-xl p-6 shadow-lg">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm text-gray-600 mb-1">Sesiones Totales</p>
+                    <p class="text-3xl font-bold text-purple-600">{{ stats.total_sessions }}</p>
+                </div>
+                <div class="w-14 h-14 bg-purple-100 rounded-full flex items-center justify-center">
+                    <i class="fas fa-users text-2xl text-purple-600"></i>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-xl p-6 shadow-lg">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm text-gray-600 mb-1">Categorías</p>
+                    <p class="text-3xl font-bold text-pink-600">{{ stats.total_categories }}</p>
+                </div>
+                <div class="w-14 h-14 bg-pink-100 rounded-full flex items-center justify-center">
+                    <i class="fas fa-tags text-2xl text-pink-600"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Features -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div class="feature-card bg-white rounded-xl p-6 shadow-lg text-center">
+            <div class="w-16 h-16 bg-blue-100 rounded-full mx-auto mb-4 flex items-center justify-center">
+                <i class="fas fa-camera text-3xl text-blue-600"></i>
+            </div>
+            <h3 class="font-semibold text-lg mb-2">Prueba en Vivo</h3>
+            <p class="text-gray-600 text-sm">Activa tu cámara y prueba monturas en tiempo real</p>
+        </div>
+
+        <div class="feature-card bg-white rounded-xl p-6 shadow-lg text-center">
+            <div class="w-16 h-16 bg-green-100 rounded-full mx-auto mb-4 flex items-center justify-center">
+                <i class="fas fa-brain text-3xl text-green-600"></i>
+            </div>
+            <h3 class="font-semibold text-lg mb-2">Detección Facial</h3>
+            <p class="text-gray-600 text-sm">IA detecta tu forma de rostro automáticamente</p>
+        </div>
+
+        <div class="feature-card bg-white rounded-xl p-6 shadow-lg text-center">
+            <div class="w-16 h-16 bg-purple-100 rounded-full mx-auto mb-4 flex items-center justify-center">
+                <i class="fas fa-lightbulb text-3xl text-purple-600"></i>
+            </div>
+            <h3 class="font-semibold text-lg mb-2">Recomendaciones</h3>
+            <p class="text-gray-600 text-sm">Sugerencias personalizadas según tu rostro</p>
+        </div>
+
+        <div class="feature-card bg-white rounded-xl p-6 shadow-lg text-center">
+            <div class="w-16 h-16 bg-pink-100 rounded-full mx-auto mb-4 flex items-center justify-center">
+                <i class="fas fa-camera-retro text-3xl text-pink-600"></i>
+            </div>
+            <h3 class="font-semibold text-lg mb-2">Captura Fotos</h3>
+            <p class="text-gray-600 text-sm">Guarda tus pruebas favoritas para compararlas</p>
+        </div>
+    </div>
+
+    <!-- Categories -->
+    {% if categories %}
+    <div class="bg-white rounded-xl p-8 shadow-lg mb-8">
+        <h2 class="text-2xl font-bold text-gray-800 mb-6 flex items-center">
+            <i class="fas fa-list-ul text-indigo-600 mr-3"></i>
+            Categorías de Monturas
+        </h2>
+        <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+            {% for category in categories %}
+            <a href="{% url 'dashboard:ar_tryon_catalog' %}?category={{ category.id }}" 
+               class="group p-4 bg-gradient-to-br from-indigo-50 to-purple-50 rounded-lg hover:from-indigo-100 hover:to-purple-100 transition-colors text-center">
+                <i class="fas {{ category.icon|default:'fa-glasses' }} text-3xl text-indigo-600 group-hover:scale-110 transition-transform mb-2"></i>
+                <p class="font-semibold text-gray-800 text-sm">{{ category.name }}</p>
+                <p class="text-xs text-gray-600">{{ category.frames.count }} monturas</p>
+            </a>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Featured Frames -->
+    {% if featured_frames %}
+    <div class="bg-white rounded-xl p-8 shadow-lg">
+        <div class="flex items-center justify-between mb-6">
+            <h2 class="text-2xl font-bold text-gray-800 flex items-center">
+                <i class="fas fa-star text-yellow-500 mr-3"></i>
+                Monturas Destacadas
+            </h2>
+            <a href="{% url 'dashboard:ar_tryon_catalog' %}" class="text-indigo-600 hover:text-indigo-700 font-semibold">
+                Ver todas <i class="fas fa-arrow-right ml-1"></i>
+            </a>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            {% for frame in featured_frames %}
+            <div class="frame-card bg-gray-50 rounded-lg overflow-hidden shadow hover:shadow-xl" 
+                 onclick="window.location.href='{% url 'dashboard:ar_tryon_camera' %}?frame={{ frame.id }}'">
+                <div class="aspect-w-16 aspect-h-9 bg-white">
+                    {% if frame.front_image %}
+                    <img src="{{ frame.front_image.url }}" alt="{{ frame.name }}" class="w-full h-48 object-contain p-4">
+                    {% else %}
+                    <div class="w-full h-48 flex items-center justify-center">
+                        <i class="fas fa-glasses text-6xl text-gray-300"></i>
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="p-4">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-xs font-semibold px-2 py-1 bg-indigo-100 text-indigo-700 rounded">
+                            {{ frame.code }}
+                        </span>
+                        <span class="text-xs text-gray-500">
+                            <i class="fas fa-eye mr-1"></i>{{ frame.try_on_count }}
+                        </span>
+                    </div>
+                    <h3 class="font-semibold text-gray-800 mb-1">{{ frame.name }}</h3>
+                    <p class="text-sm text-gray-600 mb-2">{{ frame.brand }}</p>
+                    <div class="flex items-center justify-between">
+                        <span class="text-lg font-bold text-indigo-600">${{ frame.price }}</span>
+                        <button class="px-3 py-1 bg-indigo-600 text-white text-sm rounded-lg hover:bg-indigo-700 transition-colors">
+                            <i class="fas fa-camera mr-1"></i>Probar
+                        </button>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Quick Actions -->
+    <div class="mt-8 grid grid-cols-1 md:grid-cols-2 gap-6">
+        <a href="{% url 'dashboard:ar_tryon_sessions' %}" 
+           class="bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl p-8 text-white hover:from-blue-600 hover:to-blue-700 transition-all shadow-lg">
+            <div class="flex items-center">
+                <div class="w-16 h-16 bg-white bg-opacity-20 rounded-full flex items-center justify-center mr-6">
+                    <i class="fas fa-history text-3xl"></i>
+                </div>
+                <div>
+                    <h3 class="text-xl font-bold mb-1">Historial de Sesiones</h3>
+                    <p class="text-blue-100">Revisa todas las pruebas realizadas</p>
+                </div>
+            </div>
+        </a>
+
+        <a href="{% url 'dashboard:ar_tryon_catalog' %}" 
+           class="bg-gradient-to-r from-purple-500 to-purple-600 rounded-xl p-8 text-white hover:from-purple-600 hover:to-purple-700 transition-all shadow-lg">
+            <div class="flex items-center">
+                <div class="w-16 h-16 bg-white bg-opacity-20 rounded-full flex items-center justify-center mr-6">
+                    <i class="fas fa-th-large text-3xl"></i>
+                </div>
+                <div>
+                    <h3 class="text-xl font-bold mb-1">Explorar Catálogo</h3>
+                    <p class="text-purple-100">Navega por todas nuestras monturas</p>
+                </div>
+            </div>
+        </a>
+    </div>
+</div>
+{% endblock %}
