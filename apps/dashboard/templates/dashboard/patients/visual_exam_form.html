@@ -1,5 +1,6 @@
 {% extends 'dashboard/base.html' %}
 {% load static %}
+{% load form_extras %}
 
 {% block title %}Nuevo Examen Visual - {{ patient.full_name }}{% endblock %}
 
@@ -7,6 +8,44 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <style>
+    @keyframes fade-in-down {
+        0% {
+            opacity: 0;
+            transform: translateY(-20px);
+        }
+        100% {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    @keyframes fade-out {
+        0% {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        100% {
+            opacity: 0;
+            transform: translateY(-20px);
+        }
+    }
+    
+    .animate-fade-in-down {
+        animation: fade-in-down 0.5s ease-out;
+    }
+    
+    /* Resaltar campos pre-cargados */
+    input[data-preloaded="true"], textarea[data-preloaded="true"], select[data-preloaded="true"] {
+        background-color: #eff6ff !important;
+        border-color: #3b82f6 !important;
+        box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+        transition: all 0.3s ease;
+    }
+    
+    input[data-preloaded="true"]:hover, textarea[data-preloaded="true"]:hover {
+        background-color: #dbeafe !important;
+    }
+    
     .quick-btn {
         padding: 0.25rem 0.5rem;
         font-size: 0.75rem;
@@ -97,6 +136,301 @@
                         </option>
                         {% endfor %}
                     </select>
+                </div>
+            </div>
+        </div>
+
+        <!-- ANAMNESIS -->
+        <div class="bg-gradient-to-r from-blue-50 to-blue-100 border-l-4 border-blue-600 rounded-lg p-6 mb-6 shadow-sm">
+            <h3 class="text-xl font-bold text-gray-800 mb-5 flex items-center uppercase tracking-wide">
+                <i class="fas fa-file-medical-alt text-blue-600 mr-2"></i>
+                ANAMNESIS
+            </h3>
+            
+            <div class="space-y-4">
+                <!-- Motivo de Consulta -->
+                <div class="bg-white rounded-lg p-4 shadow-sm">
+                    <label class="block text-sm font-bold text-gray-800 mb-2 uppercase">
+                        Motivo de Consulta
+                    </label>
+                    <textarea name="chief_complaint" rows="2" required
+                              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                              placeholder="Ej: Control visual, Paciente no usaría de corrección óptica que asiste a consulta para control visual">{% if history %}{{ history.chief_complaint }}{% endif %}</textarea>
+                </div>
+
+                <!-- Enfermedad Actual -->
+                <div class="bg-white rounded-lg p-4 shadow-sm">
+                    <label class="block text-sm font-bold text-gray-800 mb-2 uppercase">
+                        Enfermedad Actual
+                    </label>
+                    <textarea name="current_illness" rows="2"
+                              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                              placeholder="Ej: Paciente no usaría de corrección óptica que asiste a consulta para control visual">{% if history %}{{ history.current_illness }}{% endif %}</textarea>
+                </div>
+            </div>
+        </div>
+
+        <!-- ANTECEDENTES GENERALES -->
+        <div class="bg-gradient-to-r from-amber-50 to-amber-100 border-l-4 border-amber-600 rounded-lg p-6 mb-6 shadow-sm">
+            <div class="flex items-center justify-between mb-5">
+                <h3 class="text-xl font-bold text-gray-800 flex items-center uppercase tracking-wide">
+                    <i class="fas fa-notes-medical text-amber-600 mr-2"></i>
+                    ANTECEDENTES GENERALES
+                </h3>
+                <button type="button" onclick="fillGeneralHistoryWithNA()" 
+                        class="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-black rounded-lg shadow transition-all duration-200 flex items-center gap-2 text-sm font-medium">
+                    <i class="fas fa-magic"></i>
+                    <span>Rellenar Sección con N/A</span>
+                </button>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <!-- Patológicos -->
+                <div class="bg-white rounded-lg p-4 shadow-sm">
+                    <label class="block text-sm font-bold text-gray-800 mb-2 flex justify-between items-center">
+                        <span><i class="fas fa-disease text-red-600 mr-1"></i> Patológicos</span>
+                        <button type="button" onclick="fillWithNA('pathological_history')" class="text-xs px-2 py-1 bg-gray-200 hover:bg-gray-300 rounded" title="Rellenar con N/A">
+                            N/A
+                        </button>
+                    </label>
+                    <textarea name="pathological_history" rows="2"
+                              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500"
+                              placeholder="Diabetes, hipertensión, enfermedades crónicas... o escriba N/A">{% if history %}{{ history.pathological_history }}{% endif %}</textarea>
+                </div>
+
+                <!-- Farmacológicos -->
+                <div class="bg-white rounded-lg p-4 shadow-sm">
+                    <label class="block text-sm font-bold text-gray-800 mb-2 flex justify-between items-center">
+                        <span><i class="fas fa-pills text-green-600 mr-1"></i> Farmacológicos</span>
+                        <button type="button" onclick="fillWithNA('pharmacological_history')" class="text-xs px-2 py-1 bg-gray-200 hover:bg-gray-300 rounded" title="Rellenar con N/A">
+                            N/A
+                        </button>
+                    </label>
+                    <textarea name="pharmacological_history" rows="2"
+                              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500"
+                              placeholder="Medicamentos que toma actualmente... o escriba N/A">{% if history %}{{ history.pharmacological_history }}{% endif %}</textarea>
+                </div>
+
+                <!-- Quirúrgicos -->
+                <div class="bg-white rounded-lg p-4 shadow-sm">
+                    <label class="block text-sm font-bold text-gray-800 mb-2 flex justify-between items-center">
+                        <span><i class="fas fa-procedures text-blue-600 mr-1"></i> Quirúrgicos</span>
+                        <button type="button" onclick="fillWithNA('surgical_history')" class="text-xs px-2 py-1 bg-gray-200 hover:bg-gray-300 rounded" title="Rellenar con N/A">
+                            N/A
+                        </button>
+                    </label>
+                    <textarea name="surgical_history" rows="2"
+                              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500"
+                              placeholder="Cirugías previas generales... o escriba N/A">{% if history %}{{ history.surgical_history }}{% endif %}</textarea>
+                </div>
+
+                <!-- Alérgicos -->
+                <div class="bg-white rounded-lg p-4 shadow-sm">
+                    <label class="block text-sm font-bold text-gray-800 mb-2 flex justify-between items-center">
+                        <span><i class="fas fa-allergies text-orange-600 mr-1"></i> Alérgicos</span>
+                        <button type="button" onclick="fillWithNA('allergic_history')" class="text-xs px-2 py-1 bg-gray-200 hover:bg-gray-300 rounded" title="Rellenar con N/A">
+                            N/A
+                        </button>
+                    </label>
+                    <textarea name="allergic_history" rows="2"
+                              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500"
+                              placeholder="Alergias conocidas... o escriba N/A">{% if history %}{{ history.allergic_history }}{% endif %}</textarea>
+                </div>
+
+                <!-- Traumatológicos -->
+                <div class="bg-white rounded-lg p-4 shadow-sm">
+                    <label class="block text-sm font-bold text-gray-800 mb-2 flex justify-between items-center">
+                        <span><i class="fas fa-band-aid text-purple-600 mr-1"></i> Traumatológicos</span>
+                        <button type="button" onclick="fillWithNA('trauma_history')" class="text-xs px-2 py-1 bg-gray-200 hover:bg-gray-300 rounded" title="Rellenar con N/A">
+                            N/A
+                        </button>
+                    </label>
+                    <textarea name="trauma_history" rows="2"
+                              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500"
+                              placeholder="Traumatismos previos... o escriba N/A">{% if history %}{{ history.trauma_history }}{% endif %}</textarea>
+                </div>
+
+                <!-- Otros -->
+                <div class="bg-white rounded-lg p-4 shadow-sm">
+                    <label class="block text-sm font-bold text-gray-800 mb-2 flex justify-between items-center">
+                        <span><i class="fas fa-notes-medical text-gray-600 mr-1"></i> Otros</span>
+                        <button type="button" onclick="fillWithNA('other_general_history')" class="text-xs px-2 py-1 bg-gray-200 hover:bg-gray-300 rounded" title="Rellenar con N/A">
+                            N/A
+                        </button>
+                    </label>
+                    <textarea name="other_general_history" rows="2"
+                              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500"
+                              placeholder="Otros antecedentes generales... o escriba N/A">{% if history %}{{ history.other_general_history }}{% endif %}</textarea>
+                </div>
+            </div>
+        </div>
+
+        <!-- ANTECEDENTES OCULARES -->
+        <div class="bg-gradient-to-r from-teal-50 to-teal-100 border-l-4 border-teal-600 rounded-lg p-6 mb-6 shadow-sm">
+            <h3 class="text-xl font-bold text-gray-800 mb-5 flex items-center uppercase tracking-wide">
+                <i class="fas fa-eye text-teal-600 mr-2"></i>
+                ANTECEDENTES OCULARES
+            </h3>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <!-- Patológicos Oculares -->
+                <div class="bg-white rounded-lg p-4 shadow-sm">
+                    <label class="block text-sm font-bold text-gray-800 mb-2 flex justify-between items-center">
+                        <span><i class="fas fa-eye-slash text-red-600 mr-1"></i> Patológicos Oculares</span>
+                        <button type="button" onclick="fillWithNA('ocular_pathological_history')" class="text-xs px-2 py-1 bg-gray-200 hover:bg-gray-300 rounded" title="Rellenar con N/A">
+                            N/A
+                        </button>
+                    </label>
+                    <textarea name="ocular_pathological_history" rows="2"
+                              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500"
+                              placeholder="Glaucoma, cataratas, enfermedades oculares previas... o escriba N/A">{% if history %}{{ history.ocular_pathological_history }}{% endif %}</textarea>
+                </div>
+
+                <!-- Farmacológicos Oculares -->
+                <div class="bg-white rounded-lg p-4 shadow-sm">
+                    <label class="block text-sm font-bold text-gray-800 mb-2 flex justify-between items-center">
+                        <span><i class="fas fa-eye-dropper text-green-600 mr-1"></i> Farmacológicos Oculares</span>
+                        <button type="button" onclick="fillWithNA('ocular_pharmacological_history')" class="text-xs px-2 py-1 bg-gray-200 hover:bg-gray-300 rounded" title="Rellenar con N/A">
+                            N/A
+                        </button>
+                    </label>
+                    <textarea name="ocular_pharmacological_history" rows="2"
+                              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500"
+                              placeholder="Gotas, medicamentos oculares actuales... o escriba N/A">{% if history %}{{ history.ocular_pharmacological_history }}{% endif %}</textarea>
+                </div>
+
+                <!-- Quirúrgicos Oculares -->
+                <div class="bg-white rounded-lg p-4 shadow-sm">
+                    <label class="block text-sm font-bold text-gray-800 mb-2 flex justify-between items-center">
+                        <span><i class="fas fa-scalpel text-blue-600 mr-1"></i> Quirúrgicos Oculares</span>
+                        <button type="button" onclick="fillWithNA('ocular_surgical_history')" class="text-xs px-2 py-1 bg-gray-200 hover:bg-gray-300 rounded" title="Rellenar con N/A">
+                            N/A
+                        </button>
+                    </label>
+                    <textarea name="ocular_surgical_history" rows="2"
+                              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500"
+                              placeholder="LASIK, cirugía de cataratas, cirugías oculares previas... o escriba N/A">{% if history %}{{ history.ocular_surgical_history }}{% endif %}</textarea>
+                </div>
+
+                <!-- Traumatológicos Oculares -->
+                <div class="bg-white rounded-lg p-4 shadow-sm">
+                    <label class="block text-sm font-bold text-gray-800 mb-2 flex justify-between items-center">
+                        <span><i class="fas fa-user-injured text-purple-600 mr-1"></i> Traumatológicos Oculares</span>
+                        <button type="button" onclick="fillWithNA('ocular_trauma_history')" class="text-xs px-2 py-1 bg-gray-200 hover:bg-gray-300 rounded" title="Rellenar con N/A">
+                            N/A
+                        </button>
+                    </label>
+                    <textarea name="ocular_trauma_history" rows="2"
+                              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500"
+                              placeholder="Traumatismos oculares previos... o escriba N/A">{% if history %}{{ history.ocular_trauma_history }}{% endif %}</textarea>
+                </div>
+
+                <!-- Terapéuticos Oculares -->
+                <div class="bg-white rounded-lg p-4 shadow-sm">
+                    <label class="block text-sm font-bold text-gray-800 mb-2">
+                        <i class="fas fa-glasses text-indigo-600 mr-1"></i> Terapéuticos
+                    </label>
+                    <div class="space-y-2">
+                        <div class="flex items-center space-x-4">
+                            <label class="flex items-center space-x-2 cursor-pointer">
+                                <input type="checkbox" name="previous_glasses" {% if history.previous_glasses %}checked{% endif %}
+                                       class="w-4 h-4 text-teal-600 border-gray-300 rounded focus:ring-teal-500">
+                                <span class="text-sm text-gray-700 font-medium">Usa Lentes</span>
+                            </label>
+                            <label class="flex items-center space-x-2 cursor-pointer">
+                                <input type="checkbox" name="previous_contact_lenses" {% if history.previous_contact_lenses %}checked{% endif %}
+                                       class="w-4 h-4 text-teal-600 border-gray-300 rounded focus:ring-teal-500">
+                                <span class="text-sm text-gray-700 font-medium">Lentes de Contacto</span>
+                            </label>
+                        </div>
+                        <textarea name="ocular_therapeutic_history" rows="1"
+                                  class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500"
+                                  placeholder="Detalles de uso de lentes, terapias visuales... o escriba N/A">{% if history %}{{ history.ocular_therapeutic_history }}{% endif %}</textarea>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ANTECEDENTES FAMILIARES -->
+        <div class="bg-gradient-to-r from-pink-50 to-pink-100 border-l-4 border-pink-600 rounded-lg p-6 mb-6 shadow-sm">
+            <h3 class="text-xl font-bold text-gray-800 mb-5 flex items-center uppercase tracking-wide">
+                <i class="fas fa-users text-pink-600 mr-2"></i>
+                ANTECEDENTES FAMILIARES
+            </h3>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <!-- Generales -->
+                <div class="bg-white rounded-lg p-4 shadow-sm">
+                    <label class="block text-sm font-bold text-gray-800 mb-2">
+                        <i class="fas fa-heartbeat text-pink-600 mr-1"></i> Generales
+                    </label>
+                    <div class="grid grid-cols-2 gap-2 mb-2">
+                        <label class="flex items-center space-x-2 cursor-pointer">
+                            <input type="checkbox" name="family_diabetes" {% if history.family_diabetes %}checked{% endif %}
+                                   class="w-4 h-4 text-pink-600 border-gray-300 rounded focus:ring-pink-500">
+                            <span class="text-sm text-gray-700">Diabetes</span>
+                        </label>
+                        <label class="flex items-center space-x-2 cursor-pointer">
+                            <input type="checkbox" name="family_hypertension" {% if history.family_hypertension %}checked{% endif %}
+                                   class="w-4 h-4 text-pink-600 border-gray-300 rounded focus:ring-pink-500">
+                            <span class="text-sm text-gray-700">Hipertensión</span>
+                        </label>
+                        <label class="flex items-center space-x-2 cursor-pointer">
+                            <input type="checkbox" name="family_heart_disease" {% if history.family_heart_disease %}checked{% endif %}
+                                   class="w-4 h-4 text-pink-600 border-gray-300 rounded focus:ring-pink-500">
+                            <span class="text-sm text-gray-700">Cardiopatías</span>
+                        </label>
+                        <label class="flex items-center space-x-2 cursor-pointer">
+                            <input type="checkbox" name="family_cancer" {% if history.family_cancer %}checked{% endif %}
+                                   class="w-4 h-4 text-pink-600 border-gray-300 rounded focus:ring-pink-500">
+                            <span class="text-sm text-gray-700">Cáncer</span>
+                        </label>
+                    </div>
+                    <textarea name="family_general_notes" rows="2"
+                              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500"
+                              placeholder="Otros antecedentes familiares generales... o escriba N/A">{% if history %}{{ history.family_general_notes }}{% endif %}</textarea>
+                </div>
+
+                <!-- Oculares -->
+                <div class="bg-white rounded-lg p-4 shadow-sm">
+                    <label class="block text-sm font-bold text-gray-800 mb-2">
+                        <i class="fas fa-eye text-pink-600 mr-1"></i> Oculares
+                    </label>
+                    <div class="grid grid-cols-2 gap-2 mb-2">
+                        <label class="flex items-center space-x-2 cursor-pointer">
+                            <input type="checkbox" name="family_glaucoma" {% if history.family_glaucoma %}checked{% endif %}
+                                   class="w-4 h-4 text-pink-600 border-gray-300 rounded focus:ring-pink-500">
+                            <span class="text-sm text-gray-700">Glaucoma</span>
+                        </label>
+                        <label class="flex items-center space-x-2 cursor-pointer">
+                            <input type="checkbox" name="family_cataracts" {% if history.family_cataracts %}checked{% endif %}
+                                   class="w-4 h-4 text-pink-600 border-gray-300 rounded focus:ring-pink-500">
+                            <span class="text-sm text-gray-700">Cataratas</span>
+                        </label>
+                        <label class="flex items-center space-x-2 cursor-pointer">
+                            <input type="checkbox" name="family_macular_degeneration" {% if history.family_macular_degeneration %}checked{% endif %}
+                                   class="w-4 h-4 text-pink-600 border-gray-300 rounded focus:ring-pink-500">
+                            <span class="text-sm text-gray-700">Deg. Macular</span>
+                        </label>
+                        <label class="flex items-center space-x-2 cursor-pointer">
+                            <input type="checkbox" name="family_retinal_detachment" {% if history.family_retinal_detachment %}checked{% endif %}
+                                   class="w-4 h-4 text-pink-600 border-gray-300 rounded focus:ring-pink-500">
+                            <span class="text-sm text-gray-700">Desp. Retina</span>
+                        </label>
+                        <label class="flex items-center space-x-2 cursor-pointer">
+                            <input type="checkbox" name="family_myopia" {% if history.family_myopia %}checked{% endif %}
+                                   class="w-4 h-4 text-pink-600 border-gray-300 rounded focus:ring-pink-500">
+                            <span class="text-sm text-gray-700">Miopía</span>
+                        </label>
+                        <label class="flex items-center space-x-2 cursor-pointer">
+                            <input type="checkbox" name="family_strabismus" {% if history.family_strabismus %}checked{% endif %}
+                                   class="w-4 h-4 text-pink-600 border-gray-300 rounded focus:ring-pink-500">
+                            <span class="text-sm text-gray-700">Estrabismo</span>
+                        </label>
+                    </div>
+                    <textarea name="family_ocular_notes" rows="2"
+                              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500"
+                              placeholder="Otros antecedentes familiares oculares... o escriba N/A">{% if history %}{{ history.family_ocular_notes }}{% endif %}</textarea>
                 </div>
             </div>
         </div>
@@ -233,126 +567,135 @@
             </div>
         </div>
 
-        <!-- AGUDEZA VISUAL CON BOTONES RÁPIDOS -->
-        <div class="bg-gradient-to-r from-green-50 to-green-100 border-l-4 border-green-600 rounded-lg p-6 mb-6 shadow-sm">
-            <div class="flex items-center justify-between mb-5">
-                <h3 class="text-xl font-bold text-gray-800 flex items-center uppercase tracking-wide">
-                    <i class="fas fa-eye text-green-600 mr-2"></i>
-                    AGUDEZA VISUAL
-                </h3>
-                <!-- BOTONES RÁPIDOS AQUÍ -->
-                <div class="flex gap-2">
-                    <button type="button" onclick="setAllVA('20/20')" class="quick-btn bg-green-600 text-white border-green-700 hover:bg-green-700">
-                        <i class="fas fa-bolt mr-1"></i>20/20 Todo
-                    </button>
-                    <button type="button" onclick="setAllVA('20/30')" class="quick-btn bg-yellow-500 text-white border-yellow-600 hover:bg-yellow-600">
-                        20/30 Todo
-                    </button>
-                    <button type="button" onclick="clearVA()" class="quick-btn bg-gray-500 text-white border-gray-600 hover:bg-gray-600">
-                        <i class="fas fa-eraser mr-1"></i>Limpiar
-                    </button>
-                </div>
-            </div>
+        <!-- OPTOMETRÍA / AGUDEZA VISUAL CON BOTONES RÁPIDOS -->
+        <div class="bg-purple-50 border-l-4 border-purple-600 rounded-lg p-5 mb-6">
+            <h3 class="text-lg font-bold text-gray-800 mb-4 flex items-center">
+                <i class="fas fa-glasses text-purple-600 mr-2"></i>
+                OPTOMETRÍA
+            </h3>
             
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <!-- Sin Corrección -->
-                <div class="bg-white rounded-lg p-4 shadow-sm border-2 border-red-200">
-                    <h4 class="font-bold text-gray-800 mb-3 flex items-center text-sm">
-                        <i class="fas fa-eye-slash text-red-600 mr-2"></i>
-                        Sin Corrección (SC)
-                    </h4>
-                    <div class="space-y-2">
+            <!-- Agudeza Visual -->
+            <div class="mb-5">
+                <div class="flex items-center justify-between mb-3">
+                    <h4 class="font-semibold text-gray-700 bg-white p-2 rounded">Agudeza Visual</h4>
+                    <!-- BOTONES RÁPIDOS AQUÍ -->
+                    <div class="flex gap-2">
+                        <button type="button" onclick="setAllVA('20/20')" class="quick-btn bg-green-600 text-white border-green-700 hover:bg-green-700">
+                            <i class="fas fa-bolt mr-1"></i>20/20 Todo
+                        </button>
+                        <button type="button" onclick="setAllVA('20/30')" class="quick-btn bg-yellow-500 text-white border-yellow-600 hover:bg-yellow-600">
+                            20/30 Todo
+                        </button>
+                        <button type="button" onclick="clearVA()" class="quick-btn bg-gray-500 text-white border-gray-600 hover:bg-gray-600">
+                            <i class="fas fa-eraser mr-1"></i>Limpiar
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Cartilla de Visión Lejana -->
+                <div class="bg-blue-50 p-3 rounded mb-3">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        <i class="fas fa-eye mr-2"></i>Cartilla Visión Lejana (6 metros)
+                    </label>
+                    <select name="distance_chart" class="w-full md:w-1/2 px-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500">
+                        <option value="">-- Seleccionar cartilla --</option>
+                        <option value="ETDRS logMAR" {% if history and history.distance_chart == "ETDRS logMAR" %}selected{% endif %}>ETDRS logMAR a 6m</option>
+                        <option value="Snellen" {% if history and history.distance_chart == "Snellen" %}selected{% endif %}>Snellen</option>
+                        <option value="Anillos Landolt" {% if history and history.distance_chart == "Anillos Landolt" %}selected{% endif %}>Anillos Landolt</option>
+                        <option value="Figuras" {% if history and history.distance_chart == "Figuras" %}selected{% endif %}>Figuras</option>
+                        <option value="Números" {% if history and history.distance_chart == "Números" %}selected{% endif %}>Números</option>
+                    </select>
+                </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <!-- OD -->
+                <div class="bg-white p-3 rounded">
+                    <div class="flex items-center mb-2">
+                        <span class="bg-blue-500 text-white w-7 h-7 rounded-full flex items-center justify-center text-sm mr-2 font-bold">OD</span>
+                        <span class="font-semibold">Ojo Derecho</span>
+                    </div>
+                    <div class="grid grid-cols-2 gap-2">
                         <div>
-                            <label class="block text-xs font-medium text-gray-700 mb-1">OD (Ojo Derecho)</label>
-                            <div class="flex gap-2">
-                                <input type="text" name="va_od_sc" id="va_od_sc" list="va_values"
-                                       class="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 text-sm"
-                                       placeholder="20/20"
-                                       value="{% if history %}{{ history.va_od_sc_distance }}{% endif %}">
-                                <button type="button" onclick="setValue('va_od_sc', '20/20')" class="quick-btn bg-green-100 text-green-700 border-green-300">20/20</button>
-                            </div>
+                            <label class="block text-xs font-medium text-gray-600 mb-1">SC Lejos</label>
+                            <input type="text" name="va_od_sc_distance" id="va_od_sc"
+                                   value="{% if history %}{{ history.va_od_sc_distance }}{% endif %}"
+                                   class="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-purple-500"
+                                   placeholder="20/20">
                         </div>
                         <div>
-                            <label class="block text-xs font-medium text-gray-700 mb-1">OI (Ojo Izquierdo)</label>
-                            <div class="flex gap-2">
-                                <input type="text" name="va_os_sc" id="va_os_sc" list="va_values"
-                                       class="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 text-sm"
-                                       placeholder="20/20"
-                                       value="{% if history %}{{ history.va_os_sc_distance }}{% endif %}">
-                                <button type="button" onclick="setValue('va_os_sc', '20/20')" class="quick-btn bg-green-100 text-green-700 border-green-300">20/20</button>
-                            </div>
+                            <label class="block text-xs font-medium text-gray-600 mb-1">CC Lejos</label>
+                            <input type="text" name="va_od_cc_distance" id="va_od_cc"
+                                   value="{% if history %}{{ history.va_od_cc_distance }}{% endif %}"
+                                   class="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-purple-500"
+                                   placeholder="20/20">
                         </div>
                         <div>
-                            <label class="block text-xs font-medium text-gray-700 mb-1">AO (Ambos Ojos)</label>
-                            <div class="flex gap-2">
-                                <input type="text" name="va_ou_sc" id="va_ou_sc" list="va_values"
-                                       class="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 text-sm"
-                                       placeholder="20/20"
-                                       value="{% if history %}{{ history.va_ou_distance }}{% endif %}">
-                                <button type="button" onclick="setValue('va_ou_sc', '20/20')" class="quick-btn bg-green-100 text-green-700 border-green-300">20/20</button>
-                            </div>
+                            <label class="block text-xs font-medium text-gray-600 mb-1">SC Cerca</label>
+                            <input type="text" name="va_od_sc_near"
+                                   value="{% if history %}{{ history.va_od_sc_near }}{% endif %}"
+                                   class="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-purple-500"
+                                   placeholder="J1 a 40cm">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-gray-600 mb-1">CC Cerca</label>
+                            <input type="text" name="va_od_cc_near"
+                                   value="{% if history %}{{ history.va_od_cc_near }}{% endif %}"
+                                   class="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-purple-500"
+                                   placeholder="J1 a 40cm">
                         </div>
                     </div>
                 </div>
-
-                <!-- Con Corrección -->
-                <div class="bg-white rounded-lg p-4 shadow-sm border-2 border-green-200">
-                    <h4 class="font-bold text-gray-800 mb-3 flex items-center text-sm">
-                        <i class="fas fa-glasses text-green-600 mr-2"></i>
-                        Con Corrección (CC)
-                    </h4>
-                    <div class="space-y-2">
+                <!-- OS -->
+                <div class="bg-white p-3 rounded">
+                    <div class="flex items-center mb-2">
+                        <span class="bg-green-500 text-white w-7 h-7 rounded-full flex items-center justify-center text-sm mr-2 font-bold">OS</span>
+                        <span class="font-semibold">Ojo Izquierdo</span>
+                    </div>
+                    <div class="grid grid-cols-2 gap-2">
                         <div>
-                            <label class="block text-xs font-medium text-gray-700 mb-1">OD (Ojo Derecho)</label>
-                            <div class="flex gap-2">
-                                <input type="text" name="va_od_cc" id="va_od_cc" list="va_values"
-                                       class="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 text-sm"
-                                       placeholder="20/20"
-                                       value="{% if history %}{{ history.va_od_cc_distance }}{% endif %}">
-                                <button type="button" onclick="setValue('va_od_cc', '20/20')" class="quick-btn bg-green-100 text-green-700 border-green-300">20/20</button>
-                            </div>
+                            <label class="block text-xs font-medium text-gray-600 mb-1">SC Lejos</label>
+                            <input type="text" name="va_os_sc_distance" id="va_os_sc"
+                                   value="{% if history %}{{ history.va_os_sc_distance }}{% endif %}"
+                                   class="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-purple-500"
+                                   placeholder="20/20">
                         </div>
                         <div>
-                            <label class="block text-xs font-medium text-gray-700 mb-1">OI (Ojo Izquierdo)</label>
-                            <div class="flex gap-2">
-                                <input type="text" name="va_os_cc" id="va_os_cc" list="va_values"
-                                       class="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 text-sm"
-                                       placeholder="20/20"
-                                       value="{% if history %}{{ history.va_os_cc_distance }}{% endif %}">
-                                <button type="button" onclick="setValue('va_os_cc', '20/20')" class="quick-btn bg-green-100 text-green-700 border-green-300">20/20</button>
-                            </div>
+                            <label class="block text-xs font-medium text-gray-600 mb-1">CC Lejos</label>
+                            <input type="text" name="va_os_cc_distance" id="va_os_cc"
+                                   value="{% if history %}{{ history.va_os_cc_distance }}{% endif %}"
+                                   class="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-purple-500"
+                                   placeholder="20/20">
                         </div>
                         <div>
-                            <label class="block text-xs font-medium text-gray-700 mb-1">AO (Ambos Ojos)</label>
-                            <div class="flex gap-2">
-                                <input type="text" name="va_ou_cc" id="va_ou_cc" list="va_values"
-                                       class="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 text-sm"
-                                       placeholder="20/20"
-                                       value="{% if history %}{{ history.va_ou_near }}{% endif %}">
-                                <button type="button" onclick="setValue('va_ou_cc', '20/20')" class="quick-btn bg-green-100 text-green-700 border-green-300">20/20</button>
-                            </div>
+                            <label class="block text-xs font-medium text-gray-600 mb-1">SC Cerca</label>
+                            <input type="text" name="va_os_sc_near"
+                                   value="{% if history %}{{ history.va_os_sc_near }}{% endif %}"
+                                   class="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-purple-500"
+                                   placeholder="J1 a 40cm">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-gray-600 mb-1">CC Cerca</label>
+                            <input type="text" name="va_os_cc_near"
+                                   value="{% if history %}{{ history.va_os_cc_near }}{% endif %}"
+                                   class="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-purple-500"
+                                   placeholder="J1 a 40cm">
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Datalist con valores comunes de agudeza visual -->
-            <datalist id="va_values">
-                <option value="20/15">
-                <option value="20/20">
-                <option value="20/25">
-                <option value="20/30">
-                <option value="20/40">
-                <option value="20/50">
-                <option value="20/60">
-                <option value="20/80">
-                <option value="20/100">
-                <option value="20/200">
-                <option value="CD">
-                <option value="MM">
-                <option value="PL">
-                <option value="NPL">
-            </datalist>
+            <!-- Cartilla de Visión Próxima -->
+            <div class="bg-green-50 p-3 rounded mt-3">
+                <label class="block text-sm font-medium text-gray-700 mb-2">
+                    <i class="fas fa-book-open mr-2"></i>Cartilla Visión Próxima
+                </label>
+                <select name="near_chart" class="w-full md:w-1/2 px-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-green-500">
+                    <option value="">-- Seleccionar cartilla --</option>
+                    <option value="Tabla de Jaeger" {% if history and history.near_chart == "Tabla de Jaeger" %}selected{% endif %}>Tabla de Jaeger</option>
+                    <option value="Cartilla Rosenbaum" {% if history and history.near_chart == "Cartilla Rosenbaum" %}selected{% endif %}>Cartilla Rosenbaum</option>
+                    <option value="Cartilla Bailey-Lovie" {% if history and history.near_chart == "Cartilla Bailey-Lovie" %}selected{% endif %}>Cartilla Bailey-Lovie</option>
+                </select>
+            </div>
         </div>
 
         <!-- REFRACCIÓN CON BOTÓN COPIAR OD→OI -->
@@ -426,6 +769,7 @@
                         <div>
                             <label class="block text-xs font-medium text-gray-700 mb-1">DNP (mm)</label>
                             <input type="number" step="0.5" name="refraction_od_dnp" id="refraction_od_dnp"
+                                   value="{% if history.refraction_od_dnp %}{{ history.refraction_od_dnp|stringformat:'g' }}{% endif %}"
                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500"
                                    placeholder="32.0">
                         </div>
@@ -478,10 +822,99 @@
                         <div>
                             <label class="block text-xs font-medium text-gray-700 mb-1">DNP (mm)</label>
                             <input type="number" step="0.5" name="refraction_os_dnp" id="refraction_os_dnp"
+                                   value="{% if history.refraction_os_dnp %}{{ history.refraction_os_dnp|stringformat:'g' }}{% endif %}"
                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500"
                                    placeholder="32.0">
                         </div>
                     </div>
+                </div>
+            </div>
+
+            <!-- Distancia Pupilar -->
+            <div class="bg-white p-3 rounded mt-4">
+                <h4 class="font-semibold text-gray-700 mb-2">Distancia Pupilar (mm)</h4>
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-2">
+                    <div>
+                        <label class="block text-xs font-medium text-gray-600 mb-1">DP Lejos</label>
+                        <input type="number" step="0.5" name="pd_distance"
+                               value="{% if history.pd_distance %}{{ history.pd_distance|stringformat:'g' }}{% endif %}"
+                               class="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-purple-500"
+                               placeholder="63.0">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-gray-600 mb-1">DP Cerca</label>
+                        <input type="number" step="0.5" name="pd_near"
+                               value="{% if history.pd_near %}{{ history.pd_near|stringformat:'g' }}{% endif %}"
+                               class="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-purple-500"
+                               placeholder="59.0">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-gray-600 mb-1">DP OD</label>
+                        <input type="number" step="0.5" name="pd_od"
+                               value="{% if history.pd_od %}{{ history.pd_od|stringformat:'g' }}{% endif %}"
+                               class="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-purple-500"
+                               placeholder="31.5">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-gray-600 mb-1">DP OS</label>
+                        <input type="number" step="0.5" name="pd_os"
+                               value="{% if history.pd_os %}{{ history.pd_os|stringformat:'g' }}{% endif %}"
+                               class="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-purple-500"
+                               placeholder="31.5">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Gráfico Visual de Refracción -->
+            <div class="bg-white p-3 rounded mt-3">
+                <h4 class="font-semibold text-gray-700 mb-3 flex items-center">
+                    <i class="fas fa-chart-bar text-purple-600 mr-2"></i>
+                    Representación Visual
+                </h4>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <!-- Gráfico OD -->
+                    <div class="text-center">
+                        <p class="text-sm font-medium text-gray-700 mb-2">
+                            <span class="bg-blue-500 text-white w-6 h-6 rounded-full inline-flex items-center justify-center text-xs mr-1">OD</span>
+                            Ojo Derecho
+                        </p>
+                        <div class="relative w-32 h-32 mx-auto border-4 border-blue-500 rounded-full flex items-center justify-center bg-gradient-to-br from-blue-50 to-blue-100">
+                            <div id="od-visual" class="text-center">
+                                <p class="text-xs text-gray-500">Vista Esquemática</p>
+                                <p class="text-2xl font-bold text-blue-600 mt-1" id="od-sphere-display">--</p>
+                                <p class="text-xs text-gray-600" id="od-cyl-display">--</p>
+                            </div>
+                        </div>
+                        <div class="mt-2 text-xs text-gray-600">
+                            <p><strong>AV:</strong> <span id="od-av-display">--</span></p>
+                        </div>
+                    </div>
+                    
+                    <!-- Gráfico OS -->
+                    <div class="text-center">
+                        <p class="text-sm font-medium text-gray-700 mb-2">
+                            <span class="bg-green-500 text-white w-6 h-6 rounded-full inline-flex items-center justify-center text-xs mr-1">OS</span>
+                            Ojo Izquierdo
+                        </p>
+                        <div class="relative w-32 h-32 mx-auto border-4 border-green-500 rounded-full flex items-center justify-center bg-gradient-to-br from-green-50 to-green-100">
+                            <div id="os-visual" class="text-center">
+                                <p class="text-xs text-gray-500">Vista Esquemática</p>
+                                <p class="text-2xl font-bold text-green-600 mt-1" id="os-sphere-display">--</p>
+                                <p class="text-xs text-gray-600" id="os-cyl-display">--</p>
+                            </div>
+                        </div>
+                        <div class="mt-2 text-xs text-gray-600">
+                            <p><strong>AV:</strong> <span id="os-av-display">--</span></p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Interpretación -->
+                <div class="mt-3 p-2 bg-purple-50 rounded text-xs text-center">
+                    <p class="font-medium text-purple-800">
+                        <i class="fas fa-info-circle mr-1"></i>
+                        <span id="refraction-interpretation">Ingrese valores de refracción para ver la interpretación</span>
+                    </p>
                 </div>
             </div>
         </div>
@@ -556,27 +989,674 @@
             </div>
         </div>
 
-        <!-- Observaciones del Examen -->
-        <div class="bg-gray-50 rounded-lg p-5 mb-6">
-            <h3 class="text-lg font-semibold text-gray-800 mb-4 flex items-center">
-                <i class="fas fa-sticky-note text-yellow-600 mr-2"></i>
-                Observaciones del Examen
-            </h3>
-            <textarea name="exam_notes" rows="3"
-                      class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                      placeholder="Observaciones adicionales sobre el examen visual..."></textarea>
+        <!-- SEGMENTO ANTERIOR -->
+        <div class="bg-green-50 border-l-4 border-green-600 rounded-lg p-5 mb-6">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-bold text-gray-800 flex items-center">
+                    <i class="fas fa-eye text-green-600 mr-2"></i>
+                    SEGMENTO ANTERIOR
+                </h3>
+                <button type="button" onclick="fillAnteriorSegmentDefaults()" class="text-xs bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded">
+                    <i class="fas fa-magic mr-1"></i>Rellenar valores normales
+                </button>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <!-- OD -->
+                <div class="bg-white p-3 rounded">
+                    <div class="flex items-center mb-3">
+                        <span class="bg-blue-500 text-white w-7 h-7 rounded-full flex items-center justify-center text-sm mr-2 font-bold">OD</span>
+                        <span class="font-semibold">Ojo Derecho</span>
+                    </div>
+                    <div class="space-y-2">
+                        <div>
+                            <label class="block text-xs font-medium text-gray-600 mb-1">Párpados</label>
+                            <input type="text" name="biomicroscopy_od_lids"
+                                   value="{% if history %}{{ history.biomicroscopy_od_lids }}{% endif %}"
+                                   class="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-green-500"
+                                   placeholder="Normal">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-gray-600 mb-1">Conjuntiva</label>
+                            <input type="text" name="biomicroscopy_od_conjunctiva"
+                                   value="{% if history %}{{ history.biomicroscopy_od_conjunctiva }}{% endif %}"
+                                   class="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-green-500"
+                                   placeholder="Normal">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-gray-600 mb-1">Córnea</label>
+                            <input type="text" name="biomicroscopy_od_cornea"
+                                   value="{% if history %}{{ history.biomicroscopy_od_cornea }}{% endif %}"
+                                   class="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-green-500"
+                                   placeholder="Transparente">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-gray-600 mb-1">Cámara Anterior</label>
+                            <input type="text" name="biomicroscopy_od_anterior_chamber"
+                                   value="{% if history %}{{ history.biomicroscopy_od_anterior_chamber }}{% endif %}"
+                                   class="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-green-500"
+                                   placeholder="Formada, profunda">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-gray-600 mb-1">Iris</label>
+                            <input type="text" name="biomicroscopy_od_iris"
+                                   value="{% if history %}{{ history.biomicroscopy_od_iris }}{% endif %}"
+                                   class="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-green-500"
+                                   placeholder="Normal">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-gray-600 mb-1">Cristalino</label>
+                            <input type="text" name="biomicroscopy_od_lens"
+                                   value="{% if history %}{{ history.biomicroscopy_od_lens }}{% endif %}"
+                                   class="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-green-500"
+                                   placeholder="Transparente">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-gray-600 mb-1">Pupila</label>
+                            <input type="text" name="biomicroscopy_od_pupil"
+                                   value="{% if history %}{{ history.biomicroscopy_od_pupil }}{% endif %}"
+                                   class="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-green-500"
+                                   placeholder="Redonda, reactiva">
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- OS -->
+                <div class="bg-white p-3 rounded">
+                    <div class="flex items-center mb-3">
+                        <span class="bg-green-500 text-white w-7 h-7 rounded-full flex items-center justify-center text-sm mr-2 font-bold">OS</span>
+                        <span class="font-semibold">Ojo Izquierdo</span>
+                    </div>
+                    <div class="space-y-2">
+                        <div>
+                            <label class="block text-xs font-medium text-gray-600 mb-1">Párpados</label>
+                            <input type="text" name="biomicroscopy_os_lids"
+                                   value="{% if history %}{{ history.biomicroscopy_os_lids }}{% endif %}"
+                                   class="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-green-500"
+                                   placeholder="Normal">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-gray-600 mb-1">Conjuntiva</label>
+                            <input type="text" name="biomicroscopy_os_conjunctiva"
+                                   value="{% if history %}{{ history.biomicroscopy_os_conjunctiva }}{% endif %}"
+                                   class="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-green-500"
+                                   placeholder="Normal">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-gray-600 mb-1">Córnea</label>
+                            <input type="text" name="biomicroscopy_os_cornea"
+                                   value="{% if history %}{{ history.biomicroscopy_os_cornea }}{% endif %}"
+                                   class="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-green-500"
+                                   placeholder="Transparente">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-gray-600 mb-1">Cámara Anterior</label>
+                            <input type="text" name="biomicroscopy_os_anterior_chamber"
+                                   value="{% if history %}{{ history.biomicroscopy_os_anterior_chamber }}{% endif %}"
+                                   class="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-green-500"
+                                   placeholder="Formada, profunda">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-gray-600 mb-1">Iris</label>
+                            <input type="text" name="biomicroscopy_os_iris"
+                                   value="{% if history %}{{ history.biomicroscopy_os_iris }}{% endif %}"
+                                   class="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-green-500"
+                                   placeholder="Normal">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-gray-600 mb-1">Cristalino</label>
+                            <input type="text" name="biomicroscopy_os_lens"
+                                   value="{% if history %}{{ history.biomicroscopy_os_lens }}{% endif %}"
+                                   class="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-green-500"
+                                   placeholder="Transparente">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-gray-600 mb-1">Pupila</label>
+                            <input type="text" name="biomicroscopy_os_pupil"
+                                   value="{% if history %}{{ history.biomicroscopy_os_pupil }}{% endif %}"
+                                   class="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-green-500"
+                                   placeholder="Redonda, reactiva">
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
 
-        <!-- Botones -->
-        <div class="flex gap-3 justify-end">
+        <!-- SEGMENTO POSTERIOR -->
+        <div class="bg-indigo-50 border-l-4 border-indigo-600 rounded-lg p-5 mb-6">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-bold text-gray-800 flex items-center">
+                    <i class="fas fa-circle text-indigo-600 mr-2"></i>
+                    SEGMENTO POSTERIOR (FONDO DE OJO)
+                </h3>
+                <div class="flex gap-2">
+                    <button type="button" onclick="fillPosteriorSegmentDefaults()" class="text-xs bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded">
+                        <i class="fas fa-magic mr-1"></i>Rellenar valores normales
+                    </button>
+                    <button type="button" onclick="loadPreviousFundoscopy()" class="text-xs bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1 rounded">
+                        <i class="fas fa-history mr-1"></i>Cargar último registro
+                    </button>
+                </div>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <!-- OD -->
+                <div class="bg-white p-3 rounded">
+                    <div class="flex items-center mb-3">
+                        <span class="bg-blue-500 text-white w-7 h-7 rounded-full flex items-center justify-center text-sm mr-2 font-bold">OD</span>
+                        <span class="font-semibold">Ojo Derecho</span>
+                    </div>
+                    <div class="space-y-2">
+                        <div>
+                            <label class="block text-xs font-medium text-gray-600 mb-1">Vítreo</label>
+                            <input type="text" name="fundoscopy_od_vitreous"
+                                   value="{% if history %}{{ history.fundoscopy_od_vitreous }}{% endif %}"
+                                   class="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-indigo-500"
+                                   placeholder="Transparente">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-gray-600 mb-1">Disco Óptico</label>
+                            <input type="text" name="fundoscopy_od_optic_disc"
+                                   value="{% if history %}{{ history.fundoscopy_od_optic_disc }}{% endif %}"
+                                   class="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-indigo-500"
+                                   placeholder="Rosado, bien definido">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-gray-600 mb-1">Relación Copa/Disco</label>
+                            <input type="text" name="fundoscopy_od_cup_disc_ratio"
+                                   value="{% if history %}{{ history.fundoscopy_od_cup_disc_ratio }}{% endif %}"
+                                   class="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-indigo-500"
+                                   placeholder="0.3">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-gray-600 mb-1">Mácula</label>
+                            <input type="text" name="fundoscopy_od_macula"
+                                   value="{% if history %}{{ history.fundoscopy_od_macula }}{% endif %}"
+                                   class="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-indigo-500"
+                                   placeholder="Reflejo foveolar presente">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-gray-600 mb-1">Vasos</label>
+                            <input type="text" name="fundoscopy_od_vessels"
+                                   value="{% if history %}{{ history.fundoscopy_od_vessels }}{% endif %}"
+                                   class="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-indigo-500"
+                                   placeholder="Normales, AV 2:3">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-gray-600 mb-1">Retina/Periferia</label>
+                            <input type="text" name="fundoscopy_od_retina"
+                                   value="{% if history %}{{ history.fundoscopy_od_retina }}{% endif %}"
+                                   class="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-indigo-500"
+                                   placeholder="Aplicada, sin lesiones">
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- OS -->
+                <div class="bg-white p-3 rounded">
+                    <div class="flex items-center mb-3">
+                        <span class="bg-green-500 text-white w-7 h-7 rounded-full flex items-center justify-center text-sm mr-2 font-bold">OS</span>
+                        <span class="font-semibold">Ojo Izquierdo</span>
+                    </div>
+                    <div class="space-y-2">
+                        <div>
+                            <label class="block text-xs font-medium text-gray-600 mb-1">Vítreo</label>
+                            <input type="text" name="fundoscopy_os_vitreous"
+                                   value="{% if history %}{{ history.fundoscopy_os_vitreous }}{% endif %}"
+                                   class="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-indigo-500"
+                                   placeholder="Transparente">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-gray-600 mb-1">Disco Óptico</label>
+                            <input type="text" name="fundoscopy_os_optic_disc"
+                                   value="{% if history %}{{ history.fundoscopy_os_optic_disc }}{% endif %}"
+                                   class="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-indigo-500"
+                                   placeholder="Rosado, bien definido">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-gray-600 mb-1">Relación Copa/Disco</label>
+                            <input type="text" name="fundoscopy_os_cup_disc_ratio"
+                                   value="{% if history %}{{ history.fundoscopy_os_cup_disc_ratio }}{% endif %}"
+                                   class="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-indigo-500"
+                                   placeholder="0.3">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-gray-600 mb-1">Mácula</label>
+                            <input type="text" name="fundoscopy_os_macula"
+                                   value="{% if history %}{{ history.fundoscopy_os_macula }}{% endif %}"
+                                   class="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-indigo-500"
+                                   placeholder="Reflejo foveolar presente">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-gray-600 mb-1">Vasos</label>
+                            <input type="text" name="fundoscopy_os_vessels"
+                                   value="{% if history %}{{ history.fundoscopy_os_vessels }}{% endif %}"
+                                   class="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-indigo-500"
+                                   placeholder="Normales, AV 2:3">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-gray-600 mb-1">Retina/Periferia</label>
+                            <input type="text" name="fundoscopy_os_retina"
+                                   value="{% if history %}{{ history.fundoscopy_os_retina }}{% endif %}"
+                                   class="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-indigo-500"
+                                   placeholder="Aplicada, sin lesiones">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- DIAGNÓSTICO -->
+        <div class="bg-red-50 border-l-4 border-red-600 rounded-lg p-5 mb-6">
+            <h3 class="text-lg font-bold text-gray-800 mb-4 flex items-center">
+                <i class="fas fa-stethoscope text-red-600 mr-2"></i>
+                DIAGNÓSTICO
+            </h3>
+            
+            <div class="space-y-4">
+                <div class="bg-white p-3 rounded">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        Diagnósticos Comunes
+                    </label>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                        <label class="flex items-center space-x-2 cursor-pointer">
+                            <input type="checkbox" name="dx_myopia" {% if history.dx_myopia %}checked{% endif %}
+                                   class="w-4 h-4 text-red-600 border-gray-300 rounded focus:ring-red-500">
+                            <span class="text-sm text-gray-700">Miopía</span>
+                        </label>
+                        <label class="flex items-center space-x-2 cursor-pointer">
+                            <input type="checkbox" name="dx_hyperopia" {% if history.dx_hyperopia %}checked{% endif %}
+                                   class="w-4 h-4 text-red-600 border-gray-300 rounded focus:ring-red-500">
+                            <span class="text-sm text-gray-700">Hipermetropía</span>
+                        </label>
+                        <label class="flex items-center space-x-2 cursor-pointer">
+                            <input type="checkbox" name="dx_astigmatism" {% if history.dx_astigmatism %}checked{% endif %}
+                                   class="w-4 h-4 text-red-600 border-gray-300 rounded focus:ring-red-500">
+                            <span class="text-sm text-gray-700">Astigmatismo</span>
+                        </label>
+                        <label class="flex items-center space-x-2 cursor-pointer">
+                            <input type="checkbox" name="dx_presbyopia" {% if history.dx_presbyopia %}checked{% endif %}
+                                   class="w-4 h-4 text-red-600 border-gray-300 rounded focus:ring-red-500">
+                            <span class="text-sm text-gray-700">Presbicia</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="bg-white p-3 rounded">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">
+                        Diagnóstico Detallado
+                    </label>
+                    <textarea name="diagnosis" rows="2"
+                              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                              placeholder="Descripción completa del diagnóstico...">{% if history %}{{ history.diagnosis }}{% endif %}</textarea>
+                </div>
+            </div>
+        </div>
+
+        <!-- OBSERVACIONES / CONDUCTA -->
+        <div class="bg-pink-50 border-l-4 border-pink-600 rounded-lg p-5 mb-6">
+            <h3 class="text-lg font-bold text-gray-800 mb-4 flex items-center">
+                <i class="fas fa-clipboard-list text-pink-600 mr-2"></i>
+                OBSERVACIONES / CONDUCTA
+            </h3>
+            
+            <div class="space-y-4">
+                <!-- Prescripción -->
+                <div class="bg-white p-3 rounded">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        <i class="fas fa-glasses mr-1"></i> Prescripción
+                    </label>
+                    <div class="flex flex-wrap gap-4 mb-3">
+                        <label class="flex items-center space-x-2 cursor-pointer">
+                            <input type="checkbox" name="prescription_glasses" {% if history.prescription_glasses %}checked{% endif %}
+                                   class="w-4 h-4 text-pink-600 border-gray-300 rounded focus:ring-pink-500">
+                            <span class="text-sm text-gray-700">Lentes</span>
+                        </label>
+                        <label class="flex items-center space-x-2 cursor-pointer">
+                            <input type="checkbox" name="prescription_contact_lenses" {% if history.prescription_contact_lenses %}checked{% endif %}
+                                   class="w-4 h-4 text-pink-600 border-gray-300 rounded focus:ring-pink-500">
+                            <span class="text-sm text-gray-700">Lentes de Contacto</span>
+                        </label>
+                        <label class="flex items-center space-x-2 cursor-pointer">
+                            <input type="checkbox" name="prescription_medication" {% if history.prescription_medication %}checked{% endif %}
+                                   class="w-4 h-4 text-pink-600 border-gray-300 rounded focus:ring-pink-500">
+                            <span class="text-sm text-gray-700">Medicación</span>
+                        </label>
+                    </div>
+
+                    <!-- Tipo de lentes, Material y Tratamientos -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-3">
+                        <div>
+                            <label class="block text-xs font-medium text-gray-600 mb-1">Tipo de Lentes</label>
+                            <select name="lens_type"
+                                    class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500">
+                                <option value="">Seleccionar...</option>
+                                {% if lens_types %}
+                                    {% for lt in lens_types %}
+                                    <option value="{{ lt.name }}" {% if history and history.lens_type == lt.name %}selected{% endif %}>{{ lt.name }}</option>
+                                    {% endfor %}
+                                {% else %}
+                                    <option value="single" {% if history and history.lens_type == 'single' %}selected{% endif %}>Monofocales</option>
+                                    <option value="bifocal" {% if history and history.lens_type == 'bifocal' %}selected{% endif %}>Bifocales</option>
+                                    <option value="progressive" {% if history and history.lens_type == 'progressive' %}selected{% endif %}>Progresivos</option>
+                                    <option value="occupational" {% if history and history.lens_type == 'occupational' %}selected{% endif %}>Ocupacionales</option>
+                                    <option value="reading" {% if history and history.lens_type == 'reading' %}selected{% endif %}>Lectura</option>
+                                {% endif %}
+                            </select>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-xs font-medium text-gray-600 mb-1">
+                                Material
+                                <button type="button" onclick="openMaterialModal()" class="text-pink-600 hover:text-pink-700 ml-1" title="Agregar nuevo material">
+                                    <i class="fas fa-plus-circle"></i>
+                                </button>
+                            </label>
+                            <select name="lens_material" id="lens_material"
+                                    class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500"
+                                    onchange="showMaterialDetails(this)">
+                                <option value="">Seleccionar...</option>
+                                {% for material in lens_materials %}
+                                <option value="{{ material.name }}" 
+                                        data-description="{{ material.description|default:'' }}"
+                                        data-category="{{ material.category|default:'' }}"
+                                        {% if history and history.lens_material == material.name %}selected{% endif %}>
+                                    {{ material.name }}{% if material.category %} ({{ material.category }}){% endif %}
+                                </option>
+                                {% endfor %}
+                            </select>
+                            <div id="material-details" class="text-xs"></div>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-xs font-medium text-gray-600 mb-1">
+                                Tratamientos
+                                <button type="button" onclick="openTreatmentModal()" class="text-pink-600 hover:text-pink-700 ml-1" title="Agregar nuevo tratamiento">
+                                    <i class="fas fa-plus-circle"></i>
+                                </button>
+                            </label>
+                            <select name="lens_coating" id="lens_coating" multiple
+                                    class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500"
+                                    style="height: 60px;"
+                                    onchange="updateSelectedTreatments()">
+                                {% for coating in lens_coatings %}
+                                <option value="{{ coating.name }}" 
+                                        data-description="{{ coating.description|default:'' }}"
+                                        data-category="{{ coating.category|default:'' }}"
+                                        {% if history %}
+                                            {% if coating.name in history.lens_coating or coating.name|lower in history.lens_coating|lower %}selected{% endif %}
+                                        {% endif %}>
+                                    {{ coating.name }}{% if coating.category %} - {{ coating.category }}{% endif %}
+                                </option>
+                                {% endfor %}
+                            </select>
+                            <p class="text-xs text-gray-500 mt-1">
+                                <i class="fas fa-info-circle"></i> Mantén Ctrl/Cmd para múltiples
+                            </p>
+                            <div id="treatment-details" class="hidden mt-2"></div>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-xs font-medium text-gray-600 mb-1">Marca de Lentes (Opcional)</label>
+                            <select name="lens_brand" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500">
+                                <option value="">Seleccionar...</option>
+                                {% for brand in lens_brands %}
+                                <option value="{{ brand.name }}" {% if history and history.lens_brand == brand.name %}selected{% endif %}>{{ brand.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-xs font-medium text-gray-600 mb-1">Tipo de Montura (Opcional)</label>
+                            <select name="frame_type" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500">
+                                <option value="">Seleccionar...</option>
+                                {% for frame in frame_types %}
+                                <option value="{{ frame.name }}" {% if history and history.frame_type == frame.name %}selected{% endif %}>{{ frame.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Medicamentos -->
+                <div class="bg-white p-3 rounded">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">
+                        <i class="fas fa-pills mr-1"></i> Medicamentos
+                        <button type="button" onclick="openMedicationModal()" class="text-pink-600 hover:text-pink-700 ml-1 text-xs" title="Agregar nuevo medicamento">
+                            <i class="fas fa-plus-circle"></i>
+                        </button>
+                    </label>
+                    <select id="medication_select" 
+                            class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 mb-2"
+                            onchange="showMedicationDetails(this)">
+                        <option value="">Seleccionar medicamento...</option>
+                        {% for med in medications %}
+                        <option value="{{ med.name }}" 
+                                data-description="{{ med.description|default:'' }}"
+                                data-dosage="{{ med.dosage|default:'' }}"
+                                data-frequency="{{ med.frequency|default:'' }}"
+                                data-duration="{{ med.duration|default:'' }}"
+                                data-route="{{ med.administration_route|default:'' }}">
+                            {{ med.name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                    <div id="medication-details" class="text-xs text-gray-600 mb-2"></div>
+                    <textarea name="medication_details" id="medication_details" rows="3"
+                              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+                              placeholder="Medicamentos prescritos: nombre, dosis, frecuencia, duración...">{% if history %}{{ history.medication_details }}{% endif %}</textarea>
+                </div>
+
+                <!-- 🔍 LENTES DE CONTACTO (Opcional) -->
+                <div class="bg-white p-3 rounded shadow-sm border-l-4 border-teal-500">
+                    <h4 class="text-sm font-semibold text-gray-800 mb-2 flex items-center">
+                        <i class="fas fa-eye text-teal-600 mr-2"></i> Lentes de Contacto <span class="text-xs text-gray-500 ml-2 font-normal">(Opcional)</span>
+                    </h4>
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
+                        <div>
+                            <label class="block text-xs font-medium text-gray-600 mb-1">Tipo de LC</label>
+                            <select name="contact_lens_type" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500">
+                                <option value="">Seleccionar...</option>
+                                {% for cl in contact_lens_types %}
+                                <option value="{{ cl.name }}" {% if history and history.contact_lens_type == cl.name %}selected{% endif %}>{{ cl.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-gray-600 mb-1">Marca de LC</label>
+                            <select name="contact_lens_brand" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500">
+                                <option value="">Seleccionar...</option>
+                                {% for brand in contact_lens_brands %}
+                                <option value="{{ brand.name }}" {% if history and history.contact_lens_brand == brand.name %}selected{% endif %}>{{ brand.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-gray-600 mb-1">Material LC</label>
+                            <select name="contact_lens_material" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500">
+                                <option value="">Seleccionar...</option>
+                                {% for mat in contact_lens_materials %}
+                                <option value="{{ mat.name }}" {% if history and history.contact_lens_material == mat.name %}selected{% endif %}>{{ mat.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-gray-600 mb-1">Régimen de Uso</label>
+                            <select name="contact_lens_wearing" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500">
+                                <option value="">Seleccionar...</option>
+                                {% for wear in contact_lens_wearings %}
+                                <option value="{{ wear.name }}" {% if history and history.contact_lens_wearing == wear.name %}selected{% endif %}>{{ wear.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 🎯 TRATAMIENTOS Y TERAPIAS (Opcional) -->
+                <div class="bg-white p-3 rounded shadow-sm border-l-4 border-indigo-500">
+                    <h4 class="text-sm font-semibold text-gray-800 mb-2 flex items-center">
+                        <i class="fas fa-heartbeat text-indigo-600 mr-2"></i> Tratamientos y Terapias <span class="text-xs text-gray-500 ml-2 font-normal">(Opcional)</span>
+                    </h4>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-xs font-medium text-gray-600 mb-1">Terapias Coadyuvantes</label>
+                            <select name="therapy" multiple class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500" style="height: 50px;">
+                                {% for therapy in therapies %}
+                                <option value="{{ therapy.name }}" data-description="{{ therapy.description|default:'' }}" {% if history and history.therapy and therapy.name in history.therapy %}selected{% endif %}>{{ therapy.name }}</option>
+                                {% endfor %}
+                            </select>
+                            <p class="text-xs text-gray-500 mt-1"><i class="fas fa-info-circle"></i> Ctrl+Clic para seleccionar múltiples</p>
+                            {% if history and history.therapy %}
+                            <div class="mt-2 flex flex-wrap gap-1">
+                                {% for item in history.therapy|split:", " %}
+                                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs bg-indigo-100 text-indigo-800">
+                                    <i class="fas fa-check-circle mr-1"></i> {{ item }}
+                                </span>
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-gray-600 mb-1">Terapias Visuales</label>
+                            <select name="visual_therapy" multiple class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500" style="height: 50px;">
+                                {% for vt in visual_therapies %}
+                                <option value="{{ vt.name }}" data-description="{{ vt.description|default:'' }}" {% if history and history.visual_therapy and vt.name in history.visual_therapy %}selected{% endif %}>{{ vt.name }}</option>
+                                {% endfor %}
+                            </select>
+                            {% if history and history.visual_therapy %}
+                            <div class="mt-2 flex flex-wrap gap-1">
+                                {% for item in history.visual_therapy|split:", " %}
+                                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs bg-indigo-100 text-indigo-800">
+                                    <i class="fas fa-check-circle mr-1"></i> {{ item }}
+                                </span>
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 📋 EXÁMENES COMPLEMENTARIOS (Opcional) -->
+                <div class="bg-white p-3 rounded shadow-sm border-l-4 border-yellow-500">
+                    <h4 class="text-sm font-semibold text-gray-800 mb-2 flex items-center">
+                        <i class="fas fa-microscope text-yellow-600 mr-2"></i> Exámenes Complementarios <span class="text-xs text-gray-500 ml-2 font-normal">(Opcional)</span>
+                    </h4>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-xs font-medium text-gray-600 mb-1">Exámenes Especializados</label>
+                            <select name="complementary_exam" multiple class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500" style="height: 50px;">
+                                {% for exam in complementary_exams %}
+                                <option value="{{ exam.name }}" data-description="{{ exam.description|default:'' }}" {% if history and history.complementary_exam and exam.name in history.complementary_exam %}selected{% endif %}>{{ exam.name }}</option>
+                                {% endfor %}
+                            </select>
+                            <p class="text-xs text-gray-500 mt-1"><i class="fas fa-info-circle"></i> OCT, Campo Visual, Topografía, etc.</p>
+                            {% if history and history.complementary_exam %}
+                            <div class="mt-2 flex flex-wrap gap-1">
+                                {% for item in history.complementary_exam|split:", " %}
+                                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs bg-yellow-100 text-yellow-800">
+                                    <i class="fas fa-microscope mr-1"></i> {{ item }}
+                                </span>
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-gray-600 mb-1">Exámenes de Laboratorio</label>
+                            <select name="lab_test" multiple class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500" style="height: 50px;">
+                                {% for lab in lab_tests %}
+                                <option value="{{ lab.name }}" data-description="{{ lab.description|default:'' }}" {% if history and history.lab_test and lab.name in history.lab_test %}selected{% endif %}>{{ lab.name }}</option>
+                                {% endfor %}
+                            </select>
+                            {% if history and history.lab_test %}
+                            <div class="mt-2 flex flex-wrap gap-1">
+                                {% for item in history.lab_test|split:", " %}
+                                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs bg-yellow-100 text-yellow-800">
+                                    <i class="fas fa-vial mr-1"></i> {{ item }}
+                                </span>
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 🎓 RECOMENDACIONES Y SEGUIMIENTO -->
+                <div class="bg-white p-3 rounded shadow-sm border-l-4 border-green-500">
+                    <h4 class="text-sm font-semibold text-gray-800 mb-2 flex items-center">
+                        <i class="fas fa-lightbulb text-green-600 mr-2"></i> Recomendaciones y Seguimiento
+                    </h4>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
+                        <div>
+                            <label class="block text-xs font-medium text-gray-600 mb-1">Recomendaciones</label>
+                            <select name="recommendation" multiple class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500" style="height: 50px;">
+                                {% for rec in recommendations %}
+                                <option value="{{ rec.name }}" data-description="{{ rec.description|default:'' }}" {% if history and history.recommendation and rec.name in history.recommendation %}selected{% endif %}>{{ rec.name }}</option>
+                                {% endfor %}
+                            </select>
+                            {% if history and history.recommendation %}
+                            <div class="mt-2 flex flex-wrap gap-1">
+                                {% for item in history.recommendation|split:", " %}
+                                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs bg-green-100 text-green-800">
+                                    <i class="fas fa-lightbulb mr-1"></i> {{ item }}
+                                </span>
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-gray-600 mb-1">Motivo de Seguimiento</label>
+                            <select name="follow_up_reason" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500">
+                                <option value="">Seleccionar...</option>
+                                {% for reason in follow_up_reasons %}
+                                <option value="{{ reason.name }}" {% if history and history.follow_up_reason == reason.name %}selected{% endif %}>{{ reason.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-gray-600 mb-1">Remisión a Especialista (Opcional)</label>
+                        <select name="referral_specialty" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500">
+                            <option value="">No requiere remisión</option>
+                            {% for spec in referral_specialties %}
+                            <option value="{{ spec.name }}" {% if history and history.referral_specialty == spec.name %}selected{% endif %}>{{ spec.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+
+                <!-- 📝 OBSERVACIONES GENERALES -->
+                <div class="bg-white p-3 rounded shadow-sm">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">
+                        <i class="fas fa-comment-dots mr-1"></i> Observaciones Generales / Plan de Tratamiento
+                    </label>
+                    <textarea name="treatment_plan" rows="3"
+                              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+                              placeholder="Indicaciones, recomendaciones generales, plan de seguimiento, fecha próxima cita...">{% if history %}{{ history.treatment_plan }}{% endif %}</textarea>
+                </div>
+            </div>
+        </div>
+
+        <!-- Botones de acción -->
+        <div class="flex gap-3 pt-4 border-t">
+            <button type="submit" class="flex-1 bg-purple-600 hover:bg-purple-700 text-white px-6 py-3 rounded-lg transition-colors font-medium">
+                <i class="fas fa-save mr-2"></i>
+                {% if history %}Actualizar Examen Visual{% else %}Guardar Examen Visual{% endif %}
+            </button>
+            <button type="button" onclick="clearLocalStorageDraft(); showRestorationNotification('✓ Borrador eliminado');"
+                    class="px-6 py-3 bg-yellow-500 hover:bg-yellow-600 text-white rounded-lg transition-colors font-medium" title="Limpiar borrador guardado">
+                <i class="fas fa-eraser mr-2"></i>Limpiar Borrador
+            </button>
             <a href="{% url 'dashboard:patient_detail' patient.id %}" 
-               class="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
+               class="px-6 py-3 bg-gray-300 hover:bg-gray-400 text-gray-700 rounded-lg transition-colors font-medium">
                 <i class="fas fa-times mr-2"></i>Cancelar
             </a>
-            <button type="submit" 
-                    class="px-6 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors">
-                <i class="fas fa-save mr-2"></i>Guardar Examen
-            </button>
+        </div>
+
+        <div class="mt-4 bg-blue-50 border border-blue-200 rounded-lg p-4">
+            <p class="text-sm text-blue-800">
+                <i class="fas fa-info-circle mr-2"></i>
+                <strong>Autoguardado activado:</strong> Los datos se guardan automáticamente cada 10 segundos en tu navegador. Si cierras accidentalmente la página, los datos se restaurarán al volver a abrirla.
+            </p>
         </div>
     </form>
 </div>
@@ -663,10 +1743,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (prism_od && !prism_od.value) prism_od.value = "{{ history.refraction_od_prism }}";
         {% endif %}
         
-        {% if history.pd_od %}
-        var pd_od = document.getElementById('refraction_od_dnp');
-        if (pd_od && !pd_od.value) pd_od.value = "{{ history.pd_od }}";
-        {% endif %}
+        // DNP ya se carga directamente desde el template con el atributo value
         
         // Refracción OS - Los valores ya están en el HTML con el atributo value
         var sph_os = document.getElementById('refraction_os_sphere');
@@ -694,10 +1771,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (prism_os && !prism_os.value) prism_os.value = "{{ history.refraction_os_prism }}";
         {% endif %}
         
-        {% if history.pd_os %}
-        var pd_os = document.getElementById('refraction_os_dnp');
-        if (pd_os && !pd_os.value) pd_os.value = "{{ history.pd_os }}";
-        {% endif %}
+        // DNP ya se carga directamente desde el template con el atributo value
         
         // Queratometría OD
         {% if history.keratometry_od_k1 %}
@@ -846,6 +1920,681 @@ function clearRefraction() {
     });
     showNotification('Refracción limpiada', 'info');
 }
+
+// Rellenar campo con N/A
+function fillWithNA(fieldName) {
+    const field = document.querySelector(`[name="${fieldName}"]`);
+    if (field && !field.value.trim()) {
+        field.value = 'N/A';
+        field.focus();
+        field.blur(); // Trigger autosave
+    }
+}
+
+// Rellenar solo ANTECEDENTES GENERALES con N/A
+function fillGeneralHistoryWithNA() {
+    const fieldsToFill = [
+        'pathological_history',
+        'pharmacological_history',
+        'surgical_history',
+        'allergic_history',
+        'trauma_history',
+        'other_general_history'
+    ];
+    
+    let filledCount = 0;
+    
+    fieldsToFill.forEach(fieldName => {
+        const field = document.querySelector(`[name="${fieldName}"]`);
+        if (field && !field.value.trim()) {
+            field.value = 'N/A';
+            filledCount++;
+            
+            // Efecto visual
+            field.classList.add('bg-amber-100', 'transition-all', 'duration-300');
+            setTimeout(() => {
+                field.classList.remove('bg-amber-100');
+            }, 1000);
+        }
+    });
+    
+    if (filledCount > 0) {
+        showNotification(`✅ ${filledCount} campo(s) de Antecedentes Generales rellenado(s) con "N/A"`, 'success');
+        // Trigger autosave
+        saveFormDataToLocalStorage();
+    } else {
+        showNotification('ℹ️ No hay campos vacíos en Antecedentes Generales', 'info');
+    }
+}
+
+// Rellenar TODOS los campos textarea vacíos con N/A
+function fillAllWithNA() {
+    if (!confirm('¿Desea rellenar TODOS los campos de texto vacíos con "N/A"?\n\nEsto incluye:\n- Anamnesis\n- Antecedentes\n- Segmento Anterior/Posterior\n- Diagnóstico\n- Observaciones\n\nLos campos que ya tienen datos NO serán afectados.')) {
+        return;
+    }
+    
+    let filledCount = 0;
+    
+    // Lista de campos a rellenar con N/A
+    const fieldsToFill = [
+        // Anamnesis
+        'chief_complaint',
+        'current_illness',
+        
+        // Antecedentes Generales
+        'pathological_history',
+        'pharmacological_history',
+        'allergies',
+        'other_history',
+        
+        // Antecedentes Oculares
+        'ocular_pathology',
+        'ocular_pharmacology',
+        
+        // Segmento Anterior - OD
+        'biomicroscopy_od_lids',
+        'biomicroscopy_od_conjunctiva',
+        'biomicroscopy_od_cornea',
+        'biomicroscopy_od_anterior_chamber',
+        'biomicroscopy_od_iris',
+        'biomicroscopy_od_lens',
+        'biomicroscopy_od_pupil',
+        
+        // Segmento Anterior - OS
+        'biomicroscopy_os_lids',
+        'biomicroscopy_os_conjunctiva',
+        'biomicroscopy_os_cornea',
+        'biomicroscopy_os_anterior_chamber',
+        'biomicroscopy_os_iris',
+        'biomicroscopy_os_lens',
+        'biomicroscopy_os_pupil',
+        
+        // Segmento Posterior - OD
+        'fundoscopy_od_optic_disc',
+        'fundoscopy_od_macula',
+        'fundoscopy_od_vessels',
+        'fundoscopy_od_periphery',
+        
+        // Segmento Posterior - OS
+        'fundoscopy_os_optic_disc',
+        'fundoscopy_os_macula',
+        'fundoscopy_os_vessels',
+        'fundoscopy_os_periphery',
+        
+        // Diagnóstico
+        'diagnosis_text',
+        'treatment_plan',
+        
+        // Observaciones y Conducta
+        'exam_notes',
+        'recommendations_text',
+        'additional_notes'
+    ];
+    
+    fieldsToFill.forEach(fieldName => {
+        const field = document.querySelector(`[name="${fieldName}"]`);
+        if (field && !field.value.trim()) {
+            field.value = 'N/A';
+            filledCount++;
+            
+            // Efecto visual
+            field.classList.add('bg-yellow-100', 'transition-all', 'duration-300');
+            setTimeout(() => {
+                field.classList.remove('bg-yellow-100');
+            }, 1000);
+        }
+    });
+    
+    if (filledCount > 0) {
+        showNotification(`✅ ${filledCount} campo(s) rellenado(s) con "N/A"`, 'success');
+        // Trigger autosave
+        saveFormDataToLocalStorage();
+    } else {
+        showNotification('ℹ️ No hay campos vacíos para rellenar', 'info');
+    }
+}
+
+// Rellenar valores normales para Segmento Anterior (Biomicroscopía)
+function fillAnteriorSegmentDefaults() {
+    const defaults = {
+        'biomicroscopy_od_lids': 'Normal',
+        'biomicroscopy_od_conjunctiva': 'Normal',
+        'biomicroscopy_od_cornea': 'Transparente',
+        'biomicroscopy_od_anterior_chamber': 'Formada, profunda',
+        'biomicroscopy_od_iris': 'Normal',
+        'biomicroscopy_od_lens': 'Transparente',
+        'biomicroscopy_od_pupil': 'Redonda, reactiva',
+        'biomicroscopy_os_lids': 'Normal',
+        'biomicroscopy_os_conjunctiva': 'Normal',
+        'biomicroscopy_os_cornea': 'Transparente',
+        'biomicroscopy_os_anterior_chamber': 'Formada, profunda',
+        'biomicroscopy_os_iris': 'Normal',
+        'biomicroscopy_os_lens': 'Transparente',
+        'biomicroscopy_os_pupil': 'Redonda, reactiva'
+    };
+    
+    let filledCount = 0;
+    Object.keys(defaults).forEach(fieldName => {
+        const input = document.querySelector(`input[name="${fieldName}"]`);
+        if (input && !input.value.trim()) {
+            input.value = defaults[fieldName];
+            filledCount++;
+            input.classList.add('bg-green-100');
+            setTimeout(() => {
+                input.classList.remove('bg-green-100');
+            }, 1000);
+        }
+    });
+    
+    if (filledCount > 0) {
+        showRestorationNotification(`✓ ${filledCount} campos rellenados con valores normales`);
+    }
+}
+
+// Rellenar valores normales para Segmento Posterior (Fondo de Ojo)
+function fillPosteriorSegmentDefaults() {
+    const defaults = {
+        'fundoscopy_od_vitreous': 'Transparente',
+        'fundoscopy_od_optic_disc': 'Rosado, bien definido',
+        'fundoscopy_od_cup_disc_ratio': '0.3',
+        'fundoscopy_od_macula': 'Reflejo foveolar presente',
+        'fundoscopy_od_vessels': 'Normales, AV 2:3',
+        'fundoscopy_od_retina': 'Aplicada, sin lesiones',
+        'fundoscopy_os_vitreous': 'Transparente',
+        'fundoscopy_os_optic_disc': 'Rosado, bien definido',
+        'fundoscopy_os_cup_disc_ratio': '0.3',
+        'fundoscopy_os_macula': 'Reflejo foveolar presente',
+        'fundoscopy_os_vessels': 'Normales, AV 2:3',
+        'fundoscopy_os_retina': 'Aplicada, sin lesiones'
+    };
+    
+    let filledCount = 0;
+    Object.keys(defaults).forEach(fieldName => {
+        const input = document.querySelector(`input[name="${fieldName}"]`);
+        if (input && !input.value.trim()) {
+            input.value = defaults[fieldName];
+            filledCount++;
+            input.classList.add('bg-indigo-100');
+            setTimeout(() => {
+                input.classList.remove('bg-indigo-100');
+            }, 1000);
+        }
+    });
+    
+    if (filledCount > 0) {
+        showRestorationNotification(`✓ ${filledCount} campos rellenados con valores normales`);
+    }
+}
+
+// Cargar datos previos del fondo de ojo
+function loadPreviousFundoscopy() {
+    fetch(`/dashboard/patients/{{ patient.id }}/clinical-history/latest-fundoscopy/`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success && data.fundoscopy) {
+                // OD
+                if (data.fundoscopy.od_vitreous) document.querySelector('input[name="fundoscopy_od_vitreous"]').value = data.fundoscopy.od_vitreous;
+                if (data.fundoscopy.od_optic_disc) document.querySelector('input[name="fundoscopy_od_optic_disc"]').value = data.fundoscopy.od_optic_disc;
+                if (data.fundoscopy.od_cup_disc_ratio) document.querySelector('input[name="fundoscopy_od_cup_disc_ratio"]').value = data.fundoscopy.od_cup_disc_ratio;
+                if (data.fundoscopy.od_macula) document.querySelector('input[name="fundoscopy_od_macula"]').value = data.fundoscopy.od_macula;
+                if (data.fundoscopy.od_vessels) document.querySelector('input[name="fundoscopy_od_vessels"]').value = data.fundoscopy.od_vessels;
+                if (data.fundoscopy.od_retina) document.querySelector('input[name="fundoscopy_od_retina"]').value = data.fundoscopy.od_retina;
+                
+                // OS
+                if (data.fundoscopy.os_vitreous) document.querySelector('input[name="fundoscopy_os_vitreous"]').value = data.fundoscopy.os_vitreous;
+                if (data.fundoscopy.os_optic_disc) document.querySelector('input[name="fundoscopy_os_optic_disc"]').value = data.fundoscopy.os_optic_disc;
+                if (data.fundoscopy.os_cup_disc_ratio) document.querySelector('input[name="fundoscopy_os_cup_disc_ratio"]').value = data.fundoscopy.os_cup_disc_ratio;
+                if (data.fundoscopy.os_macula) document.querySelector('input[name="fundoscopy_os_macula"]').value = data.fundoscopy.os_macula;
+                if (data.fundoscopy.os_vessels) document.querySelector('input[name="fundoscopy_os_vessels"]').value = data.fundoscopy.os_vessels;
+                if (data.fundoscopy.os_retina) document.querySelector('input[name="fundoscopy_os_retina"]').value = data.fundoscopy.os_retina;
+                
+                showRestorationNotification('✓ Datos del fondo de ojo cargados exitosamente');
+            } else {
+                console.log(data.message || 'No hay registros previos de fondo de ojo');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+        });
+}
+
+// Mostrar detalles del material seleccionado
+function showMaterialDetails(select) {
+    const option = select.options[select.selectedIndex];
+    const detailsDiv = document.getElementById('material-details');
+    
+    if (!detailsDiv) return;
+    
+    if (option.value) {
+        const description = option.getAttribute('data-description');
+        const category = option.getAttribute('data-category');
+        let details = '';
+        
+        if (category && category !== 'None' && category !== '') {
+            details += `<span class="inline-block px-2 py-1 bg-blue-100 text-blue-800 rounded text-xs mr-2"><i class="fas fa-tag mr-1"></i>${category}</span>`;
+        }
+        if (description && description !== 'None' && description !== '') {
+            details += `<span class="text-gray-600"><i class="fas fa-info-circle mr-1"></i>${description}</span>`;
+        }
+        
+        if (details) {
+            detailsDiv.innerHTML = details;
+            detailsDiv.classList.remove('hidden');
+            detailsDiv.classList.add('mt-2', 'p-2', 'bg-blue-50', 'rounded', 'border', 'border-blue-200');
+        } else {
+            detailsDiv.classList.add('hidden');
+        }
+    } else {
+        detailsDiv.classList.add('hidden');
+    }
+}
+
+// Mostrar tratamientos seleccionados con sus descripciones
+function updateSelectedTreatments() {
+    const select = document.getElementById('lens_coating');
+    if (!select) return;
+    
+    const selectedOptions = Array.from(select.selectedOptions);
+    let detailsContainer = document.getElementById('treatment-details');
+    
+    if (!detailsContainer) {
+        // Crear el contenedor si no existe
+        const container = document.createElement('div');
+        container.id = 'treatment-details';
+        container.className = 'mt-2 space-y-1';
+        select.parentElement.appendChild(container);
+        detailsContainer = container;
+    }
+    
+    const detailsDiv = detailsContainer;
+    
+    if (selectedOptions.length > 0) {
+        let html = '<div class="text-xs font-medium text-gray-700 mb-1"><i class="fas fa-info-circle mr-1"></i>Tratamientos seleccionados:</div>';
+        html += '<div class="space-y-2">';
+        selectedOptions.forEach(option => {
+            const description = option.getAttribute('data-description');
+            const category = option.getAttribute('data-category');
+            
+            html += `<div class="p-3 bg-purple-50 rounded-lg border border-purple-200 shadow-sm">`;
+            html += `<div class="font-medium text-purple-800"><i class="fas fa-check-circle mr-1"></i>${option.value}</div>`;
+            
+            if (category && category !== 'None' && category !== '') {
+                html += `<div class="text-xs text-purple-600 mt-1"><i class="fas fa-tag mr-1"></i><strong>Categoría:</strong> ${category}</div>`;
+            }
+            if (description && description !== 'None' && description !== '') {
+                html += `<div class="text-xs text-gray-700 mt-1 leading-relaxed"><i class="fas fa-info-circle mr-1"></i>${description}</div>`;
+            }
+            html += `</div>`;
+        });
+        html += '</div>';
+        
+        detailsDiv.innerHTML = html;
+        detailsDiv.classList.remove('hidden');
+    } else {
+        detailsDiv.innerHTML = '';
+        detailsDiv.classList.add('hidden');
+    }
+}
+
+// Agregar listener de click además del onchange para mejor UX
+document.addEventListener('DOMContentLoaded', function() {
+    const treatmentSelect = document.getElementById('lens_coating');
+    if (treatmentSelect) {
+        // Escuchar clicks en el select
+        treatmentSelect.addEventListener('click', function() {
+            setTimeout(updateSelectedTreatments, 50);
+        });
+        
+        // Escuchar cambios con teclado
+        treatmentSelect.addEventListener('keyup', function(e) {
+            if (e.key === 'ArrowUp' || e.key === 'ArrowDown' || e.key === ' ') {
+                setTimeout(updateSelectedTreatments, 50);
+            }
+        });
+    }
+});
+
+// Mostrar detalles del medicamento seleccionado
+function showMedicationDetails(select) {
+    const option = select.options[select.selectedIndex];
+    const detailsDiv = document.getElementById('medication-details');
+    
+    if (!detailsDiv) return;
+    
+    if (option.value) {
+        const description = option.getAttribute('data-description');
+        const dosage = option.getAttribute('data-dosage');
+        const frequency = option.getAttribute('data-frequency');
+        const duration = option.getAttribute('data-duration');
+        const route = option.getAttribute('data-route');
+        
+        let details = `<div class="p-2 bg-green-50 rounded border border-green-200">`;
+        details += `<div class="font-medium text-green-800"><i class="fas fa-pills mr-1"></i>${option.value}</div>`;
+        
+        if (dosage && dosage !== 'None' && dosage !== '') {
+            details += `<div class="mt-1"><span class="text-gray-500">Dosis:</span> <span class="text-gray-800">${dosage}</span></div>`;
+        }
+        if (frequency && frequency !== 'None' && frequency !== '') {
+            details += `<div class="mt-1"><span class="text-gray-500">Frecuencia:</span> <span class="text-gray-800">${frequency}</span></div>`;
+        }
+        if (duration && duration !== 'None' && duration !== '') {
+            details += `<div class="mt-1"><span class="text-gray-500">Duración:</span> <span class="text-gray-800">${duration}</span></div>`;
+        }
+        if (route && route !== 'None' && route !== '') {
+            details += `<div class="mt-1"><span class="text-gray-500">Vía:</span> <span class="text-gray-800">${route}</span></div>`;
+        }
+        if (description && description !== 'None' && description !== '') {
+            details += `<div class="mt-1 text-xs text-gray-600"><i class="fas fa-info-circle mr-1"></i>${description}</div>`;
+        }
+        details += `</div>`;
+        
+        detailsDiv.innerHTML = details;
+        detailsDiv.classList.remove('hidden');
+    } else {
+        detailsDiv.innerHTML = '';
+        detailsDiv.classList.add('hidden');
+    }
+}
+
+// ==================== AUTOGUARDADO LOCAL ====================
+const AUTOSAVE_KEY = 'visual_exam_draft_{{ patient.id }}';
+const AUTOSAVE_INTERVAL = 10000; // 10 segundos
+let autosaveTimer;
+
+// Guardar formulario en LocalStorage
+function saveFormToLocalStorage() {
+    const form = document.getElementById('visualExamForm');
+    const formData = new FormData(form);
+    const data = {};
+    
+    for (let [key, value] of formData.entries()) {
+        if (key !== 'csrfmiddlewaretoken') {
+            data[key] = value;
+        }
+    }
+    
+    // Guardar checkboxes
+    form.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
+        data[checkbox.name] = checkbox.checked;
+    });
+    
+    // Agregar timestamp
+    data._timestamp = new Date().toISOString();
+    
+    try {
+        localStorage.setItem(AUTOSAVE_KEY, JSON.stringify(data));
+        console.log('✓ Autoguardado exitoso:', new Date().toLocaleTimeString());
+        showAutosaveIndicator();
+    } catch (e) {
+        console.error('Error al autoguardar:', e);
+    }
+}
+
+// Restaurar formulario desde LocalStorage
+function loadFormFromLocalStorage() {
+    try {
+        const savedData = localStorage.getItem(AUTOSAVE_KEY);
+        if (!savedData) return false;
+        
+        const data = JSON.parse(savedData);
+        const form = document.getElementById('visualExamForm');
+        
+        const hasExistingData = {% if history %}true{% else %}false{% endif %};
+        
+        if (hasExistingData) {
+            console.log('✓ Usando datos de la base de datos');
+            return false;
+        }
+        
+        let restoredCount = 0;
+        Object.keys(data).forEach(key => {
+            if (key === '_timestamp') return;
+            
+            const element = form.querySelector(`[name="${key}"]`);
+            if (!element) return;
+            
+            if (element.type === 'checkbox') {
+                if (!element.checked) {
+                    element.checked = data[key] === true || data[key] === 'true';
+                    restoredCount++;
+                }
+            } else if (element.type === 'radio') {
+                if (!element.checked && element.value === data[key]) {
+                    element.checked = true;
+                    restoredCount++;
+                }
+            } else {
+                if (!element.value || element.value === '') {
+                    element.value = data[key] || '';
+                    if (data[key]) restoredCount++;
+                }
+            }
+        });
+        
+        if (restoredCount > 0) {
+            const timestamp = new Date(data._timestamp);
+            showRestorationNotification(`${restoredCount} campos restaurados del borrador (${timestamp.toLocaleTimeString()})`);
+            console.log(`✓ ${restoredCount} campos restaurados desde localStorage`);
+            return true;
+        }
+        return false;
+    } catch (e) {
+        console.error('Error al restaurar datos:', e);
+        return false;
+    }
+}
+
+// Limpiar borrador del LocalStorage
+function clearLocalStorageDraft() {
+    try {
+        localStorage.removeItem(AUTOSAVE_KEY);
+        console.log('✓ Borrador eliminado');
+    } catch (e) {
+        console.error('Error al eliminar borrador:', e);
+    }
+}
+
+// Mostrar indicador visual de autoguardado
+function showAutosaveIndicator() {
+    let indicator = document.getElementById('autosave-indicator');
+    if (!indicator) {
+        indicator = document.createElement('div');
+        indicator.id = 'autosave-indicator';
+        indicator.style.cssText = `
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: #10b981;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            z-index: 1000;
+            font-size: 14px;
+            opacity: 0;
+            transition: opacity 0.3s;
+        `;
+        indicator.innerHTML = '<i class="fas fa-check-circle mr-2"></i>Guardado automáticamente';
+        document.body.appendChild(indicator);
+    }
+    
+    indicator.style.opacity = '1';
+    setTimeout(() => {
+        indicator.style.opacity = '0';
+    }, 2000);
+}
+
+// Mostrar notificación de restauración
+function showRestorationNotification(message) {
+    let indicator = document.getElementById('restoration-indicator');
+    if (!indicator) {
+        indicator = document.createElement('div');
+        indicator.id = 'restoration-indicator';
+        indicator.style.cssText = `
+            position: fixed;
+            top: 80px;
+            right: 20px;
+            background: #3b82f6;
+            color: white;
+            padding: 12px 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            z-index: 1000;
+            font-size: 14px;
+            opacity: 0;
+            transition: opacity 0.3s;
+            max-width: 300px;
+        `;
+        document.body.appendChild(indicator);
+    }
+    
+    indicator.innerHTML = `<i class="fas fa-info-circle mr-2"></i>${message}`;
+    indicator.style.opacity = '1';
+    
+    setTimeout(() => {
+        indicator.style.opacity = '0';
+    }, 4000);
+}
+
+// Configurar autoguardado automático
+function setupAutosave() {
+    const form = document.getElementById('visualExamForm');
+    
+    form.addEventListener('input', function() {
+        clearTimeout(autosaveTimer);
+        autosaveTimer = setTimeout(saveFormToLocalStorage, 2000);
+    });
+    
+    form.addEventListener('change', function(e) {
+        if (e.target.type === 'checkbox' || e.target.type === 'radio' || e.target.tagName === 'SELECT') {
+            saveFormToLocalStorage();
+        }
+    });
+    
+    setInterval(saveFormToLocalStorage, AUTOSAVE_INTERVAL);
+    
+    form.addEventListener('submit', function() {
+        setTimeout(clearLocalStorageDraft, 1000);
+    });
+}
+
+// Actualizar gráficos visuales en tiempo real
+function updateRefractionDisplay() {
+    // OD (Ojo Derecho)
+    const odSphereInput = document.querySelector('input[name="refraction_od_sphere"]')?.value || '';
+    const odSphere = odSphereInput.toUpperCase() === 'N/A' ? 0 : (parseFloat(odSphereInput) || 0);
+    const odCyl = parseFloat(document.querySelector('input[name="refraction_od_cylinder"]')?.value) || 0;
+    const odAxis = parseFloat(document.querySelector('input[name="refraction_od_axis"]')?.value) || 0;
+    const odAV = document.querySelector('input[name="va_od_cc_distance"]')?.value || '--';
+    
+    // OS (Ojo Izquierdo)
+    const osSphereInput = document.querySelector('input[name="refraction_os_sphere"]')?.value || '';
+    const osSphere = osSphereInput.toUpperCase() === 'N/A' ? 0 : (parseFloat(osSphereInput) || 0);
+    const osCyl = parseFloat(document.querySelector('input[name="refraction_os_cylinder"]')?.value) || 0;
+    const osAxis = parseFloat(document.querySelector('input[name="refraction_os_axis"]')?.value) || 0;
+    const osAV = document.querySelector('input[name="va_os_cc_distance"]')?.value || '--';
+    
+    // Actualizar displays OD
+    const odSphereDisplay = odSphereInput.toUpperCase() === 'N/A' ? 'N/A' : (odSphere !== 0 ? (odSphere > 0 ? '+' : '') + odSphere.toFixed(2) : '--');
+    if (document.getElementById('od-sphere-display')) {
+        document.getElementById('od-sphere-display').textContent = odSphereDisplay;
+    }
+    if (document.getElementById('od-cyl-display')) {
+        document.getElementById('od-cyl-display').textContent = odCyl !== 0 ? 'Cil: ' + (odCyl > 0 ? '+' : '') + odCyl.toFixed(2) + ' x ' + odAxis + '°' : '--';
+    }
+    if (document.getElementById('od-av-display')) {
+        document.getElementById('od-av-display').textContent = odAV;
+    }
+    
+    // Actualizar displays OS
+    const osSphereDisplay = osSphereInput.toUpperCase() === 'N/A' ? 'N/A' : (osSphere !== 0 ? (osSphere > 0 ? '+' : '') + osSphere.toFixed(2) : '--');
+    if (document.getElementById('os-sphere-display')) {
+        document.getElementById('os-sphere-display').textContent = osSphereDisplay;
+    }
+    if (document.getElementById('os-cyl-display')) {
+        document.getElementById('os-cyl-display').textContent = osCyl !== 0 ? 'Cil: ' + (osCyl > 0 ? '+' : '') + osCyl.toFixed(2) + ' x ' + osAxis + '°' : '--';
+    }
+    if (document.getElementById('os-av-display')) {
+        document.getElementById('os-av-display').textContent = osAV;
+    }
+    
+    // Interpretación
+    let interpretation = '';
+    const avgSphere = (odSphere + osSphere) / 2;
+    const avgCyl = (Math.abs(odCyl) + Math.abs(osCyl)) / 2;
+    
+    if (avgSphere < -0.5) {
+        interpretation += 'Miopía';
+    } else if (avgSphere > 0.5) {
+        interpretation += 'Hipermetropía';
+    } else {
+        interpretation += 'Emetropía';
+    }
+    
+    if (avgCyl >= 0.5) {
+        interpretation += ' con Astigmatismo';
+        if (avgCyl >= 2.0) interpretation += ' Alto';
+        else if (avgCyl >= 1.0) interpretation += ' Moderado';
+        else interpretation += ' Bajo';
+    }
+    
+    // Verificar presbicia (si hay adición)
+    const odAdd = parseFloat(document.querySelector('input[name="refraction_od_add"]')?.value) || 0;
+    const osAdd = parseFloat(document.querySelector('input[name="refraction_os_add"]')?.value) || 0;
+    if (odAdd > 0 || osAdd > 0) {
+        interpretation += ' + Presbicia';
+    }
+    
+    if (interpretation === '') {
+        interpretation = 'Ingrese valores de refracción para ver la interpretación';
+    }
+    
+    if (document.getElementById('refraction-interpretation')) {
+        document.getElementById('refraction-interpretation').innerHTML = '<i class="fas fa-info-circle mr-1"></i>' + interpretation;
+    }
+}
+
+// Agregar event listeners a los campos de refracción
+const refractionInputs = [
+    'refraction_od_sphere', 'refraction_od_cylinder', 'refraction_od_axis', 'refraction_od_add',
+    'refraction_os_sphere', 'refraction_os_cylinder', 'refraction_os_axis', 'refraction_os_add',
+    'va_od_cc_distance', 'va_os_cc_distance'
+];
+
+document.addEventListener('DOMContentLoaded', function() {
+    refractionInputs.forEach(function(inputName) {
+        const input = document.querySelector(`input[name="${inputName}"]`);
+        if (input) {
+            input.addEventListener('input', updateRefractionDisplay);
+            input.addEventListener('change', updateRefractionDisplay);
+        }
+    });
+    
+    // Inicializar display
+    updateRefractionDisplay();
+    
+    // Intentar restaurar datos guardados
+    const restored = loadFormFromLocalStorage();
+    
+    // Configurar autoguardado
+    setupAutosave();
+    
+    // Si se restauraron datos, actualizar displays
+    if (restored) {
+        updateRefractionDisplay();
+        if (typeof updateRadarChart === 'function') updateRadarChart();
+        if (typeof updateSelectedTreatments === 'function') updateSelectedTreatments();
+    }
+    
+    // Inicializar visualización de tratamientos si hay pre-seleccionados
+    if (typeof updateSelectedTreatments === 'function') {
+        setTimeout(function() {
+            updateSelectedTreatments();
+        }, 100);
+        if (typeof updatePolarChart === 'function') updatePolarChart();
+        if (typeof updateSeverityIndicators === 'function') updateSeverityIndicators();
+    }
+});
 
 // Mostrar notificación temporal
 function showNotification(message, type = 'info') {
@@ -1361,5 +3110,363 @@ style.textContent = `
     }
 `;
 document.head.appendChild(style);
+
+// ============================================================
+// FUNCIONES DE MODALES PARA AGREGAR PARÁMETROS
+// ============================================================
+
+// MODALES
+function openMaterialModal() {
+    document.getElementById('materialModal').classList.remove('hidden');
+}
+
+function closeMaterialModal() {
+    document.getElementById('materialModal').classList.add('hidden');
+    document.getElementById('materialForm').reset();
+}
+
+function openTreatmentModal() {
+    document.getElementById('treatmentModal').classList.remove('hidden');
+}
+
+function closeTreatmentModal() {
+    document.getElementById('treatmentModal').classList.add('hidden');
+    document.getElementById('treatmentForm').reset();
+}
+
+function openMedicationModal() {
+    document.getElementById('medicationModal').classList.remove('hidden');
+}
+
+function closeMedicationModal() {
+    document.getElementById('medicationModal').classList.add('hidden');
+    document.getElementById('medicationForm').reset();
+}
+
+// Guardar Material
+function saveMaterial() {
+    const form = document.getElementById('materialForm');
+    const formData = new FormData(form);
+    const btn = document.getElementById('saveMaterialBtn');
+    
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Guardando...';
+    
+    fetch('/dashboard/clinical-parameters/create/', {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': '{{ csrf_token }}',
+        },
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Agregar al select
+            const select = document.getElementById('lens_material');
+            const option = new Option(data.parameter.name, data.parameter.id, true, true);
+            select.add(option);
+            
+            // Notificación
+            showNotification('Material agregado exitosamente', 'success');
+            closeMaterialModal();
+        } else {
+            showNotification('Error: ' + data.message, 'error');
+        }
+    })
+    .catch(error => {
+        showNotification('Error al guardar el material', 'error');
+    })
+    .finally(() => {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-save mr-2"></i>Guardar';
+    });
+}
+
+// Guardar Tratamiento
+function saveTreatment() {
+    const form = document.getElementById('treatmentForm');
+    const formData = new FormData(form);
+    const btn = document.getElementById('saveTreatmentBtn');
+    
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Guardando...';
+    
+    fetch('/dashboard/clinical-parameters/create/', {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': '{{ csrf_token }}',
+        },
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Agregar al select
+            const select = document.getElementById('lens_coating');
+            const option = new Option(data.parameter.name, data.parameter.id, true, true);
+            select.add(option);
+            
+            // Notificación
+            showNotification('Tratamiento agregado exitosamente', 'success');
+            closeTreatmentModal();
+        } else {
+            showNotification('Error: ' + data.message, 'error');
+        }
+    })
+    .catch(error => {
+        showNotification('Error al guardar el tratamiento', 'error');
+    })
+    .finally(() => {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-save mr-2"></i>Guardar';
+    });
+}
+
+// Guardar Medicamento
+function saveMedication() {
+    const form = document.getElementById('medicationForm');
+    const formData = new FormData(form);
+    const btn = document.getElementById('saveMedicationBtn');
+    
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Guardando...';
+    
+    fetch('/dashboard/clinical-parameters/create/', {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': '{{ csrf_token }}',
+        },
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Agregar al textarea de medicamentos
+            const textarea = document.getElementById('medication_details');
+            const medInfo = `${data.parameter.name}`;
+            if (textarea.value) {
+                textarea.value += `\n${medInfo}`;
+            } else {
+                textarea.value = medInfo;
+            }
+            
+            // Notificación
+            showNotification('Medicamento agregado exitosamente', 'success');
+            closeMedicationModal();
+        } else {
+            showNotification('Error: ' + data.message, 'error');
+        }
+    })
+    .catch(error => {
+        showNotification('Error al guardar el medicamento', 'error');
+    })
+    .finally(() => {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-save mr-2"></i>Guardar';
+    });
+}
+
+// Función de notificación
+function showNotification(message, type) {
+    const notification = document.createElement('div');
+    notification.className = `fixed top-4 right-4 px-6 py-3 rounded-lg shadow-lg z-50 ${
+        type === 'success' ? 'bg-green-500' : 'bg-red-500'
+    } text-white`;
+    notification.innerHTML = `<i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'} mr-2"></i>${message}`;
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+        notification.remove();
+    }, 3000);
+}
+
+// Cerrar modales con ESC
+document.addEventListener('keydown', function(event) {
+    if (event.key === 'Escape') {
+        closeMaterialModal();
+        closeTreatmentModal();
+        closeMedicationModal();
+    }
+});
 </script>
+
+<!-- Modal Material -->
+<div id="materialModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+    <div class="relative top-20 mx-auto p-5 border w-full max-w-md shadow-lg rounded-md bg-white">
+        <div class="flex justify-between items-center mb-4">
+            <h3 class="text-lg font-semibold text-gray-900">
+                <i class="fas fa-plus-circle text-pink-600 mr-2"></i>Agregar Material
+            </h3>
+            <button onclick="closeMaterialModal()" class="text-gray-400 hover:text-gray-600">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <form id="materialForm" onsubmit="event.preventDefault(); saveMaterial();">
+            <input type="hidden" name="parameter_type" value="lens_material">
+            <input type="hidden" name="display_order" value="0">
+            <div class="space-y-3">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Nombre *</label>
+                    <input type="text" name="name" required
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500"
+                           placeholder="Ej: Policarbonato">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Descripción</label>
+                    <textarea name="description" rows="2"
+                              class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500"
+                              placeholder="Características del material"></textarea>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Categoría</label>
+                    <input type="text" name="category"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500"
+                           placeholder="Ej: Alto índice">
+                </div>
+            </div>
+            <div class="flex gap-2 mt-4">
+                <button type="button" onclick="saveMaterial()" id="saveMaterialBtn"
+                        class="flex-1 bg-pink-600 hover:bg-pink-700 text-white px-4 py-2 rounded-lg">
+                    <i class="fas fa-save mr-2"></i>Guardar
+                </button>
+                <button type="button" onclick="closeMaterialModal()"
+                        class="px-4 py-2 bg-gray-300 hover:bg-gray-400 text-gray-800 rounded-lg">
+                    Cancelar
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Modal Tratamiento -->
+<div id="treatmentModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+    <div class="relative top-20 mx-auto p-5 border w-full max-w-md shadow-lg rounded-md bg-white">
+        <div class="flex justify-between items-center mb-4">
+            <h3 class="text-lg font-semibold text-gray-900">
+                <i class="fas fa-plus-circle text-pink-600 mr-2"></i>Agregar Tratamiento
+            </h3>
+            <button onclick="closeTreatmentModal()" class="text-gray-400 hover:text-gray-600">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <form id="treatmentForm" onsubmit="event.preventDefault(); saveTreatment();">
+            <input type="hidden" name="parameter_type" value="treatment">
+            <input type="hidden" name="display_order" value="0">
+            <div class="space-y-3">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Nombre *</label>
+                    <input type="text" name="name" required
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500"
+                           placeholder="Ej: Antireflejo, Blue Light, Fotocromatico">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Descripción</label>
+                    <textarea name="description" rows="2"
+                              class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500"
+                              placeholder="Beneficios del tratamiento"></textarea>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Categoría</label>
+                    <select name="category" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500">
+                        <option value="">Sin Descripción</option>
+                        <option value="Protección">Protección</option>
+                        <option value="Filtro">Filtro</option>
+                        <option value="Antireflejo">Antireflejo</option>
+                        <option value="Endurecimiento">Endurecimiento</option>
+                        <option value="Transición">Transición</option>
+                        <option value="Medicamento">Medicamento</option>
+                        <option value="Otro">Otro</option>
+                    </select>
+                </div>
+            </div>
+            <div class="flex gap-2 mt-4">
+                <button type="button" onclick="saveTreatment()" id="saveTreatmentBtn"
+                        class="flex-1 bg-pink-600 hover:bg-pink-700 text-white px-4 py-2 rounded-lg">
+                    <i class="fas fa-save mr-2"></i>Guardar
+                </button>
+                <button type="button" onclick="closeTreatmentModal()"
+                        class="px-4 py-2 bg-gray-300 hover:bg-gray-400 text-gray-800 rounded-lg">
+                    Cancelar
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Modal Medicamento -->
+<div id="medicationModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+    <div class="relative top-10 mx-auto p-5 border w-full max-w-lg shadow-lg rounded-md bg-white">
+        <div class="flex justify-between items-center mb-4">
+            <h3 class="text-lg font-semibold text-gray-900">
+                <i class="fas fa-plus-circle text-pink-600 mr-2"></i>Agregar Medicamento
+            </h3>
+            <button onclick="closeMedicationModal()" class="text-gray-400 hover:text-gray-600">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <form id="medicationForm" onsubmit="event.preventDefault(); saveMedication();">
+            <input type="hidden" name="parameter_type" value="medication">
+            <input type="hidden" name="display_order" value="0">
+            <div class="space-y-3">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Nombre del Medicamento *</label>
+                    <input type="text" name="name" required
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500"
+                           placeholder="Ej: Dorzolamida 2%">
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Dosis</label>
+                        <input type="text" name="dosage"
+                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500"
+                               placeholder="1 gota">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Frecuencia</label>
+                        <input type="text" name="frequency"
+                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500"
+                               placeholder="Cada 8 horas">
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Duración</label>
+                        <input type="text" name="duration"
+                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500"
+                               placeholder="7 días">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Vía</label>
+                        <select name="administration_route"
+                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500">
+                            <option value="">Seleccionar...</option>
+                            <option value="topical">Tópico</option>
+                            <option value="oral">Oral</option>
+                            <option value="parenteral">Parenteral</option>
+                            <option value="sublingual">Sublingual</option>
+                            <option value="other">Otro</option>
+                        </select>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Descripción / Indicaciones</label>
+                    <textarea name="description" rows="2"
+                              class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500"
+                              placeholder="Indicaciones especiales"></textarea>
+                </div>
+            </div>
+            <div class="flex gap-2 mt-4">
+                <button type="button" onclick="saveMedication()" id="saveMedicationBtn"
+                        class="flex-1 bg-pink-600 hover:bg-pink-700 text-white px-4 py-2 rounded-lg">
+                    <i class="fas fa-save mr-2"></i>Guardar
+                </button>
+                <button type="button" onclick="closeMedicationModal()"
+                        class="px-4 py-2 bg-gray-300 hover:bg-gray-400 text-gray-800 rounded-lg">
+                    Cancelar
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
 {% endblock %}

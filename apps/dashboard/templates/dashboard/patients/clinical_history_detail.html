@@ -37,10 +37,7 @@
         </div>
         
         <div class="flex gap-2">
-            <a href="{% url 'dashboard:clinical_history_edit' patient.id history.id %}"
-               class="px-4 py-2 bg-yellow-500 hover:bg-yellow-600 text-white rounded-lg transition-colors">
-                <i class="fas fa-edit mr-2"></i>Editar Historia Clínica
-            </a>
+            {# Botón de editar deshabilitado - Las historias clínicas son documentos permanentes #}
             <a href="{% url 'dashboard:clinical_history_pdf' patient.id history.id %}"
                target="_blank"
                class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors">

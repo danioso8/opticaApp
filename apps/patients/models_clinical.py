@@ -160,6 +160,10 @@ class ClinicalHistory(TenantModel):
     refraction_os_add = models.DecimalField(max_digits=4, decimal_places=2, verbose_name='OS Adición', null=True, blank=True)
     refraction_os_prism = models.CharField(max_length=20, verbose_name='OS Prisma', blank=True)
     
+    # DNP en refracción (Distance Nasale-Pupilar)
+    refraction_od_dnp = models.DecimalField(max_digits=4, decimal_places=1, verbose_name='OD DNP (mm)', null=True, blank=True, help_text='Distancia Nasal-Pupilar OD')
+    refraction_os_dnp = models.DecimalField(max_digits=4, decimal_places=1, verbose_name='OS DNP (mm)', null=True, blank=True, help_text='Distancia Nasal-Pupilar OS')
+    
     # Distancia Pupilar
     pd_distance = models.DecimalField(max_digits=4, decimal_places=1, verbose_name='DP Lejos (mm)', null=True, blank=True)
     pd_near = models.DecimalField(max_digits=4, decimal_places=1, verbose_name='DP Cerca (mm)', null=True, blank=True)
@@ -361,6 +365,31 @@ class ClinicalHistory(TenantModel):
         blank=True,
         help_text='Ej: Antireflejo, Blue Block, Fotocromático'
     )
+    
+    lens_brand = models.CharField(max_length=100, verbose_name='Marca de Lentes', blank=True)
+    frame_type = models.CharField(max_length=100, verbose_name='Tipo de Montura', blank=True)
+    
+    # ==================== LENTES DE CONTACTO ====================
+    contact_lens_type = models.CharField(max_length=100, verbose_name='Tipo de Lentes de Contacto', blank=True)
+    contact_lens_brand = models.CharField(max_length=100, verbose_name='Marca de LC', blank=True)
+    contact_lens_material = models.CharField(max_length=100, verbose_name='Material de LC', blank=True)
+    contact_lens_wearing = models.CharField(max_length=100, verbose_name='Régimen de Uso LC', blank=True)
+    
+    # ==================== TERAPIAS ====================
+    therapy = models.TextField(verbose_name='Terapias Coadyuvantes', blank=True)
+    visual_therapy = models.TextField(verbose_name='Terapias Visuales', blank=True)
+    
+    # ==================== EXÁMENES Y SEGUIMIENTO ====================
+    complementary_exam = models.TextField(verbose_name='Exámenes Complementarios Solicitados', blank=True)
+    lab_test = models.TextField(verbose_name='Exámenes de Laboratorio', blank=True)
+    recommendation = models.TextField(verbose_name='Recomendaciones Específicas', blank=True)
+    follow_up_reason = models.CharField(max_length=200, verbose_name='Motivo de Seguimiento', blank=True)
+    referral_specialty = models.CharField(max_length=200, verbose_name='Remisión a Especialidad', blank=True)
+    
+    # Campos adicionales de texto
+    recommendations_text = models.TextField(verbose_name='Texto de Recomendaciones', blank=True)
+    additional_notes = models.TextField(verbose_name='Notas Adicionales', blank=True)
+    diagnosis_text = models.TextField(verbose_name='Texto de Diagnóstico Detallado', blank=True)
     
     # ==================== EVOLUCIÓN Y CONTROL ====================
     

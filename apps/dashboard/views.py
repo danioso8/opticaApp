@@ -12,12 +12,14 @@ from .views_clinical import (
     clinical_history_list,
     clinical_history_create,
     clinical_history_detail,
-    clinical_history_edit,
-    clinical_history_delete,
+    # clinical_history_edit,  # Deshabilitado - Las historias clínicas son documentos permanentes
+    # clinical_history_delete,  # Deshabilitado - Las historias clínicas son documentos permanentes
     clinical_history_pdf,
     latest_fundoscopy,
     visual_exam_create,
-    visual_exam_edit
+    visual_exam_edit,
+    visual_exam_detail,
+    visual_exam_pdf
 )
 
 from apps.appointments.models import (

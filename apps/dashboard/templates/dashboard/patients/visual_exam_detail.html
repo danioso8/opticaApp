@@ -1,0 +1,211 @@
+{% extends 'dashboard/base.html' %}
+{% load static %}
+{% load form_extras %}
+
+{% block title %}Examen Visual - {{ patient.full_name }} - {{ history.date }}{% endblock %}
+
+{% block content %}
+<div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+    <!-- Header -->
+    <div class="mb-6 pb-6 border-b flex justify-between items-start">
+        <div>
+            <div class="flex items-center gap-3 mb-2">
+                <a href="{% url 'dashboard:patient_detail' patient.id %}" class="text-gray-600 hover:text-gray-800">
+                    <i class="fas fa-arrow-left"></i>
+                </a>
+                <h1 class="text-2xl font-bold text-gray-800">
+                    <i class="fas fa-eye text-purple-600 mr-2"></i>
+                    Examen Visual - {{ history.date|date:"d/m/Y" }}
+                </h1>
+            </div>
+            <div class="ml-9 space-y-1">
+                <p class="text-lg text-gray-700"><strong>Paciente:</strong> {{ patient.full_name }}</p>
+                {% if patient.identification %}
+                <p class="text-sm text-gray-600"><strong>Identificación:</strong> {{ patient.identification }}</p>
+                {% endif %}
+                {% if history.doctor %}
+                <p class="text-sm text-gray-600">
+                    <strong>Atendido por:</strong> {{ history.doctor.full_name }}
+                    {% if history.doctor.specialty %}
+                    <span class="text-gray-500">({{ history.doctor.get_specialty_display }})</span>
+                    {% endif %}
+                    {% if history.doctor.professional_card %}
+                    <span class="text-gray-500">- T.P: {{ history.doctor.professional_card }}</span>
+                    {% endif %}
+                </p>
+                {% endif %}
+            </div>
+        </div>
+        
+        <div class="flex gap-2">
+            <a href="{% url 'dashboard:visual_exam_pdf' patient.id history.id %}"
+               target="_blank"
+               class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors">
+                <i class="fas fa-file-pdf mr-2"></i>Generar PDF
+            </a>
+            <a href="{% url 'dashboard:visual_exam_edit' patient.id history.id %}"
+               class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors">
+                <i class="fas fa-edit mr-2"></i>Editar
+            </a>
+        </div>
+    </div>
+
+    <!-- Motivo de Consulta -->
+    {% if history.chief_complaint %}
+    <div class="mb-6 bg-green-50 rounded-lg p-5">
+        <h3 class="text-lg font-semibold text-gray-800 mb-2 flex items-center">
+            <i class="fas fa-comment-medical text-green-600 mr-2"></i>
+            Motivo de Consulta
+        </h3>
+        <p class="text-gray-700">{{ history.chief_complaint }}</p>
+    </div>
+    {% endif %}
+
+    <!-- Refracción -->
+    {% if history.refraction_od_sphere or history.refraction_os_sphere %}
+    <div class="mb-6 bg-blue-50 rounded-lg p-5">
+        <h3 class="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+            <i class="fas fa-glasses text-blue-600 mr-2"></i>
+            Fórmula de Lentes
+        </h3>
+        
+        <div class="overflow-x-auto">
+            <table class="min-w-full bg-white border border-gray-300 rounded-lg">
+                <thead class="bg-blue-600 text-white">
+                    <tr>
+                        <th class="px-4 py-3 text-left text-sm font-semibold"></th>
+                        <th class="px-4 py-3 text-center text-sm font-semibold">ESFERA</th>
+                        <th class="px-4 py-3 text-center text-sm font-semibold">CILINDRO</th>
+                        <th class="px-4 py-3 text-center text-sm font-semibold">EJE</th>
+                        <th class="px-4 py-3 text-center text-sm font-semibold">ADICIÓN</th>
+                        <th class="px-4 py-3 text-center text-sm font-semibold">DNP</th>
+                        <th class="px-4 py-3 text-center text-sm font-semibold">AV LEJOS</th>
+                        <th class="px-4 py-3 text-center text-sm font-semibold">AV CERCA</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr class="border-b border-gray-200 hover:bg-gray-50">
+                        <td class="px-4 py-3 font-semibold bg-gray-100">OD</td>
+                        <td class="px-4 py-3 text-center">{{ history.refraction_od_sphere|default:"-" }}</td>
+                        <td class="px-4 py-3 text-center">{{ history.refraction_od_cylinder|default:"-" }}</td>
+                        <td class="px-4 py-3 text-center">{% if history.refraction_od_axis %}{{ history.refraction_od_axis }}°{% else %}-{% endif %}</td>
+                        <td class="px-4 py-3 text-center">{% if history.refraction_od_add %}+{{ history.refraction_od_add }}{% else %}-{% endif %}</td>
+                        <td class="px-4 py-3 text-center">{{ history.refraction_od_dnp|default:"-" }}</td>
+                        <td class="px-4 py-3 text-center">{{ history.va_od_cc_distance|default:"-" }}</td>
+                        <td class="px-4 py-3 text-center">{{ history.va_od_cc_near|default:"-" }}</td>
+                    </tr>
+                    <tr class="border-b border-gray-200 hover:bg-gray-50">
+                        <td class="px-4 py-3 font-semibold bg-gray-100">OS</td>
+                        <td class="px-4 py-3 text-center">{{ history.refraction_os_sphere|default:"-" }}</td>
+                        <td class="px-4 py-3 text-center">{{ history.refraction_os_cylinder|default:"-" }}</td>
+                        <td class="px-4 py-3 text-center">{% if history.refraction_os_axis %}{{ history.refraction_os_axis }}°{% else %}-{% endif %}</td>
+                        <td class="px-4 py-3 text-center">{% if history.refraction_os_add %}+{{ history.refraction_os_add }}{% else %}-{% endif %}</td>
+                        <td class="px-4 py-3 text-center">{{ history.refraction_os_dnp|default:"-" }}</td>
+                        <td class="px-4 py-3 text-center">{{ history.va_os_cc_distance|default:"-" }}</td>
+                        <td class="px-4 py-3 text-center">{{ history.va_os_cc_near|default:"-" }}</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Detalles de la prescripción -->
+        {% if history.lens_type or history.lens_material or history.lens_coating %}
+        <div class="mt-4 p-4 bg-gray-50 rounded-lg">
+            <h4 class="font-semibold text-gray-700 mb-2">Detalles de la Prescripción:</h4>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm">
+                {% if history.lens_type %}
+                <div><span class="font-medium">Tipo:</span> {{ history.lens_type }}</div>
+                {% endif %}
+                {% if history.lens_material %}
+                <div><span class="font-medium">Material:</span> {{ history.lens_material }}</div>
+                {% endif %}
+                {% if history.lens_coating %}
+                <div><span class="font-medium">Tratamientos:</span> {{ history.lens_coating }}</div>
+                {% endif %}
+                {% if history.lens_brand %}
+                <div><span class="font-medium">Marca:</span> {{ history.lens_brand }}</div>
+                {% endif %}
+                {% if history.frame_type %}
+                <div><span class="font-medium">Montura:</span> {{ history.frame_type }}</div>
+                {% endif %}
+                {% if history.pd_distance %}
+                <div><span class="font-medium">DP Lejos:</span> {{ history.pd_distance }} mm</div>
+                {% endif %}
+                {% if history.pd_near %}
+                <div><span class="font-medium">DP Cerca:</span> {{ history.pd_near }} mm</div>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    <!-- Diagnóstico -->
+    {% if history.diagnosis %}
+    <div class="mb-6 bg-yellow-50 rounded-lg p-5">
+        <h3 class="text-lg font-semibold text-gray-800 mb-2 flex items-center">
+            <i class="fas fa-stethoscope text-yellow-600 mr-2"></i>
+            Diagnóstico
+        </h3>
+        <p class="text-gray-700">{{ history.diagnosis }}</p>
+    </div>
+    {% endif %}
+
+    <!-- Observaciones y Tratamiento -->
+    {% if history.treatment_plan or history.therapy or history.visual_therapy %}
+    <div class="mb-6 bg-pink-50 rounded-lg p-5">
+        <h3 class="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+            <i class="fas fa-clipboard-list text-pink-600 mr-2"></i>
+            Observaciones y Tratamiento
+        </h3>
+        
+        {% if history.treatment_plan %}
+        <div class="mb-3">
+            <p class="font-semibold text-gray-700 mb-1">Plan de Tratamiento:</p>
+            <p class="text-gray-600">{{ history.treatment_plan }}</p>
+        </div>
+        {% endif %}
+
+        {% if history.therapy %}
+        <div class="mb-3">
+            <p class="font-semibold text-gray-700 mb-2">Terapias Coadyuvantes:</p>
+            <div class="flex flex-wrap gap-2">
+                {% for item in history.therapy|split:", " %}
+                <span class="inline-flex items-center px-3 py-1 rounded-full text-xs bg-indigo-100 text-indigo-800">
+                    <i class="fas fa-check-circle mr-1"></i> {{ item }}
+                </span>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        {% if history.visual_therapy %}
+        <div class="mb-3">
+            <p class="font-semibold text-gray-700 mb-2">Terapias Visuales:</p>
+            <div class="flex flex-wrap gap-2">
+                {% for item in history.visual_therapy|split:", " %}
+                <span class="inline-flex items-center px-3 py-1 rounded-full text-xs bg-indigo-100 text-indigo-800">
+                    <i class="fas fa-check-circle mr-1"></i> {{ item }}
+                </span>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        {% if history.recommendation %}
+        <div class="mb-3">
+            <p class="font-semibold text-gray-700 mb-2">Recomendaciones:</p>
+            <div class="flex flex-wrap gap-2">
+                {% for item in history.recommendation|split:", " %}
+                <span class="inline-flex items-center px-3 py-1 rounded-full text-xs bg-green-100 text-green-800">
+                    <i class="fas fa-lightbulb mr-1"></i> {{ item }}
+                </span>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+    {% endif %}
+
+</div>
+{% endblock %}

@@ -1029,7 +1029,186 @@ def clinical_history_pdf(request, patient_id, history_id):
     
     story.append(Spacer(1, 0.2*inch))
     
+    # FÓRMULA DE LENTES ÓPTICOS
+    # Mostrar si hay datos de refracción (independiente de prescription_glasses)
+    if any([
+        history.refraction_od_sphere, history.refraction_od_cylinder,
+        history.refraction_os_sphere, history.refraction_os_cylinder
+    ]):
+        story.append(PageBreak())
+        
+        # Encabezado estilo fórmula profesional
+        formula_title_style = ParagraphStyle(
+            'FormulaTitle',
+            parent=title_style,
+            fontSize=16,
+            textColor=colors.Color(0.1, 0.3, 0.5),
+            spaceAfter=20,
+            alignment=TA_CENTER,
+            fontName='Helvetica-Bold',
+            borderWidth=2,
+            borderColor=colors.Color(0.1, 0.3, 0.5),
+            borderPadding=10,
+            backColor=colors.Color(0.95, 0.97, 1)
+        )
+        
+        story.append(Paragraph("FÓRMULA DE LENTES ÓPTICOS", formula_title_style))
+        story.append(Spacer(1, 0.3*inch))
+        
+        # Tabla de fórmula principal - formato profesional
+        formula_data = [
+            ['', 'ESFERA', 'CILINDRO', 'EJE', 'ADICIÓN', 'PRISMA BASE', 'GRADUADOS', 'AV LEJOS', 'AV CERCA'],
+            [
+                'OD',
+                str(history.refraction_od_sphere) if history.refraction_od_sphere else '-',
+                str(history.refraction_od_cylinder) if history.refraction_od_cylinder else '-',
+                str(history.refraction_od_axis) + '°' if history.refraction_od_axis else '-',
+                '+' + str(history.refraction_od_add) if history.refraction_od_add else '-',
+                str(history.refraction_od_prism) if history.refraction_od_prism else '-',
+                str(history.refraction_od_dnp) if history.refraction_od_dnp else '-',
+                str(history.va_od_cc_distance) if history.va_od_cc_distance else '20/20',
+                str(history.va_od_cc_near) if history.va_od_cc_near else '0.75M',
+            ],
+            [
+                'OS',
+                str(history.refraction_os_sphere) if history.refraction_os_sphere else '-',
+                str(history.refraction_os_cylinder) if history.refraction_os_cylinder else '-',
+                str(history.refraction_os_axis) + '°' if history.refraction_os_axis else '-',
+                '+' + str(history.refraction_os_add) if history.refraction_os_add else '-',
+                str(history.refraction_os_prism) if history.refraction_os_prism else '-',
+                str(history.refraction_os_dnp) if history.refraction_os_dnp else '-',
+                str(history.va_os_cc_distance) if history.va_os_cc_distance else '20/20',
+                str(history.va_os_cc_near) if history.va_os_cc_near else '0.75M',
+            ]
+        ]
+        
+        formula_table = Table(formula_data, colWidths=[0.5*inch, 0.65*inch, 0.7*inch, 0.55*inch, 0.7*inch, 0.85*inch, 0.85*inch, 0.75*inch, 0.75*inch])
+        formula_table.setStyle(TableStyle([
+            # Encabezado
+            ('BACKGROUND', (0, 0), (-1, 0), colors.Color(0.15, 0.35, 0.55)),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+            ('FONTSIZE', (0, 0), (-1, 0), 9),
+            # Filas de datos
+            ('FONTSIZE', (0, 1), (-1, -1), 10),
+            ('FONTNAME', (0, 1), (0, -1), 'Helvetica-Bold'),
+            ('BACKGROUND', (0, 1), (0, -1), colors.Color(0.92, 0.92, 0.92)),
+            # Bordes y líneas
+            ('GRID', (0, 0), (-1, -1), 1.5, colors.black),
+            ('LINEABOVE', (0, 0), (-1, 0), 2, colors.Color(0.15, 0.35, 0.55)),
+            ('LINEBELOW', (0, 0), (-1, 0), 2, colors.Color(0.15, 0.35, 0.55)),
+            ('LINEBELOW', (0, -1), (-1, -1), 2, colors.Color(0.15, 0.35, 0.55)),
+            # Padding
+            ('TOPPADDING', (0, 0), (-1, -1), 10),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 10),
+            ('LEFTPADDING', (0, 0), (-1, -1), 8),
+            ('RIGHTPADDING', (0, 0), (-1, -1), 8),
+        ]))
+        
+        story.append(formula_table)
+        story.append(Spacer(1, 0.4*inch))
+        
+        # Sección: TOMAR CENTROS ÓPTICOS
+        if history.pd_distance or history.pd_near or history.pd_od or history.pd_os:
+            center_title = Paragraph("<b>TOMAR CENTROS ÓPTICOS</b>", heading_style)
+            story.append(center_title)
+            story.append(Spacer(1, 0.1*inch))
+            
+            center_data = [
+                ['Distancia Pupilar (mm)', 'Altura (mm)', 'Alternativa'],
+            ]
+            
+            # Fila con los datos
+            dp_text = f"{history.pd_distance}" if history.pd_distance else "N/A"
+            if history.pd_near:
+                dp_text += f" / {history.pd_near}"
+            
+            altura_text = f"DN/PA: {history.pd_od or 'N/A'} / {history.pd_os or 'N/A'}"
+            
+            center_data.append([dp_text, altura_text, 'Sí/No'])
+            
+            center_table = Table(center_data, colWidths=[2.3*inch, 2.3*inch, 2*inch])
+            center_table.setStyle(TableStyle([
+                ('BACKGROUND', (0, 0), (-1, 0), colors.Color(0.85, 0.85, 0.85)),
+                ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+                ('FONTSIZE', (0, 0), (-1, 0), 9),
+                ('FONTSIZE', (0, 1), (-1, -1), 10),
+                ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+                ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+                ('GRID', (0, 0), (-1, -1), 1, colors.black),
+                ('TOPPADDING', (0, 0), (-1, -1), 8),
+                ('BOTTOMPADDING', (0, 0), (-1, -1), 8),
+            ]))
+            story.append(center_table)
+            story.append(Spacer(1, 0.3*inch))
+        
+        # Detalles de lentes y dispositivo
+        details_data = [
+            ['Tipo Lentes:', history.lens_type or 'No especificado', 'Detalle:', 'AR'],
+            ['Color y Tints:', history.lens_material or '-', 'Dip:', f"{history.pd_distance or 'N/A'}/{history.pd_near or 'N/A'}"],
+            ['Uso Dispositivo:', 'Permanente' if history.prescription_glasses else '-', 'Control:', '1 año'],
+        ]
+        
+        details_table = Table(details_data, colWidths=[1.5*inch, 2*inch, 1.2*inch, 2*inch])
+        details_table.setStyle(TableStyle([
+            ('FONTSIZE', (0, 0), (-1, -1), 9),
+            ('FONTNAME', (0, 0), (0, -1), 'Helvetica-Bold'),
+            ('FONTNAME', (2, 0), (2, -1), 'Helvetica-Bold'),
+            ('GRID', (0, 0), (-1, -1), 1, colors.grey),
+            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+            ('TOPPADDING', (0, 0), (-1, -1), 6),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
+            ('LEFTPADDING', (0, 0), (-1, -1), 8),
+        ]))
+        story.append(details_table)
+        story.append(Spacer(1, 0.3*inch))
+        
+        # Observaciones de la prescripción
+        if history.optical_prescription_notes or history.lens_type or history.lens_material or history.lens_coating:
+            story.append(Paragraph("Observaciones:", heading_style))
+            obs_text = ""
+            if history.lens_type:
+                obs_text += f"<b>Tipo:</b> {history.lens_type}. "
+            if history.lens_material:
+                obs_text += f"<b>Material:</b> {history.lens_material}. "
+            if history.lens_coating:
+                obs_text += f"<b>Tratamientos:</b> {history.lens_coating}. "
+            if history.lens_brand:
+                obs_text += f"<b>Marca:</b> {history.lens_brand}. "
+            if history.frame_type:
+                obs_text += f"<b>Montura:</b> {history.frame_type}. "
+            if history.optical_prescription_notes:
+                obs_text += f"<br/>{history.optical_prescription_notes}"
+            
+            story.append(Paragraph(obs_text, normal_style))
+            story.append(Spacer(1, 0.2*inch))
+        
+        # Nota de advertencia (similar a la imagen)
+        warning_style = ParagraphStyle(
+            'Warning',
+            parent=normal_style,
+            fontSize=8,
+            alignment=TA_CENTER,
+            textColor=colors.Color(0.3, 0.3, 0.3),
+            borderWidth=1,
+            borderColor=colors.grey,
+            borderPadding=5
+        )
+        story.append(Paragraph("NO SE DA GARANTÍA POR LENTES ADQUIRIDOS EN OTRA ÓPTICA", warning_style))
+        story.append(Spacer(1, 0.3*inch))
+        
+        # Información del optómetra y sello
+        org_name = request.organization.name if hasattr(request, 'organization') and request.organization else 'ÓPTICA'
+        org_info = f"<b>Optómetra:</b> {history.doctor.full_name if history.doctor else 'N/A'}<br/>"
+        org_info += f"<b>Reg Médico:</b> {history.doctor.professional_card if history.doctor and history.doctor.professional_card else 'N/A'}"
+        
+        story.append(Paragraph(org_info, normal_style))
+        story.append(Spacer(1, 0.3*inch))
+    
     # MANEJO Y OBSERVACIONES
+    story.append(PageBreak())
     story.append(Paragraph("MANEJO Y OBSERVACIONES", heading_style))
     
     if history.disposition:
@@ -1132,31 +1311,43 @@ def visual_exam_create(request, patient_id):
                 date=request.POST.get('date'),
                 doctor_id=request.POST.get('doctor') if request.POST.get('doctor') else None,
                 
-                # Agudeza Visual - usar los nombres correctos del template
-                va_od_sc_distance=request.POST.get('va_od_sc', ''),
-                va_os_sc_distance=request.POST.get('va_os_sc', ''),
-                va_ou_distance=request.POST.get('va_ou_sc', ''),
-                va_od_cc_distance=request.POST.get('va_od_cc', ''),
-                va_os_cc_distance=request.POST.get('va_os_cc', ''),
-                va_ou_near=request.POST.get('va_ou_cc', ''),
+                # Cartillas utilizadas
+                distance_chart=request.POST.get('distance_chart', ''),
+                near_chart=request.POST.get('near_chart', ''),
+                
+                # Agudeza Visual - Lejos
+                va_od_sc_distance=request.POST.get('va_od_sc_distance', ''),
+                va_od_cc_distance=request.POST.get('va_od_cc_distance', ''),
+                va_os_sc_distance=request.POST.get('va_os_sc_distance', ''),
+                va_os_cc_distance=request.POST.get('va_os_cc_distance', ''),
+                
+                # Agudeza Visual - Cerca
+                va_od_sc_near=request.POST.get('va_od_sc_near', ''),
+                va_od_cc_near=request.POST.get('va_od_cc_near', ''),
+                va_os_sc_near=request.POST.get('va_os_sc_near', ''),
+                va_os_cc_near=request.POST.get('va_os_cc_near', ''),
                 
                 # Refracción OD
                 refraction_od_sphere=request.POST.get('refraction_od_sphere', ''),
-                refraction_od_cylinder=float(request.POST.get('refraction_od_cylinder') or 0),
-                refraction_od_axis=int(request.POST.get('refraction_od_axis') or 0),
-                refraction_od_add=float(request.POST.get('refraction_od_add') or 0),
+                refraction_od_cylinder=float(request.POST.get('refraction_od_cylinder') or 0) if request.POST.get('refraction_od_cylinder') else None,
+                refraction_od_axis=int(request.POST.get('refraction_od_axis') or 0) if request.POST.get('refraction_od_axis') else None,
+                refraction_od_add=float(request.POST.get('refraction_od_add') or 0) if request.POST.get('refraction_od_add') else None,
                 refraction_od_prism=request.POST.get('refraction_od_prism', ''),
+                refraction_od_dnp=float(request.POST.get('refraction_od_dnp') or 0) if request.POST.get('refraction_od_dnp') else None,
                 
                 # Refracción OS
                 refraction_os_sphere=request.POST.get('refraction_os_sphere', ''),
-                refraction_os_cylinder=float(request.POST.get('refraction_os_cylinder') or 0),
-                refraction_os_axis=int(request.POST.get('refraction_os_axis') or 0),
-                refraction_os_add=float(request.POST.get('refraction_os_add') or 0),
+                refraction_os_cylinder=float(request.POST.get('refraction_os_cylinder') or 0) if request.POST.get('refraction_os_cylinder') else None,
+                refraction_os_axis=int(request.POST.get('refraction_os_axis') or 0) if request.POST.get('refraction_os_axis') else None,
+                refraction_os_add=float(request.POST.get('refraction_os_add') or 0) if request.POST.get('refraction_os_add') else None,
                 refraction_os_prism=request.POST.get('refraction_os_prism', ''),
+                refraction_os_dnp=float(request.POST.get('refraction_os_dnp') or 0) if request.POST.get('refraction_os_dnp') else None,
                 
                 # Distancia Pupilar
-                pd_od=float(request.POST.get('refraction_od_dnp') or 0) if request.POST.get('refraction_od_dnp') else None,
-                pd_os=float(request.POST.get('refraction_os_dnp') or 0) if request.POST.get('refraction_os_dnp') else None,
+                pd_distance=float(request.POST.get('pd_distance') or 0) if request.POST.get('pd_distance') else None,
+                pd_near=float(request.POST.get('pd_near') or 0) if request.POST.get('pd_near') else None,
+                pd_od=float(request.POST.get('pd_od') or 0) if request.POST.get('pd_od') else None,
+                pd_os=float(request.POST.get('pd_os') or 0) if request.POST.get('pd_os') else None,
                 
                 # Queratometría OD
                 keratometry_od_k1=float(request.POST.get('keratometry_od_k1') or 0) if request.POST.get('keratometry_od_k1') else None,
@@ -1168,11 +1359,123 @@ def visual_exam_create(request, patient_id):
                 keratometry_os_k2=float(request.POST.get('keratometry_os_k2') or 0) if request.POST.get('keratometry_os_k2') else None,
                 keratometry_os_k1_axis=int(request.POST.get('keratometry_os_axis') or 0) if request.POST.get('keratometry_os_axis') else None,
                 
-                # Observaciones
-                observations=request.POST.get('exam_notes', ''),
+                # ANAMNESIS
+                chief_complaint=request.POST.get('chief_complaint', 'Examen visual de rutina'),
+                current_illness=request.POST.get('current_illness', ''),
                 
-                # Motivo de consulta por defecto
-                chief_complaint='Examen visual de rutina'
+                # ANTECEDENTES GENERALES
+                pathological_history=request.POST.get('pathological_history', ''),
+                pharmacological_history=request.POST.get('pharmacological_history', ''),
+                surgical_history=request.POST.get('surgical_history', ''),
+                allergic_history=request.POST.get('allergic_history', ''),
+                trauma_history=request.POST.get('trauma_history', ''),
+                other_general_history=request.POST.get('other_general_history', ''),
+                
+                # ANTECEDENTES OCULARES
+                ocular_pathological_history=request.POST.get('ocular_pathological_history', ''),
+                ocular_pharmacological_history=request.POST.get('ocular_pharmacological_history', ''),
+                ocular_surgical_history=request.POST.get('ocular_surgical_history', ''),
+                ocular_trauma_history=request.POST.get('ocular_trauma_history', ''),
+                previous_glasses=request.POST.get('previous_glasses') == 'on',
+                previous_contact_lenses=request.POST.get('previous_contact_lenses') == 'on',
+                ocular_therapeutic_history=request.POST.get('ocular_therapeutic_history', ''),
+                
+                # ANTECEDENTES FAMILIARES - Generales
+                family_diabetes=request.POST.get('family_diabetes') == 'on',
+                family_hypertension=request.POST.get('family_hypertension') == 'on',
+                family_heart_disease=request.POST.get('family_heart_disease') == 'on',
+                family_cancer=request.POST.get('family_cancer') == 'on',
+                family_general_notes=request.POST.get('family_general_notes', ''),
+                
+                # ANTECEDENTES FAMILIARES - Oculares
+                family_glaucoma=request.POST.get('family_glaucoma') == 'on',
+                family_cataracts=request.POST.get('family_cataracts') == 'on',
+                family_macular_degeneration=request.POST.get('family_macular_degeneration') == 'on',
+                family_retinal_detachment=request.POST.get('family_retinal_detachment') == 'on',
+                family_myopia=request.POST.get('family_myopia') == 'on',
+                family_strabismus=request.POST.get('family_strabismus') == 'on',
+                family_ocular_notes=request.POST.get('family_ocular_notes', ''),
+                
+                # SEGMENTO ANTERIOR - OD
+                biomicroscopy_od_lids=request.POST.get('biomicroscopy_od_lids', ''),
+                biomicroscopy_od_conjunctiva=request.POST.get('biomicroscopy_od_conjunctiva', ''),
+                biomicroscopy_od_cornea=request.POST.get('biomicroscopy_od_cornea', ''),
+                biomicroscopy_od_anterior_chamber=request.POST.get('biomicroscopy_od_anterior_chamber', ''),
+                biomicroscopy_od_iris=request.POST.get('biomicroscopy_od_iris', ''),
+                biomicroscopy_od_lens=request.POST.get('biomicroscopy_od_lens', ''),
+                biomicroscopy_od_pupil=request.POST.get('biomicroscopy_od_pupil', ''),
+                
+                # SEGMENTO ANTERIOR - OS
+                biomicroscopy_os_lids=request.POST.get('biomicroscopy_os_lids', ''),
+                biomicroscopy_os_conjunctiva=request.POST.get('biomicroscopy_os_conjunctiva', ''),
+                biomicroscopy_os_cornea=request.POST.get('biomicroscopy_os_cornea', ''),
+                biomicroscopy_os_anterior_chamber=request.POST.get('biomicroscopy_os_anterior_chamber', ''),
+                biomicroscopy_os_iris=request.POST.get('biomicroscopy_os_iris', ''),
+                biomicroscopy_os_lens=request.POST.get('biomicroscopy_os_lens', ''),
+                biomicroscopy_os_pupil=request.POST.get('biomicroscopy_os_pupil', ''),
+                
+                # SEGMENTO POSTERIOR - OD
+                fundoscopy_od_vitreous=request.POST.get('fundoscopy_od_vitreous', ''),
+                fundoscopy_od_optic_disc=request.POST.get('fundoscopy_od_optic_disc', ''),
+                fundoscopy_od_cup_disc_ratio=request.POST.get('fundoscopy_od_cup_disc_ratio', ''),
+                fundoscopy_od_macula=request.POST.get('fundoscopy_od_macula', ''),
+                fundoscopy_od_vessels=request.POST.get('fundoscopy_od_vessels', ''),
+                fundoscopy_od_retina=request.POST.get('fundoscopy_od_retina', ''),
+                
+                # SEGMENTO POSTERIOR - OS
+                fundoscopy_os_vitreous=request.POST.get('fundoscopy_os_vitreous', ''),
+                fundoscopy_os_optic_disc=request.POST.get('fundoscopy_os_optic_disc', ''),
+                fundoscopy_os_cup_disc_ratio=request.POST.get('fundoscopy_os_cup_disc_ratio', ''),
+                fundoscopy_os_macula=request.POST.get('fundoscopy_os_macula', ''),
+                fundoscopy_os_vessels=request.POST.get('fundoscopy_os_vessels', ''),
+                fundoscopy_os_retina=request.POST.get('fundoscopy_os_retina', ''),
+                
+                # DIAGNÓSTICO - Checkboxes
+                dx_myopia=request.POST.get('dx_myopia') == 'on',
+                dx_hyperopia=request.POST.get('dx_hyperopia') == 'on',
+                dx_astigmatism=request.POST.get('dx_astigmatism') == 'on',
+                dx_presbyopia=request.POST.get('dx_presbyopia') == 'on',
+                diagnosis=request.POST.get('diagnosis', ''),
+                
+                # PRESCRIPCIÓN - Checkboxes
+                prescription_glasses=request.POST.get('prescription_glasses') == 'on',
+                prescription_contact_lenses=request.POST.get('prescription_contact_lenses') == 'on',
+                prescription_medication=request.POST.get('prescription_medication') == 'on',
+                
+                # LENTES OFTÁLMICOS
+                lens_type=request.POST.get('lens_type', ''),
+                lens_material=request.POST.get('lens_material', ''),
+                lens_coating=request.POST.get('lens_coating', ''),
+                lens_brand=request.POST.get('lens_brand', ''),
+                frame_type=request.POST.get('frame_type', ''),
+                
+                # MEDICAMENTOS
+                medication_details=request.POST.get('medication_details', ''),
+                
+                # LENTES DE CONTACTO
+                contact_lens_type=request.POST.get('contact_lens_type', ''),
+                contact_lens_brand=request.POST.get('contact_lens_brand', ''),
+                contact_lens_material=request.POST.get('contact_lens_material', ''),
+                contact_lens_wearing=request.POST.get('contact_lens_wearing', ''),
+                
+                # TRATAMIENTOS Y TERAPIAS
+                therapy=', '.join(request.POST.getlist('therapy')),
+                visual_therapy=', '.join(request.POST.getlist('visual_therapy')),
+                
+                # EXÁMENES COMPLEMENTARIOS
+                complementary_exam=', '.join(request.POST.getlist('complementary_exam')),
+                lab_test=', '.join(request.POST.getlist('lab_test')),
+                
+                # RECOMENDACIONES Y SEGUIMIENTO
+                recommendation=', '.join(request.POST.getlist('recommendation')),
+                follow_up_reason=request.POST.get('follow_up_reason', ''),
+                referral_specialty=request.POST.get('referral_specialty', ''),
+                treatment_plan=request.POST.get('treatment_plan', ''),
+                
+                # OBSERVACIONES Y CONDUCTA
+                observations=request.POST.get('exam_notes', ''),
+                recommendations_text=request.POST.get('recommendations_text', ''),
+                additional_notes=request.POST.get('additional_notes', '')
             )
             
             return JsonResponse({
@@ -1192,10 +1495,59 @@ def visual_exam_create(request, patient_id):
             }, status=400)
     
     # GET - Mostrar formulario
+    # Obtener parámetros clínicos
+    from apps.patients.models import ClinicalParameter
+    
+    # Función auxiliar para obtener parámetros por tipo
+    def get_params(param_types):
+        if isinstance(param_types, str):
+            param_types = [param_types]
+        return ClinicalParameter.objects.filter(
+            organization=request.organization,
+            parameter_type__in=param_types,
+            is_active=True
+        ).order_by('display_order', 'name')
+    
     context = {
         'patient': patient,
         'doctors': doctors,
         'today': datetime.now().date(),
+        
+        # Medicamentos
+        'medications': get_params(['medication', 'topical_medication', 'systemic_medication']),
+        'topical_medications': get_params('topical_medication'),
+        'systemic_medications': get_params('systemic_medication'),
+        
+        # Lentes Oftálmicos
+        'lens_types': get_params('lens_type'),
+        'lens_materials': get_params('lens_material'),
+        'lens_coatings': get_params(['lens_coating', 'treatment']),
+        'lens_brands': get_params('lens_brand'),
+        'frame_types': get_params('frame_type'),
+        
+        # Lentes de Contacto
+        'contact_lens_types': get_params('contact_lens_type'),
+        'contact_lens_brands': get_params('contact_lens_brand'),
+        'contact_lens_materials': get_params('contact_lens_material'),
+        'contact_lens_wearings': get_params('contact_lens_wearing'),
+        
+        # Diagnósticos
+        'diagnoses': get_params('diagnosis'),
+        'diagnosis_categories': get_params('diagnosis_category'),
+        
+        # Tratamientos y Terapias
+        'treatments': get_params('treatment'),
+        'therapies': get_params('therapy'),
+        'visual_therapies': get_params('visual_therapy'),
+        
+        # Exámenes
+        'complementary_exams': get_params('complementary_exam'),
+        'lab_tests': get_params('lab_test'),
+        
+        # Otros
+        'recommendations': get_params('recommendation'),
+        'referral_specialties': get_params('referral_specialty'),
+        'follow_up_reasons': get_params('follow_up_reason'),
     }
     
     return render(request, 'dashboard/patients/visual_exam_form.html', context)
@@ -1220,13 +1572,21 @@ def visual_exam_edit(request, patient_id, history_id):
             history.date = request.POST.get('date')
             history.doctor_id = request.POST.get('doctor') if request.POST.get('doctor') else None
             
-            # Agudeza Visual
-            history.va_od_sc_distance = request.POST.get('va_od_sc', '')
-            history.va_os_sc_distance = request.POST.get('va_os_sc', '')
-            history.va_ou_distance = request.POST.get('va_ou_sc', '')
-            history.va_od_cc_distance = request.POST.get('va_od_cc', '')
-            history.va_os_cc_distance = request.POST.get('va_os_cc', '')
-            history.va_ou_near = request.POST.get('va_ou_cc', '')
+            # Cartillas utilizadas
+            history.distance_chart = request.POST.get('distance_chart', '')
+            history.near_chart = request.POST.get('near_chart', '')
+            
+            # Agudeza Visual - Lejos
+            history.va_od_sc_distance = request.POST.get('va_od_sc_distance', '')
+            history.va_od_cc_distance = request.POST.get('va_od_cc_distance', '')
+            history.va_os_sc_distance = request.POST.get('va_os_sc_distance', '')
+            history.va_os_cc_distance = request.POST.get('va_os_cc_distance', '')
+            
+            # Agudeza Visual - Cerca
+            history.va_od_sc_near = request.POST.get('va_od_sc_near', '')
+            history.va_od_cc_near = request.POST.get('va_od_cc_near', '')
+            history.va_os_sc_near = request.POST.get('va_os_sc_near', '')
+            history.va_os_cc_near = request.POST.get('va_os_cc_near', '')
             
             # Refracción OD
             history.refraction_od_sphere = request.POST.get('refraction_od_sphere', '') or ''
@@ -1242,6 +1602,9 @@ def visual_exam_edit(request, patient_id, history_id):
             
             history.refraction_od_prism = request.POST.get('refraction_od_prism', '') or ''
             
+            dnp_od = request.POST.get('refraction_od_dnp', '').strip()
+            history.refraction_od_dnp = float(dnp_od) if dnp_od else None
+            
             # Refracción OS
             history.refraction_os_sphere = request.POST.get('refraction_os_sphere', '') or ''
             
@@ -1256,11 +1619,20 @@ def visual_exam_edit(request, patient_id, history_id):
             
             history.refraction_os_prism = request.POST.get('refraction_os_prism', '') or ''
             
+            dnp_os = request.POST.get('refraction_os_dnp', '').strip()
+            history.refraction_os_dnp = float(dnp_os) if dnp_os else None
+            
             # Distancia Pupilar
-            pd_od_val = request.POST.get('refraction_od_dnp', '').strip()
+            pd_distance_val = request.POST.get('pd_distance', '').strip()
+            history.pd_distance = float(pd_distance_val) if pd_distance_val else None
+            
+            pd_near_val = request.POST.get('pd_near', '').strip()
+            history.pd_near = float(pd_near_val) if pd_near_val else None
+            
+            pd_od_val = request.POST.get('pd_od', '').strip()
             history.pd_od = float(pd_od_val) if pd_od_val else None
             
-            pd_os_val = request.POST.get('refraction_os_dnp', '').strip()
+            pd_os_val = request.POST.get('pd_os', '').strip()
             history.pd_os = float(pd_os_val) if pd_os_val else None
             
             # Queratometría OD
@@ -1283,8 +1655,123 @@ def visual_exam_edit(request, patient_id, history_id):
             kaxis_os_val = request.POST.get('keratometry_os_axis', '').strip()
             history.keratometry_os_k1_axis = int(kaxis_os_val) if kaxis_os_val else None
             
-            # Observaciones
+            # ANAMNESIS
+            history.chief_complaint = request.POST.get('chief_complaint', '')
+            history.current_illness = request.POST.get('current_illness', '')
+            
+            # ANTECEDENTES GENERALES
+            history.pathological_history = request.POST.get('pathological_history', '')
+            history.pharmacological_history = request.POST.get('pharmacological_history', '')
+            history.surgical_history = request.POST.get('surgical_history', '')
+            history.allergic_history = request.POST.get('allergic_history', '')
+            history.trauma_history = request.POST.get('trauma_history', '')
+            history.other_general_history = request.POST.get('other_general_history', '')
+            
+            # ANTECEDENTES OCULARES
+            history.ocular_pathological_history = request.POST.get('ocular_pathological_history', '')
+            history.ocular_pharmacological_history = request.POST.get('ocular_pharmacological_history', '')
+            history.ocular_surgical_history = request.POST.get('ocular_surgical_history', '')
+            history.ocular_trauma_history = request.POST.get('ocular_trauma_history', '')
+            history.previous_glasses = request.POST.get('previous_glasses') == 'on'
+            history.previous_contact_lenses = request.POST.get('previous_contact_lenses') == 'on'
+            history.ocular_therapeutic_history = request.POST.get('ocular_therapeutic_history', '')
+            
+            # ANTECEDENTES FAMILIARES - Generales
+            history.family_diabetes = request.POST.get('family_diabetes') == 'on'
+            history.family_hypertension = request.POST.get('family_hypertension') == 'on'
+            history.family_heart_disease = request.POST.get('family_heart_disease') == 'on'
+            history.family_cancer = request.POST.get('family_cancer') == 'on'
+            history.family_general_notes = request.POST.get('family_general_notes', '')
+            
+            # ANTECEDENTES FAMILIARES - Oculares
+            history.family_glaucoma = request.POST.get('family_glaucoma') == 'on'
+            history.family_cataracts = request.POST.get('family_cataracts') == 'on'
+            history.family_macular_degeneration = request.POST.get('family_macular_degeneration') == 'on'
+            history.family_retinal_detachment = request.POST.get('family_retinal_detachment') == 'on'
+            history.family_myopia = request.POST.get('family_myopia') == 'on'
+            history.family_strabismus = request.POST.get('family_strabismus') == 'on'
+            history.family_ocular_notes = request.POST.get('family_ocular_notes', '')
+            
+            # SEGMENTO ANTERIOR - OD
+            history.biomicroscopy_od_lids = request.POST.get('biomicroscopy_od_lids', '')
+            history.biomicroscopy_od_conjunctiva = request.POST.get('biomicroscopy_od_conjunctiva', '')
+            history.biomicroscopy_od_cornea = request.POST.get('biomicroscopy_od_cornea', '')
+            history.biomicroscopy_od_anterior_chamber = request.POST.get('biomicroscopy_od_anterior_chamber', '')
+            history.biomicroscopy_od_iris = request.POST.get('biomicroscopy_od_iris', '')
+            history.biomicroscopy_od_lens = request.POST.get('biomicroscopy_od_lens', '')
+            history.biomicroscopy_od_pupil = request.POST.get('biomicroscopy_od_pupil', '')
+            
+            # SEGMENTO ANTERIOR - OS
+            history.biomicroscopy_os_lids = request.POST.get('biomicroscopy_os_lids', '')
+            history.biomicroscopy_os_conjunctiva = request.POST.get('biomicroscopy_os_conjunctiva', '')
+            history.biomicroscopy_os_cornea = request.POST.get('biomicroscopy_os_cornea', '')
+            history.biomicroscopy_os_anterior_chamber = request.POST.get('biomicroscopy_os_anterior_chamber', '')
+            history.biomicroscopy_os_iris = request.POST.get('biomicroscopy_os_iris', '')
+            history.biomicroscopy_os_lens = request.POST.get('biomicroscopy_os_lens', '')
+            history.biomicroscopy_os_pupil = request.POST.get('biomicroscopy_os_pupil', '')
+            
+            # SEGMENTO POSTERIOR - OD
+            history.fundoscopy_od_vitreous = request.POST.get('fundoscopy_od_vitreous', '')
+            history.fundoscopy_od_optic_disc = request.POST.get('fundoscopy_od_optic_disc', '')
+            history.fundoscopy_od_cup_disc_ratio = request.POST.get('fundoscopy_od_cup_disc_ratio', '')
+            history.fundoscopy_od_macula = request.POST.get('fundoscopy_od_macula', '')
+            history.fundoscopy_od_vessels = request.POST.get('fundoscopy_od_vessels', '')
+            history.fundoscopy_od_retina = request.POST.get('fundoscopy_od_retina', '')
+            
+            # SEGMENTO POSTERIOR - OS
+            history.fundoscopy_os_vitreous = request.POST.get('fundoscopy_os_vitreous', '')
+            history.fundoscopy_os_optic_disc = request.POST.get('fundoscopy_os_optic_disc', '')
+            history.fundoscopy_os_cup_disc_ratio = request.POST.get('fundoscopy_os_cup_disc_ratio', '')
+            history.fundoscopy_os_macula = request.POST.get('fundoscopy_os_macula', '')
+            history.fundoscopy_os_vessels = request.POST.get('fundoscopy_os_vessels', '')
+            history.fundoscopy_os_retina = request.POST.get('fundoscopy_os_retina', '')
+            
+            # DIAGNÓSTICO - Checkboxes
+            history.dx_myopia = request.POST.get('dx_myopia') == 'on'
+            history.dx_hyperopia = request.POST.get('dx_hyperopia') == 'on'
+            history.dx_astigmatism = request.POST.get('dx_astigmatism') == 'on'
+            history.dx_presbyopia = request.POST.get('dx_presbyopia') == 'on'
+            history.diagnosis = request.POST.get('diagnosis', '')
+            
+            # PRESCRIPCIÓN - Checkboxes
+            history.prescription_glasses = request.POST.get('prescription_glasses') == 'on'
+            history.prescription_contact_lenses = request.POST.get('prescription_contact_lenses') == 'on'
+            history.prescription_medication = request.POST.get('prescription_medication') == 'on'
+            
+            # LENTES OFTÁLMICOS
+            history.lens_type = request.POST.get('lens_type', '')
+            history.lens_material = request.POST.get('lens_material', '')
+            history.lens_coating = request.POST.get('lens_coating', '')
+            history.lens_brand = request.POST.get('lens_brand', '')
+            history.frame_type = request.POST.get('frame_type', '')
+            
+            # MEDICAMENTOS
+            history.medication_details = request.POST.get('medication_details', '')
+            
+            # LENTES DE CONTACTO
+            history.contact_lens_type = request.POST.get('contact_lens_type', '')
+            history.contact_lens_brand = request.POST.get('contact_lens_brand', '')
+            history.contact_lens_material = request.POST.get('contact_lens_material', '')
+            history.contact_lens_wearing = request.POST.get('contact_lens_wearing', '')
+            
+            # TRATAMIENTOS Y TERAPIAS
+            history.therapy = ', '.join(request.POST.getlist('therapy'))
+            history.visual_therapy = ', '.join(request.POST.getlist('visual_therapy'))
+            
+            # EXÁMENES COMPLEMENTARIOS
+            history.complementary_exam = ', '.join(request.POST.getlist('complementary_exam'))
+            history.lab_test = ', '.join(request.POST.getlist('lab_test'))
+            
+            # RECOMENDACIONES Y SEGUIMIENTO
+            history.recommendation = ', '.join(request.POST.getlist('recommendation'))
+            history.follow_up_reason = request.POST.get('follow_up_reason', '')
+            history.referral_specialty = request.POST.get('referral_specialty', '')
+            history.treatment_plan = request.POST.get('treatment_plan', '')
+            
+            # OBSERVACIONES Y CONDUCTA
             history.observations = request.POST.get('exam_notes', '')
+            history.recommendations_text = request.POST.get('recommendations_text', '')
+            history.additional_notes = request.POST.get('additional_notes', '')
             
             history.save()
             
@@ -1305,11 +1792,397 @@ def visual_exam_edit(request, patient_id, history_id):
             }, status=400)
     
     # GET - Mostrar formulario con datos
+    # Obtener parámetros clínicos
+    from apps.patients.models import ClinicalParameter
+    
+    # Función auxiliar para obtener parámetros por tipo
+    def get_params(param_types):
+        if isinstance(param_types, str):
+            param_types = [param_types]
+        return ClinicalParameter.objects.filter(
+            organization=request.organization,
+            parameter_type__in=param_types,
+            is_active=True
+        ).order_by('display_order', 'name')
+    
     context = {
         'patient': patient,
         'doctors': doctors,
         'history': history,
         'today': datetime.now().date(),
+        
+        # Medicamentos
+        'medications': get_params(['medication', 'topical_medication', 'systemic_medication']),
+        'topical_medications': get_params('topical_medication'),
+        'systemic_medications': get_params('systemic_medication'),
+        
+        # Lentes Oftálmicos
+        'lens_types': get_params('lens_type'),
+        'lens_materials': get_params('lens_material'),
+        'lens_coatings': get_params(['lens_coating', 'treatment']),
+        'lens_brands': get_params('lens_brand'),
+        'frame_types': get_params('frame_type'),
+        
+        # Lentes de Contacto
+        'contact_lens_types': get_params('contact_lens_type'),
+        'contact_lens_brands': get_params('contact_lens_brand'),
+        'contact_lens_materials': get_params('contact_lens_material'),
+        'contact_lens_wearings': get_params('contact_lens_wearing'),
+        
+        # Diagnósticos
+        'diagnoses': get_params('diagnosis'),
+        'diagnosis_categories': get_params('diagnosis_category'),
+        
+        # Tratamientos y Terapias
+        'treatments': get_params('treatment'),
+        'therapies': get_params('therapy'),
+        'visual_therapies': get_params('visual_therapy'),
+        
+        # Exámenes
+        'complementary_exams': get_params('complementary_exam'),
+        'lab_tests': get_params('lab_test'),
+        
+        # Otros
+        'recommendations': get_params('recommendation'),
+        'referral_specialties': get_params('referral_specialty'),
+        'follow_up_reasons': get_params('follow_up_reason'),
     }
     
     return render(request, 'dashboard/patients/visual_exam_form.html', context)
+
+
+@login_required
+def visual_exam_detail(request, patient_id, history_id):
+    """Ver detalle de examen visual"""
+    org_filter = {'organization': request.organization} if hasattr(request, 'organization') and request.organization else {}
+    patient = get_object_or_404(Patient, id=patient_id, **org_filter)
+    history = get_object_or_404(ClinicalHistory, id=history_id, patient=patient, **org_filter)
+    
+    context = {
+        'patient': patient,
+        'history': history,
+    }
+    
+    return render(request, 'dashboard/patients/visual_exam_detail.html', context)
+
+
+@login_required
+def visual_exam_pdf(request, patient_id, history_id):
+    """Generar PDF específico de fórmula de lentes ópticos"""
+    from reportlab.lib.pagesizes import letter
+    from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+    from reportlab.lib.units import inch
+    from reportlab.lib.enums import TA_CENTER, TA_LEFT
+    from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
+    from reportlab.lib import colors
+    
+    org_filter = {'organization': request.organization} if hasattr(request, 'organization') and request.organization else {}
+    patient = get_object_or_404(Patient, id=patient_id, **org_filter)
+    history = get_object_or_404(ClinicalHistory, id=history_id, patient=patient, **org_filter)
+    
+    # Crear buffer para el PDF
+    buffer = BytesIO()
+    
+    # Configurar documento
+    doc = SimpleDocTemplate(
+        buffer,
+        pagesize=letter,
+        rightMargin=0.75*inch,
+        leftMargin=0.75*inch,
+        topMargin=0.75*inch,
+        bottomMargin=0.75*inch
+    )
+    
+    # Estilos
+    styles = getSampleStyleSheet()
+    
+    title_style = ParagraphStyle(
+        'Title',
+        parent=styles['Heading1'],
+        fontSize=16,
+        textColor=colors.Color(0.1, 0.3, 0.5),
+        spaceAfter=20,
+        alignment=TA_CENTER,
+        fontName='Helvetica-Bold'
+    )
+    
+    heading_style = ParagraphStyle(
+        'Heading',
+        parent=styles['Heading2'],
+        fontSize=11,
+        textColor=colors.Color(0.2, 0.2, 0.2),
+        spaceAfter=8,
+        fontName='Helvetica-Bold'
+    )
+    
+    normal_style = ParagraphStyle(
+        'Normal',
+        parent=styles['Normal'],
+        fontSize=9,
+        spaceAfter=6
+    )
+    
+    # Contenido del PDF
+    story = []
+    
+    # ========== ENCABEZADO PROFESIONAL ==========
+    # Crear tabla de encabezado con logo y datos de la óptica
+    org_name = request.organization.name if hasattr(request, 'organization') and request.organization else 'Óptica'
+    org_address = request.organization.address if hasattr(request, 'organization') and request.organization and request.organization.address else 'Dirección no especificada'
+    org_phone = request.organization.phone if hasattr(request, 'organization') and request.organization and request.organization.phone else ''
+    org_email = request.organization.email if hasattr(request, 'organization') and request.organization and request.organization.email else ''
+    
+    # Estilos para el encabezado
+    header_org_style = ParagraphStyle(
+        'HeaderOrg',
+        parent=styles['Normal'],
+        fontSize=18,
+        textColor=colors.Color(0.0, 0.2, 0.5),
+        fontName='Helvetica-Bold',
+        alignment=TA_CENTER,
+        leading=20
+    )
+    
+    header_subtitle_style = ParagraphStyle(
+        'HeaderSubtitle',
+        parent=styles['Normal'],
+        fontSize=10,
+        textColor=colors.Color(0.2, 0.2, 0.2),
+        fontName='Helvetica',
+        alignment=TA_CENTER,
+        leading=12
+    )
+    
+    header_title_style = ParagraphStyle(
+        'HeaderTitle',
+        parent=styles['Normal'],
+        fontSize=14,
+        textColor=colors.black,
+        fontName='Helvetica-Bold',
+        alignment=TA_CENTER,
+        leading=16,
+        spaceAfter=4
+    )
+    
+    header_date_style = ParagraphStyle(
+        'HeaderDate',
+        parent=styles['Normal'],
+        fontSize=10,
+        textColor=colors.black,
+        fontName='Helvetica',
+        alignment=TA_CENTER,
+        leading=12
+    )
+    
+    # Tabla del encabezado (3 columnas: Logo | Info Central | Código)
+    from datetime import datetime
+    current_date = datetime.now().strftime('%Y-%m-%d')
+    
+    header_data = [
+        [
+            # Columna izquierda - Logo placeholder (puedes agregar imagen después)
+            Paragraph('<para align="center"><b><font size="24" color="#003366">Ó</font></b></para>', header_org_style),
+            # Columna central - Información principal
+            [
+                Paragraph(f'<b>{org_name}</b>', header_org_style),
+                Paragraph('Credilentes Sede Paraísos' if 'Credilentes' in org_name else org_name, header_subtitle_style),
+                Paragraph(f'<b>CRA.5 NLM 50-45</b>' if not org_address or org_address == 'Dirección no especificada' else org_address[:50], header_subtitle_style),
+                Paragraph(f'Tel: L UNICA 3223159-8520 | Email: {org_email}' if org_email else f'Tel: {org_phone}' if org_phone else '', header_subtitle_style),
+            ],
+            # Columna derecha - Título del documento
+            [
+                Paragraph('<b>FÓRMULA DE LENTES</b>', header_title_style),
+                Paragraph('<b>OFTÁLMICOS</b>', header_title_style),
+                Spacer(1, 0.05*inch),
+                Paragraph(current_date, header_date_style),
+            ]
+        ]
+    ]
+    
+    header_table = Table(header_data, colWidths=[1.2*inch, 3.8*inch, 1.8*inch])
+    header_table.setStyle(TableStyle([
+        ('ALIGN', (0, 0), (0, 0), 'CENTER'),
+        ('ALIGN', (1, 0), (1, 0), 'CENTER'),
+        ('ALIGN', (2, 0), (2, 0), 'CENTER'),
+        ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+        ('LEFTPADDING', (0, 0), (-1, -1), 0),
+        ('RIGHTPADDING', (0, 0), (-1, -1), 0),
+        ('TOPPADDING', (0, 0), (-1, -1), 0),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 0),
+    ]))
+    
+    story.append(header_table)
+    story.append(Spacer(1, 0.15*inch))
+    
+    # Línea separadora
+    line_separator = Table([['']], colWidths=[7*inch])
+    line_separator.setStyle(TableStyle([
+        ('LINEABOVE', (0, 0), (-1, 0), 2, colors.Color(0.0, 0.2, 0.5)),
+    ]))
+    story.append(line_separator)
+    story.append(Spacer(1, 0.15*inch))
+    
+    # Información del paciente
+    patient_data = [
+        ['Identificación:', f"{patient.identification}" if patient.identification else 'N/A', 'Edad:', f"{history.age_at_exam or patient.age} años" if hasattr(patient, 'age') or history.age_at_exam else 'N/A'],
+        ['Nombre:', patient.full_name, 'Número de HC:', str(history.id)],
+        ['Dirección:', patient.address[:40] if patient.address else 'N/A', 'Afiliación:', 'Particular'],
+        ['Teléfono:', patient.phone_number or 'N/A', 'Edad:', f"{history.age_at_exam or 'N/A'} años"],
+        ['', '', 'Relac:', 'S'],
+    ]
+    
+    patient_table = Table(patient_data, colWidths=[1.3*inch, 2.5*inch, 1.2*inch, 2*inch])
+    patient_table.setStyle(TableStyle([
+        ('FONTSIZE', (0, 0), (-1, -1), 9),
+        ('FONTNAME', (0, 0), (0, -1), 'Helvetica-Bold'),
+        ('FONTNAME', (2, 0), (2, -1), 'Helvetica-Bold'),
+        ('GRID', (0, 0), (-1, -1), 0.5, colors.black),
+        ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+        ('TOPPADDING', (0, 0), (-1, -1), 6),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
+        ('LEFTPADDING', (0, 0), (-1, -1), 8),
+    ]))
+    
+    story.append(patient_table)
+    story.append(Spacer(1, 0.3*inch))
+    
+    # Tabla de fórmula principal
+    formula_data = [
+        ['', 'ESFERA', 'CILINDRO', 'EJE', 'ADICIÓN', 'PRISMA BASE', 'GRADUADOS', 'AV LEJOS', 'AV CERCA'],
+        [
+            'OD',
+            str(history.refraction_od_sphere) if history.refraction_od_sphere else 'N/A',
+            str(history.refraction_od_cylinder) if history.refraction_od_cylinder else '',
+            str(history.refraction_od_axis) + '°' if history.refraction_od_axis else '',
+            '+' + str(history.refraction_od_add) if history.refraction_od_add else '',
+            str(history.refraction_od_prism) if history.refraction_od_prism else '',
+            str(history.refraction_od_dnp) if history.refraction_od_dnp else '20/20',
+            str(history.va_od_cc_distance) if history.va_od_cc_distance else '20/20',
+            str(history.va_od_cc_near) if history.va_od_cc_near else '0.75M',
+        ],
+        [
+            'OI',
+            str(history.refraction_os_sphere) if history.refraction_os_sphere else 'N/A',
+            str(history.refraction_os_cylinder) if history.refraction_os_cylinder else '',
+            str(history.refraction_os_axis) + '°' if history.refraction_os_axis else '',
+            '+' + str(history.refraction_os_add) if history.refraction_os_add else '',
+            str(history.refraction_os_prism) if history.refraction_os_prism else '',
+            str(history.refraction_os_dnp) if history.refraction_os_dnp else '20/20',
+            str(history.va_os_cc_distance) if history.va_os_cc_distance else '20/20',
+            str(history.va_os_cc_near) if history.va_os_cc_near else '0.75M',
+        ]
+    ]
+    
+    formula_table = Table(formula_data, colWidths=[0.5*inch, 0.75*inch, 0.75*inch, 0.6*inch, 0.75*inch, 0.9*inch, 0.9*inch, 0.75*inch, 0.75*inch])
+    formula_table.setStyle(TableStyle([
+        # Encabezado
+        ('BACKGROUND', (0, 0), (-1, 0), colors.Color(0.2, 0.4, 0.6)),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+        ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+        ('FONTSIZE', (0, 0), (-1, 0), 8),
+        # Filas de datos
+        ('FONTSIZE', (0, 1), (-1, -1), 10),
+        ('FONTNAME', (0, 1), (0, -1), 'Helvetica-Bold'),
+        # Bordes
+        ('GRID', (0, 0), (-1, -1), 1, colors.black),
+        ('LINEABOVE', (0, 0), (-1, 0), 2, colors.Color(0.2, 0.4, 0.6)),
+        ('LINEBELOW', (0, -1), (-1, -1), 2, colors.Color(0.2, 0.4, 0.6)),
+        # Padding
+        ('TOPPADDING', (0, 0), (-1, -1), 8),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 8),
+    ]))
+    
+    story.append(formula_table)
+    story.append(Spacer(1, 0.3*inch))
+    
+    # Detalles adicionales
+    details_data = [
+        ['Tipo Lentes:', history.lens_type or '-', 'Detalle:', 'AR'],
+        ['Color y Tins:', history.lens_material or '-', 'Dip:', f"{history.pd_distance or 'N/A'} / {history.pd_near or 'N/A'}"],
+    ]
+    
+    # Agregar distancia pupilar si existe
+    if history.pd_distance or history.pd_near:
+        details_data.append(['Distancia Pupilar (mm):', f"Lejos: {history.pd_distance or 'N/A'} mm  |  Cerca: {history.pd_near or 'N/A'} mm", 'Altura:', f"OD: {history.pd_od or 'N/A'} / OI: {history.pd_os or 'N/A'}"])
+    
+    details_data.append(['Uso Dispositivo:', 'Permanente', 'Control:', '1 año'])
+    
+    details_table = Table(details_data, colWidths=[1.5*inch, 2.5*inch, 1.2*inch, 1.8*inch])
+    details_table.setStyle(TableStyle([
+        ('FONTSIZE', (0, 0), (-1, -1), 9),
+        ('FONTNAME', (0, 0), (0, -1), 'Helvetica-Bold'),
+        ('FONTNAME', (2, 0), (2, -1), 'Helvetica-Bold'),
+        ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),
+        ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+        ('TOPPADDING', (0, 0), (-1, -1), 6),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
+        ('LEFTPADDING', (0, 0), (-1, -1), 8),
+    ]))
+    
+    story.append(details_table)
+    story.append(Spacer(1, 0.3*inch))
+    
+    # Observaciones
+    if history.optical_prescription_notes or history.lens_coating:
+        story.append(Paragraph("Observaciones:", heading_style))
+        obs_text = ""
+        if history.lens_coating:
+            obs_text += f"<b>Tratamientos:</b> {history.lens_coating}. "
+        if history.lens_brand:
+            obs_text += f"<b>Marca:</b> {history.lens_brand}. "
+        if history.frame_type:
+            obs_text += f"<b>Montura:</b> {history.frame_type}. "
+        if history.optical_prescription_notes:
+            obs_text += f"{history.optical_prescription_notes}"
+        
+        story.append(Paragraph(obs_text or "Ninguna", normal_style))
+        story.append(Spacer(1, 0.2*inch))
+    
+    # Advertencia
+    warning_style = ParagraphStyle(
+        'Warning',
+        parent=normal_style,
+        fontSize=8,
+        alignment=TA_CENTER,
+        textColor=colors.Color(0.3, 0.3, 0.3),
+        borderWidth=1,
+        borderColor=colors.grey,
+        borderPadding=8
+    )
+    story.append(Paragraph("NO SE DA GARANTÍA POR LENTES ADQUIRIDOS EN OTRA ÓPTICA", warning_style))
+    story.append(Spacer(1, 0.4*inch))
+    
+    # Pie de página con información del optómetra
+    footer_data = [
+        ['Optómetra:', history.doctor.full_name if history.doctor else 'N/A', 'Rep Médico:', ''],
+        ['', '', '', ''],
+        ['_' * 40, '', '_' * 40, ''],
+        ['Firma del Optómetra', '', 'Firma del Paciente', ''],
+    ]
+    
+    if history.doctor and history.doctor.professional_card:
+        footer_data[0][3] = history.doctor.professional_card
+    
+    footer_table = Table(footer_data, colWidths=[1.5*inch, 2*inch, 1.5*inch, 2*inch])
+    footer_table.setStyle(TableStyle([
+        ('FONTSIZE', (0, 0), (-1, -1), 9),
+        ('FONTNAME', (0, 0), (0, 0), 'Helvetica-Bold'),
+        ('FONTNAME', (2, 0), (2, 0), 'Helvetica-Bold'),
+        ('ALIGN', (0, 2), (-1, 3), 'CENTER'),
+        ('FONTSIZE', (0, 3), (-1, 3), 8),
+        ('TOPPADDING', (0, 0), (-1, -1), 3),
+    ]))
+    
+    story.append(footer_table)
+    
+    # Construir PDF
+    doc.build(story)
+    
+    # Retornar respuesta
+    buffer.seek(0)
+    response = HttpResponse(buffer, content_type='application/pdf')
+    response['Content-Disposition'] = f'inline; filename="formula_lentes_{patient.full_name.replace(" ", "_")}_{history.date}.pdf"'
+    
+    return response

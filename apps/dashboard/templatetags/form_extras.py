@@ -12,3 +12,13 @@ def attr(obj, attr_name):
         return getattr(obj, attr_name)
     except AttributeError:
         return None
+
+@register.filter
+def split(value, delimiter=','):
+    """
+    Split a string by a delimiter.
+    Usage: {{ value|split:", " }}
+    """
+    if not value:
+        return []
+    return [item.strip() for item in str(value).split(delimiter) if item.strip()]

@@ -111,14 +111,17 @@ urlpatterns = [
     path('patients/<int:patient_id>/clinical-history/', views.clinical_history_list, name='clinical_history_list'),
     path('patients/<int:patient_id>/clinical-history/create/', views.clinical_history_create, name='clinical_history_create'),
     path('patients/<int:patient_id>/clinical-history/<int:history_id>/', views.clinical_history_detail, name='clinical_history_detail'),
-    path('patients/<int:patient_id>/clinical-history/<int:history_id>/edit/', views.clinical_history_edit, name='clinical_history_edit'),
-    path('patients/<int:patient_id>/clinical-history/<int:history_id>/delete/', views.clinical_history_delete, name='clinical_history_delete'),
+    # Rutas de edición y eliminación deshabilitadas - Las historias clínicas son documentos permanentes
+    # path('patients/<int:patient_id>/clinical-history/<int:history_id>/edit/', views.clinical_history_edit, name='clinical_history_edit'),
+    # path('patients/<int:patient_id>/clinical-history/<int:history_id>/delete/', views.clinical_history_delete, name='clinical_history_delete'),
     path('patients/<int:patient_id>/clinical-history/<int:history_id>/pdf/', views.clinical_history_pdf, name='clinical_history_pdf'),
     path('patients/<int:patient_id>/clinical-history/latest-fundoscopy/', views.latest_fundoscopy, name='latest_fundoscopy'),
     
     # Examen Visual Simplificado
     path('patients/<int:patient_id>/visual-exam/create/', views.visual_exam_create, name='visual_exam_create'),
     path('patients/<int:patient_id>/visual-exam/<int:history_id>/edit/', views.visual_exam_edit, name='visual_exam_edit'),
+    path('patients/<int:patient_id>/visual-exam/<int:history_id>/', views.visual_exam_detail, name='visual_exam_detail'),
+    path('patients/<int:patient_id>/visual-exam/<int:history_id>/pdf/', views.visual_exam_pdf, name='visual_exam_pdf'),
     
     # Calendario
     path('calendar/', views.calendar_view, name='calendar'),
