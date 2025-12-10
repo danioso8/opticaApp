@@ -9,6 +9,9 @@ echo "==> Recolectando archivos estáticos..."
 python manage.py collectstatic --no-input
 
 echo "==> Aplicando migraciones..."
+# Marcar migración 0016 como fake si existe (evita error de triggers en PostgreSQL)
+python manage.py migrate patients 0016_auto_20251210_1329 --fake --noinput || true
+# Aplicar todas las migraciones
 python manage.py migrate --noinput
 
 echo "==> Creando superusuario..."
