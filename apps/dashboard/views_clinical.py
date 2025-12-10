@@ -1608,8 +1608,8 @@ def visual_exam_edit(request, patient_id, history_id):
             add_od = normalize_number(request.POST.get('refraction_od_add', ''))
             history.refraction_od_add = float(add_od) if add_od else None
             
-            prism_od = normalize_number(request.POST.get('refraction_od_prism', ''))
-            history.refraction_od_prism = float(prism_od) if prism_od else None
+            prism_od = request.POST.get('refraction_od_prism', '').strip()
+            history.refraction_od_prism = prism_od if prism_od else ''
             
             dnp_od = normalize_number(request.POST.get('refraction_od_dnp', ''))
             history.refraction_od_dnp = float(dnp_od) if dnp_od else None
@@ -1627,8 +1627,8 @@ def visual_exam_edit(request, patient_id, history_id):
             add_os = normalize_number(request.POST.get('refraction_os_add', ''))
             history.refraction_os_add = float(add_os) if add_os else None
             
-            prism_os = normalize_number(request.POST.get('refraction_os_prism', ''))
-            history.refraction_os_prism = float(prism_os) if prism_os else None
+            prism_os = request.POST.get('refraction_os_prism', '').strip()
+            history.refraction_os_prism = prism_os if prism_os else ''
             
             dnp_os = normalize_number(request.POST.get('refraction_os_dnp', ''))
             history.refraction_os_dnp = float(dnp_os) if dnp_os else None
