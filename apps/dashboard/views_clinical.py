@@ -1588,72 +1588,79 @@ def visual_exam_edit(request, patient_id, history_id):
             history.va_os_sc_near = request.POST.get('va_os_sc_near', '')
             history.va_os_cc_near = request.POST.get('va_os_cc_near', '')
             
+            # Función para normalizar números (coma a punto)
+            def normalize_number(value):
+                if not value:
+                    return None
+                value = str(value).strip().replace(',', '.')
+                return value if value else None
+            
             # Refracción OD
-            sphere_od = request.POST.get('refraction_od_sphere', '').strip()
+            sphere_od = normalize_number(request.POST.get('refraction_od_sphere', ''))
             history.refraction_od_sphere = float(sphere_od) if sphere_od else None
             
-            cyl_od = request.POST.get('refraction_od_cylinder', '').strip()
+            cyl_od = normalize_number(request.POST.get('refraction_od_cylinder', ''))
             history.refraction_od_cylinder = float(cyl_od) if cyl_od else None
             
             axis_od = request.POST.get('refraction_od_axis', '').strip()
             history.refraction_od_axis = int(axis_od) if axis_od else None
             
-            add_od = request.POST.get('refraction_od_add', '').strip()
+            add_od = normalize_number(request.POST.get('refraction_od_add', ''))
             history.refraction_od_add = float(add_od) if add_od else None
             
-            prism_od = request.POST.get('refraction_od_prism', '').strip()
+            prism_od = normalize_number(request.POST.get('refraction_od_prism', ''))
             history.refraction_od_prism = float(prism_od) if prism_od else None
             
-            dnp_od = request.POST.get('refraction_od_dnp', '').strip()
+            dnp_od = normalize_number(request.POST.get('refraction_od_dnp', ''))
             history.refraction_od_dnp = float(dnp_od) if dnp_od else None
             
             # Refracción OS
-            sphere_os = request.POST.get('refraction_os_sphere', '').strip()
+            sphere_os = normalize_number(request.POST.get('refraction_os_sphere', ''))
             history.refraction_os_sphere = float(sphere_os) if sphere_os else None
             
-            cyl_os = request.POST.get('refraction_os_cylinder', '').strip()
+            cyl_os = normalize_number(request.POST.get('refraction_os_cylinder', ''))
             history.refraction_os_cylinder = float(cyl_os) if cyl_os else None
             
             axis_os = request.POST.get('refraction_os_axis', '').strip()
             history.refraction_os_axis = int(axis_os) if axis_os else None
             
-            add_os = request.POST.get('refraction_os_add', '').strip()
+            add_os = normalize_number(request.POST.get('refraction_os_add', ''))
             history.refraction_os_add = float(add_os) if add_os else None
             
-            prism_os = request.POST.get('refraction_os_prism', '').strip()
+            prism_os = normalize_number(request.POST.get('refraction_os_prism', ''))
             history.refraction_os_prism = float(prism_os) if prism_os else None
             
-            dnp_os = request.POST.get('refraction_os_dnp', '').strip()
+            dnp_os = normalize_number(request.POST.get('refraction_os_dnp', ''))
             history.refraction_os_dnp = float(dnp_os) if dnp_os else None
             
             # Distancia Pupilar
-            pd_distance_val = request.POST.get('pd_distance', '').strip()
+            pd_distance_val = normalize_number(request.POST.get('pd_distance', ''))
             history.pd_distance = float(pd_distance_val) if pd_distance_val else None
             
-            pd_near_val = request.POST.get('pd_near', '').strip()
+            pd_near_val = normalize_number(request.POST.get('pd_near', ''))
             history.pd_near = float(pd_near_val) if pd_near_val else None
             
-            pd_od_val = request.POST.get('pd_od', '').strip()
+            pd_od_val = normalize_number(request.POST.get('pd_od', ''))
             history.pd_od = float(pd_od_val) if pd_od_val else None
             
-            pd_os_val = request.POST.get('pd_os', '').strip()
+            pd_os_val = normalize_number(request.POST.get('pd_os', ''))
             history.pd_os = float(pd_os_val) if pd_os_val else None
             
             # Queratometría OD
-            k1_od_val = request.POST.get('keratometry_od_k1', '').strip()
+            k1_od_val = normalize_number(request.POST.get('keratometry_od_k1', ''))
             history.keratometry_od_k1 = float(k1_od_val) if k1_od_val else None
             
-            k2_od_val = request.POST.get('keratometry_od_k2', '').strip()
+            k2_od_val = normalize_number(request.POST.get('keratometry_od_k2', ''))
             history.keratometry_od_k2 = float(k2_od_val) if k2_od_val else None
             
             kaxis_od_val = request.POST.get('keratometry_od_axis', '').strip()
             history.keratometry_od_k1_axis = int(kaxis_od_val) if kaxis_od_val else None
             
             # Queratometría OS
-            k1_os_val = request.POST.get('keratometry_os_k1', '').strip()
+            k1_os_val = normalize_number(request.POST.get('keratometry_os_k1', ''))
             history.keratometry_os_k1 = float(k1_os_val) if k1_os_val else None
             
-            k2_os_val = request.POST.get('keratometry_os_k2', '').strip()
+            k2_os_val = normalize_number(request.POST.get('keratometry_os_k2', ''))
             history.keratometry_os_k2 = float(k2_os_val) if k2_os_val else None
             
             kaxis_os_val = request.POST.get('keratometry_os_axis', '').strip()
