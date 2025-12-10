@@ -273,6 +273,15 @@ class LandingPageConfig(models.Model):
         verbose_name='Organización'
     )
     
+    # Logo de la organización
+    logo = models.ImageField(
+        upload_to='landing/logos/', 
+        blank=True, 
+        null=True,
+        verbose_name='Logo',
+        help_text='Logo de la empresa. Recomendado: 200x60px, fondo transparente PNG'
+    )
+    
     # Estilo del navbar
     navbar_style = models.CharField(
         max_length=20,

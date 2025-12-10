@@ -83,9 +83,18 @@
             </div>
         </form>
         
-        <div class="mt-6 text-center text-sm text-gray-600">
+        <div class="mt-6 text-center">
+            <p class="text-sm text-gray-600">
+                ¿No tienes una cuenta? 
+                <a href="{% url 'organizations:user_register' %}" class="font-medium text-indigo-600 hover:text-indigo-500 transition">
+                    Regístrate aquí
+                </a>
+            </p>
+        </div>
+        
+        <div class="mt-4 text-center text-sm text-gray-500">
             <p>Credenciales de prueba:</p>
-            <p class="font-mono bg-gray-100 p-2 rounded mt-2">
+            <p class="font-mono bg-gray-100 p-2 rounded mt-2 text-xs">
                 admin / admin123
             </p>
         </div>

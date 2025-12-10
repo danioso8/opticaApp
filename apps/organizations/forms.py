@@ -8,6 +8,8 @@ class LandingPageConfigForm(forms.ModelForm):
     class Meta:
         model = LandingPageConfig
         fields = [
+            # Logo
+            'logo',
             # Navbar
             'navbar_style', 'navbar_bg_color', 'navbar_text_color', 'navbar_hover_color',
             # Hero
@@ -70,9 +72,15 @@ class LandingPageConfigForm(forms.ModelForm):
                 'type': 'color',
                 'class': 'form-input w-24 h-10 cursor-pointer'
             }),
+            'logo': forms.FileInput(attrs={
+                'class': 'form-input',
+                'accept': 'image/*',
+                'id': 'logo_input'
+            }),
             'hero_image': forms.FileInput(attrs={
                 'class': 'form-input',
-                'accept': 'image/*'
+                'accept': 'image/*',
+                'id': 'hero_image_input'
             }),
             'service_image_1': forms.FileInput(attrs={
                 'class': 'form-input',

@@ -1686,7 +1686,7 @@ def landing_page_config(request):
         'page_subtitle': 'Personaliza los colores e imágenes de tu página pública',
     }
     
-    return render(request, 'dashboard/landing_page_config.html', context)
+    return render(request, 'dashboard/landing_page_config_pro.html', context)
 
 
 # ==================== PARÁMETROS CLÍNICOS ====================

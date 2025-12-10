@@ -1,0 +1,647 @@
+{% extends 'dashboard/base.html' %}
+{% load static %}
+
+{% block title %}Configuración Landing Page{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto">
+    <!-- Header -->
+    <div class="bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg shadow-lg p-6 mb-6 text-white">
+        <div class="flex justify-between items-center">
+            <div>
+                <h1 class="text-3xl font-bold mb-2">
+                    <i class="fas fa-paint-brush mr-3"></i>Configuración de Landing Page
+                </h1>
+                <p class="text-blue-100">Personaliza tu página web con logo, colores y contenido</p>
+            </div>
+            <a href="{% url 'public:home' %}" target="_blank" 
+               class="bg-white text-blue-600 px-6 py-3 rounded-lg font-semibold hover:bg-blue-50 transition shadow-lg">
+                <i class="fas fa-external-link-alt mr-2"></i>Vista Previa
+            </a>
+        </div>
+    </div>
+
+    <form method="post" enctype="multipart/form-data" id="landingConfigForm">
+        {% csrf_token %}
+        
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <!-- Panel Izquierdo - Tabs -->
+            <div class="lg:col-span-1">
+                <div class="bg-white rounded-lg shadow-md p-4 sticky top-4">
+                    <h3 class="font-bold text-gray-800 mb-4">Secciones</h3>
+                    <nav class="space-y-2">
+                        <button type="button" onclick="showSection('logo')" 
+                                class="config-tab w-full text-left px-4 py-3 rounded-lg hover:bg-blue-50 transition flex items-center active">
+                            <i class="fas fa-image w-6 text-blue-600"></i>
+                            <span class="ml-3 font-medium">Logo y Marca</span>
+                        </button>
+                        <button type="button" onclick="showSection('colors')" 
+                                class="config-tab w-full text-left px-4 py-3 rounded-lg hover:bg-blue-50 transition flex items-center">
+                            <i class="fas fa-palette w-6 text-purple-600"></i>
+                            <span class="ml-3 font-medium">Paleta de Colores</span>
+                        </button>
+                        <button type="button" onclick="showSection('navbar')" 
+                                class="config-tab w-full text-left px-4 py-3 rounded-lg hover:bg-blue-50 transition flex items-center">
+                            <i class="fas fa-bars w-6 text-indigo-600"></i>
+                            <span class="ml-3 font-medium">Barra de Navegación</span>
+                        </button>
+                        <button type="button" onclick="showSection('hero')" 
+                                class="config-tab w-full text-left px-4 py-3 rounded-lg hover:bg-blue-50 transition flex items-center">
+                            <i class="fas fa-star w-6 text-yellow-600"></i>
+                            <span class="ml-3 font-medium">Sección Principal</span>
+                        </button>
+                        <button type="button" onclick="showSection('services')" 
+                                class="config-tab w-full text-left px-4 py-3 rounded-lg hover:bg-blue-50 transition flex items-center">
+                            <i class="fas fa-th-large w-6 text-green-600"></i>
+                            <span class="ml-3 font-medium">Servicios</span>
+                        </button>
+                        <button type="button" onclick="showSection('design')" 
+                                class="config-tab w-full text-left px-4 py-3 rounded-lg hover:bg-blue-50 transition flex items-center">
+                            <i class="fas fa-magic w-6 text-pink-600"></i>
+                            <span class="ml-3 font-medium">Diseño y Efectos</span>
+                        </button>
+                    </nav>
+                    
+                    <!-- Botón Guardar Fijo -->
+                    <div class="mt-6 pt-6 border-t">
+                        <button type="submit" 
+                                class="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-4 rounded-lg font-bold hover:from-blue-700 hover:to-purple-700 transition shadow-lg">
+                            <i class="fas fa-save mr-2"></i>Guardar Cambios
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Panel Derecho - Contenido -->
+            <div class="lg:col-span-2">
+                
+                <!-- Sección: Logo y Marca -->
+                <div id="section-logo" class="config-section bg-white rounded-lg shadow-md p-6">
+                    <h2 class="text-2xl font-bold text-gray-800 mb-6 flex items-center">
+                        <i class="fas fa-image text-blue-600 mr-3"></i>
+                        Logo y Marca
+                    </h2>
+                    
+                    <div class="space-y-6">
+                        <!-- Logo Actual -->
+                        <div class="bg-gray-50 rounded-lg p-6 border-2 border-dashed border-gray-300">
+                            <label class="block text-sm font-medium text-gray-700 mb-3">Logo Actual</label>
+                            <div class="flex items-center justify-center bg-white rounded-lg p-8 min-h-[150px]">
+                                {% if config.logo %}
+                                    <img id="current_logo" src="{{ config.logo.url }}" alt="Logo" class="max-h-32 object-contain">
+                                {% else %}
+                                    <div id="logo_placeholder" class="text-center">
+                                        <i class="fas fa-image text-gray-400 text-5xl mb-3"></i>
+                                        <p class="text-gray-500">Sin logo cargado</p>
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <!-- Subir Logo -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-3">
+                                <i class="fas fa-upload mr-2 text-blue-600"></i>Subir Nuevo Logo
+                            </label>
+                            <div class="relative">
+                                {{ form.logo }}
+                                <p class="text-xs text-gray-500 mt-2">
+                                    <i class="fas fa-info-circle mr-1"></i>
+                                    Recomendado: PNG con fondo transparente, 200x60px, máximo 2MB
+                                </p>
+                            </div>
+                            <!-- Preview del logo nuevo -->
+                            <div id="logo_preview" class="hidden mt-4 p-4 bg-gray-50 rounded-lg">
+                                <p class="text-sm font-medium text-gray-700 mb-2">Vista Previa:</p>
+                                <div class="bg-white p-4 rounded border">
+                                    <img id="logo_preview_img" src="" alt="Preview" class="max-h-24 object-contain">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sección: Paleta de Colores -->
+                <div id="section-colors" class="config-section bg-white rounded-lg shadow-md p-6 hidden">
+                    <h2 class="text-2xl font-bold text-gray-800 mb-6 flex items-center">
+                        <i class="fas fa-palette text-purple-600 mr-3"></i>
+                        Paletas de Colores
+                    </h2>
+                    
+                    <!-- Paletas Predefinidas -->
+                    <div class="mb-8">
+                        <label class="block text-sm font-medium text-gray-700 mb-4">
+                            Selecciona una Paleta Predefinida
+                        </label>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <!-- Paleta 1: Azul Profesional -->
+                            <div class="color-palette cursor-pointer border-2 rounded-lg p-4 hover:border-blue-500 transition"
+                                 onclick="applyPalette('blue')">
+                                <div class="flex items-center justify-between mb-3">
+                                    <span class="font-semibold text-gray-800">Azul Profesional</span>
+                                    <i class="fas fa-check-circle text-blue-500 text-xl hidden palette-check"></i>
+                                </div>
+                                <div class="flex space-x-2 mb-2">
+                                    <div class="w-12 h-12 rounded-lg shadow" style="background-color: #2563eb;"></div>
+                                    <div class="w-12 h-12 rounded-lg shadow" style="background-color: #1e40af;"></div>
+                                    <div class="w-12 h-12 rounded-lg shadow" style="background-color: #60a5fa;"></div>
+                                    <div class="w-12 h-12 rounded-lg shadow" style="background-color: #dbeafe;"></div>
+                                </div>
+                                <p class="text-xs text-gray-600">Confianza y profesionalismo</p>
+                            </div>
+
+                            <!-- Paleta 2: Verde Salud -->
+                            <div class="color-palette cursor-pointer border-2 rounded-lg p-4 hover:border-green-500 transition"
+                                 onclick="applyPalette('green')">
+                                <div class="flex items-center justify-between mb-3">
+                                    <span class="font-semibold text-gray-800">Verde Salud</span>
+                                    <i class="fas fa-check-circle text-green-500 text-xl hidden palette-check"></i>
+                                </div>
+                                <div class="flex space-x-2 mb-2">
+                                    <div class="w-12 h-12 rounded-lg shadow" style="background-color: #10b981;"></div>
+                                    <div class="w-12 h-12 rounded-lg shadow" style="background-color: #059669;"></div>
+                                    <div class="w-12 h-12 rounded-lg shadow" style="background-color: #34d399;"></div>
+                                    <div class="w-12 h-12 rounded-lg shadow" style="background-color: #d1fae5;"></div>
+                                </div>
+                                <p class="text-xs text-gray-600">Frescura y bienestar</p>
+                            </div>
+
+                            <!-- Paleta 3: Púrpura Moderno -->
+                            <div class="color-palette cursor-pointer border-2 rounded-lg p-4 hover:border-purple-500 transition"
+                                 onclick="applyPalette('purple')">
+                                <div class="flex items-center justify-between mb-3">
+                                    <span class="font-semibold text-gray-800">Púrpura Moderno</span>
+                                    <i class="fas fa-check-circle text-purple-500 text-xl hidden palette-check"></i>
+                                </div>
+                                <div class="flex space-x-2 mb-2">
+                                    <div class="w-12 h-12 rounded-lg shadow" style="background-color: #8b5cf6;"></div>
+                                    <div class="w-12 h-12 rounded-lg shadow" style="background-color: #7c3aed;"></div>
+                                    <div class="w-12 h-12 rounded-lg shadow" style="background-color: #a78bfa;"></div>
+                                    <div class="w-12 h-12 rounded-lg shadow" style="background-color: #ede9fe;"></div>
+                                </div>
+                                <p class="text-xs text-gray-600">Creatividad e innovación</p>
+                            </div>
+
+                            <!-- Paleta 4: Naranja Energético -->
+                            <div class="color-palette cursor-pointer border-2 rounded-lg p-4 hover:border-orange-500 transition"
+                                 onclick="applyPalette('orange')">
+                                <div class="flex items-center justify-between mb-3">
+                                    <span class="font-semibold text-gray-800">Naranja Energético</span>
+                                    <i class="fas fa-check-circle text-orange-500 text-xl hidden palette-check"></i>
+                                </div>
+                                <div class="flex space-x-2 mb-2">
+                                    <div class="w-12 h-12 rounded-lg shadow" style="background-color: #f97316;"></div>
+                                    <div class="w-12 h-12 rounded-lg shadow" style="background-color: #ea580c;"></div>
+                                    <div class="w-12 h-12 rounded-lg shadow" style="background-color: #fb923c;"></div>
+                                    <div class="w-12 h-12 rounded-lg shadow" style="background-color: #ffedd5;"></div>
+                                </div>
+                                <p class="text-xs text-gray-600">Energía y dinamismo</p>
+                            </div>
+
+                            <!-- Paleta 5: Teal Elegante -->
+                            <div class="color-palette cursor-pointer border-2 rounded-lg p-4 hover:border-teal-500 transition"
+                                 onclick="applyPalette('teal')">
+                                <div class="flex items-center justify-between mb-3">
+                                    <span class="font-semibold text-gray-800">Teal Elegante</span>
+                                    <i class="fas fa-check-circle text-teal-500 text-xl hidden palette-check"></i>
+                                </div>
+                                <div class="flex space-x-2 mb-2">
+                                    <div class="w-12 h-12 rounded-lg shadow" style="background-color: #14b8a6;"></div>
+                                    <div class="w-12 h-12 rounded-lg shadow" style="background-color: #0d9488;"></div>
+                                    <div class="w-12 h-12 rounded-lg shadow" style="background-color: #2dd4bf;"></div>
+                                    <div class="w-12 h-12 rounded-lg shadow" style="background-color: #ccfbf1;"></div>
+                                </div>
+                                <p class="text-xs text-gray-600">Sofisticación y equilibrio</p>
+                            </div>
+
+                            <!-- Paleta 6: Rosa Suave -->
+                            <div class="color-palette cursor-pointer border-2 rounded-lg p-4 hover:border-pink-500 transition"
+                                 onclick="applyPalette('pink')">
+                                <div class="flex items-center justify-between mb-3">
+                                    <span class="font-semibold text-gray-800">Rosa Suave</span>
+                                    <i class="fas fa-check-circle text-pink-500 text-xl hidden palette-check"></i>
+                                </div>
+                                <div class="flex space-x-2 mb-2">
+                                    <div class="w-12 h-12 rounded-lg shadow" style="background-color: #ec4899;"></div>
+                                    <div class="w-12 h-12 rounded-lg shadow" style="background-color: #db2777;"></div>
+                                    <div class="w-12 h-12 rounded-lg shadow" style="background-color: #f9a8d4;"></div>
+                                    <div class="w-12 h-12 rounded-lg shadow" style="background-color: #fce7f3;"></div>
+                                </div>
+                                <p class="text-xs text-gray-600">Calidez y cercanía</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Colores Personalizados -->
+                    <div class="border-t pt-8">
+                        <h3 class="text-lg font-bold text-gray-800 mb-4">Personalización Manual</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">
+                                    <i class="fas fa-paint-brush mr-2"></i>Color Primario
+                                </label>
+                                {{ form.primary_button_color }}
+                                <p class="text-xs text-gray-500 mt-1">Botones principales y acentos</p>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">
+                                    <i class="fas fa-paint-brush mr-2"></i>Color Secundario
+                                </label>
+                                {{ form.secondary_button_color }}
+                                <p class="text-xs text-gray-500 mt-1">Botones secundarios y bordes</p>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">
+                                    <i class="fas fa-paint-brush mr-2"></i>Navbar - Fondo
+                                </label>
+                                {{ form.navbar_bg_color }}
+                                <p class="text-xs text-gray-500 mt-1">Color de fondo de la navegación</p>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">
+                                    <i class="fas fa-paint-brush mr-2"></i>Navbar - Texto
+                                </label>
+                                {{ form.navbar_text_color }}
+                                <p class="text-xs text-gray-500 mt-1">Color del texto en navegación</p>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">
+                                    <i class="fas fa-paint-brush mr-2"></i>Hero - Degradado Inicio
+                                </label>
+                                {{ form.hero_bg_gradient_start }}
+                                <p class="text-xs text-gray-500 mt-1">Color inicial del degradado</p>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">
+                                    <i class="fas fa-paint-brush mr-2"></i>Hero - Degradado Fin
+                                </label>
+                                {{ form.hero_bg_gradient_end }}
+                                <p class="text-xs text-gray-500 mt-1">Color final del degradado</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sección: Navbar -->
+                <div id="section-navbar" class="config-section bg-white rounded-lg shadow-md p-6 hidden">
+                    <h2 class="text-2xl font-bold text-gray-800 mb-6 flex items-center">
+                        <i class="fas fa-bars text-indigo-600 mr-3"></i>
+                        Barra de Navegación
+                    </h2>
+                    
+                    <div class="space-y-6">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-3">Estilo del Navbar</label>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                {% for value, label in form.navbar_style.field.choices %}
+                                <label class="cursor-pointer">
+                                    <input type="radio" name="navbar_style" value="{{ value }}" 
+                                           {% if config.navbar_style == value %}checked{% endif %}
+                                           class="hidden navbar-style-radio">
+                                    <div class="border-2 rounded-lg p-4 hover:border-indigo-500 transition navbar-style-option">
+                                        <p class="font-semibold text-gray-800">{{ label }}</p>
+                                    </div>
+                                </label>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sección: Hero -->
+                <div id="section-hero" class="config-section bg-white rounded-lg shadow-md p-6 hidden">
+                    <h2 class="text-2xl font-bold text-gray-800 mb-6 flex items-center">
+                        <i class="fas fa-star text-yellow-600 mr-3"></i>
+                        Sección Principal (Hero)
+                    </h2>
+                    
+                    <div class="space-y-6">
+                        <!-- Imagen Hero -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-3">
+                                <i class="fas fa-image mr-2"></i>Imagen de Fondo
+                            </label>
+                            {% if config.hero_image %}
+                            <div class="mb-4 rounded-lg overflow-hidden">
+                                <img src="{{ config.hero_image.url }}" alt="Hero" class="w-full h-48 object-cover">
+                            </div>
+                            {% endif %}
+                            {{ form.hero_image }}
+                            <p class="text-xs text-gray-500 mt-2">Recomendado: 1920x1080px</p>
+                        </div>
+
+                        <!-- Textos -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Título Principal</label>
+                            {{ form.hero_title }}
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Subtítulo</label>
+                            {{ form.hero_subtitle }}
+                        </div>
+
+                        <!-- Colores de texto -->
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Color Título</label>
+                                {{ form.hero_title_color }}
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Color Subtítulo</label>
+                                {{ form.hero_subtitle_color }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sección: Servicios -->
+                <div id="section-services" class="config-section bg-white rounded-lg shadow-md p-6 hidden">
+                    <h2 class="text-2xl font-bold text-gray-800 mb-6 flex items-center">
+                        <i class="fas fa-th-large text-green-600 mr-3"></i>
+                        Servicios
+                    </h2>
+                    
+                    <div class="space-y-8">
+                        <!-- Títulos Sección -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Título Sección</label>
+                                {{ form.services_title }}
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Subtítulo</label>
+                                {{ form.services_subtitle }}
+                            </div>
+                        </div>
+
+                        <!-- Servicio 1 -->
+                        <div class="border-t pt-6">
+                            <h4 class="font-semibold text-gray-800 mb-4">Servicio 1</h4>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    {% if config.service_image_1 %}
+                                    <img src="{{ config.service_image_1.url }}" alt="Servicio 1" class="w-full h-32 object-cover rounded mb-2">
+                                    {% endif %}
+                                    {{ form.service_image_1 }}
+                                </div>
+                                <div class="space-y-3">
+                                    {{ form.service_1_title }}
+                                    {{ form.service_1_description }}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Servicio 2 -->
+                        <div class="border-t pt-6">
+                            <h4 class="font-semibold text-gray-800 mb-4">Servicio 2</h4>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    {% if config.service_image_2 %}
+                                    <img src="{{ config.service_image_2.url }}" alt="Servicio 2" class="w-full h-32 object-cover rounded mb-2">
+                                    {% endif %}
+                                    {{ form.service_image_2 }}
+                                </div>
+                                <div class="space-y-3">
+                                    {{ form.service_2_title }}
+                                    {{ form.service_2_description }}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Servicio 3 -->
+                        <div class="border-t pt-6">
+                            <h4 class="font-semibold text-gray-800 mb-4">Servicio 3</h4>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    {% if config.service_image_3 %}
+                                    <img src="{{ config.service_image_3.url }}" alt="Servicio 3" class="w-full h-32 object-cover rounded mb-2">
+                                    {% endif %}
+                                    {{ form.service_image_3 }}
+                                </div>
+                                <div class="space-y-3">
+                                    {{ form.service_3_title }}
+                                    {{ form.service_3_description }}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Servicio 4 -->
+                        <div class="border-t pt-6">
+                            <h4 class="font-semibold text-gray-800 mb-4">Servicio 4</h4>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    {% if config.service_image_4 %}
+                                    <img src="{{ config.service_image_4.url }}" alt="Servicio 4" class="w-full h-32 object-cover rounded mb-2">
+                                    {% endif %}
+                                    {{ form.service_image_4 }}
+                                </div>
+                                <div class="space-y-3">
+                                    {{ form.service_4_title }}
+                                    {{ form.service_4_description }}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sección: Diseño y Efectos -->
+                <div id="section-design" class="config-section bg-white rounded-lg shadow-md p-6 hidden">
+                    <h2 class="text-2xl font-bold text-gray-800 mb-6 flex items-center">
+                        <i class="fas fa-magic text-pink-600 mr-3"></i>
+                        Diseño y Efectos
+                    </h2>
+                    
+                    <div class="space-y-6">
+                        <!-- Tipografía -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-3">Familia de Fuente</label>
+                            <select name="font_family" class="w-full px-4 py-2 border rounded-lg">
+                                {% for value, label in form.font_family.field.choices %}
+                                <option value="{{ value }}" {% if config.font_family == value %}selected{% endif %}>{{ label }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <!-- Animaciones -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-3">Velocidad de Animaciones</label>
+                            <select name="animation_speed" class="w-full px-4 py-2 border rounded-lg">
+                                {% for value, label in form.animation_speed.field.choices %}
+                                <option value="{{ value }}" {% if config.animation_speed == value %}selected{% endif %}>{{ label }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <!-- Efectos -->
+                        <div class="space-y-4">
+                            <label class="flex items-center">
+                                <input type="checkbox" name="enable_parallax" {% if config.enable_parallax %}checked{% endif %} class="mr-3 h-5 w-5">
+                                <span class="font-medium">Efecto Parallax</span>
+                            </label>
+                            <label class="flex items-center">
+                                <input type="checkbox" name="enable_hover_effects" {% if config.enable_hover_effects %}checked{% endif %} class="mr-3 h-5 w-5">
+                                <span class="font-medium">Efectos Hover</span>
+                            </label>
+                            <label class="flex items-center">
+                                <input type="checkbox" name="button_shadow" {% if config.button_shadow %}checked{% endif %} class="mr-3 h-5 w-5">
+                                <span class="font-medium">Sombras en Botones</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </form>
+</div>
+
+<style>
+    .config-tab.active {
+        background-color: #eff6ff;
+        border-left: 4px solid #2563eb;
+    }
+    
+    .color-palette.selected {
+        border-color: #2563eb;
+        background-color: #eff6ff;
+    }
+    
+    .color-palette.selected .palette-check {
+        display: inline-block !important;
+    }
+    
+    .navbar-style-option {
+        border-color: #e5e7eb;
+    }
+    
+    .navbar-style-radio:checked + .navbar-style-option {
+        border-color: #6366f1;
+        background-color: #eef2ff;
+    }
+</style>
+
+<script>
+// Navegación entre secciones
+function showSection(sectionName) {
+    // Ocultar todas las secciones
+    document.querySelectorAll('.config-section').forEach(section => {
+        section.classList.add('hidden');
+    });
+    
+    // Remover clase active de todos los tabs
+    document.querySelectorAll('.config-tab').forEach(tab => {
+        tab.classList.remove('active');
+    });
+    
+    // Mostrar sección seleccionada
+    document.getElementById('section-' + sectionName).classList.remove('hidden');
+    
+    // Activar tab
+    event.target.closest('.config-tab').classList.add('active');
+    
+    // Scroll suave al inicio de la sección
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// Preview del logo
+document.getElementById('logo_input').addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            document.getElementById('logo_preview').classList.remove('hidden');
+            document.getElementById('logo_preview_img').src = e.target.result;
+            
+            // Actualizar logo actual si existe
+            const currentLogo = document.getElementById('current_logo');
+            if (currentLogo) {
+                currentLogo.src = e.target.result;
+            } else {
+                document.getElementById('logo_placeholder').innerHTML = 
+                    `<img src="${e.target.result}" alt="Logo" class="max-h-32 object-contain">`;
+            }
+        };
+        reader.readAsDataURL(file);
+    }
+});
+
+// Aplicar paleta de colores
+function applyPalette(palette) {
+    // Quitar selección previa
+    document.querySelectorAll('.color-palette').forEach(el => {
+        el.classList.remove('selected');
+    });
+    
+    // Agregar selección
+    event.currentTarget.classList.add('selected');
+    
+    const palettes = {
+        'blue': {
+            primary: '#2563eb',
+            secondary: '#ffffff',
+            navbar_bg: '#ffffff',
+            navbar_text: '#1f2937',
+            hero_start: '#2563eb',
+            hero_end: '#1e40af'
+        },
+        'green': {
+            primary: '#10b981',
+            secondary: '#ffffff',
+            navbar_bg: '#ffffff',
+            navbar_text: '#1f2937',
+            hero_start: '#10b981',
+            hero_end: '#059669'
+        },
+        'purple': {
+            primary: '#8b5cf6',
+            secondary: '#ffffff',
+            navbar_bg: '#ffffff',
+            navbar_text: '#1f2937',
+            hero_start: '#8b5cf6',
+            hero_end: '#7c3aed'
+        },
+        'orange': {
+            primary: '#f97316',
+            secondary: '#ffffff',
+            navbar_bg: '#ffffff',
+            navbar_text: '#1f2937',
+            hero_start: '#f97316',
+            hero_end: '#ea580c'
+        },
+        'teal': {
+            primary: '#14b8a6',
+            secondary: '#ffffff',
+            navbar_bg: '#ffffff',
+            navbar_text: '#1f2937',
+            hero_start: '#14b8a6',
+            hero_end: '#0d9488'
+        },
+        'pink': {
+            primary: '#ec4899',
+            secondary: '#ffffff',
+            navbar_bg: '#ffffff',
+            navbar_text: '#1f2937',
+            hero_start: '#ec4899',
+            hero_end: '#db2777'
+        }
+    };
+    
+    const colors = palettes[palette];
+    document.querySelector('[name="primary_button_color"]').value = colors.primary;
+    document.querySelector('[name="secondary_button_color"]').value = colors.secondary;
+    document.querySelector('[name="navbar_bg_color"]').value = colors.navbar_bg;
+    document.querySelector('[name="navbar_text_color"]').value = colors.navbar_text;
+    document.querySelector('[name="hero_bg_gradient_start"]').value = colors.hero_start;
+    document.querySelector('[name="hero_bg_gradient_end"]').value = colors.hero_end;
+    
+    Toast.success('Paleta aplicada correctamente');
+}
+
+// Mensaje de guardado
+document.getElementById('landingConfigForm').addEventListener('submit', function(e) {
+    const submitBtn = this.querySelector('button[type="submit"]');
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Guardando...';
+    submitBtn.disabled = true;
+});
+</script>
+{% endblock %}
