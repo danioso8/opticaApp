@@ -1589,7 +1589,8 @@ def visual_exam_edit(request, patient_id, history_id):
             history.va_os_cc_near = request.POST.get('va_os_cc_near', '')
             
             # Refracción OD
-            history.refraction_od_sphere = request.POST.get('refraction_od_sphere', '') or ''
+            sphere_od = request.POST.get('refraction_od_sphere', '').strip()
+            history.refraction_od_sphere = float(sphere_od) if sphere_od else None
             
             cyl_od = request.POST.get('refraction_od_cylinder', '').strip()
             history.refraction_od_cylinder = float(cyl_od) if cyl_od else None
@@ -1600,13 +1601,15 @@ def visual_exam_edit(request, patient_id, history_id):
             add_od = request.POST.get('refraction_od_add', '').strip()
             history.refraction_od_add = float(add_od) if add_od else None
             
-            history.refraction_od_prism = request.POST.get('refraction_od_prism', '') or ''
+            prism_od = request.POST.get('refraction_od_prism', '').strip()
+            history.refraction_od_prism = float(prism_od) if prism_od else None
             
             dnp_od = request.POST.get('refraction_od_dnp', '').strip()
             history.refraction_od_dnp = float(dnp_od) if dnp_od else None
             
             # Refracción OS
-            history.refraction_os_sphere = request.POST.get('refraction_os_sphere', '') or ''
+            sphere_os = request.POST.get('refraction_os_sphere', '').strip()
+            history.refraction_os_sphere = float(sphere_os) if sphere_os else None
             
             cyl_os = request.POST.get('refraction_os_cylinder', '').strip()
             history.refraction_os_cylinder = float(cyl_os) if cyl_os else None
@@ -1617,7 +1620,8 @@ def visual_exam_edit(request, patient_id, history_id):
             add_os = request.POST.get('refraction_os_add', '').strip()
             history.refraction_os_add = float(add_os) if add_os else None
             
-            history.refraction_os_prism = request.POST.get('refraction_os_prism', '') or ''
+            prism_os = request.POST.get('refraction_os_prism', '').strip()
+            history.refraction_os_prism = float(prism_os) if prism_os else None
             
             dnp_os = request.POST.get('refraction_os_dnp', '').strip()
             history.refraction_os_dnp = float(dnp_os) if dnp_os else None
