@@ -14,6 +14,8 @@ urlpatterns = [
     path('users/<int:user_id>/delete/', views.user_delete, name='user_delete'),
     path('users/<int:user_id>/unlimited/', views.subscription_unlimited, name='subscription_unlimited'),
     path('users/<int:user_id>/revoke-unlimited/', views.subscription_revoke_unlimited, name='subscription_revoke_unlimited'),
+    path('users/<int:user_id>/verify-email/', views.verify_user_email, name='verify_user_email'),
+    path('users/<int:user_id>/unverify-email/', views.unverify_user_email, name='unverify_user_email'),
     
     # Gestión de suscripciones
     path('subscriptions/', views.subscriptions_list, name='subscriptions_list'),

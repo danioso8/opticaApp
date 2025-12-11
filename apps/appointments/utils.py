@@ -72,6 +72,17 @@ def get_available_slots_for_date(date, organization=None):
     # Si hay horarios específicos, usar esos (ignora WorkingHours)
     if specific_schedules.exists():
         working_hours = specific_schedules
+        # Generar todos los slots posibles de horarios específicos
+        all_slots = []
+        for wh in working_hours:
+            # Usar slot_duration específico del horario si existe, sino usar el de configuración
+            duration = getattr(wh, 'slot_duration', config.slot_duration)
+            slots = generate_time_slots(
+                wh.start_time,
+                wh.end_time,
+                duration
+            )
+            all_slots.extend(slots)
     else:
         # Si no hay específicos, usar horarios del día de la semana
         day_of_week = date.weekday()
@@ -80,19 +91,19 @@ def get_available_slots_for_date(date, organization=None):
             is_active=True,
             **org_filter
         )
-    
-    if not working_hours.exists():
-        return []
-    
-    # Generar todos los slots posibles
-    all_slots = []
-    for wh in working_hours:
-        slots = generate_time_slots(
-            wh.start_time,
-            wh.end_time,
-            config.slot_duration
-        )
-        all_slots.extend(slots)
+        
+        if not working_hours.exists():
+            return []
+        
+        # Generar todos los slots posibles
+        all_slots = []
+        for wh in working_hours:
+            slots = generate_time_slots(
+                wh.start_time,
+                wh.end_time,
+                config.slot_duration
+            )
+            all_slots.extend(slots)
     
     # Obtener citas ya agendadas
     booked_appointments = Appointment.objects.filter(

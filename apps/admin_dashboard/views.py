@@ -6,6 +6,7 @@ from django.db.models import Q, Count
 from django.utils import timezone
 from datetime import timedelta
 from apps.users.models import UserSubscription
+from apps.users.email_verification_models import UserProfile
 from apps.organizations.models import Organization, OrganizationMember, SubscriptionPlan
 from django.db import transaction
 
@@ -428,3 +429,41 @@ def plan_toggle_active(request, plan_id):
         messages.success(request, f'Plan {plan.name} {status} exitosamente')
     
     return redirect('admin_dashboard:plans_list')
+
+
+@login_required
+@user_passes_test(is_superuser)
+def verify_user_email(request, user_id):
+    """Verificar manualmente el email de un usuario"""
+    if request.method == 'POST':
+        user = get_object_or_404(User, id=user_id)
+        
+        # Obtener o crear perfil de usuario
+        profile, created = UserProfile.objects.get_or_create(user=user)
+        profile.email_verified = True
+        profile.save()
+        
+        # Activar el usuario
+        user.is_active = True
+        user.save()
+        
+        messages.success(request, f'Email de {user.username} verificado exitosamente')
+    
+    return redirect('admin_dashboard:user_detail', user_id=user_id)
+
+
+@login_required
+@user_passes_test(is_superuser)
+def unverify_user_email(request, user_id):
+    """Marcar como no verificado el email de un usuario"""
+    if request.method == 'POST':
+        user = get_object_or_404(User, id=user_id)
+        
+        # Obtener o crear perfil de usuario
+        profile, created = UserProfile.objects.get_or_create(user=user)
+        profile.email_verified = False
+        profile.save()
+        
+        messages.warning(request, f'Email de {user.username} marcado como no verificado')
+    
+    return redirect('admin_dashboard:user_detail', user_id=user_id)
