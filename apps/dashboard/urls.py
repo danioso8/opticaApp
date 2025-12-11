@@ -96,6 +96,7 @@ urlpatterns = [
     # Horarios específicos
     path('configuration/add-specific-schedule/', views.add_specific_schedule, name='add_specific_schedule'),
     path('configuration/specific-schedule/<int:pk>/toggle/', views.toggle_specific_schedule, name='toggle_specific_schedule'),
+    path('configuration/specific-schedule/<int:pk>/edit/', views.edit_specific_schedule, name='edit_specific_schedule'),
     path('configuration/specific-schedule/<int:pk>/delete/', views.delete_specific_schedule, name='delete_specific_schedule'),
     
     # Pacientes

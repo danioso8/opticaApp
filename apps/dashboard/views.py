@@ -1063,6 +1063,85 @@ def delete_specific_schedule(request, pk):
     return JsonResponse({'success': False}, status=405)
 
 
+@login_required
+def edit_specific_schedule(request, pk):
+    """Editar horario específico (AJAX)"""
+    from apps.appointments.models import SpecificDateSchedule
+    from django.contrib.auth.models import User
+    
+    schedule = get_object_or_404(SpecificDateSchedule, pk=pk, organization=request.organization)
+    
+    if request.method == 'GET':
+        # Devolver datos del horario para edición
+        return JsonResponse({
+            'success': True,
+            'schedule': {
+                'id': schedule.id,
+                'date': schedule.date.strftime('%Y-%m-%d'),
+                'start_time': schedule.start_time.strftime('%H:%M'),
+                'end_time': schedule.end_time.strftime('%H:%M'),
+                'slot_duration': schedule.slot_duration,
+                'notes': schedule.notes or '',
+                'doctor': schedule.doctor.id if schedule.doctor else None,
+            }
+        })
+    
+    elif request.method == 'POST':
+        date_str = request.POST.get('date')
+        start_time = request.POST.get('start_time')
+        end_time = request.POST.get('end_time')
+        notes = request.POST.get('notes', '')
+        doctor_id = request.POST.get('doctor')
+        slot_duration = request.POST.get('slot_duration', 30)
+        
+        try:
+            date = datetime.strptime(date_str, '%Y-%m-%d').date()
+            
+            # Validar que la fecha no sea pasada (solo si se está cambiando)
+            if date != schedule.date and date < timezone.now().date():
+                return JsonResponse({
+                    'success': False,
+                    'message': 'No puedes cambiar a una fecha pasada'
+                }, status=400)
+            
+            # Obtener doctor si se especificó
+            doctor = None
+            if doctor_id:
+                try:
+                    doctor = User.objects.get(id=doctor_id)
+                except User.DoesNotExist:
+                    return JsonResponse({
+                        'success': False,
+                        'message': 'Doctor no encontrado'
+                    }, status=400)
+            
+            # Actualizar campos
+            schedule.date = date
+            schedule.start_time = start_time
+            schedule.end_time = end_time
+            schedule.slot_duration = int(slot_duration)
+            schedule.notes = notes
+            schedule.doctor = doctor
+            schedule.save()
+            
+            return JsonResponse({
+                'success': True,
+                'message': 'Horario actualizado exitosamente'
+            })
+        except ValueError:
+            return JsonResponse({
+                'success': False,
+                'message': 'Formato de fecha inválido'
+            }, status=400)
+        except Exception as e:
+            return JsonResponse({
+                'success': False,
+                'message': f'Error al actualizar horario: {str(e)}'
+            }, status=400)
+    
+    return JsonResponse({'success': False}, status=405)
+
+
 # ==================== WHATSAPP API ====================
 
 @login_required
