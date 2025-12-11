@@ -1,0 +1,121 @@
+{% extends 'admin_dashboard/base.html' %}
+
+{% block title %}Módulos del Sistema - Admin{% endblock %}
+
+{% block content %}
+<div class="mb-6">
+    <div class="flex items-center justify-between">
+        <h1 class="text-3xl font-bold text-gray-800">
+            <i class="fas fa-puzzle-piece mr-2 text-indigo-600"></i>
+            Módulos del Sistema
+        </h1>
+        <a href="{% url 'admin_dashboard:feature_create' %}" 
+           class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg inline-flex items-center">
+            <i class="fas fa-plus mr-2"></i>Crear Módulo
+        </a>
+    </div>
+    <p class="text-gray-600 mt-2">
+        Gestiona los módulos y características que estarán disponibles en los planes de suscripción
+    </p>
+</div>
+
+{% if messages %}
+<div class="mb-6">
+    {% for message in messages %}
+    <div class="{% if message.tags == 'error' %}bg-red-50 border-red-400 text-red-800{% else %}bg-green-50 border-green-400 text-green-800{% endif %} border-l-4 p-4 mb-3">
+        {{ message }}
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+
+<!-- Filtros por categoría -->
+<div class="bg-white rounded-lg shadow-md p-4 mb-6">
+    <div class="flex flex-wrap gap-2">
+        <a href="{% url 'admin_dashboard:features_list' %}" 
+           class="px-4 py-2 {% if not category_filter %}bg-indigo-600 text-white{% else %}bg-gray-200 text-gray-700 hover:bg-gray-300{% endif %} rounded-lg">
+            Todos
+        </a>
+        {% for cat_code, cat_name in categories %}
+        <a href="{% url 'admin_dashboard:features_list' %}?category={{ cat_code }}" 
+           class="px-4 py-2 {% if category_filter == cat_code %}bg-indigo-600 text-white{% else %}bg-gray-200 text-gray-700 hover:bg-gray-300{% endif %} rounded-lg">
+            {{ cat_name }}
+        </a>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- Lista de módulos -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    {% for feature in features %}
+    <div class="bg-white rounded-lg shadow-md hover:shadow-lg transition p-6">
+        <div class="flex items-start justify-between mb-4">
+            <div class="flex items-center">
+                {% if feature.icon %}
+                <i class="{{ feature.icon }} text-3xl text-indigo-600 mr-3"></i>
+                {% else %}
+                <i class="fas fa-puzzle-piece text-3xl text-gray-400 mr-3"></i>
+                {% endif %}
+                <div>
+                    <h3 class="text-lg font-semibold text-gray-800">{{ feature.name }}</h3>
+                    <p class="text-xs text-gray-500">{{ feature.get_category_display }}</p>
+                </div>
+            </div>
+            <span class="px-2 py-1 text-xs rounded {% if feature.is_active %}bg-green-100 text-green-800{% else %}bg-red-100 text-red-800{% endif %}">
+                {% if feature.is_active %}Activo{% else %}Inactivo{% endif %}
+            </span>
+        </div>
+        
+        <p class="text-sm text-gray-600 mb-4">{{ feature.description|truncatewords:15 }}</p>
+        
+        <div class="mb-4">
+            <p class="text-xs text-gray-500 mb-2">Código: <code class="bg-gray-100 px-2 py-1 rounded">{{ feature.code }}</code></p>
+            <p class="text-xs text-gray-600">
+                <i class="fas fa-layer-group mr-1"></i>
+                Incluido en {{ feature.plans.count }} plan{{ feature.plans.count|pluralize:"es" }}
+            </p>
+        </div>
+        
+        <div class="flex gap-2">
+            <a href="{% url 'admin_dashboard:feature_edit' feature.id %}" 
+               class="flex-1 bg-blue-600 hover:bg-blue-700 text-white text-center px-3 py-2 rounded-lg text-sm">
+                <i class="fas fa-edit mr-1"></i>Editar
+            </a>
+            <form method="post" action="{% url 'admin_dashboard:feature_delete' feature.id %}" 
+                  onsubmit="return confirm('¿Eliminar este módulo? Los planes que lo tienen perderán esta característica.');"
+                  class="flex-1">
+                {% csrf_token %}
+                <button type="submit" class="w-full bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded-lg text-sm">
+                    <i class="fas fa-trash mr-1"></i>Eliminar
+                </button>
+            </form>
+        </div>
+    </div>
+    {% empty %}
+    <div class="col-span-full bg-white rounded-lg shadow-md p-12 text-center">
+        <i class="fas fa-puzzle-piece text-6xl text-gray-300 mb-4"></i>
+        <p class="text-gray-500 text-lg">No hay módulos registrados</p>
+        <a href="{% url 'admin_dashboard:feature_create' %}" 
+           class="mt-4 inline-block bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-lg">
+            Crear Primer Módulo
+        </a>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- Resumen por categoría -->
+{% if features %}
+<div class="mt-8 bg-white rounded-lg shadow-md p-6">
+    <h3 class="text-lg font-semibold text-gray-800 mb-4">Resumen por Categoría</h3>
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+        {% for cat in category_counts %}
+        <div class="text-center p-4 bg-gray-50 rounded-lg">
+            <p class="text-2xl font-bold text-indigo-600">{{ cat.count }}</p>
+            <p class="text-sm text-gray-600">{{ cat.name }}</p>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
+{% endblock %}

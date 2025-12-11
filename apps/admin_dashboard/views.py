@@ -161,12 +161,35 @@ def user_toggle_active(request, user_id):
 @login_required
 @user_passes_test(is_superuser)
 def user_delete(request, user_id):
-    """Eliminar usuario"""
+    """Eliminar usuario y sus organizaciones asociadas"""
     if request.method == 'POST':
         user = get_object_or_404(User, id=user_id)
         username = user.username
-        user.delete()
-        messages.success(request, f'Usuario {username} eliminado exitosamente')
+        
+        # Verificar si el usuario es owner de organizaciones
+        from apps.organizations.models import Organization
+        owned_orgs = Organization.objects.filter(owner=user)
+        
+        if owned_orgs.exists():
+            org_count = owned_orgs.count()
+            org_names = ', '.join([org.name for org in owned_orgs[:3]])
+            if org_count > 3:
+                org_names += f' y {org_count - 3} más'
+            
+            # Eliminar las organizaciones primero (esto eliminará en cascada todo lo relacionado)
+            owned_orgs.delete()
+            messages.warning(
+                request, 
+                f'{org_count} organización(es) eliminada(s): {org_names}'
+            )
+        
+        try:
+            user.delete()
+            messages.success(request, f'Usuario {username} eliminado exitosamente')
+        except Exception as e:
+            messages.error(request, f'Error al eliminar el usuario: {str(e)}')
+            return redirect('admin_dashboard:user_detail', user_id=user_id)
+        
         return redirect('admin_dashboard:users_list')
     
     return redirect('admin_dashboard:user_detail', user_id=user_id)
@@ -404,6 +427,8 @@ def plans_list(request):
 @user_passes_test(is_superuser)
 def plan_create(request):
     """Crear nuevo plan"""
+    from apps.organizations.models import PlanFeature
+    
     if request.method == 'POST':
         from django.utils.text import slugify
         
@@ -418,7 +443,7 @@ def plan_create(request):
         max_storage_mb = request.POST.get('max_storage_mb', 500)
         is_active = request.POST.get('is_active') == 'on'
         
-        # Características (checkboxes)
+        # Características (checkboxes - legacy)
         whatsapp_integration = request.POST.get('whatsapp_integration') == '1'
         custom_branding = request.POST.get('custom_branding') == '1'
         api_access = request.POST.get('api_access') == '1'
@@ -426,7 +451,10 @@ def plan_create(request):
         analytics = request.POST.get('analytics') == '1'
         multi_location = request.POST.get('multi_location') == '1'
         
-        SubscriptionPlan.objects.create(
+        # Módulos seleccionados
+        selected_features = request.POST.getlist('features')
+        
+        plan = SubscriptionPlan.objects.create(
             name=name,
             slug=slugify(name),
             plan_type=plan_type,
@@ -445,16 +473,28 @@ def plan_create(request):
             is_active=is_active,
         )
         
-        messages.success(request, f'Plan {name} creado exitosamente')
+        # Asignar módulos al plan
+        if selected_features:
+            plan.features.set(selected_features)
+        
+        messages.success(request, f'Plan {name} creado exitosamente con {len(selected_features)} módulo(s)')
         return redirect('admin_dashboard:plans_list')
     
-    return render(request, 'admin_dashboard/plan_create.html')
+    # GET - Mostrar formulario
+    available_features = PlanFeature.objects.filter(is_active=True).order_by('category', 'name')
+    
+    context = {
+        'available_features': available_features,
+    }
+    return render(request, 'admin_dashboard/plan_create.html', context)
 
 
 @login_required
 @user_passes_test(is_superuser)
 def plan_edit(request, plan_id):
     """Editar plan existente"""
+    from apps.organizations.models import PlanFeature
+    
     plan = get_object_or_404(SubscriptionPlan, id=plan_id)
     
     if request.method == 'POST':
@@ -470,7 +510,7 @@ def plan_edit(request, plan_id):
         plan.max_patients = request.POST.get('max_patients')
         plan.max_storage_mb = request.POST.get('max_storage_mb', 500)
         
-        # Características (checkboxes)
+        # Características (checkboxes - legacy)
         plan.whatsapp_integration = request.POST.get('whatsapp_integration') == '1'
         plan.custom_branding = request.POST.get('custom_branding') == '1'
         plan.api_access = request.POST.get('api_access') == '1'
@@ -480,12 +520,22 @@ def plan_edit(request, plan_id):
         
         plan.is_active = request.POST.get('is_active') == 'on'
         
+        # Módulos seleccionados
+        selected_features = request.POST.getlist('features')
+        plan.features.set(selected_features)
+        
         plan.save()
-        messages.success(request, f'Plan {plan.name} actualizado exitosamente')
+        messages.success(request, f'Plan {plan.name} actualizado con {plan.features.count()} módulo(s)')
         return redirect('admin_dashboard:plans_list')
+    
+    # GET - Mostrar formulario
+    available_features = PlanFeature.objects.filter(is_active=True).order_by('category', 'name')
+    plan_feature_ids = list(plan.features.values_list('id', flat=True))
     
     context = {
         'plan': plan,
+        'available_features': available_features,
+        'plan_feature_ids': plan_feature_ids,
     }
     return render(request, 'admin_dashboard/plan_edit.html', context)
 
@@ -543,3 +593,117 @@ def unverify_user_email(request, user_id):
         messages.warning(request, f'Email de {user.username} marcado como no verificado')
     
     return redirect('admin_dashboard:user_detail', user_id=user_id)
+
+
+# ==================== GESTIÓN DE MÓDULOS/CARACTERÍSTICAS ====================
+
+@login_required
+@user_passes_test(is_superuser)
+def features_list(request):
+    """Listar todos los módulos/características"""
+    from apps.organizations.models import PlanFeature
+    from django.db.models import Count
+    
+    category_filter = request.GET.get('category')
+    
+    features = PlanFeature.objects.annotate(
+        plans_count=Count('plans')
+    ).order_by('category', 'name')
+    
+    if category_filter:
+        features = features.filter(category=category_filter)
+    
+    # Contar por categoría con nombres
+    category_counts = []
+    for cat_code, cat_name in PlanFeature.FEATURE_CATEGORIES:
+        count = PlanFeature.objects.filter(category=cat_code).count()
+        category_counts.append({
+            'code': cat_code,
+            'name': cat_name,
+            'count': count
+        })
+    
+    context = {
+        'features': features,
+        'categories': PlanFeature.FEATURE_CATEGORIES,
+        'category_filter': category_filter,
+        'category_counts': category_counts,
+    }
+    return render(request, 'admin_dashboard/features_list.html', context)
+
+
+@login_required
+@user_passes_test(is_superuser)
+def feature_create(request):
+    """Crear nuevo módulo/característica"""
+    from apps.organizations.models import PlanFeature
+    from django.utils.text import slugify
+    
+    if request.method == 'POST':
+        name = request.POST.get('name')
+        code = request.POST.get('code')
+        category = request.POST.get('category')
+        icon = request.POST.get('icon', '')
+        description = request.POST.get('description', '')
+        is_active = request.POST.get('is_active') == 'on'
+        
+        try:
+            feature = PlanFeature.objects.create(
+                name=name,
+                code=code,
+                category=category,
+                icon=icon,
+                description=description,
+                is_active=is_active
+            )
+            messages.success(request, f'Módulo "{name}" creado exitosamente')
+            return redirect('admin_dashboard:features_list')
+        except Exception as e:
+            messages.error(request, f'Error al crear módulo: {str(e)}')
+    
+    return render(request, 'admin_dashboard/feature_create.html')
+
+
+@login_required
+@user_passes_test(is_superuser)
+def feature_edit(request, feature_id):
+    """Editar módulo/característica"""
+    from apps.organizations.models import PlanFeature
+    
+    feature = get_object_or_404(PlanFeature, id=feature_id)
+    
+    if request.method == 'POST':
+        feature.name = request.POST.get('name')
+        feature.code = request.POST.get('code')
+        feature.category = request.POST.get('category')
+        feature.icon = request.POST.get('icon', '')
+        feature.description = request.POST.get('description', '')
+        feature.is_active = request.POST.get('is_active') == 'on'
+        
+        try:
+            feature.save()
+            messages.success(request, f'Módulo "{feature.name}" actualizado exitosamente')
+            return redirect('admin_dashboard:features_list')
+        except Exception as e:
+            messages.error(request, f'Error al actualizar módulo: {str(e)}')
+    
+    context = {
+        'feature': feature,
+        'categories': PlanFeature.FEATURE_CATEGORIES,
+    }
+    return render(request, 'admin_dashboard/feature_edit.html', context)
+
+
+@login_required
+@user_passes_test(is_superuser)
+def feature_delete(request, feature_id):
+    """Eliminar módulo/característica"""
+    from apps.organizations.models import PlanFeature
+    
+    if request.method == 'POST':
+        feature = get_object_or_404(PlanFeature, id=feature_id)
+        feature_name = feature.name
+        feature.delete()
+        messages.success(request, f'Módulo "{feature_name}" eliminado exitosamente')
+    
+    return redirect('admin_dashboard:features_list')

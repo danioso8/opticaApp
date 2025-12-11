@@ -20,7 +20,7 @@
 
     <!-- Formulario -->
     <div class="bg-white rounded-lg shadow-md">
-        <form method="post" class="p-6 space-y-6">
+        <form method="post" enctype="multipart/form-data" class="p-6 space-y-6">
             {% csrf_token %}
 
             <!-- Información Legal -->
@@ -282,20 +282,48 @@
                     Personalización
                 </h3>
                 
-                <div>
-                    <label for="primary_color" class="block text-sm font-medium text-gray-700 mb-2">
-                        Color Primario de la Marca
-                    </label>
-                    <div class="flex items-center gap-4">
-                        <input type="color" 
-                               id="primary_color" 
-                               name="primary_color" 
-                               value="{{ organization.primary_color }}"
-                               class="w-20 h-12 rounded-lg border-2 border-gray-300 cursor-pointer">
-                        <div class="flex-1">
-                            <p class="text-sm text-gray-600">
-                                Selecciona el color que representa tu organización. Se usará en varios elementos visuales del sistema.
-                            </p>
+                <div class="space-y-4">
+                    <!-- Logo -->
+                    <div>
+                        <label for="logo" class="block text-sm font-medium text-gray-700 mb-2">
+                            Logo de la Empresa
+                        </label>
+                        
+                        {% if organization.logo %}
+                        <div class="mb-3">
+                            <img src="{{ organization.logo.url }}" 
+                                 alt="Logo actual" 
+                                 class="w-32 h-32 object-contain border-2 border-gray-300 rounded-lg p-2 bg-white">
+                            <p class="text-sm text-gray-500 mt-1">Logo actual</p>
+                        </div>
+                        {% endif %}
+                        
+                        <input type="file" 
+                               id="logo" 
+                               name="logo" 
+                               accept="image/*"
+                               class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition">
+                        <p class="text-sm text-gray-500 mt-1">
+                            Formatos permitidos: JPG, PNG, GIF. Tamaño máximo: 5MB
+                        </p>
+                    </div>
+                    
+                    <!-- Color primario -->
+                    <div>
+                        <label for="primary_color" class="block text-sm font-medium text-gray-700 mb-2">
+                            Color Primario de la Marca
+                        </label>
+                        <div class="flex items-center gap-4">
+                            <input type="color" 
+                                   id="primary_color" 
+                                   name="primary_color" 
+                                   value="{{ organization.primary_color }}"
+                                   class="w-20 h-12 rounded-lg border-2 border-gray-300 cursor-pointer">
+                            <div class="flex-1">
+                                <p class="text-sm text-gray-600">
+                                    Selecciona el color que representa tu organización. Se usará en varios elementos visuales del sistema.
+                                </p>
+                            </div>
                         </div>
                     </div>
                 </div>

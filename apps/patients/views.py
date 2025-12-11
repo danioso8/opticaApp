@@ -73,11 +73,16 @@ def patient_detail(request, pk):
     ).order_by('appointment_date', 'appointment_time')[:5]
     
     # Obtener doctores de la organización
-    doctors = User.objects.filter(
-        **org_filter,
-        role__in=['doctor', 'admin'],
-        is_active=True
-    ).order_by('full_name')
+    if org_filter:
+        doctors = User.objects.filter(
+            organization_memberships__organization=request.organization,
+            organization_memberships__is_active=True,
+            is_active=True
+        ).distinct().order_by('username')
+    else:
+        doctors = User.objects.filter(
+            is_active=True
+        ).order_by('username')
     
     context = {
         'patient': patient,

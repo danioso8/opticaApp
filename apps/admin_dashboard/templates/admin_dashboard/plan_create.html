@@ -163,6 +163,38 @@
                 </div>
             </div>
 
+            <!-- Módulos/Características del Sistema -->
+            <div class="border-t pt-4">
+                <h3 class="text-lg font-semibold text-gray-800 mb-2">
+                    <i class="fas fa-puzzle-piece text-indigo-600 mr-2"></i>
+                    Módulos del Sistema
+                </h3>
+                <p class="text-sm text-gray-600 mb-4">Selecciona los módulos que estarán disponibles en este plan</p>
+                
+                <div class="bg-gray-50 p-4 rounded-lg max-h-64 overflow-y-auto">
+                    {% if available_features %}
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            {% for feature in available_features %}
+                            <div class="flex items-start">
+                                <input type="checkbox" name="features" id="feature_{{ feature.id }}" value="{{ feature.id }}"
+                                       class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded mt-1">
+                                <label for="feature_{{ feature.id }}" class="ml-2 block text-sm">
+                                    {% if feature.icon %}<i class="{{ feature.icon }} mr-1"></i>{% endif %}
+                                    <span class="font-medium text-gray-800">{{ feature.name }}</span>
+                                    <span class="text-xs text-gray-500 block">{{ feature.get_category_display }}</span>
+                                </label>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <p class="text-sm text-gray-500 text-center py-4">
+                            No hay módulos disponibles. 
+                            <a href="{% url 'admin_dashboard:feature_create' %}" class="text-indigo-600 hover:underline">Crear módulo</a>
+                        </p>
+                    {% endif %}
+                </div>
+            </div>
+
             <!-- Estado -->
             <div class="flex items-center">
                 <input type="checkbox" name="is_active" id="is_active" checked

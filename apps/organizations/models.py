@@ -4,6 +4,35 @@ from django.utils import timezone
 from datetime import timedelta
 
 
+class PlanFeature(models.Model):
+    """Módulos/Características disponibles en el sistema"""
+    FEATURE_CATEGORIES = [
+        ('integration', 'Integración'),
+        ('analytics', 'Análisis'),
+        ('customization', 'Personalización'),
+        ('communication', 'Comunicación'),
+        ('medical', 'Médico'),
+        ('sales', 'Ventas'),
+        ('other', 'Otro'),
+    ]
+    
+    code = models.SlugField(unique=True, verbose_name='Código', help_text='Identificador único (ej: whatsapp_integration)')
+    name = models.CharField(max_length=100, verbose_name='Nombre', help_text='Nombre visible del módulo')
+    description = models.TextField(blank=True, verbose_name='Descripción')
+    category = models.CharField(max_length=20, choices=FEATURE_CATEGORIES, default='other', verbose_name='Categoría')
+    icon = models.CharField(max_length=50, blank=True, verbose_name='Ícono FontAwesome', help_text='ej: fa-whatsapp')
+    is_active = models.BooleanField(default=True, verbose_name='Activo')
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        verbose_name = 'Módulo/Característica'
+        verbose_name_plural = 'Módulos/Características'
+        ordering = ['category', 'name']
+    
+    def __str__(self):
+        return f"{self.name} ({self.code})"
+
+
 class SubscriptionPlan(models.Model):
     """Planes de suscripción disponibles"""
     PLAN_TYPES = [
@@ -25,13 +54,21 @@ class SubscriptionPlan(models.Model):
     max_patients = models.IntegerField(default=100, verbose_name='Máximo de Pacientes')
     max_storage_mb = models.IntegerField(default=100, verbose_name='Almacenamiento (MB)')
     
-    # Características
+    # Características (DEPRECATED - usar features M2M)
     whatsapp_integration = models.BooleanField(default=False, verbose_name='Integración WhatsApp')
     custom_branding = models.BooleanField(default=False, verbose_name='Marca Personalizada')
     api_access = models.BooleanField(default=False, verbose_name='Acceso API')
     priority_support = models.BooleanField(default=False, verbose_name='Soporte Prioritario')
     analytics = models.BooleanField(default=False, verbose_name='Análisis Avanzado')
     multi_location = models.BooleanField(default=False, verbose_name='Múltiples Ubicaciones')
+    
+    # Relación con módulos/características
+    features = models.ManyToManyField(
+        PlanFeature,
+        blank=True,
+        related_name='plans',
+        verbose_name='Módulos/Características'
+    )
     
     is_active = models.BooleanField(default=True, verbose_name='Activo')
     created_at = models.DateTimeField(auto_now_add=True)
@@ -43,6 +80,10 @@ class SubscriptionPlan(models.Model):
     
     def __str__(self):
         return f"{self.name} - ${self.price_monthly}/mes"
+    
+    def has_feature(self, feature_code):
+        """Verifica si el plan tiene un módulo específico"""
+        return self.features.filter(code=feature_code, is_active=True).exists()
 
 
 class Organization(models.Model):
@@ -198,6 +239,12 @@ class Subscription(models.Model):
             return 0
         delta = self.end_date - timezone.now()
         return delta.days
+    
+    def has_feature(self, feature_code):
+        """Verifica si la suscripción tiene acceso a un módulo específico"""
+        if not self.is_active or self.is_expired:
+            return False
+        return self.plan.has_feature(feature_code)
 
 
 class OrganizationMember(models.Model):

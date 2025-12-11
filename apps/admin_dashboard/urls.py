@@ -36,4 +36,10 @@ urlpatterns = [
     path('plans/create/', views.plan_create, name='plan_create'),
     path('plans/<int:plan_id>/edit/', views.plan_edit, name='plan_edit'),
     path('plans/<int:plan_id>/toggle-active/', views.plan_toggle_active, name='plan_toggle_active'),
+    
+    # Gestión de módulos/características
+    path('features/', views.features_list, name='features_list'),
+    path('features/create/', views.feature_create, name='feature_create'),
+    path('features/<int:feature_id>/edit/', views.feature_edit, name='feature_edit'),
+    path('features/<int:feature_id>/delete/', views.feature_delete, name='feature_delete'),
 ]

@@ -222,7 +222,8 @@ def upgrade_plan(request, plan_id):
             subscription = UserSubscription.objects.get(user=request.user)
             subscription.plan = plan
             subscription.billing_cycle = billing_cycle
-            subscription.payment_status = 'pending'  # En producción, iría a pasarela de pago
+            # Plan Free no requiere pago
+            subscription.payment_status = 'paid' if plan.plan_type == 'free' else 'pending'
             subscription.is_active = True
             
             # Calcular nueva fecha de expiración
@@ -245,11 +246,14 @@ def upgrade_plan(request, plan_id):
                 end_date = timezone.now() + timedelta(days=30)
                 amount = plan.price_monthly
             
+            # Plan Free no requiere pago
+            payment_status = 'paid' if plan.plan_type == 'free' else 'pending'
+            
             UserSubscription.objects.create(
                 user=request.user,
                 plan=plan,
                 billing_cycle=billing_cycle,
-                payment_status='pending',
+                payment_status=payment_status,
                 is_active=True,
                 end_date=end_date,
                 amount_paid=amount
@@ -308,6 +312,16 @@ def organization_settings(request, org_id):
         organization.postal_code = request.POST.get('postal_code', organization.postal_code)
         organization.country = request.POST.get('country', organization.country)
         organization.primary_color = request.POST.get('primary_color', organization.primary_color)
+        
+        # Manejar subida de logo
+        if 'logo' in request.FILES:
+            # Eliminar logo anterior si existe
+            if organization.logo:
+                try:
+                    organization.logo.delete(save=False)
+                except:
+                    pass
+            organization.logo = request.FILES['logo']
         
         try:
             organization.save()

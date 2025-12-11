@@ -1802,6 +1802,10 @@ def landing_page_config(request):
             messages.success(request, '✅ Configuración de landing page guardada correctamente')
             return redirect('dashboard:landing_page_config')
         else:
+            # Mostrar errores específicos del formulario
+            for field, errors in form.errors.items():
+                for error in errors:
+                    messages.error(request, f'{field}: {error}')
             messages.error(request, 'Por favor corrige los errores del formulario')
     else:
         form = LandingPageConfigForm(instance=config)

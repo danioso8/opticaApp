@@ -61,6 +61,11 @@ class UserSubscription(models.Model):
             else:
                 self.amount_paid = self.plan.price_yearly
         
+        # Plan Free siempre está pagado automáticamente
+        if self.plan.plan_type == 'free' and self.payment_status == 'pending':
+            self.payment_status = 'paid'
+            self.amount_paid = 0  # Planes gratuitos no tienen costo
+        
         super().save(*args, **kwargs)
     
     @property

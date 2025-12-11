@@ -50,6 +50,9 @@
                 <a href="{% url 'admin_dashboard:plans_list' %}" class="block px-4 py-3 rounded-lg hover:bg-gray-700 {% if 'plans' in request.path %}bg-gray-700{% endif %}">
                     <i class="fas fa-box mr-2"></i> Planes
                 </a>
+                <a href="{% url 'admin_dashboard:features_list' %}" class="block px-4 py-3 rounded-lg hover:bg-gray-700 {% if 'features' in request.path %}bg-gray-700{% endif %}">
+                    <i class="fas fa-puzzle-piece mr-2"></i> Módulos
+                </a>
             </nav>
         </aside>
 

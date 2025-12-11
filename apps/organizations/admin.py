@@ -1,5 +1,13 @@
 from django.contrib import admin
-from .models import SubscriptionPlan, Organization, Subscription, OrganizationMember, LandingPageConfig
+from .models import SubscriptionPlan, Organization, Subscription, OrganizationMember, LandingPageConfig, PlanFeature
+
+
+@admin.register(PlanFeature)
+class PlanFeatureAdmin(admin.ModelAdmin):
+    list_display = ['name', 'code', 'category', 'is_active', 'created_at']
+    list_filter = ['category', 'is_active']
+    search_fields = ['name', 'code', 'description']
+    prepopulated_fields = {'code': ('name',)}
 
 
 @admin.register(SubscriptionPlan)
@@ -8,6 +16,7 @@ class SubscriptionPlanAdmin(admin.ModelAdmin):
     list_filter = ['plan_type', 'is_active']
     search_fields = ['name', 'slug']
     prepopulated_fields = {'slug': ('name',)}
+    filter_horizontal = ['features']
 
 
 @admin.register(Organization)
