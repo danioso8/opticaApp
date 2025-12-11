@@ -6,6 +6,17 @@
 {% block page_subtitle %}Todas las citas del sistema{% endblock %}
 
 {% block content %}
+<!-- Encabezado con botón -->
+<div class="bg-white rounded-lg shadow p-4 mb-6 flex justify-between items-center">
+    <div>
+        <h2 class="text-xl font-bold text-gray-800">Gestión de Citas</h2>
+        <p class="text-sm text-gray-600">Todas las citas del sistema</p>
+    </div>
+    <button onclick="openCreatePatientModal()" class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors">
+        <i class="fas fa-user-plus mr-2"></i>Nuevo Paciente
+    </button>
+</div>
+
 <!-- Filtros -->
 <div class="bg-white rounded-lg shadow p-6 mb-6">
     <form method="GET" class="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -147,4 +158,226 @@
         </table>
     </div>
 </div>
+
+<!-- Modal Crear Paciente -->
+<div id="createPatientModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+    <div class="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto m-4">
+        <div class="bg-blue-600 text-white px-6 py-4 rounded-t-lg flex justify-between items-center sticky top-0">
+            <h2 class="text-xl font-bold">
+                <i class="fas fa-user-plus mr-2"></i>Nuevo Paciente
+            </h2>
+            <button onclick="closeCreatePatientModal()" class="text-white hover:text-gray-200">
+                <i class="fas fa-times text-2xl"></i>
+            </button>
+        </div>
+        
+        <form id="createPatientForm" onsubmit="savePatient(event)" class="p-6">
+            {% csrf_token %}
+            
+            <!-- Información Personal -->
+            <div class="mb-6">
+                <h3 class="text-lg font-semibold text-gray-800 mb-3 border-b pb-2">
+                    <i class="fas fa-user mr-2 text-blue-600"></i>Información Personal
+                </h3>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="md:col-span-2">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">
+                            Nombre Completo <span class="text-red-500">*</span>
+                        </label>
+                        <input type="text" name="full_name" required
+                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                               placeholder="Nombre y apellidos del paciente">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">
+                            Tipo de Identificación
+                        </label>
+                        <select name="identification_type"
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                            <option value="">Seleccionar...</option>
+                            <option value="CC">Cédula de Ciudadanía</option>
+                            <option value="CE">Cédula de Extranjería</option>
+                            <option value="TI">Tarjeta de Identidad</option>
+                            <option value="PA">Pasaporte</option>
+                            <option value="RC">Registro Civil</option>
+                            <option value="NIT">NIT</option>
+                            <option value="OTRO">Otro</option>
+                        </select>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">
+                            Número de Identificación
+                        </label>
+                        <input type="text" name="identification"
+                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                               placeholder="Número de documento">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">
+                            Fecha de Nacimiento
+                        </label>
+                        <input type="date" name="date_of_birth"
+                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">
+                            Género
+                        </label>
+                        <select name="gender"
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                            <option value="">Seleccionar...</option>
+                            <option value="M">Masculino</option>
+                            <option value="F">Femenino</option>
+                            <option value="O">Otro</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Información de Contacto -->
+            <div class="mb-6">
+                <h3 class="text-lg font-semibold text-gray-800 mb-3 border-b pb-2">
+                    <i class="fas fa-phone mr-2 text-green-600"></i>Información de Contacto
+                </h3>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">
+                            Teléfono <span class="text-red-500">*</span>
+                        </label>
+                        <input type="tel" name="phone_number" required
+                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                               placeholder="300 123 4567">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">
+                            Email
+                        </label>
+                        <input type="email" name="email"
+                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                               placeholder="correo@ejemplo.com">
+                    </div>
+                    
+                    <div class="md:col-span-2">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">
+                            Dirección
+                        </label>
+                        <input type="text" name="address"
+                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                               placeholder="Calle, número, barrio">
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Información Médica -->
+            <div class="mb-6">
+                <h3 class="text-lg font-semibold text-gray-800 mb-3 border-b pb-2">
+                    <i class="fas fa-notes-medical mr-2 text-red-600"></i>Información Médica
+                </h3>
+                
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">
+                            Alergias
+                        </label>
+                        <textarea name="allergies" rows="2"
+                                  class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                  placeholder="Ej: Penicilina, Polen..."></textarea>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">
+                            Condiciones Médicas
+                        </label>
+                        <textarea name="medical_conditions" rows="2"
+                                  class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                  placeholder="Ej: Diabetes, Hipertensión..."></textarea>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">
+                            Medicamentos Actuales
+                        </label>
+                        <textarea name="current_medications" rows="2"
+                                  class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                  placeholder="Ej: Metformina, Aspirina..."></textarea>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Botones -->
+            <div class="flex gap-3 pt-4 border-t">
+                <button type="submit" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg transition-colors font-medium">
+                    <i class="fas fa-save mr-2"></i>Guardar Paciente
+                </button>
+                <button type="button" onclick="closeCreatePatientModal()" 
+                        class="px-6 py-3 bg-gray-300 hover:bg-gray-400 text-gray-700 rounded-lg transition-colors font-medium">
+                    <i class="fas fa-times mr-2"></i>Cancelar
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+// Funciones para el modal
+function openCreatePatientModal() {
+    const modal = document.getElementById('createPatientModal');
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+}
+
+function closeCreatePatientModal() {
+    const modal = document.getElementById('createPatientModal');
+    modal.classList.add('hidden');
+    modal.classList.remove('flex');
+    document.getElementById('createPatientForm').reset();
+}
+
+function savePatient(event) {
+    event.preventDefault();
+    
+    const form = event.target;
+    const formData = new FormData(form);
+    
+    fetch('{% url "dashboard:patient_create" %}', {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': '{{ csrf_token }}'
+        },
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            Toast.success('Paciente creado exitosamente');
+            closeCreatePatientModal();
+            // Redirigir al detalle del paciente
+            setTimeout(() => {
+                window.location.href = `/dashboard/patients/${data.patient_id}/`;
+            }, 1500);
+        } else {
+            Toast.error(data.message || 'Error al crear el paciente');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        Toast.error('Error al crear el paciente');
+    });
+}
+
+// Cerrar modal al hacer clic fuera
+document.addEventListener('click', function(event) {
+    const modal = document.getElementById('createPatientModal');
+    if (event.target === modal) {
+        closeCreatePatientModal();
+    }
+});
+</script>
 {% endblock %}

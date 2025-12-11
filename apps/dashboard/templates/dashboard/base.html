@@ -221,7 +221,7 @@
                 
                 <!-- Gestión de Citas (Menú Desplegable) -->
                 <div class="appointments-menu">
-                    <button onclick="toggleSubmenu('appointments-submenu')" class="flex items-center justify-between w-full px-4 py-3 hover:bg-indigo-800 {% if 'appointments' in request.path or 'calendar' in request.path or 'configuration' in request.path %}bg-indigo-800{% endif %} relative">
+                    <button onclick="toggleSubmenu('appointments-submenu')" class="flex items-center justify-between w-full px-4 py-3 hover:bg-indigo-800 {% if 'appointments' in request.path or 'configuration' in request.path %}bg-indigo-800{% endif %} relative">
                         <div class="flex items-center">
                             <i class="fas fa-calendar-check mr-3"></i>
                             <span class="sidebar-text">Gestión de Citas</span>
@@ -230,20 +230,15 @@
                         <span class="sidebar-tooltip">Gestión de Citas</span>
                     </button>
                     <div id="appointments-submenu" class="bg-indigo-950 hidden sidebar-submenu">
-                        <a href="{% url 'dashboard:appointments_list' %}" class="flex items-center px-8 py-2 hover:bg-indigo-800 text-sm {% if 'appointments' in request.path and 'calendar' not in request.path %}bg-indigo-800{% endif %} relative">
+                        <a href="{% url 'dashboard:appointments_list' %}" class="flex items-center px-8 py-2 hover:bg-indigo-800 text-sm {% if 'appointments' in request.path %}bg-indigo-800{% endif %} relative">
                             <i class="fas fa-list mr-3"></i>
                             <span class="sidebar-text">Lista de Citas</span>
                             <span class="sidebar-tooltip">Lista de Citas</span>
                         </a>
-                        <a href="{% url 'dashboard:calendar' %}" class="flex items-center px-8 py-2 hover:bg-indigo-800 text-sm {% if 'calendar' in request.path %}bg-indigo-800{% endif %} relative">
-                            <i class="fas fa-calendar mr-3"></i>
-                            <span class="sidebar-text">Calendario</span>
-                            <span class="sidebar-tooltip">Calendario</span>
-                        </a>
                         <a href="{% url 'dashboard:configuration' %}" class="flex items-center px-8 py-2 hover:bg-indigo-800 text-sm {% if 'configuration' in request.path and 'notifications' not in request.path %}bg-indigo-800{% endif %} relative">
-                            <i class="fas fa-clock mr-3"></i>
-                            <span class="sidebar-text">Horarios y Fechas</span>
-                            <span class="sidebar-tooltip">Horarios y Fechas</span>
+                            <i class="fas fa-calendar-plus mr-3"></i>
+                            <span class="sidebar-text">Agendamiento de Citas</span>
+                            <span class="sidebar-tooltip">Agendamiento de Citas</span>
                         </a>
                     </div>
                 </div>

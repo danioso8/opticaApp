@@ -321,6 +321,85 @@ def appointment_detail(request, pk):
 
 
 @login_required
+def appointment_edit(request, pk):
+    """Editar fecha/hora de una cita"""
+    from datetime import datetime
+    from apps.appointments.utils import check_slot_availability
+    
+    appointment = get_object_or_404(Appointment, pk=pk)
+    
+    if request.method == 'POST':
+        try:
+            new_date_str = request.POST.get('appointment_date')
+            new_time_str = request.POST.get('appointment_time')
+            notes = request.POST.get('notes', '')
+            
+            if not new_date_str or not new_time_str:
+                return JsonResponse({
+                    'success': False,
+                    'message': 'Fecha y hora son requeridas'
+                }, status=400)
+            
+            # Convertir strings a objetos date y time
+            new_date = datetime.strptime(new_date_str, '%Y-%m-%d').date()
+            new_time = datetime.strptime(new_time_str, '%H:%M').time()
+            
+            # Verificar disponibilidad solo si cambió la fecha u hora
+            if new_date != appointment.appointment_date or new_time != appointment.appointment_time:
+                # Verificar que no haya otra cita en ese horario
+                conflicting_appointment = Appointment.objects.filter(
+                    organization=appointment.organization,
+                    appointment_date=new_date,
+                    appointment_time=new_time,
+                    status__in=['pending', 'confirmed']
+                ).exclude(pk=pk).exists()
+                
+                if conflicting_appointment:
+                    return JsonResponse({
+                        'success': False,
+                        'message': 'Ya existe una cita confirmada en esa fecha y hora'
+                    }, status=400)
+            
+            # Actualizar la cita
+            old_date = appointment.appointment_date
+            old_time = appointment.appointment_time
+            
+            appointment.appointment_date = new_date
+            appointment.appointment_time = new_time
+            if notes:
+                appointment.notes = notes
+            appointment.save()
+            
+            # Notificar cambio
+            notify_appointment_updated(appointment)
+            
+            # Enviar notificación al paciente sobre el cambio
+            try:
+                from apps.appointments.notifications import notify_appointment_rescheduled
+                notify_appointment_rescheduled(appointment, old_date, old_time)
+            except:
+                pass
+            
+            return JsonResponse({
+                'success': True,
+                'message': f'Cita reagendada para {new_date.strftime("%d/%m/%Y")} a las {new_time.strftime("%H:%M")}'
+            })
+            
+        except ValueError as e:
+            return JsonResponse({
+                'success': False,
+                'message': 'Formato de fecha u hora inválido'
+            }, status=400)
+        except Exception as e:
+            return JsonResponse({
+                'success': False,
+                'message': f'Error al editar la cita: {str(e)}'
+            }, status=500)
+    
+    return JsonResponse({'success': False}, status=405)
+
+
+@login_required
 def appointment_change_status(request, pk):
     """Cambiar estado de una cita (AJAX)"""
     if request.method == 'POST':

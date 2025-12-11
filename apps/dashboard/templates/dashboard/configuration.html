@@ -1,165 +1,17 @@
 {% extends 'dashboard/base.html' %}
 
-{% block title %}Configuración{% endblock %}
+{% block title %}Agendamiento de Citas{% endblock %}
 
-{% block page_title %}Configuración del Sistema{% endblock %}
-{% block page_subtitle %}Gestiona horarios, fechas bloqueadas y configuración general{% endblock %}
+{% block page_title %}Agendamiento de Citas{% endblock %}
+{% block page_subtitle %}Gestiona horarios específicos por fecha y doctores{% endblock %}
 
 {% block content %}
 {% csrf_token %}
-<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-    <!-- Configuración General -->
-    <div class="bg-white rounded-lg shadow p-6">
-        <div class="flex items-center justify-between mb-4">
-            <h3 class="text-lg font-semibold text-gray-800">
-                <i class="fas fa-cog mr-2 text-indigo-600"></i>
-                Configuración General
-            </h3>
-            <button onclick="showEditConfigModal()" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition text-sm">
-                <i class="fas fa-edit mr-1"></i>Editar
-            </button>
-        </div>
-        
-        <div class="space-y-4">
-            <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-                <div>
-                    <p class="font-semibold text-gray-800">Sistema de Agendamiento</p>
-                    <p class="text-sm text-gray-600">
-                        Estado: 
-                        <span class="font-semibold {% if config.is_open %}text-green-600{% else %}text-red-600{% endif %}">
-                            {% if config.is_open %}Abierto{% else %}Cerrado{% endif %}
-                        </span>
-                    </p>
-                </div>
-                <button onclick="toggleSystem()" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition">
-                    {% if config.is_open %}
-                    <i class="fas fa-lock mr-1"></i>Cerrar
-                    {% else %}
-                    <i class="fas fa-lock-open mr-1"></i>Abrir
-                    {% endif %}
-                </button>
-            </div>
-            
-            <div class="p-4 bg-gray-50 rounded-lg">
-                <p class="font-semibold text-gray-800 mb-2">Duración de Citas</p>
-                <p class="text-2xl font-bold text-indigo-600" id="display_slot_duration">{{ config.slot_duration }} minutos</p>
-            </div>
-            
-            <div class="p-4 bg-gray-50 rounded-lg">
-                <p class="font-semibold text-gray-800 mb-2">Máximo de Citas Diarias</p>
-                <p class="text-2xl font-bold text-indigo-600" id="display_max_appointments">{{ config.max_daily_appointments }}</p>
-            </div>
-            
-            <div class="p-4 bg-gray-50 rounded-lg">
-                <p class="font-semibold text-gray-800 mb-2">Días de Anticipación</p>
-                <p class="text-2xl font-bold text-indigo-600" id="display_advance_days">{{ config.advance_booking_days }} días</p>
-            </div>
-            
-            <div class="p-4 border-2 border-green-200 bg-green-50 rounded-lg hover:bg-green-100 transition">
-                <a href="{% url 'dashboard:notification_settings' %}" class="block">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <p class="font-semibold text-gray-800 flex items-center">
-                                <i class="fab fa-whatsapp text-green-600 mr-2"></i>
-                                Configuración de Notificaciones
-                            </p>
-                            <p class="text-sm text-gray-600 mt-1">
-                                WhatsApp (Twilio), Email y más
-                            </p>
-                        </div>
-                        <i class="fas fa-chevron-right text-gray-400"></i>
-                    </div>
-                </a>
-            </div>
-            
-            <div class="p-4 border-2 border-blue-200 bg-blue-50 rounded-lg hover:bg-blue-100 transition">
-                <a href="{% url 'dashboard:clinical_parameters' %}" class="block">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <p class="font-semibold text-gray-800 flex items-center">
-                                <i class="fas fa-pills text-blue-600 mr-2"></i>
-                                Parámetros Clínicos
-                            </p>
-                            <p class="text-sm text-gray-600 mt-1">
-                                Medicamentos, diagnósticos, lentes y más
-                            </p>
-                        </div>
-                        <i class="fas fa-chevron-right text-gray-400"></i>
-                    </div>
-                </a>
-            </div>
-            
-            <div class="p-4 border-2 border-purple-200 bg-purple-50 rounded-lg hover:bg-purple-100 transition">
-                <a href="{% url 'dashboard:landing_page_config' %}" class="block">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <p class="font-semibold text-gray-800 flex items-center">
-                                <i class="fas fa-palette text-purple-600 mr-2"></i>
-                                Personalización Landing
-                            </p>
-                            <p class="text-sm text-gray-600 mt-1">
-                                Diseño, colores, contenidos y más
-                            </p>
-                        </div>
-                        <i class="fas fa-chevron-right text-gray-400"></i>
-                    </div>
-                </a>
-            </div>
-        </div>
-    </div>
-    
-    <!-- Horarios de Atención -->
-    <div class="bg-white rounded-lg shadow p-6">
-        <div class="flex items-center justify-between mb-4">
-            <h3 class="text-lg font-semibold text-gray-800">
-                <i class="fas fa-clock mr-2 text-indigo-600"></i>
-                Horarios de Atención
-            </h3>
-            <button onclick="showWorkingHoursModal()" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition text-sm">
-                <i class="fas fa-plus mr-1"></i>Agregar Horario
-            </button>
-        </div>
-        
-        <div class="space-y-3">
-            {% if working_hours %}
-                {% for wh in working_hours %}
-                <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition">
-                    <div class="flex items-center">
-                        <div class="w-10 h-10 bg-indigo-100 rounded-full flex items-center justify-center mr-3">
-                            <i class="fas fa-calendar-day text-indigo-600"></i>
-                        </div>
-                        <div>
-                            <p class="font-semibold text-gray-800">{{ wh.get_day_of_week_display }}</p>
-                            <p class="text-sm text-gray-600">
-                                {{ wh.start_time|time:"H:i" }} - {{ wh.end_time|time:"H:i" }}
-                            </p>
-                        </div>
-                    </div>
-                    <div class="flex items-center space-x-2">
-                        <button onclick="toggleWorkingHour({{ wh.id }})" class="p-2 rounded hover:bg-gray-200">
-                            <i class="fas fa-{% if wh.is_active %}toggle-on text-green-600{% else %}toggle-off text-gray-400{% endif %} text-xl"></i>
-                        </button>
-                        <button onclick="deleteWorkingHour({{ wh.id }})" class="p-2 text-red-600 hover:bg-red-50 rounded">
-                            <i class="fas fa-trash"></i>
-                        </button>
-                    </div>
-                </div>
-                {% endfor %}
-            {% else %}
-                <div class="text-center py-8 text-gray-500">
-                    <i class="fas fa-clock text-4xl mb-3"></i>
-                    <p>No hay horarios configurados</p>
-                    <p class="text-sm mt-2">Agrega horarios para habilitar el agendamiento</p>
-                </div>
-            {% endif %}
-        </div>
-    </div>
-</div>
 
 <!-- Horarios Específicos por Fecha -->
-<div class="mt-6 bg-white rounded-lg shadow p-6">
-    <div class="flex items-center justify-between mb-4">
-        <h3 class="text-lg font-semibold text-gray-800">
+<div class="bg-white rounded-lg shadow p-6">
+    <div class="flex items-center justify-between mb-6">
+        <h3 class="text-xl font-bold text-gray-800">
             <i class="fas fa-calendar-plus mr-2 text-emerald-600"></i>
             Horarios Específicos por Fecha
         </h3>
@@ -209,127 +61,15 @@
         {% endfor %}
     </div>
     {% else %}
-    <div class="text-center py-8 text-gray-500">
-        <i class="fas fa-calendar-times text-4xl mb-3"></i>
-        <p>No hay fechas específicas configuradas</p>
-        <p class="text-sm mt-2">Agrega fechas específicas con horarios para habilitar el agendamiento</p>
-    </div>
-    {% endif %}
-</div>
-
-<!-- Fechas Bloqueadas -->
-<div class="mt-6 bg-white rounded-lg shadow p-6">
-    <div class="flex items-center justify-between mb-4">
-        <h3 class="text-lg font-semibold text-gray-800">
-            <i class="fas fa-ban mr-2 text-red-600"></i>
-            Fechas Bloqueadas
-        </h3>
-        <button onclick="showBlockDateModal()" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition">
-            <i class="fas fa-plus mr-1"></i>Bloquear Fecha
+    <div class="text-center py-12">
+        <i class="fas fa-calendar-times text-gray-400 text-5xl mb-4"></i>
+        <p class="text-gray-600 font-semibold mb-2">No hay fechas específicas configuradas</p>
+        <p class="text-sm text-gray-500 mb-4">Agrega fechas específicas con horarios para habilitar el agendamiento</p>
+        <button onclick="showSpecificDateModal()" class="px-6 py-3 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition">
+            <i class="fas fa-plus mr-2"></i>Agregar Primera Fecha
         </button>
     </div>
-    
-    {% if blocked_dates %}
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {% for bd in blocked_dates %}
-        <div class="p-4 border-l-4 border-red-500 bg-red-50 rounded-lg">
-            <div class="flex items-start justify-between">
-                <div>
-                    <p class="font-semibold text-gray-800">{{ bd.date|date:"d/m/Y" }}</p>
-                    <p class="text-sm text-gray-600 mt-1">{{ bd.reason }}</p>
-                </div>
-                <button class="text-red-600 hover:text-red-800">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
-        </div>
-        {% endfor %}
-    </div>
-    {% else %}
-    <div class="text-center py-8 text-gray-500">
-        <i class="fas fa-calendar-check text-4xl mb-3"></i>
-        <p>No hay fechas bloqueadas</p>
-    </div>
     {% endif %}
-</div>
-
-<!-- Modal para Agregar Horario -->
-<div id="working-hours-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-    <div class="bg-white rounded-lg p-8 max-w-md w-full">
-        <h3 class="text-xl font-semibold text-gray-800 mb-4">
-            <i class="fas fa-clock mr-2 text-indigo-600"></i>
-            Agregar Horario de Atención
-        </h3>
-        
-        <form id="working-hours-form" onsubmit="saveWorkingHour(event)">
-            <div class="mb-4">
-                <label class="block text-sm font-medium text-gray-700 mb-2">Día de la semana</label>
-                <select 
-                    name="day_of_week" 
-                    required
-                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500"
-                >
-                    <option value="">Selecciona un día</option>
-                    <option value="0">Lunes</option>
-                    <option value="1">Martes</option>
-                    <option value="2">Miércoles</option>
-                    <option value="3">Jueves</option>
-                    <option value="4">Viernes</option>
-                    <option value="5">Sábado</option>
-                    <option value="6">Domingo</option>
-                </select>
-            </div>
-            
-            <div class="grid grid-cols-2 gap-4 mb-4">
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Hora inicio</label>
-                    <input 
-                        type="time" 
-                        name="start_time" 
-                        required
-                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500"
-                    >
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Hora fin</label>
-                    <input 
-                        type="time" 
-                        name="end_time" 
-                        required
-                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500"
-                    >
-                </div>
-            </div>
-            
-            <div class="mb-6">
-                <label class="flex items-center">
-                    <input 
-                        type="checkbox" 
-                        name="is_active" 
-                        checked
-                        class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
-                    >
-                    <span class="ml-2 text-sm text-gray-700">Activar horario inmediatamente</span>
-                </label>
-            </div>
-            
-            <div class="flex justify-end space-x-3">
-                <button 
-                    type="button" 
-                    onclick="hideWorkingHoursModal()" 
-                    class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition"
-                >
-                    Cancelar
-                </button>
-                <button 
-                    type="submit" 
-                    class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition"
-                >
-                    <i class="fas fa-save mr-1"></i>Guardar
-                </button>
-            </div>
-        </form>
-    </div>
 </div>
 
 <!-- Modal para Agregar Horario Específico -->
@@ -559,114 +299,6 @@
     </div>
 </div>
 
-<!-- Modal para Bloquear Fecha -->
-<div id="block-date-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-    <div class="bg-white rounded-lg p-8 max-w-md w-full">
-        <h3 class="text-xl font-semibold text-gray-800 mb-4">Bloquear Fecha</h3>
-        
-        <form id="block-date-form" onsubmit="blockDate(event)">
-            <div class="mb-4">
-                <label class="block text-sm font-medium text-gray-700 mb-2">Fecha</label>
-                <input 
-                    type="date" 
-                    name="date" 
-                    required
-                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500"
-                >
-            </div>
-            
-            <div class="mb-6">
-                <label class="block text-sm font-medium text-gray-700 mb-2">Motivo</label>
-                <input 
-                    type="text" 
-                    name="reason" 
-                    placeholder="Ej: Festivo, Vacaciones"
-                    required
-                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500"
-                >
-            </div>
-            
-            <div class="flex justify-end space-x-3">
-                <button 
-                    type="button" 
-                    onclick="hideBlockDateModal()" 
-                    class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition"
-                >
-                    Cancelar
-                </button>
-                <button 
-                    type="submit" 
-                    class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition"
-                >
-                    Bloquear
-                </button>
-            </div>
-        </form>
-    </div>
-</div>
-
-<!-- Modal Editar Configuración -->
-<div id="edit-config-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50">
-    <div class="absolute right-0 top-0 h-full bg-white shadow-2xl max-w-md w-full overflow-y-auto transform transition-transform duration-300 translate-x-full" id="edit-config-panel">
-        <div class="bg-blue-600 text-white px-6 py-4 rounded-t-lg flex justify-between items-center">
-            <h3 class="text-lg font-bold">
-                <i class="fas fa-edit mr-2"></i>Editar Configuración General
-            </h3>
-            <button onclick="hideEditConfigModal()" class="text-white hover:text-gray-200">
-                <i class="fas fa-times text-xl"></i>
-            </button>
-        </div>
-        
-        <form onsubmit="updateGeneralConfig(event)" class="p-6">
-            {% csrf_token %}
-            
-            <div class="space-y-4">
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">
-                        <i class="fas fa-clock mr-1 text-indigo-600"></i>
-                        Duración de Citas (minutos) <span class="text-red-500">*</span>
-                    </label>
-                    <input type="number" name="slot_duration" value="{{ config.slot_duration }}" required min="5" max="120"
-                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                           placeholder="Ej: 30">
-                    <p class="text-xs text-gray-500 mt-1">Tiempo asignado para cada cita</p>
-                </div>
-                
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">
-                        <i class="fas fa-users mr-1 text-indigo-600"></i>
-                        Máximo de Citas Diarias <span class="text-red-500">*</span>
-                    </label>
-                    <input type="number" name="max_daily_appointments" value="{{ config.max_daily_appointments }}" required min="1" max="100"
-                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                           placeholder="Ej: 20">
-                    <p class="text-xs text-gray-500 mt-1">Número máximo de citas por día</p>
-                </div>
-                
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">
-                        <i class="fas fa-calendar-alt mr-1 text-indigo-600"></i>
-                        Días de Anticipación <span class="text-red-500">*</span>
-                    </label>
-                    <input type="number" name="advance_booking_days" value="{{ config.advance_booking_days }}" required min="1" max="365"
-                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                           placeholder="Ej: 30">
-                    <p class="text-xs text-gray-500 mt-1">Con cuántos días de anticipación se pueden agendar citas</p>
-                </div>
-            </div>
-            
-            <div class="flex gap-3 mt-6">
-                <button type="submit" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg transition-colors font-medium">
-                    <i class="fas fa-save mr-2"></i>Guardar Cambios
-                </button>
-                <button type="button" onclick="hideEditConfigModal()" class="px-6 py-3 bg-gray-300 hover:bg-gray-400 text-gray-700 rounded-lg transition-colors font-medium">
-                    <i class="fas fa-times mr-2"></i>Cancelar
-                </button>
-            </div>
-        </form>
-    </div>
-</div>
-
 {% endblock %}
 
 {% block extra_js %}
@@ -675,103 +307,6 @@
 function getCsrfToken() {
     const token = document.querySelector('[name=csrfmiddlewaretoken]');
     return token ? token.value : '';
-}
-
-// ==================== HORARIOS DE ATENCIÓN ====================
-function showWorkingHoursModal() {
-    document.getElementById('working-hours-modal').classList.remove('hidden');
-}
-
-function hideWorkingHoursModal() {
-    document.getElementById('working-hours-modal').classList.add('hidden');
-    document.getElementById('working-hours-form').reset();
-}
-
-function saveWorkingHour(event) {
-    event.preventDefault();
-    
-    const form = event.target;
-    const formData = new FormData(form);
-    const csrftoken = getCsrfToken();
-    
-    fetch('{% url "dashboard:add_working_hour" %}', {
-        method: 'POST',
-        headers: {
-            'X-CSRFToken': csrftoken
-        },
-        body: formData
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            Toast.success('Horario agregado exitosamente');
-            setTimeout(() => location.reload(), 1500);
-        } else {
-            Toast.error(data.message || 'Error al agregar horario');
-        }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        Toast.error('Error al guardar el horario');
-    });
-}
-
-function toggleWorkingHour(id) {
-    const csrftoken = getCsrfToken();
-    
-    fetch(`{% url "dashboard:toggle_working_hour" 0 %}`.replace('0', id), {
-        method: 'POST',
-        headers: {
-            'X-CSRFToken': csrftoken,
-            'Content-Type': 'application/json'
-        }
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            Toast.success('Estado actualizado');
-            setTimeout(() => location.reload(), 1000);
-        } else {
-            Toast.error(data.message || 'Error al cambiar estado');
-        }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        Toast.error('Error al cambiar el estado del horario');
-    });
-}
-
-async function deleteWorkingHour(id) {
-    const confirmed = await Confirm.show(
-        'Este horario se eliminará permanentemente y no se podrá recuperar.',
-        '¿Eliminar horario?',
-        'Eliminar',
-        'Cancelar'
-    );
-    if (!confirmed) return;
-    
-    const csrftoken = getCsrfToken();
-    
-    fetch(`{% url "dashboard:delete_working_hour" 0 %}`.replace('0', id), {
-        method: 'DELETE',
-        headers: {
-            'X-CSRFToken': csrftoken,
-            'Content-Type': 'application/json'
-        }
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            Toast.success('Horario eliminado');
-            setTimeout(() => location.reload(), 1500);
-        } else {
-            Toast.error(data.message || 'Error al eliminar horario');
-        }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        Toast.error('Error al eliminar el horario');
-    });
 }
 
 // ==================== HORARIOS ESPECÍFICOS ====================
@@ -858,6 +393,95 @@ async function deleteSpecificSchedule(scheduleId) {
         }
     })
     .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            Toast.success('Horario eliminado exitosamente');
+            setTimeout(() => location.reload(), 1500);
+        } else {
+            Toast.error(data.message || 'Error al eliminar el horario');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        Toast.error('Error al eliminar el horario');
+    });
+}
+
+function editSpecificSchedule(scheduleId) {
+    const csrftoken = getCsrfToken();
+    
+    // Obtener los datos del horario
+    fetch(`/dashboard/configuration/specific-schedule/${scheduleId}/edit/`, {
+        method: 'GET',
+        headers: {
+            'X-CSRFToken': csrftoken
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Llenar el formulario
+            document.getElementById('edit-schedule-id').value = scheduleId;
+            document.getElementById('edit-doctor').value = data.doctor_id;
+            document.getElementById('edit-date').value = data.date;
+            document.getElementById('edit-start-time').value = data.start_time;
+            document.getElementById('edit-end-time').value = data.end_time;
+            document.getElementById('edit-slot-duration').value = data.slot_duration;
+            document.getElementById('edit-notes').value = data.notes || '';
+            
+            // Mostrar modal
+            showEditSpecificDateModal();
+        } else {
+            Toast.error(data.message || 'Error al cargar el horario');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        Toast.error('Error al cargar el horario');
+    });
+}
+
+function showEditSpecificDateModal() {
+    document.getElementById('edit-specific-date-modal').classList.remove('hidden');
+}
+
+function hideEditSpecificDateModal() {
+    document.getElementById('edit-specific-date-modal').classList.add('hidden');
+    document.getElementById('edit-specific-date-form').reset();
+}
+
+function updateSpecificSchedule(event) {
+    event.preventDefault();
+    
+    const form = event.target;
+    const scheduleId = document.getElementById('edit-schedule-id').value;
+    const formData = new FormData(form);
+    const csrftoken = getCsrfToken();
+    
+    fetch(`/dashboard/configuration/specific-schedule/${scheduleId}/edit/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': csrftoken
+        },
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            Toast.success('Horario actualizado exitosamente');
+            hideEditSpecificDateModal();
+            setTimeout(() => location.reload(), 1500);
+        } else {
+            Toast.error(data.message || 'Error al actualizar el horario');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        Toast.error('Error al actualizar el horario');
+    });
+}
+</script>
+{% endblock %})
     .then(data => {
         if (data.success) {
             Toast.success('Horario eliminado exitosamente');

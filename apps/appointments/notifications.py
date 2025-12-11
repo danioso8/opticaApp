@@ -114,6 +114,72 @@ def notify_appointment_cancelled(appointment):
         return False
 
 
+def notify_appointment_rescheduled(appointment, old_date, old_time):
+    """
+    Notifica que una cita fue reagendada
+    Usa WhatsApp en local, Email en producción
+    
+    Args:
+        appointment: Objeto Appointment con los nuevos datos
+        old_date: Fecha anterior de la cita
+        old_time: Hora anterior de la cita
+    """
+    try:
+        # Obtener el notificador apropiado
+        notifier_instance = get_notifier(appointment.organization)
+        
+        # Formatear fechas y horas
+        old_date_str = old_date.strftime('%d/%m/%Y')
+        old_time_str = old_time.strftime('%H:%M')
+        new_date_str = appointment.appointment_date.strftime('%d/%m/%Y')
+        new_time_str = appointment.appointment_time.strftime('%H:%M')
+        
+        # Preparar mensaje
+        message = f"""
+📅 CITA REAGENDADA - {appointment.organization.name if appointment.organization else 'OCEANO OPTICO'}
+
+Hola {appointment.full_name},
+
+Su cita ha sido REAGENDADA:
+
+❌ Cita Anterior:
+   📆 {old_date_str}
+   🕒 {old_time_str}
+
+✅ Nueva Cita:
+   📆 {new_date_str}
+   🕒 {new_time_str}
+
+Por favor, confirme su asistencia en el nuevo horario.
+
+Si tiene alguna duda, contáctenos.
+        """.strip()
+        
+        # Intentar enviar por WhatsApp o Email según configuración
+        if hasattr(notifier_instance, 'send_message'):
+            # Es un notificador de WhatsApp
+            phone = appointment.phone_number
+            if not phone.startswith('+'):
+                phone = '+' + phone
+            return notifier_instance.send_message(phone, message)
+        elif hasattr(notifier_instance, 'send_email'):
+            # Es un notificador de Email
+            if appointment.email:
+                subject = 'Cita Reagendada - ' + (appointment.organization.name if appointment.organization else 'OCEANO OPTICO')
+                return notifier_instance.send_email(
+                    appointment.email,
+                    subject,
+                    message
+                )
+        
+        logger.warning(f"No se pudo enviar notificación de reagendamiento para cita {appointment.id}")
+        return False
+        
+    except Exception as e:
+        logger.error(f"Error al enviar notificación de reagendamiento: {e}")
+        return False
+
+
 def send_test_notification(phone_or_email, method='auto'):
     """
     Envía una notificación de prueba
