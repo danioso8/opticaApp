@@ -47,10 +47,12 @@ class EmailVerificationMiddleware:
                 if not profile.is_email_verified:
                     # No mostrar mensaje repetidamente si ya está en la página de verificación
                     if path != reverse('users:verification_pending'):
-                        messages.warning(
-                            request, 
-                            'Debes verificar tu correo electrónico para acceder a esta área.'
-                        )
+                        # Intentar agregar mensaje solo si el middleware de mensajes ya se ejecutó
+                        if hasattr(request, '_messages'):
+                            messages.warning(
+                                request, 
+                                'Debes verificar tu correo electrónico para acceder a esta área.'
+                            )
                     return redirect('users:verification_pending')
         
         response = self.get_response(request)
