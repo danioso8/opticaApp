@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Suscripción Confirmada</title>
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+        .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
+        .content { background: #f9fafb; padding: 30px; }
+        .box { background: white; border-radius: 8px; padding: 20px; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .button { display: inline-block; background: #667eea; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; margin-top: 20px; }
+        .footer { text-align: center; padding: 20px; color: #666; font-size: 12px; }
+        .success-icon { font-size: 48px; margin-bottom: 10px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="success-icon">✓</div>
+            <h1>¡Suscripción Activada!</h1>
+        </div>
+        
+        <div class="content">
+            <div class="box">
+                <h2>Hola {{ user.get_full_name|default:user.username }},</h2>
+                <p>Tu suscripción ha sido activada exitosamente. ¡Gracias por confiar en nosotros!</p>
+            </div>
+            
+            <div class="box">
+                <h3>Detalles de tu Suscripción</h3>
+                <table style="width: 100%; border-collapse: collapse;">
+                    <tr style="border-bottom: 1px solid #e5e7eb;">
+                        <td style="padding: 10px 0;"><strong>Plan:</strong></td>
+                        <td style="text-align: right;">{{ subscription.plan.name }}</td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid #e5e7eb;">
+                        <td style="padding: 10px 0;"><strong>Ciclo:</strong></td>
+                        <td style="text-align: right;">{{ subscription.get_billing_cycle_display }}</td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid #e5e7eb;">
+                        <td style="padding: 10px 0;"><strong>Inicio:</strong></td>
+                        <td style="text-align: right;">{{ subscription.start_date|date:"d/m/Y" }}</td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid #e5e7eb;">
+                        <td style="padding: 10px 0;"><strong>Vencimiento:</strong></td>
+                        <td style="text-align: right;">{{ subscription.end_date|date:"d/m/Y" }}</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 10px 0;"><strong>Monto:</strong></td>
+                        <td style="text-align: right; color: #16a34a; font-weight: bold;">${{ subscription.amount_paid|floatformat:0 }} COP</td>
+                    </tr>
+                </table>
+            </div>
+            
+            <div class="box">
+                <h3>Renovación Automática</h3>
+                <p>Tu suscripción se renovará automáticamente el <strong>{{ subscription.end_date|date:"d/m/Y" }}</strong> usando tu método de pago predeterminado.</p>
+                <p style="color: #666; font-size: 14px;">Puedes desactivar la renovación automática en cualquier momento desde tu panel de control.</p>
+            </div>
+            
+            <div style="text-align: center;">
+                <a href="{{ request.scheme }}://{{ request.get_host }}{% url 'users:subscription_status' %}" class="button">
+                    Ver Mi Suscripción
+                </a>
+            </div>
+        </div>
+        
+        <div class="footer">
+            <p>Si tienes alguna pregunta, no dudes en contactarnos.</p>
+            <p>&copy; {{ current_year }} OpticaApp. Todos los derechos reservados.</p>
+        </div>
+    </div>
+</body>
+</html>

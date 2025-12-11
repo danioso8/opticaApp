@@ -101,8 +101,8 @@ class SubscriptionMiddleware(MiddlewareMixin):
         '/dashboard/login/',
         '/dashboard/logout/',
         '/dashboard/register/',
-        '/organizations/register/',
-        '/organizations/subscription/',
+        '/organizations/',  # Permitir acceso a la lista de organizaciones
+        '/users/',  # Permitir acceso a checkout y pagos de Wompi
         '/subscription/expired/',
         '/subscription/plans/',
         '/subscription/checkout/',

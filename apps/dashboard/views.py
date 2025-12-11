@@ -19,7 +19,8 @@ from .views_clinical import (
     visual_exam_create,
     visual_exam_edit,
     visual_exam_detail,
-    visual_exam_pdf
+    visual_exam_pdf,
+    visual_exam_delete
 )
 
 from apps.appointments.models import (

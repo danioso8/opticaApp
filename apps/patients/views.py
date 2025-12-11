@@ -56,6 +56,8 @@ def patient_list(request):
 @login_required
 def patient_detail(request, pk):
     """Detalle de un paciente"""
+    from apps.users.models import User
+    
     org_filter = {'organization': request.organization} if hasattr(request, 'organization') and request.organization else {}
     patient = get_object_or_404(Patient, pk=pk, **org_filter)
     
@@ -70,6 +72,13 @@ def patient_detail(request, pk):
         status__in=['pending', 'confirmed']
     ).order_by('appointment_date', 'appointment_time')[:5]
     
+    # Obtener doctores de la organización
+    doctors = User.objects.filter(
+        **org_filter,
+        role__in=['doctor', 'admin'],
+        is_active=True
+    ).order_by('full_name')
+    
     context = {
         'patient': patient,
         'appointments': appointments[:10],  # Últimas 10
@@ -77,6 +86,7 @@ def patient_detail(request, pk):
         'total_appointments': total_appointments,
         'completed_appointments': completed_appointments,
         'cancelled_appointments': cancelled_appointments,
+        'doctors': doctors,
     }
     
     return render(request, 'dashboard/patients/detail.html', context)

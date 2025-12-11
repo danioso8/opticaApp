@@ -475,6 +475,12 @@
             const currentPath = window.location.pathname;
             const sidebar = document.getElementById('sidebar');
             
+            // Solo ejecutar si el sidebar existe (no en páginas de login)
+            if (!sidebar) {
+                console.log('Dashboard loaded');
+                return;
+            }
+            
             // Restaurar preferencia de mini sidebar
             const isMiniSaved = localStorage.getItem('miniSidebar') === 'true';
             if (isMiniSaved && window.innerWidth >= 768) {
@@ -490,37 +496,56 @@
             if (!sidebar.classList.contains('mini')) {
                 if (currentPath.includes('appointments') || currentPath.includes('calendar') || currentPath.includes('configuration')) {
                     const appointmentsSubmenu = document.getElementById('appointments-submenu');
-                    appointmentsSubmenu.classList.remove('hidden');
-                    document.getElementById('appointments-submenu-icon').classList.add('rotate-180');
+                    if (appointmentsSubmenu) {
+                        appointmentsSubmenu.classList.remove('hidden');
+                        const appointmentsIcon = document.getElementById('appointments-submenu-icon');
+                        if (appointmentsIcon) {
+                            appointmentsIcon.classList.add('rotate-180');
+                        }
+                    }
                 }
                 
                 // Submenu de Configuración
                 if (currentPath.includes('notifications') || currentPath.includes('landing-page') || currentPath.includes('clinical-parameters')) {
                     const configurationSubmenu = document.getElementById('configuration-submenu');
-                    configurationSubmenu.classList.remove('hidden');
-                    document.getElementById('configuration-submenu-icon').classList.add('rotate-180');
+                    if (configurationSubmenu) {
+                        configurationSubmenu.classList.remove('hidden');
+                        const configIcon = document.getElementById('configuration-submenu-icon');
+                        if (configIcon) {
+                            configIcon.classList.add('rotate-180');
+                        }
+                    }
                 }
             }
+            
+            console.log('Dashboard loaded');
         });
         
         // Cerrar sidebar al hacer click en un enlace (solo en móvil)
-        document.querySelectorAll('#sidebar a').forEach(link => {
-            link.addEventListener('click', function() {
-                if (window.innerWidth < 768) {
-                    toggleSidebar();
-                }
+        const sidebarLinks = document.querySelectorAll('#sidebar a');
+        if (sidebarLinks.length > 0) {
+            sidebarLinks.forEach(link => {
+                link.addEventListener('click', function() {
+                    if (window.innerWidth < 768) {
+                        toggleSidebar();
+                    }
+                });
             });
-        });
+        }
 
         // Toggle User Menu
         function toggleUserMenu() {
             const dropdown = document.getElementById('user-dropdown');
-            dropdown.classList.toggle('hidden');
+            if (dropdown) {
+                dropdown.classList.toggle('hidden');
+            }
         }
 
         function toggleMobileUserMenu() {
             const dropdown = document.getElementById('mobile-user-dropdown');
-            dropdown.classList.toggle('hidden');
+            if (dropdown) {
+                dropdown.classList.toggle('hidden');
+            }
         }
 
         // Cerrar los user menus al hacer click fuera

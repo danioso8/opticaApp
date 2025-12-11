@@ -648,6 +648,46 @@ document.addEventListener('keydown', function(e) {
                        value="{{ patient.full_name }}">
             </div>
             
+            <!-- Doctor y Duración -->
+            <div class="mb-6">
+                <h3 class="text-lg font-semibold text-gray-800 mb-3 border-b pb-2">
+                    <i class="fas fa-user-md mr-2 text-purple-600"></i>Información de la Cita
+                </h3>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            Doctor/Optómetra
+                        </label>
+                        <select name="doctor_id" id="appointment_doctor"
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                            <option value="">Sin asignar</option>
+                            {% if doctors %}
+                                {% for doctor in doctors %}
+                                <option value="{{ doctor.id }}">
+                                    {{ doctor.full_name }}{% if doctor.specialty %} - {{ doctor.get_specialty_display }}{% endif %}
+                                </option>
+                                {% endfor %}
+                            {% endif %}
+                        </select>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            Duración (minutos) <span class="text-red-500">*</span>
+                        </label>
+                        <select name="duration" id="appointment_duration" required
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                            <option value="30">30 minutos</option>
+                            <option value="45">45 minutos</option>
+                            <option value="60" selected>60 minutos (1 hora)</option>
+                            <option value="90">90 minutos (1.5 horas)</option>
+                            <option value="120">120 minutos (2 horas)</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
             <!-- Selector de Fecha y Hora -->
             <div class="mb-6">
                 <h3 class="text-lg font-semibold text-gray-800 mb-3 border-b pb-2">

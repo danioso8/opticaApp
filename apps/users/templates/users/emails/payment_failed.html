@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Error en el Pago</title>
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+        .header { background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
+        .content { background: #f9fafb; padding: 30px; }
+        .box { background: white; border-radius: 8px; padding: 20px; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .button { display: inline-block; background: #ef4444; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; margin-top: 20px; }
+        .footer { text-align: center; padding: 20px; color: #666; font-size: 12px; }
+        .error-icon { font-size: 48px; margin-bottom: 10px; }
+        .alert { background: #fee2e2; border-left: 4px solid #ef4444; padding: 15px; margin: 15px 0; border-radius: 4px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="error-icon">⚠️</div>
+            <h1>Error en el Pago</h1>
+        </div>
+        
+        <div class="content">
+            <div class="box">
+                <h2>Hola {{ user.get_full_name|default:user.username }},</h2>
+                <p>Hubo un problema al procesar tu pago.</p>
+            </div>
+            
+            <div class="alert">
+                <strong>Razón del rechazo:</strong><br>
+                {{ transaction.status_message|default:"La transacción no pudo ser completada" }}
+            </div>
+            
+            <div class="box">
+                <h3>¿Qué puedes hacer?</h3>
+                <ul>
+                    <li>Verifica que tu tarjeta tenga fondos suficientes</li>
+                    <li>Confirma que los datos de la tarjeta sean correctos</li>
+                    <li>Contacta a tu banco para autorizar el pago</li>
+                    <li>Intenta con otro método de pago</li>
+                </ul>
+            </div>
+            
+            <div class="box">
+                <h3>Detalles de la Transacción</h3>
+                <table style="width: 100%; border-collapse: collapse;">
+                    <tr style="border-bottom: 1px solid #e5e7eb;">
+                        <td style="padding: 10px 0;"><strong>ID:</strong></td>
+                        <td style="text-align: right;">{{ transaction.id }}</td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid #e5e7eb;">
+                        <td style="padding: 10px 0;"><strong>Monto:</strong></td>
+                        <td style="text-align: right;">${{ transaction.amount|floatformat:0 }} COP</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 10px 0;"><strong>Fecha:</strong></td>
+                        <td style="text-align: right;">{{ transaction.created_at|date:"d/m/Y H:i" }}</td>
+                    </tr>
+                </table>
+            </div>
+            
+            <div style="text-align: center;">
+                <a href="{{ request.scheme }}://{{ request.get_host }}{% url 'users:payment_methods' %}" class="button">
+                    Actualizar Método de Pago
+                </a>
+            </div>
+        </div>
+        
+        <div class="footer">
+            <p>Si necesitas ayuda, contáctanos a soporte@opticaapp.com</p>
+            <p>&copy; {{ current_year }} OpticaApp. Todos los derechos reservados.</p>
+        </div>
+    </div>
+</body>
+</html>

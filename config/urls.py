@@ -27,6 +27,9 @@ urlpatterns = [
     # Organizations URLs
     path('organizations/', include('apps.organizations.urls')),
     
+    # Users URLs (Payments & Subscriptions)
+    path('users/', include('apps.users.urls')),
+    
     # Dashboard URLs
     path('dashboard/', include('apps.dashboard.urls')),
     

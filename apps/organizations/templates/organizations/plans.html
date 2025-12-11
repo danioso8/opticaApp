@@ -210,10 +210,8 @@ function toggleBilling(type) {
 }
 
 function selectPlan(planId, planName) {
-    document.getElementById('selectedPlanName').textContent = planName;
-    document.getElementById('billingCycleInput').value = currentBilling;
-    document.getElementById('upgradePlanForm').action = `/organizations/subscription/upgrade/${planId}/`;
-    document.getElementById('confirmModal').classList.remove('hidden');
+    // Redirigir directamente al checkout de Wompi
+    window.location.href = `/users/subscription/checkout/${planId}/?cycle=${currentBilling}`;
 }
 
 function closeModal() {

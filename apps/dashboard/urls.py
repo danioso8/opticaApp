@@ -122,6 +122,7 @@ urlpatterns = [
     path('patients/<int:patient_id>/visual-exam/<int:history_id>/edit/', views.visual_exam_edit, name='visual_exam_edit'),
     path('patients/<int:patient_id>/visual-exam/<int:history_id>/', views.visual_exam_detail, name='visual_exam_detail'),
     path('patients/<int:patient_id>/visual-exam/<int:history_id>/pdf/', views.visual_exam_pdf, name='visual_exam_pdf'),
+    path('patients/<int:patient_id>/visual-exam/<int:history_id>/delete/', views.visual_exam_delete, name='visual_exam_delete'),
     
     # Calendario
     path('calendar/', views.calendar_view, name='calendar'),

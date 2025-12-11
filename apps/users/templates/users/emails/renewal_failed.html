@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>No se pudo Renovar tu Suscripción</title>
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+        .header { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
+        .content { background: #f9fafb; padding: 30px; }
+        .box { background: white; border-radius: 8px; padding: 20px; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .button { display: inline-block; background: #f59e0b; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; margin-top: 20px; }
+        .footer { text-align: center; padding: 20px; color: #666; font-size: 12px; }
+        .warning-icon { font-size: 48px; margin-bottom: 10px; }
+        .alert { background: #fef3c7; border-left: 4px solid #f59e0b; padding: 15px; margin: 15px 0; border-radius: 4px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="warning-icon">⚠️</div>
+            <h1>Renovación Fallida</h1>
+        </div>
+        
+        <div class="content">
+            <div class="box">
+                <h2>Hola {{ user.get_full_name|default:user.username }},</h2>
+                <p>Intentamos renovar tu suscripción automáticamente, pero no pudimos procesar el pago.</p>
+            </div>
+            
+            <div class="alert">
+                <strong>Razón:</strong><br>
+                {{ error_message }}
+            </div>
+            
+            <div class="box">
+                <h3>Estado de tu Suscripción</h3>
+                <table style="width: 100%; border-collapse: collapse;">
+                    <tr style="border-bottom: 1px solid #e5e7eb;">
+                        <td style="padding: 10px 0;"><strong>Plan:</strong></td>
+                        <td style="text-align: right;">{{ subscription.plan.name }}</td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid #e5e7eb;">
+                        <td style="padding: 10px 0;"><strong>Fecha de Vencimiento:</strong></td>
+                        <td style="text-align: right; color: #dc2626; font-weight: bold;">{{ subscription.end_date|date:"d/m/Y" }}</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 10px 0;"><strong>Días Restantes:</strong></td>
+                        <td style="text-align: right;">{{ subscription.days_remaining }} días</td>
+                    </tr>
+                </table>
+            </div>
+            
+            <div class="box">
+                <h3>Acción Requerida</h3>
+                <p><strong>Para evitar la interrupción del servicio, por favor:</strong></p>
+                <ol>
+                    <li>Verifica que tu método de pago esté vigente</li>
+                    <li>Asegúrate de tener fondos suficientes</li>
+                    <li>Actualiza tu información de pago si es necesario</li>
+                </ol>
+                <p style="color: #dc2626; font-weight: bold;">Si no actualizas tu método de pago antes del vencimiento, tu suscripción será suspendida.</p>
+            </div>
+            
+            <div style="text-align: center;">
+                <a href="{{ request.scheme }}://{{ request.get_host }}{% url 'users:payment_methods' %}" class="button">
+                    Actualizar Método de Pago
+                </a>
+            </div>
+        </div>
+        
+        <div class="footer">
+            <p>¿Necesitas ayuda? Contáctanos a soporte@opticaapp.com</p>
+            <p>&copy; {{ current_year }} OpticaApp. Todos los derechos reservados.</p>
+        </div>
+    </div>
+</body>
+</html>

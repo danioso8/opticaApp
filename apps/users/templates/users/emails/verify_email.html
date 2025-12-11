@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verifica tu correo electrónico</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            max-width: 600px;
+            margin: 20px auto;
+            background: #fff;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #fff;
+            padding: 30px;
+            text-align: center;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 28px;
+        }
+        .content {
+            padding: 40px 30px;
+        }
+        .content h2 {
+            color: #667eea;
+            margin-top: 0;
+        }
+        .button {
+            display: inline-block;
+            padding: 15px 40px;
+            margin: 20px 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #fff !important;
+            text-decoration: none;
+            border-radius: 5px;
+            font-weight: bold;
+            text-align: center;
+        }
+        .button:hover {
+            opacity: 0.9;
+        }
+        .footer {
+            background: #f8f9fa;
+            padding: 20px;
+            text-align: center;
+            font-size: 12px;
+            color: #666;
+            border-top: 1px solid #e9ecef;
+        }
+        .info-box {
+            background: #f8f9fa;
+            border-left: 4px solid #667eea;
+            padding: 15px;
+            margin: 20px 0;
+        }
+        .link-box {
+            background: #f8f9fa;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 5px;
+            word-break: break-all;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔐 OpticaApp</h1>
+        </div>
+        
+        <div class="content">
+            <h2>¡Bienvenido, {{ user.first_name|default:user.username }}!</h2>
+            
+            <p>Gracias por registrarte en OpticaApp. Para completar tu registro y acceder a tu cuenta, necesitamos verificar tu correo electrónico.</p>
+            
+            <div style="text-align: center; margin: 30px 0;">
+                <a href="{{ verification_url }}" class="button">
+                    ✓ Verificar mi correo electrónico
+                </a>
+            </div>
+            
+            <div class="info-box">
+                <strong>⏰ Importante:</strong> Este enlace expirará en 24 horas por razones de seguridad.
+            </div>
+            
+            <p>Si el botón no funciona, copia y pega el siguiente enlace en tu navegador:</p>
+            
+            <div class="link-box">
+                <small>{{ verification_url }}</small>
+            </div>
+            
+            <p><strong>¿No solicitaste esta verificación?</strong><br>
+            Si no creaste una cuenta en OpticaApp, puedes ignorar este correo de forma segura.</p>
+        </div>
+        
+        <div class="footer">
+            <p>Este correo fue enviado desde {{ site_name }}</p>
+            <p>Por favor no respondas a este correo. Este buzón no es monitoreado.</p>
+            <p>&copy; 2024 OpticaApp. Todos los derechos reservados.</p>
+        </div>
+    </div>
+</body>
+</html>

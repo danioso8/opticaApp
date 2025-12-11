@@ -21,6 +21,8 @@ def organization_list(request):
     current_count = 0
     max_allowed = 0
     
+    has_unlimited_access = False
+    
     try:
         from apps.users.models import UserSubscription
         user_subscription = UserSubscription.objects.get(user=request.user)
@@ -32,7 +34,6 @@ def organization_list(request):
         has_unlimited_access = user_subscription.end_date.year >= 2125
     except UserSubscription.DoesNotExist:
         pass
-        has_unlimited_access = False
     
     context = {
         'memberships': memberships,
@@ -414,13 +415,21 @@ def user_register(request):
         
         try:
             with transaction.atomic():
-                # Crear usuario
+                # Crear usuario - INACTIVO hasta que verifique el email
                 user = User.objects.create_user(
                     username=username,
                     email=email,
                     password=password,
                     first_name=first_name,
-                    last_name=last_name
+                    last_name=last_name,
+                    is_active=False  # Usuario inactivo hasta verificar email
+                )
+                
+                # Crear perfil de usuario
+                from apps.users.email_verification_models import UserProfile
+                UserProfile.objects.create(
+                    user=user,
+                    is_email_verified=False
                 )
                 
                 # Crear suscripción del usuario
@@ -437,21 +446,24 @@ def user_register(request):
                     payment_status=payment_status
                 )
                 
-                messages.success(
-                    request, 
-                    f'¡Bienvenido {first_name}! Tu cuenta ha sido creada exitosamente.'
-                )
+                # Enviar email de verificación
+                from apps.users.email_views import send_verification_email
+                email_sent = send_verification_email(user, request)
                 
-                # Si no es plan gratuito, redirigir a página de pago (por implementar)
-                if plan.plan_type != 'free':
-                    messages.info(request, 'Por favor completa el pago para activar tu suscripción.')
-                    # TODO: Redirigir a página de pago
+                if email_sent:
+                    messages.success(
+                        request, 
+                        f'¡Cuenta creada exitosamente! Hemos enviado un correo a {email} para verificar tu cuenta.'
+                    )
+                else:
+                    messages.warning(
+                        request,
+                        'Cuenta creada, pero hubo un error al enviar el email. Por favor contacta a soporte.'
+                    )
                 
-                # Login automático
-                from django.contrib.auth import login
-                login(request, user)
-                
-                return redirect('dashboard:home')
+                # NO hacer login automático - requiere verificación de email
+                # Redirigir a página de verificación pendiente
+                return redirect('users:verification_pending')
                 
         except SubscriptionPlan.DoesNotExist:
             messages.error(request, 'El plan seleccionado no existe')

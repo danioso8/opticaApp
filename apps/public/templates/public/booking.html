@@ -45,6 +45,7 @@
             <!-- Progress Steps -->
             <div class="bg-gradient-to-r from-blue-600 to-purple-600 p-4 md:p-6">
                 <div class="flex justify-between items-center">
+                    {% if available_organizations.count > 1 %}
                     <div class="flex-1 text-center">
                         <div id="step1-indicator" class="inline-block bg-white text-blue-600 w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center font-bold mb-1 md:mb-2 transition text-sm md:text-base">
                             1
@@ -53,17 +54,18 @@
                         <p class="text-white text-xs font-medium sm:hidden">Sucursal</p>
                     </div>
                     <div class="flex-1 border-t-2 border-white border-dashed mx-1 md:mx-2"></div>
+                    {% endif %}
                     <div class="flex-1 text-center">
-                        <div id="step2-indicator" class="inline-block bg-white bg-opacity-30 text-white w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center font-bold mb-1 md:mb-2 transition text-sm md:text-base">
-                            2
+                        <div id="step2-indicator" class="inline-block {% if available_organizations.count == 1 %}bg-white text-blue-600{% else %}bg-white bg-opacity-30 text-white{% endif %} w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center font-bold mb-1 md:mb-2 transition text-sm md:text-base">
+                            {% if available_organizations.count == 1 %}1{% else %}2{% endif %}
                         </div>
-                        <p class="text-white text-opacity-70 text-xs md:text-sm font-medium hidden sm:block">Fecha</p>
-                        <p class="text-white text-opacity-70 text-xs font-medium sm:hidden">Fecha</p>
+                        <p class="{% if available_organizations.count == 1 %}text-white{% else %}text-white text-opacity-70{% endif %} text-xs md:text-sm font-medium hidden sm:block">Fecha</p>
+                        <p class="{% if available_organizations.count == 1 %}text-white{% else %}text-white text-opacity-70{% endif %} text-xs font-medium sm:hidden">Fecha</p>
                     </div>
                     <div class="flex-1 border-t-2 border-white border-dashed mx-1 md:mx-2"></div>
                     <div class="flex-1 text-center">
                         <div id="step3-indicator" class="inline-block bg-white bg-opacity-30 text-white w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center font-bold mb-1 md:mb-2 transition text-sm md:text-base">
-                            3
+                            {% if available_organizations.count == 1 %}2{% else %}3{% endif %}
                         </div>
                         <p class="text-white text-opacity-70 text-xs md:text-sm font-medium hidden sm:block">Hora</p>
                         <p class="text-white text-opacity-70 text-xs font-medium sm:hidden">Hora</p>
@@ -71,7 +73,7 @@
                     <div class="flex-1 border-t-2 border-white border-dashed mx-1 md:mx-2"></div>
                     <div class="flex-1 text-center">
                         <div id="step4-indicator" class="inline-block bg-white bg-opacity-30 text-white w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center font-bold mb-1 md:mb-2 transition text-sm md:text-base">
-                            4
+                            {% if available_organizations.count == 1 %}3{% else %}4{% endif %}
                         </div>
                         <p class="text-white text-opacity-70 text-xs md:text-sm font-medium hidden sm:block">Datos</p>
                         <p class="text-white text-opacity-70 text-xs font-medium sm:hidden">Datos</p>
@@ -86,6 +88,7 @@
                     
                     <!-- Step 1: Seleccionar Sucursal -->
                     <div id="step1" class="step-content">
+                        {% if available_organizations.count > 1 %}
                         <h3 class="text-xl md:text-2xl font-bold text-gray-800 mb-4 md:mb-6">Selecciona una Sucursal</h3>
                         {% if available_organizations %}
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
@@ -127,6 +130,29 @@
                             Continuar
                             <i class="fas fa-arrow-right ml-2"></i>
                         </button>
+                        {% else %}
+                        <!-- Solo una organización, avanzar automáticamente -->
+                        <div class="text-center py-8">
+                            <div class="inline-block bg-blue-100 rounded-full p-6 mb-4">
+                                <i class="fas fa-building text-blue-600 text-4xl"></i>
+                            </div>
+                            <h3 class="text-2xl font-bold text-gray-800 mb-2">{{ available_organizations.first.name }}</h3>
+                            {% if available_organizations.first.neighborhood or available_organizations.first.city %}
+                            <p class="text-gray-600 mb-4">
+                                <i class="fas fa-map-marker-alt text-blue-500 mr-1"></i>
+                                {% if available_organizations.first.neighborhood %}{{ available_organizations.first.neighborhood }}{% endif %}
+                                {% if available_organizations.first.neighborhood and available_organizations.first.city %}, {% endif %}
+                                {% if available_organizations.first.city %}{{ available_organizations.first.city }}{% endif %}
+                            </p>
+                            {% endif %}
+                        </div>
+                        <input type="hidden" id="selectedOrganization" name="organization_id" value="{{ available_organizations.first.id }}" required>
+                        <button type="button" onclick="nextStep(2)" id="btnStep1" 
+                                class="w-full bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 rounded-lg font-semibold text-lg transition">
+                            Continuar
+                            <i class="fas fa-arrow-right ml-2"></i>
+                        </button>
+                        {% endif %}
                     </div>
                     
                     <!-- Step 2: Seleccionar Fecha -->
@@ -252,6 +278,17 @@ let selectedDate = null;
 let selectedTime = null;
 
 console.log('Booking page loaded');
+
+// Inicializar cuando solo hay una organización
+{% if available_organizations.count == 1 %}
+document.addEventListener('DOMContentLoaded', function() {
+    selectedOrganizationId = {{ available_organizations.first.id }};
+    selectedOrganizationName = '{{ available_organizations.first.name|escapejs }}';
+    selectedOrganizationNeighborhood = '{{ available_organizations.first.neighborhood|default:''|escapejs }}';
+    selectedOrganizationCity = '{{ available_organizations.first.city|default:''|escapejs }}';
+    console.log('Auto-selected organization:', selectedOrganizationId);
+});
+{% endif %}
 
 function nextStep(step) {
     document.getElementById(`step${currentStep}`).classList.add('hidden');

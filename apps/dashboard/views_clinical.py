@@ -1878,6 +1878,23 @@ def visual_exam_detail(request, patient_id, history_id):
 
 
 @login_required
+def visual_exam_delete(request, patient_id, history_id):
+    """Eliminar examen visual"""
+    if request.method != 'POST':
+        return redirect('dashboard:patient_detail', patient_id=patient_id)
+    
+    org_filter = {'organization': request.organization} if hasattr(request, 'organization') and request.organization else {}
+    patient = get_object_or_404(Patient, id=patient_id, **org_filter)
+    history = get_object_or_404(ClinicalHistory, id=history_id, patient=patient, **org_filter)
+    
+    # Eliminar el examen visual
+    history.delete()
+    
+    messages.success(request, 'Examen visual eliminado exitosamente.')
+    return redirect('dashboard:patient_detail', patient_id=patient_id)
+
+
+@login_required
 def visual_exam_pdf(request, patient_id, history_id):
     """Generar PDF específico de fórmula de lentes ópticos"""
     from reportlab.lib.pagesizes import letter

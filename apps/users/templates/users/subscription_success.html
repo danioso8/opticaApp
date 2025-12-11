@@ -1,0 +1,115 @@
+{% extends "dashboard/base.html" %}
+
+{% block title %}¡Pago Exitoso!{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto">
+    <div class="bg-white rounded-lg shadow-lg p-8 text-center">
+        <!-- Icono de éxito -->
+        <div class="mb-6">
+            <div class="inline-flex items-center justify-center w-24 h-24 rounded-full bg-green-100">
+                <i class="fas fa-check-circle text-5xl text-green-500"></i>
+            </div>
+        </div>
+
+        <h1 class="text-3xl font-bold text-gray-800 mb-4">
+            ¡Pago Procesado Exitosamente!
+        </h1>
+        
+        <p class="text-xl text-gray-600 mb-8">
+            Tu suscripción ha sido activada correctamente
+        </p>
+
+        <!-- Información de la Transacción -->
+        <div class="bg-gray-50 rounded-lg p-6 mb-8 text-left">
+            <h2 class="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+                <i class="fas fa-receipt mr-2 text-indigo-600"></i>
+                Detalles de la Transacción
+            </h2>
+            
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <p class="text-sm text-gray-600">ID de Transacción</p>
+                    <p class="font-semibold">{{ transaction.id }}</p>
+                </div>
+                
+                <div>
+                    <p class="text-sm text-gray-600">Monto Pagado</p>
+                    <p class="font-semibold text-green-600">${{ transaction.amount|floatformat:0 }} COP</p>
+                </div>
+                
+                {% if subscription %}
+                <div>
+                    <p class="text-sm text-gray-600">Plan</p>
+                    <p class="font-semibold">{{ subscription.plan.name }}</p>
+                </div>
+                
+                <div>
+                    <p class="text-sm text-gray-600">Válido Hasta</p>
+                    <p class="font-semibold">{{ subscription.end_date|date:"d/m/Y" }}</p>
+                </div>
+                {% endif %}
+                
+                <div>
+                    <p class="text-sm text-gray-600">Fecha</p>
+                    <p class="font-semibold">{{ transaction.created_at|date:"d/m/Y H:i" }}</p>
+                </div>
+                
+                <div>
+                    <p class="text-sm text-gray-600">Estado</p>
+                    <p class="font-semibold text-green-600">
+                        <i class="fas fa-check mr-1"></i>Aprobado
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Beneficios del Plan -->
+        {% if subscription %}
+        <div class="bg-indigo-50 border border-indigo-200 rounded-lg p-6 mb-8">
+            <h3 class="text-lg font-semibold text-gray-800 mb-3">
+                <i class="fas fa-star mr-2 text-yellow-500"></i>
+                Beneficios de tu Plan
+            </h3>
+            <ul class="text-left space-y-2">
+                <li class="flex items-start">
+                    <i class="fas fa-check text-green-500 mr-2 mt-1"></i>
+                    <span>Hasta {{ subscription.plan.max_users }} empresas/sucursales</span>
+                </li>
+                <li class="flex items-start">
+                    <i class="fas fa-check text-green-500 mr-2 mt-1"></i>
+                    <span>Renovación automática el {{ subscription.end_date|date:"d/m/Y" }}</span>
+                </li>
+                <li class="flex items-start">
+                    <i class="fas fa-check text-green-500 mr-2 mt-1"></i>
+                    <span>Acceso completo a todas las funcionalidades</span>
+                </li>
+            </ul>
+        </div>
+        {% endif %}
+
+        <!-- Botones de Acción -->
+        <div class="flex flex-col sm:flex-row gap-4 justify-center">
+            <a href="{% url 'organizations:list' %}" 
+               class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 px-6 rounded-lg shadow-md transition duration-200 flex items-center justify-center">
+                <i class="fas fa-building mr-2"></i>
+                Ir a Mis Empresas
+            </a>
+            
+            <a href="{% url 'users:subscription_status' %}" 
+               class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-3 px-6 rounded-lg shadow-md transition duration-200 flex items-center justify-center">
+                <i class="fas fa-file-invoice mr-2"></i>
+                Ver Mi Suscripción
+            </a>
+        </div>
+
+        <!-- Información Adicional -->
+        <div class="mt-8 pt-6 border-t">
+            <p class="text-sm text-gray-600">
+                <i class="fas fa-envelope mr-2"></i>
+                Recibirás un correo de confirmación con los detalles de tu suscripción
+            </p>
+        </div>
+    </div>
+</div>
+{% endblock %}

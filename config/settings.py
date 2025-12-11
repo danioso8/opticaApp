@@ -78,6 +78,7 @@ MIDDLEWARE = [
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'apps.organizations.middleware.TenantMiddleware',  # Multi-tenant support
+    'apps.users.email_verification_middleware.EmailVerificationMiddleware',  # Email verification
     'apps.organizations.middleware.SubscriptionMiddleware',  # Subscription validation
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
@@ -241,14 +242,17 @@ CHANNEL_LAYERS = {
 # True = Email (Producción - Gratis)
 USE_EMAIL_NOTIFICATIONS = config('USE_EMAIL_NOTIFICATIONS', default=not DEBUG, cast=bool)
 
-# Email Configuration (GRATIS - Gmail SMTP)
+# Email Configuration (Gmail SMTP)
 EMAIL_BACKEND = config('EMAIL_BACKEND', default='django.core.mail.backends.smtp.EmailBackend')
 EMAIL_HOST = config('EMAIL_HOST', default='smtp.gmail.com')
 EMAIL_PORT = config('EMAIL_PORT', default=587, cast=int)
 EMAIL_USE_TLS = config('EMAIL_USE_TLS', default=True, cast=bool)
-EMAIL_HOST_USER = config('EMAIL_HOST_USER', default='')
-EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD', default='')
-DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL', default='OCEANO OPTICO <noreply@oceanooptico.com>')
+EMAIL_USE_SSL = config('EMAIL_USE_SSL', default=False, cast=bool)
+EMAIL_HOST_USER = config('EMAIL_HOST_USER', default='compueasys@gmail.com')
+EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD', default='hucewtoa stbqrcnk')
+DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL', default=f'OpticaApp <{config("EMAIL_HOST_USER", default="compueasys@gmail.com")}>')
+CONTACT_EMAIL = config('CONTACT_EMAIL', default=config('EMAIL_HOST_USER', default='compueasys@gmail.com'))
+EMAIL_TIMEOUT = 30
 
 # WhatsApp Configuration (Local Bot - Gratuito)
 WHATSAPP_API_URL = config('WHATSAPP_API_URL', default='http://localhost:3000')
@@ -261,3 +265,12 @@ TWILIO_WHATSAPP_FROM = config('TWILIO_WHATSAPP_FROM', default='whatsapp:+1415523
 # Business Information
 BUSINESS_PHONE = config('BUSINESS_PHONE', default='300 123 4567')
 WEBSITE_URL = config('WEBSITE_URL', default='http://127.0.0.1:8000')
+
+# ==================== WOMPI PAYMENT GATEWAY ====================
+
+# Wompi Configuration
+WOMPI_PUBLIC_KEY = config('WOMPI_PUBLIC_KEY', default='')
+WOMPI_PRIVATE_KEY = config('WOMPI_PRIVATE_KEY', default='')
+WOMPI_EVENTS_SECRET = config('WOMPI_EVENTS_SECRET', default='')
+WOMPI_BASE_URL = config('WOMPI_BASE_URL', default='https://production.wompi.co/v1')
+WOMPI_TEST_MODE = config('WOMPI_TEST_MODE', default=DEBUG, cast=bool)
