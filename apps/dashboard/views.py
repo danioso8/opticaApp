@@ -379,6 +379,11 @@ def configuration(request):
     # Obtener todos los usuarios del grupo 'Doctores' (sin filtrar por organización)
     doctors = []
     doctor_group = Group.objects.filter(name='Doctores').first()
+    
+    # Debug: si no hay grupo, intentar buscar variantes
+    if not doctor_group:
+        doctor_group = Group.objects.filter(name__icontains='doctor').first()
+    
     if doctor_group:
         from django.contrib.auth import get_user_model
         User = get_user_model()

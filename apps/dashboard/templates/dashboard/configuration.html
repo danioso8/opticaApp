@@ -349,9 +349,9 @@
                     {% endfor %}
                 </select>
                 {% if not doctors %}
-                <p class="text-xs text-red-500 mt-1">No hay doctores disponibles. Agrega miembros al grupo "Doctor".</p>
+                <p class="text-xs text-red-500 mt-1">No hay doctores disponibles. Asegúrate de que los usuarios estén en el grupo "Doctores".</p>
                 {% else %}
-                <p class="text-xs text-gray-500 mt-1">Selecciona el doctor para este horario</p>
+                <p class="text-xs text-gray-500 mt-1">Selecciona el doctor para este horario ({{ doctors|length }} disponible{{ doctors|length|pluralize:"s" }})</p>
                 {% endif %}
             </div>
             
