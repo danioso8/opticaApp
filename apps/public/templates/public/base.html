@@ -32,11 +32,11 @@
 </head>
 <body class="bg-gray-50">
     <!-- Header/Navigation -->
-    {% if landing_config.navbar_style == 'modern' %}
+    {% if landing_config and landing_config.navbar_style == 'modern' %}
     <nav class="fixed w-full top-0 z-50 shadow-lg" style="background: linear-gradient(135deg, {{ landing_config.navbar_bg_color|default:'#2563eb' }} 0%, #4f46e5 100%);">
-    {% elif landing_config.navbar_style == 'minimal' %}
+    {% elif landing_config and landing_config.navbar_style == 'minimal' %}
     <nav class="fixed w-full top-0 z-50 bg-white/95 backdrop-blur-sm border-b-2" style="border-color: {% if landing_config %}{{ landing_config.navbar_hover_color }}{% else %}#e5e7eb{% endif %};">
-    {% elif landing_config.navbar_style == 'bold' %}
+    {% elif landing_config and landing_config.navbar_style == 'bold' %}
     <nav class="fixed w-full top-0 z-50 shadow-2xl" style="background-color: {% if landing_config %}{{ landing_config.navbar_bg_color }}{% else %}#111827{% endif %};">
     {% else %}
     <nav class="shadow-md fixed w-full top-0 z-50" style="background-color: {% if landing_config %}{{ landing_config.navbar_bg_color }}{% else %}#ffffff{% endif %};">
@@ -50,14 +50,14 @@
                             <img src="{{ landing_config.logo.url }}" alt="Logo" class="h-12 object-contain mr-3">
                         {% else %}
                             <!-- Logo por defecto (ícono) -->
-                            {% if landing_config.navbar_style == 'modern' or landing_config.navbar_style == 'bold' %}
+                            {% if landing_config and landing_config.navbar_style == 'modern' or landing_config and landing_config.navbar_style == 'bold' %}
                             <i class="fas fa-glasses text-3xl mr-3 text-white"></i>
                             {% else %}
                             <i class="fas fa-glasses text-3xl mr-3" style="color: {% if landing_config %}{{ landing_config.navbar_hover_color }}{% else %}#2563eb{% endif %};"></i>
                             {% endif %}
                         {% endif %}
                         
-                        {% if landing_config.navbar_style == 'modern' or landing_config.navbar_style == 'bold' %}
+                        {% if landing_config and landing_config.navbar_style == 'modern' or landing_config and landing_config.navbar_style == 'bold' %}
                         <span class="text-2xl font-bold text-white">
                         {% else %}
                         <span class="text-2xl font-bold" style="color: {% if landing_config %}{{ landing_config.navbar_text_color }}{% else %}#1f2937{% endif %};">
@@ -68,7 +68,7 @@
                 </div>
                 
                 <div class="hidden md:flex space-x-8">
-                    {% if landing_config.navbar_style == 'modern' or landing_config.navbar_style == 'bold' %}
+                    {% if landing_config and landing_config.navbar_style == 'modern' or landing_config and landing_config.navbar_style == 'bold' %}
                     <a href="{% url 'public:home' %}" class="font-medium transition navbar-link text-white/90 hover:text-white">
                         Inicio
                     </a>
@@ -104,7 +104,7 @@
                 </div>
                 
                 <div class="flex items-center space-x-4">
-                    {% if landing_config.navbar_style == 'modern' or landing_config.navbar_style == 'bold' %}
+                    {% if landing_config and landing_config.navbar_style == 'modern' or landing_config and landing_config.navbar_style == 'bold' %}
                     <a href="/dashboard/login/" class="hidden md:block font-medium transition navbar-link text-white/90 hover:text-white">
                         <i class="fas fa-sign-in-alt mr-2"></i>Iniciar Sesión
                     </a>
