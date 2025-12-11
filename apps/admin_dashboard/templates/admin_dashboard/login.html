@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SaaS Admin - Login</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .gradient-bg {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .login-card {
+            backdrop-filter: blur(16px);
+            background: rgba(255, 255, 255, 0.95);
+        }
+    </style>
+</head>
+<body class="gradient-bg min-h-screen flex items-center justify-center p-4">
+    <div class="login-card rounded-2xl shadow-2xl p-8 md:p-12 w-full max-w-md">
+        <!-- Logo y Título -->
+        <div class="text-center mb-8">
+            <div class="inline-block bg-gradient-to-r from-purple-600 to-indigo-600 p-4 rounded-full mb-4">
+                <i class="fas fa-user-shield text-white text-4xl"></i>
+            </div>
+            <h1 class="text-3xl font-bold text-gray-800 mb-2">SaaS Admin Panel</h1>
+            <p class="text-gray-600">Administración del Sistema</p>
+        </div>
+        
+        <!-- Mensajes -->
+        {% if messages %}
+        <div class="mb-6 space-y-2">
+            {% for message in messages %}
+            <div class="p-4 rounded-lg {% if message.tags == 'error' %}bg-red-50 border border-red-200 text-red-800{% elif message.tags == 'success' %}bg-green-50 border border-green-200 text-green-800{% else %}bg-blue-50 border border-blue-200 text-blue-800{% endif %}">
+                <div class="flex items-center">
+                    <i class="fas {% if message.tags == 'error' %}fa-exclamation-circle{% elif message.tags == 'success' %}fa-check-circle{% else %}fa-info-circle{% endif %} mr-2"></i>
+                    <span class="text-sm font-medium">{{ message }}</span>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+        
+        <!-- Formulario de Login -->
+        <form method="POST" action="{% url 'admin_dashboard:login' %}" class="space-y-6">
+            {% csrf_token %}
+            
+            <div>
+                <label for="username" class="block text-sm font-semibold text-gray-700 mb-2">
+                    <i class="fas fa-user mr-2 text-purple-600"></i>Usuario o Email
+                </label>
+                <input type="text" 
+                       id="username" 
+                       name="username" 
+                       required 
+                       autofocus
+                       class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-purple-500 focus:ring-4 focus:ring-purple-200 transition-all outline-none"
+                       placeholder="Ingresa tu usuario o email">
+            </div>
+            
+            <div>
+                <label for="password" class="block text-sm font-semibold text-gray-700 mb-2">
+                    <i class="fas fa-lock mr-2 text-purple-600"></i>Contraseña
+                </label>
+                <div class="relative">
+                    <input type="password" 
+                           id="password" 
+                           name="password" 
+                           required
+                           class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-purple-500 focus:ring-4 focus:ring-purple-200 transition-all outline-none pr-12"
+                           placeholder="Ingresa tu contraseña">
+                    <button type="button" 
+                            onclick="togglePassword()"
+                            class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700">
+                        <i id="toggleIcon" class="fas fa-eye"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Botón de Submit -->
+            <button type="submit" 
+                    class="w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-bold py-4 rounded-lg transition-all transform hover:scale-105 shadow-lg">
+                <i class="fas fa-sign-in-alt mr-2"></i>Iniciar Sesión
+            </button>
+        </form>
+        
+        <!-- Footer -->
+        <div class="mt-8 pt-6 border-t border-gray-200 text-center">
+            <p class="text-sm text-gray-600">
+                <i class="fas fa-shield-alt mr-1 text-purple-600"></i>
+                Panel de administración protegido
+            </p>
+            <p class="text-xs text-gray-500 mt-2">
+                Solo usuarios autorizados pueden acceder
+            </p>
+        </div>
+    </div>
+    
+    <script>
+        function togglePassword() {
+            const passwordInput = document.getElementById('password');
+            const toggleIcon = document.getElementById('toggleIcon');
+            
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                toggleIcon.classList.remove('fa-eye');
+                toggleIcon.classList.add('fa-eye-slash');
+            } else {
+                passwordInput.type = 'password';
+                toggleIcon.classList.remove('fa-eye-slash');
+                toggleIcon.classList.add('fa-eye');
+            }
+        }
+        
+        // Auto-focus en el campo de usuario
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('username').focus();
+        });
+    </script>
+</body>
+</html>

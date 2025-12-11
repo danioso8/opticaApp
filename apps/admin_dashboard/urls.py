@@ -4,6 +4,10 @@ from . import views
 app_name = 'admin_dashboard'
 
 urlpatterns = [
+    # Autenticación
+    path('login/', views.saas_admin_login, name='login'),
+    path('logout/', views.saas_admin_logout, name='logout'),
+    
     # Dashboard principal
     path('', views.admin_dashboard_home, name='home'),
     

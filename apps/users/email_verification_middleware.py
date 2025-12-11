@@ -26,6 +26,7 @@ class EmailVerificationMiddleware:
         '/static/',
         '/media/',
         '/admin/',  # Admin panel no requiere verificación
+        '/saas-admin/',  # Panel SaaS Admin no requiere verificación
         '/api/',    # APIs pueden tener su propia lógica
     ]
     

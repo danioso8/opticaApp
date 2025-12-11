@@ -2,6 +2,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.auth.models import User
 from django.contrib import messages
+from django.contrib.auth import authenticate, login, logout
 from django.db.models import Q, Count
 from django.utils import timezone
 from datetime import timedelta
@@ -14,6 +15,38 @@ from django.db import transaction
 def is_superuser(user):
     """Verificar si el usuario es superusuario"""
     return user.is_superuser
+
+
+def saas_admin_login(request):
+    """Vista de login para el panel SaaS Admin"""
+    if request.user.is_authenticated and request.user.is_superuser:
+        return redirect('admin_dashboard:home')
+    
+    if request.method == 'POST':
+        username = request.POST.get('username')
+        password = request.POST.get('password')
+        
+        user = authenticate(request, username=username, password=password)
+        
+        if user is not None:
+            if user.is_superuser:
+                login(request, user)
+                messages.success(request, f'Bienvenido al panel de administración, {user.get_full_name() or user.username}!')
+                return redirect('admin_dashboard:home')
+            else:
+                messages.error(request, 'No tienes permisos para acceder al panel de administración.')
+        else:
+            messages.error(request, 'Usuario o contraseña incorrectos.')
+    
+    return render(request, 'admin_dashboard/login.html')
+
+
+@login_required
+def saas_admin_logout(request):
+    """Vista de logout para el panel SaaS Admin"""
+    logout(request)
+    messages.success(request, 'Has cerrado sesión correctamente.')
+    return redirect('admin_dashboard:login')
 
 
 @login_required
