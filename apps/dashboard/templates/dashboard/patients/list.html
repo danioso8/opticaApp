@@ -1184,7 +1184,7 @@ searchInput.addEventListener('input', function(e) {
     clearTimeout(searchTimeout);
     
     // Si el campo está vacío y no hay búsqueda activa, no hacer nada
-    if (!searchTerm && !{{ 'true' if request.GET.search else 'false' }}) {
+    if (!searchTerm && !{{ request.GET.search|yesno:"true,false" }}) {
         return;
     }
     

@@ -23,6 +23,7 @@ class WompiService:
         self.public_key = getattr(settings, 'WOMPI_PUBLIC_KEY', '')
         self.private_key = getattr(settings, 'WOMPI_PRIVATE_KEY', '')
         self.events_secret = getattr(settings, 'WOMPI_EVENTS_SECRET', '')
+        self.integrity_secret = getattr(settings, 'WOMPI_INTEGRITY_SECRET', '')
         self.base_url = getattr(settings, 'WOMPI_BASE_URL', 'https://production.wompi.co/v1')
         self.test_mode = getattr(settings, 'WOMPI_TEST_MODE', True)
         
@@ -38,6 +39,29 @@ class WompiService:
             'Authorization': f'Bearer {auth_key}',
             'Content-Type': 'application/json',
         }
+    
+    def get_acceptance_token(self) -> Optional[str]:
+        """
+        Obtiene el token de aceptación de términos y condiciones
+        
+        Returns:
+            Token de aceptación o None si falla
+        """
+        try:
+            url = f"{self.base_url}/merchants/{self.public_key}"
+            response = requests.get(url, headers=self._get_headers())
+            
+            if response.status_code == 200:
+                data = response.json()
+                presigned_acceptance = data.get('data', {}).get('presigned_acceptance', {})
+                return presigned_acceptance.get('acceptance_token')
+            else:
+                logger.error(f"Error al obtener acceptance token: {response.text}")
+                return None
+                
+        except Exception as e:
+            logger.error(f"Excepción al obtener acceptance token: {str(e)}")
+            return None
     
     def create_payment_source(self, token_card: str) -> Optional[Dict]:
         """
@@ -116,6 +140,11 @@ class WompiService:
             # Crear la transacción en Wompi
             url = f"{self.base_url}/transactions"
             
+            # Obtener acceptance token
+            acceptance_token = self.get_acceptance_token()
+            if not acceptance_token:
+                return False, None, "No se pudo obtener el token de aceptación"
+            
             # Generar signature
             integrity = self._generate_integrity_signature(
                 reference=reference,
@@ -124,6 +153,7 @@ class WompiService:
             )
             
             data = {
+                "acceptance_token": acceptance_token,
                 "amount_in_cents": amount_in_cents,
                 "currency": currency,
                 "customer_email": customer_email,
@@ -133,7 +163,7 @@ class WompiService:
                     "installments": 1
                 },
                 "reference": reference,
-                "signature:integrity": integrity
+                "signature": integrity
             }
             
             response = requests.post(
@@ -303,7 +333,7 @@ class WompiService:
         Returns:
             Firma SHA256
         """
-        concat_string = f"{reference}{amount_in_cents}{currency}{self.events_secret}"
+        concat_string = f"{reference}{amount_in_cents}{currency}{self.integrity_secret}"
         return hashlib.sha256(concat_string.encode()).hexdigest()
     
     def _get_nested_value(self, data: Dict, key_path: str):

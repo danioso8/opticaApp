@@ -38,14 +38,10 @@ def subscription_checkout(request, plan_id):
     else:
         amount = plan.price_monthly
     
-    # Convertir a USD (ejemplo: dividir entre 4000 para COP a USD aproximado)
-    amount_usd = float(amount) / 4000
-    
     context = {
         'plan': plan,
         'billing_cycle': billing_cycle,
         'amount': amount,
-        'amount_usd': amount_usd,
         'payment_methods': payment_methods,
         'wompi_public_key': settings.WOMPI_PUBLIC_KEY,
     }

@@ -367,6 +367,7 @@ def appointment_change_status(request, pk):
 def configuration(request):
     """Vista de configuración del sistema"""
     from apps.appointments.models import SpecificDateSchedule
+    from django.contrib.auth.models import Group
     
     org_filter = {'organization': request.organization} if hasattr(request, 'organization') and request.organization else {}
     
@@ -375,11 +376,23 @@ def configuration(request):
     blocked_dates = BlockedDate.objects.filter(date__gte=timezone.now().date(), **org_filter).order_by('date')
     specific_schedules = SpecificDateSchedule.objects.filter(date__gte=timezone.now().date(), **org_filter).order_by('date', 'start_time')
     
+    # Obtener solo doctores de la organización
+    doctors = []
+    if request.organization:
+        doctor_group = Group.objects.filter(name__icontains='doctor').first()
+        if doctor_group:
+            # Filtrar por grupo de doctor
+            doctors = request.organization.members.filter(user__groups=doctor_group, is_active=True)
+        else:
+            # Si no hay grupo, mostrar todos los miembros activos
+            doctors = request.organization.members.filter(is_active=True)
+    
     context = {
         'config': config,
         'working_hours': working_hours,
         'blocked_dates': blocked_dates,
         'specific_schedules': specific_schedules,
+        'doctors': doctors,
     }
     
     return render(request, 'dashboard/configuration.html', context)
@@ -927,11 +940,14 @@ def add_specific_schedule(request):
     """Agregar horario específico por fecha (AJAX)"""
     if request.method == 'POST':
         from apps.appointments.models import SpecificDateSchedule
+        from django.contrib.auth.models import User
         
         date_str = request.POST.get('date')
         start_time = request.POST.get('start_time')
         end_time = request.POST.get('end_time')
         notes = request.POST.get('notes', '')
+        doctor_id = request.POST.get('doctor')
+        slot_duration = request.POST.get('slot_duration', 30)
         
         try:
             date = datetime.strptime(date_str, '%Y-%m-%d').date()
@@ -946,11 +962,24 @@ def add_specific_schedule(request):
             if not request.organization:
                 return JsonResponse({'success': False, 'message': 'No hay organización activa'}, status=400)
             
+            # Obtener doctor si se especificó
+            doctor = None
+            if doctor_id:
+                try:
+                    doctor = User.objects.get(id=doctor_id)
+                except User.DoesNotExist:
+                    return JsonResponse({
+                        'success': False,
+                        'message': 'Doctor no encontrado'
+                    }, status=400)
+            
             schedule = SpecificDateSchedule.objects.create(
                 organization=request.organization,
+                doctor=doctor,
                 date=date,
                 start_time=start_time,
                 end_time=end_time,
+                slot_duration=int(slot_duration),
                 notes=notes,
                 is_active=True,
                 created_by=request.user

@@ -269,8 +269,9 @@ WEBSITE_URL = config('WEBSITE_URL', default='http://127.0.0.1:8000')
 # ==================== WOMPI PAYMENT GATEWAY ====================
 
 # Wompi Configuration
-WOMPI_PUBLIC_KEY = config('WOMPI_PUBLIC_KEY', default='')
-WOMPI_PRIVATE_KEY = config('WOMPI_PRIVATE_KEY', default='')
-WOMPI_EVENTS_SECRET = config('WOMPI_EVENTS_SECRET', default='')
+WOMPI_PUBLIC_KEY = config('WOMPI_PUBLIC_KEY', default='pub_prod_DMT4tAPNSvnvuHiVmwjIoyVwaam8N3k7')
+WOMPI_PRIVATE_KEY = config('WOMPI_PRIVATE_KEY', default='prv_prod_1X63CjcbCvba86WpWJOuXiqJnKvtMgeT')
+WOMPI_EVENTS_SECRET = config('WOMPI_EVENTS_SECRET', default='prod_events_cmDhDmWt3heMjSm5uB9QMRHJO8HxJLvv')
+WOMPI_INTEGRITY_SECRET = config('WOMPI_INTEGRITY_SECRET', default='prod_integrity_YW2t43XJOhLUAOONX5u6U8AO5sEosmTT')
 WOMPI_BASE_URL = config('WOMPI_BASE_URL', default='https://production.wompi.co/v1')
-WOMPI_TEST_MODE = config('WOMPI_TEST_MODE', default=DEBUG, cast=bool)
+WOMPI_TEST_MODE = config('WOMPI_TEST_MODE', default=False, cast=bool)

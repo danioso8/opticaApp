@@ -83,11 +83,23 @@ class WorkingHours(TenantModel):
 
 class SpecificDateSchedule(TenantModel):
     """Horarios para fechas específicas (sobrescribe WorkingHours)"""
+    doctor = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='doctor_schedules',
+        null=True,
+        blank=True,
+        verbose_name="Doctor"
+    )
     date = models.DateField(
         verbose_name="Fecha específica"
     )
     start_time = models.TimeField(verbose_name="Hora inicio")
     end_time = models.TimeField(verbose_name="Hora fin")
+    slot_duration = models.IntegerField(
+        default=30,
+        verbose_name="Duración de cita (minutos)"
+    )
     is_active = models.BooleanField(
         default=True,
         verbose_name="Activo"
@@ -113,7 +125,8 @@ class SpecificDateSchedule(TenantModel):
         unique_together = [['organization', 'date', 'start_time']]
 
     def __str__(self):
-        return f"{self.date} - {self.start_time} a {self.end_time}"
+        doctor_name = self.doctor.get_full_name() if self.doctor else "Sin doctor"
+        return f"{doctor_name} - {self.date} - {self.start_time} a {self.end_time}"
 
 
 class BlockedDate(TenantModel):

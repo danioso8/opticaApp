@@ -101,11 +101,15 @@ class SubscriptionMiddleware(MiddlewareMixin):
         '/dashboard/login/',
         '/dashboard/logout/',
         '/dashboard/register/',
-        '/organizations/',  # Permitir acceso a la lista de organizaciones
-        '/users/',  # Permitir acceso a checkout y pagos de Wompi
-        '/subscription/expired/',
-        '/subscription/plans/',
-        '/subscription/checkout/',
+        '/organizations/register/',
+        '/organizations/subscription/',
+        '/users/verify-email/',
+        '/users/resend-verification/',
+        '/users/subscription/',  # Checkout y procesamiento de pagos
+        '/users/payment-methods/',
+        '/users/webhooks/',  # Webhook de Wompi
+        '/static/',
+        '/media/',
     ]
     
     def process_request(self, request):
@@ -126,6 +130,12 @@ class SubscriptionMiddleware(MiddlewareMixin):
         try:
             from apps.users.models import UserSubscription
             user_subscription = UserSubscription.objects.get(user=request.user)
+            
+            # Si la suscripción no está pagada, redirigir al checkout
+            if user_subscription.payment_status == 'pending':
+                # Permitir acceso solo al checkout y rutas de pago
+                if not request.path.startswith('/users/subscription/') and not request.path.startswith('/users/payment-methods/'):
+                    return redirect('users:subscription_checkout', plan_id=user_subscription.plan.id)
             
             # Si la suscripción ha expirado o no está activa
             if not user_subscription.is_active or user_subscription.is_expired:
