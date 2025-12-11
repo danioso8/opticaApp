@@ -376,11 +376,10 @@ def configuration(request):
     blocked_dates = BlockedDate.objects.filter(date__gte=timezone.now().date(), **org_filter).order_by('date')
     specific_schedules = SpecificDateSchedule.objects.filter(date__gte=timezone.now().date(), **org_filter).order_by('date', 'start_time')
     
-    # Obtener solo doctores del grupo 'Doctores'
+    # Obtener todos los usuarios del grupo 'Doctores' (sin filtrar por organización)
     doctors = []
     doctor_group = Group.objects.filter(name='Doctores').first()
     if doctor_group:
-        # Obtener todos los usuarios del grupo Doctores que estén activos
         from django.contrib.auth import get_user_model
         User = get_user_model()
         doctor_users = User.objects.filter(
@@ -388,28 +387,12 @@ def configuration(request):
             is_active=True
         )
         
-        # Si hay organización, filtrar solo los que son miembros
-        # Si no hay organización o quieres mostrar todos, comentar este filtro
-        if request.organization:
-            from apps.organizations.models import OrganizationMember
-            # Convertir a lista de miembros para mantener compatibilidad con el template
-            member_ids = request.organization.members.filter(
-                user__in=doctor_users,
-                is_active=True
-            ).values_list('user_id', flat=True)
-            
-            # Crear objetos pseudo-member para compatibilidad
-            class PseudoMember:
-                def __init__(self, user):
-                    self.user = user
-            
-            doctors = [PseudoMember(user) for user in doctor_users.filter(id__in=member_ids)]
-        else:
-            # Si no hay organización, mostrar todos los doctores
-            class PseudoMember:
-                def __init__(self, user):
-                    self.user = user
-            doctors = [PseudoMember(user) for user in doctor_users]
+        # Crear objetos pseudo-member para compatibilidad con el template
+        class PseudoMember:
+            def __init__(self, user):
+                self.user = user
+        
+        doctors = [PseudoMember(user) for user in doctor_users]
     
     context = {
         'config': config,
