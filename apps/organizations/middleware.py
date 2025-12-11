@@ -105,11 +105,15 @@ class SubscriptionMiddleware(MiddlewareMixin):
         '/organizations/subscription/',
         '/users/verify-email/',
         '/users/resend-verification/',
+        '/users/verification/',
         '/users/subscription/',  # Checkout y procesamiento de pagos
         '/users/payment-methods/',
         '/users/webhooks/',  # Webhook de Wompi
         '/static/',
         '/media/',
+        '/',  # Página de inicio pública
+        '/agendar/',  # Página de booking pública
+        '/tienda/',  # Página de tienda pública
     ]
     
     def process_request(self, request):
