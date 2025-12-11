@@ -561,104 +561,145 @@ document.addEventListener('click', function(event) {
     </div>
 </div>
 
-<!-- Modal para Editar Cita con Agenda -->
+<!-- Modal para Editar Cita (usando estructura de Nueva Cita) -->
 <div id="editAppointmentModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-    <div class="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-        <div class="sticky top-0 bg-gradient-to-r from-orange-600 to-red-600 p-6 text-white rounded-t-2xl z-10">
-            <div class="flex items-center justify-between">
-                <div>
-                    <h2 class="text-2xl font-bold">
-                        <i class="fas fa-calendar-check mr-2"></i>Reagendar Cita
-                    </h2>
-                    <p class="mt-1 text-orange-100 text-sm">Selecciona una nueva fecha y hora disponible</p>
-                </div>
-                <button onclick="closeEditModal()" class="text-white hover:text-gray-200">
-                    <i class="fas fa-times text-2xl"></i>
-                </button>
-            </div>
+    <div class="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+        <div class="bg-orange-600 text-white px-6 py-4 rounded-t-lg flex justify-between items-center">
+            <h2 class="text-xl font-bold">
+                <i class="fas fa-calendar-check mr-2"></i>Reagendar Cita para {{ appointment.full_name }}
+            </h2>
+            <button onclick="closeEditModal()" class="text-white hover:text-gray-200">
+                <i class="fas fa-times text-2xl"></i>
+            </button>
         </div>
-
+        
         <form id="editAppointmentForm" class="p-6">
             {% csrf_token %}
+            <input type="hidden" id="edit_selected_appointment_date" name="appointment_date">
+            <input type="hidden" id="edit_selected_appointment_time" name="appointment_time">
             
-            <!-- Información de la Cita Actual -->
-            <div class="bg-blue-50 border-l-4 border-blue-500 rounded-lg p-4 mb-6">
-                <h3 class="font-semibold text-gray-800 mb-3 flex items-center">
-                    <i class="fas fa-info-circle text-blue-600 mr-2"></i>Cita Actual
+            <!-- Información del Paciente (Solo lectura) -->
+            <div class="mb-6 bg-orange-50 p-4 rounded-lg border-l-4 border-orange-500">
+                <h3 class="text-sm font-semibold text-gray-700 mb-3">
+                    <i class="fas fa-user mr-2 text-orange-600"></i>Cita Actual
                 </h3>
                 <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                     <div>
-                        <p class="text-gray-600 text-xs mb-1">Paciente</p>
+                        <p class="text-gray-600">Paciente</p>
                         <p class="font-semibold text-gray-800">{{ appointment.full_name }}</p>
                     </div>
                     <div>
-                        <p class="text-gray-600 text-xs mb-1">Teléfono</p>
+                        <p class="text-gray-600">Teléfono</p>
                         <p class="font-semibold text-gray-800">{{ appointment.phone_number }}</p>
                     </div>
                     <div>
-                        <p class="text-gray-600 text-xs mb-1">Fecha Actual</p>
-                        <p class="font-semibold text-blue-700">{{ appointment.appointment_date|date:"d/m/Y" }}</p>
+                        <p class="text-gray-600">Fecha Actual</p>
+                        <p class="font-semibold text-orange-700">{{ appointment.appointment_date|date:"d/m/Y" }}</p>
                     </div>
                     <div>
-                        <p class="text-gray-600 text-xs mb-1">Hora Actual</p>
-                        <p class="font-semibold text-blue-700">{{ appointment.appointment_time|time:"H:i" }}</p>
+                        <p class="text-gray-600">Hora Actual</p>
+                        <p class="font-semibold text-orange-700">{{ appointment.appointment_time|time:"H:i" }}</p>
                     </div>
                 </div>
             </div>
-
-            <!-- Selector de Doctor (si aplica) -->
+            
+            <!-- Doctor y Duración (opcional para mostrar contexto) -->
             {% if available_doctors %}
             <div class="mb-6">
-                <label class="block text-sm font-medium text-gray-700 mb-3">
-                    <i class="fas fa-user-md text-orange-600 mr-2"></i>Selecciona un Doctor (Opcional - Filtra disponibilidad)
-                </label>
-                <select id="edit_doctor_select" onchange="loadEditAvailableDates()" 
-                        class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-orange-500 focus:ring-2 focus:ring-orange-200 transition">
-                    <option value="">Ver todos los doctores disponibles</option>
-                    {% for doctor in available_doctors %}
-                    <option value="{{ doctor.id }}">Dr. {{ doctor.full_name }}</option>
-                    {% endfor %}
-                </select>
-                <p class="text-xs text-gray-500 mt-2">
-                    <i class="fas fa-lightbulb mr-1"></i>
-                    Puedes seleccionar un doctor específico o ver todos los horarios disponibles
-                </p>
-            </div>
-            {% endif %}
-            
-            <!-- Paso 1: Seleccionar Nueva Fecha -->
-            <div class="mb-6">
-                <label class="block text-sm font-medium text-gray-700 mb-3">
-                    <i class="fas fa-calendar text-orange-600 mr-2"></i>1. Selecciona la Nueva Fecha
-                </label>
-                <div id="editDatesContainer" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-                    <div class="col-span-full text-center py-8">
-                        <i class="fas fa-spinner fa-spin text-orange-600 text-3xl mb-3"></i>
-                        <p class="text-gray-600">Cargando fechas disponibles...</p>
+                <h3 class="text-lg font-semibold text-gray-800 mb-3 border-b pb-2">
+                    <i class="fas fa-user-md mr-2 text-purple-600"></i>Información de la Cita
+                </h3>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            Doctor/Optómetra (Filtrar disponibilidad)
+                        </label>
+                        <select name="doctor_id" id="edit_doctor_filter" onchange="loadEditAvailableDates()"
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent">
+                            <option value="">Todos los doctores</option>
+                            {% for doctor in available_doctors %}
+                            <option value="{{ doctor.id }}">
+                                {{ doctor.full_name }}{% if doctor.specialty %} - {{ doctor.get_specialty_display }}{% endif %}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            Duración (minutos)
+                        </label>
+                        <select name="duration" id="edit_duration"
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent">
+                            <option value="30">30 minutos</option>
+                            <option value="45">45 minutos</option>
+                            <option value="60" selected>60 minutos (1 hora)</option>
+                            <option value="90">90 minutos (1.5 horas)</option>
+                            <option value="120">120 minutos (2 horas)</option>
+                        </select>
                     </div>
                 </div>
-                <input type="hidden" id="edit_date" name="appointment_date" required>
             </div>
+            {% endif %}
 
-            <!-- Paso 2: Seleccionar Nueva Hora -->
-            <div id="editTimeSlotsSection" class="mb-6 hidden">
-                <label class="block text-sm font-medium text-gray-700 mb-3">
-                    <i class="fas fa-clock text-orange-600 mr-2"></i>2. Selecciona la Nueva Hora
-                </label>
-                <div id="editSlotsContainer" class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3">
-                    <!-- Los horarios se cargarán dinámicamente -->
-                </div>
-                <input type="hidden" id="edit_time" name="appointment_time" required>
-            </div>
-
-            <!-- Notas Adicionales -->
+            <!-- Selector de Fecha y Hora -->
             <div class="mb-6">
-                <label class="block text-sm font-medium text-gray-700 mb-2">
-                    <i class="fas fa-sticky-note text-orange-600 mr-2"></i>Notas Adicionales (Opcional)
+                <h3 class="text-lg font-semibold text-gray-800 mb-3 border-b pb-2">
+                    <i class="fas fa-calendar-alt mr-2 text-orange-600"></i>Seleccionar Fecha y Hora
+                </h3>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Fechas Disponibles -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            Fechas Disponibles <span class="text-red-500">*</span>
+                        </label>
+                        <div id="editAvailableDatesContainer" class="space-y-2 max-h-96 overflow-y-auto border border-gray-200 rounded-lg p-3">
+                            <div class="text-center py-8 text-gray-500">
+                                <i class="fas fa-spinner fa-spin text-2xl mb-2"></i>
+                                <p>Cargando fechas disponibles...</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Horarios Disponibles -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            Horarios Disponibles <span class="text-red-500">*</span>
+                        </label>
+                        <div id="editAvailableSlotsContainer" class="space-y-2 max-h-96 overflow-y-auto border border-gray-200 rounded-lg p-3">
+                            <div class="text-center py-8 text-gray-400">
+                                <i class="fas fa-clock text-2xl mb-2"></i>
+                                <p>Selecciona una fecha primero</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Resumen de Selección -->
+                <div id="editSelectionSummary" class="mt-4 p-4 bg-green-50 border border-green-200 rounded-lg hidden">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm text-gray-600">Nueva cita seleccionada:</p>
+                            <p class="text-lg font-bold text-green-800">
+                                <i class="fas fa-calendar mr-2"></i><span id="editSummaryDate"></span>
+                                <i class="fas fa-clock ml-4 mr-2"></i><span id="editSummaryTime"></span>
+                            </p>
+                        </div>
+                        <i class="fas fa-check-circle text-green-600 text-3xl"></i>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Notas -->
+            <div class="mb-6">
+                <label class="block text-sm font-medium text-gray-700 mb-1">
+                    <i class="fas fa-sticky-note mr-2 text-yellow-600"></i>Notas / Motivo del Cambio
                 </label>
-                <textarea id="edit_notes" name="notes" rows="3" 
-                          placeholder="Ej: Cliente solicitó cambio de horario por motivos laborales..."
-                          class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent">{{ appointment.notes }}</textarea>
+                <textarea name="notes" id="edit_notes" rows="3"
+                          class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                          placeholder="Ej: Cliente solicitó cambio de horario, conflicto de agenda...">{{ appointment.notes }}</textarea>
             </div>
 
             <!-- Advertencia -->
@@ -666,24 +707,23 @@ document.addEventListener('click', function(event) {
                 <div class="flex items-start">
                     <i class="fas fa-exclamation-triangle text-yellow-600 text-xl mt-0.5 mr-3"></i>
                     <div class="text-sm text-gray-700">
-                        <p class="font-semibold mb-2">⚠️ Importante antes de confirmar:</p>
+                        <p class="font-semibold mb-2">⚠️ Importante:</p>
                         <ul class="list-disc ml-4 space-y-1">
                             <li>El paciente será notificado automáticamente del cambio</li>
-                            <li>Selecciona solo horarios marcados como disponibles</li>
                             <li>Esta acción no se puede deshacer</li>
                         </ul>
                     </div>
                 </div>
             </div>
-
-            <!-- Botones de Acción -->
-            <div class="flex flex-col sm:flex-row justify-end gap-3 pt-4 border-t">
-                <button type="button" onclick="closeEditModal()" class="px-6 py-3 border-2 border-gray-300 rounded-lg hover:bg-gray-50 transition-colors order-2 sm:order-1">
-                    <i class="fas fa-times mr-2"></i>Cancelar
+            
+            <!-- Botones -->
+            <div class="flex gap-3">
+                <button type="button" onclick="saveEditAppointment()" id="btnSaveEdit"
+                        class="flex-1 bg-orange-600 hover:bg-orange-700 text-white px-6 py-3 rounded-lg transition-colors font-medium">
+                    <i class="fas fa-save mr-2"></i>Guardar Cambios
                 </button>
-                <button type="button" onclick="saveEditAppointment()" id="btnSaveEdit" disabled
-                        class="px-6 py-3 bg-orange-600 hover:bg-orange-700 text-white rounded-lg transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed order-1 sm:order-2">
-                    <i class="fas fa-save mr-2"></i>Confirmar Cambios
+                <button type="button" onclick="closeEditModal()" class="px-6 py-3 bg-gray-300 hover:bg-gray-400 text-gray-700 rounded-lg transition-colors font-medium">
+                    <i class="fas fa-times mr-2"></i>Cancelar
                 </button>
             </div>
         </form>
@@ -694,105 +734,97 @@ document.addEventListener('click', function(event) {
 // Variables globales para el modal de edición
 let editSelectedDate = null;
 let editSelectedTime = null;
-let editSelectedDoctorId = null;
 
-// Funciones para el modal de edición
+// Funciones para el modal de edición (estructura igual a nueva cita)
 function openEditModal() {
     document.getElementById('editAppointmentModal').classList.remove('hidden');
+    document.getElementById('editAppointmentModal').classList.add('flex');
     // Cargar fechas disponibles al abrir el modal
     loadEditAvailableDates();
 }
 
 function closeEditModal() {
     document.getElementById('editAppointmentModal').classList.add('hidden');
-    // Limpiar selecciones
+    document.getElementById('editAppointmentModal').classList.remove('flex');
+    document.getElementById('editAppointmentForm').reset();
+    document.getElementById('editSelectionSummary').classList.add('hidden');
+    document.getElementById('editAvailableDatesContainer').innerHTML = '';
+    document.getElementById('editAvailableSlotsContainer').innerHTML = '<div class="text-center py-8 text-gray-400"><i class="fas fa-clock text-2xl mb-2"></i><p>Selecciona una fecha primero</p></div>';
     editSelectedDate = null;
     editSelectedTime = null;
-    editSelectedDoctorId = null;
-    document.getElementById('editTimeSlotsSection').classList.add('hidden');
-    document.getElementById('btnSaveEdit').disabled = true;
 }
 
-// Cargar fechas disponibles
+// Cargar fechas disponibles (igual que en nueva cita)
 async function loadEditAvailableDates() {
-    const doctorId = document.getElementById('edit_doctor_select')?.value || '';
-    editSelectedDoctorId = doctorId;
-    
-    const container = document.getElementById('editDatesContainer');
-    container.innerHTML = '<div class="col-span-full text-center py-4"><i class="fas fa-spinner fa-spin text-orange-600 text-2xl"></i></div>';
+    const container = document.getElementById('editAvailableDatesContainer');
+    container.innerHTML = '<div class="text-center py-8 text-gray-500"><i class="fas fa-spinner fa-spin text-2xl mb-2"></i><p>Cargando fechas...</p></div>';
     
     try {
-        const response = await fetch(`/api/available-dates/?organization_id={{ appointment.organization.id }}${doctorId ? '&doctor_id=' + doctorId : ''}`);
+        const doctorFilter = document.getElementById('edit_doctor_filter')?.value || '';
+        const url = `/api/available-dates/?organization_id={{ appointment.organization.id }}${doctorFilter ? '&doctor_id=' + doctorFilter : ''}`;
+        console.log('Fetching dates from:', url);
+        
+        const response = await fetch(url);
+        console.log('Response status:', response.status);
+        
         const data = await response.json();
+        console.log('Response data:', data);
         
         if (data.dates && data.dates.length > 0) {
             container.innerHTML = '';
-            data.dates.forEach(dateObj => {
+            data.dates.forEach(date => {
+                const dateObj = new Date(date + 'T00:00:00');
+                const dayName = dateObj.toLocaleDateString('es-ES', { weekday: 'long' });
+                const dateFormatted = dateObj.toLocaleDateString('es-ES', { day: '2-digit', month: 'long', year: 'numeric' });
+                
                 const button = document.createElement('button');
                 button.type = 'button';
-                button.className = 'date-option border-2 border-gray-300 rounded-lg p-3 hover:border-orange-500 hover:bg-orange-50 transition text-center';
-                button.onclick = () => selectEditDate(dateObj.date, dateObj.formatted);
-                
-                const dayName = new Date(dateObj.date).toLocaleDateString('es-ES', { weekday: 'short' });
-                const day = new Date(dateObj.date).getDate();
-                const month = new Date(dateObj.date).toLocaleDateString('es-ES', { month: 'short' });
-                
+                button.className = 'w-full text-left px-4 py-3 border-2 border-gray-200 rounded-lg hover:border-orange-500 hover:bg-orange-50 transition-all';
                 button.innerHTML = `
-                    <div class="text-xs text-gray-600 uppercase">${dayName}</div>
-                    <div class="text-2xl font-bold text-gray-800">${day}</div>
-                    <div class="text-xs text-gray-600 uppercase">${month}</div>
-                    <div class="mt-1 text-xs text-green-600">
-                        <i class="fas fa-check-circle"></i> Disponible
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="font-semibold text-gray-800 capitalize">${dayName}</p>
+                            <p class="text-sm text-gray-600">${dateFormatted}</p>
+                        </div>
+                        <i class="fas fa-chevron-right text-gray-400"></i>
                     </div>
                 `;
+                button.onclick = () => selectEditDate(date, button);
                 container.appendChild(button);
             });
         } else {
-            container.innerHTML = `
-                <div class="col-span-full text-center py-8 text-gray-500">
-                    <i class="fas fa-calendar-times text-4xl mb-3"></i>
-                    <p>No hay fechas disponibles</p>
-                    <p class="text-sm mt-1">Intenta con otro doctor o contáctanos</p>
-                </div>
-            `;
+            container.innerHTML = '<div class="text-center py-8 text-gray-500"><i class="fas fa-calendar-times text-2xl mb-2"></i><p>No hay fechas disponibles</p></div>';
         }
     } catch (error) {
-        console.error('Error:', error);
-        container.innerHTML = `
-            <div class="col-span-full text-center py-8 text-red-500">
-                <i class="fas fa-exclamation-triangle text-4xl mb-3"></i>
-                <p>Error al cargar fechas disponibles</p>
-            </div>
-        `;
+        console.error('Error loading dates:', error);
+        container.innerHTML = '<div class="text-center py-8 text-red-500"><i class="fas fa-exclamation-triangle text-2xl mb-2"></i><p>Error al cargar fechas</p></div>';
     }
 }
 
-// Seleccionar fecha
-function selectEditDate(date, formatted) {
-    editSelectedDate = date;
-    document.getElementById('edit_date').value = date;
-    
-    // Marcar fecha seleccionada
-    document.querySelectorAll('.date-option').forEach(btn => {
-        btn.classList.remove('border-orange-500', 'bg-orange-100', 'ring-2', 'ring-orange-300');
+// Seleccionar fecha (igual que en nueva cita)
+async function selectEditDate(date, button) {
+    // Actualizar estilos de botones
+    document.querySelectorAll('#editAvailableDatesContainer button').forEach(btn => {
+        btn.className = 'w-full text-left px-4 py-3 border-2 border-gray-200 rounded-lg hover:border-orange-500 hover:bg-orange-50 transition-all';
     });
-    event.target.closest('.date-option').classList.add('border-orange-500', 'bg-orange-100', 'ring-2', 'ring-orange-300');
+    button.className = 'w-full text-left px-4 py-3 border-2 border-orange-500 bg-orange-50 rounded-lg transition-all';
     
-    // Cargar horarios disponibles
-    loadEditAvailableSlots(date);
+    // Guardar fecha seleccionada
+    editSelectedDate = date;
+    document.getElementById('edit_selected_appointment_date').value = date;
+    
+    // Cargar horarios para esta fecha
+    await loadEditAvailableSlots(date);
 }
 
-// Cargar horarios disponibles
+// Cargar horarios disponibles (igual que en nueva cita)
 async function loadEditAvailableSlots(date) {
-    const container = document.getElementById('editSlotsContainer');
-    const section = document.getElementById('editTimeSlotsSection');
-    
-    section.classList.remove('hidden');
-    container.innerHTML = '<div class="col-span-full text-center py-4"><i class="fas fa-spinner fa-spin text-orange-600 text-2xl"></i></div>';
+    const container = document.getElementById('editAvailableSlotsContainer');
+    container.innerHTML = '<div class="text-center py-8 text-gray-500"><i class="fas fa-spinner fa-spin text-2xl mb-2"></i><p>Cargando horarios...</p></div>';
     
     try {
-        const doctorParam = editSelectedDoctorId ? `&doctor_id=${editSelectedDoctorId}` : '';
-        const response = await fetch(`/api/available-slots/?organization_id={{ appointment.organization.id }}&date=${date}${doctorParam}`);
+        const doctorFilter = document.getElementById('edit_doctor_filter')?.value || '';
+        const response = await fetch(`/api/available-slots/?date=${date}&organization_id={{ appointment.organization.id }}${doctorFilter ? '&doctor_id=' + doctorFilter : ''}`);
         const data = await response.json();
         
         if (data.slots && data.slots.length > 0) {
@@ -800,61 +832,68 @@ async function loadEditAvailableSlots(date) {
             data.slots.forEach(slot => {
                 const button = document.createElement('button');
                 button.type = 'button';
-                button.className = 'time-slot border-2 border-gray-300 rounded-lg p-3 hover:border-orange-500 hover:bg-orange-50 transition text-center font-semibold';
-                button.onclick = () => selectEditTime(slot.time);
+                button.className = 'w-full px-4 py-3 border-2 border-gray-200 rounded-lg hover:border-green-500 hover:bg-green-50 transition-all';
                 button.innerHTML = `
-                    <i class="far fa-clock text-orange-600 mr-1"></i>
-                    ${slot.time}
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center">
+                            <i class="fas fa-clock text-gray-600 mr-3"></i>
+                            <span class="font-semibold text-gray-800">${slot.time}</span>
+                        </div>
+                        <span class="px-2 py-1 bg-green-100 text-green-800 text-xs font-semibold rounded-full">
+                            Disponible
+                        </span>
+                    </div>
                 `;
+                button.onclick = () => selectEditSlot(slot.time, button, date);
                 container.appendChild(button);
             });
         } else {
-            container.innerHTML = `
-                <div class="col-span-full text-center py-8 text-gray-500">
-                    <i class="fas fa-clock text-4xl mb-3"></i>
-                    <p>No hay horarios disponibles para esta fecha</p>
-                </div>
-            `;
+            container.innerHTML = '<div class="text-center py-8 text-gray-500"><i class="fas fa-clock text-2xl mb-2"></i><p>No hay horarios disponibles</p></div>';
         }
     } catch (error) {
-        console.error('Error:', error);
-        container.innerHTML = `
-            <div class="col-span-full text-center py-8 text-red-500">
-                <i class="fas fa-exclamation-triangle text-4xl mb-3"></i>
-                <p>Error al cargar horarios</p>
-            </div>
-        `;
+        console.error('Error loading slots:', error);
+        container.innerHTML = '<div class="text-center py-8 text-red-500"><i class="fas fa-exclamation-triangle text-2xl mb-2"></i><p>Error al cargar horarios</p></div>';
     }
 }
 
-// Seleccionar hora
-function selectEditTime(time) {
-    editSelectedTime = time;
-    document.getElementById('edit_time').value = time;
-    
-    // Marcar hora seleccionada
-    document.querySelectorAll('.time-slot').forEach(btn => {
-        btn.classList.remove('border-orange-500', 'bg-orange-100', 'ring-2', 'ring-orange-300');
+// Seleccionar horario (igual que en nueva cita)
+function selectEditSlot(time, button, date) {
+    // Actualizar estilos de botones
+    document.querySelectorAll('#editAvailableSlotsContainer button').forEach(btn => {
+        btn.className = 'w-full px-4 py-3 border-2 border-gray-200 rounded-lg hover:border-green-500 hover:bg-green-50 transition-all';
     });
-    event.target.closest('.time-slot').classList.add('border-orange-500', 'bg-orange-100', 'ring-2', 'ring-orange-300');
+    button.className = 'w-full px-4 py-3 border-2 border-green-500 bg-green-50 rounded-lg transition-all';
     
-    // Habilitar botón de guardar
-    document.getElementById('btnSaveEdit').disabled = false;
+    // Guardar hora seleccionada
+    editSelectedTime = time;
+    document.getElementById('edit_selected_appointment_time').value = time;
+    
+    // Mostrar resumen
+    const dateObj = new Date(date + 'T00:00:00');
+    const dateFormatted = dateObj.toLocaleDateString('es-ES', { day: '2-digit', month: 'long', year: 'numeric' });
+    
+    document.getElementById('editSummaryDate').textContent = dateFormatted;
+    document.getElementById('editSummaryTime').textContent = time;
+    document.getElementById('editSelectionSummary').classList.remove('hidden');
 }
 
+// Guardar cambios de edición
 async function saveEditAppointment() {
     const form = document.getElementById('editAppointmentForm');
     const formData = new FormData(form);
     
     // Validar que se haya seleccionado fecha y hora
-    if (!editSelectedDate || !editSelectedTime) {
-        Toast.error('Por favor selecciona una fecha y hora');
+    const appointmentDate = document.getElementById('edit_selected_appointment_date').value;
+    const appointmentTime = document.getElementById('edit_selected_appointment_time').value;
+    
+    if (!appointmentDate || !appointmentTime) {
+        Toast.warning('Por favor selecciona una fecha y hora para la cita');
         return;
     }
     
     // Confirmar el cambio
     const confirmed = await Confirm.show(
-        `¿Reagendar la cita para el ${new Date(editSelectedDate).toLocaleDateString('es-ES', {day: '2-digit', month: 'long', year: 'numeric'})} a las ${editSelectedTime}?`,
+        `¿Reagendar la cita para el ${document.getElementById('editSummaryDate').textContent} a las ${editSelectedTime}?`,
         'Confirmar Cambio de Cita',
         'Sí, Reagendar',
         'Cancelar'
@@ -862,28 +901,37 @@ async function saveEditAppointment() {
     
     if (!confirmed) return;
     
-    // Enviar la solicitud
-    fetch('{% url "dashboard:appointment_edit" appointment.id %}', {
-        method: 'POST',
-        headers: {
-            'X-CSRFToken': '{{ csrf_token }}'
-        },
-        body: formData
-    })
-    .then(response => response.json())
-    .then(data => {
+    const submitBtn = document.getElementById('btnSaveEdit');
+    const originalText = submitBtn.innerHTML;
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Guardando...';
+    
+    try {
+        const response = await fetch('{% url "dashboard:appointment_edit" appointment.id %}', {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}'
+            },
+            body: formData
+        });
+        
+        const data = await response.json();
+        
         if (data.success) {
             Toast.success(data.message);
             closeEditModal();
             setTimeout(() => location.reload(), 1500);
         } else {
             Toast.error(data.message);
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = originalText;
         }
-    })
-    .catch(error => {
+    } catch (error) {
         console.error('Error:', error);
         Toast.error('Error al reagendar la cita');
-    });
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = originalText;
+    }
 }
 
 // Cerrar modales al hacer clic fuera
