@@ -244,13 +244,24 @@ def subscription_unlimited(request, user_id):
     if request.method == 'POST':
         user = get_object_or_404(User, id=user_id)
         
-        # Obtener o crear plan Enterprise (o el más alto) - case insensitive
+        # Intentar obtener plan Enterprise (case insensitive)
         enterprise_plan = SubscriptionPlan.objects.filter(
             plan_type__iexact='enterprise'
         ).first()
         
+        # Si no existe, buscar por nombre que contenga "empresarial"
         if not enterprise_plan:
-            messages.error(request, 'No existe un plan empresarial configurado')
+            enterprise_plan = SubscriptionPlan.objects.filter(
+                name__icontains='empresarial'
+            ).first()
+        
+        # Si aún no existe, obtener el plan más caro (el de mayor precio)
+        if not enterprise_plan:
+            enterprise_plan = SubscriptionPlan.objects.order_by('-price_monthly').first()
+        
+        # Si no hay ningún plan configurado, mostrar error
+        if not enterprise_plan:
+            messages.error(request, 'No existe ningún plan de suscripción configurado. Por favor, crea al menos un plan.')
             return redirect('admin_dashboard:user_detail', user_id=user_id)
         
         try:
@@ -261,7 +272,7 @@ def subscription_unlimited(request, user_id):
             # Extender por 100 años (prácticamente ilimitado)
             subscription.end_date = timezone.now() + timedelta(days=36500)
             subscription.save()
-            messages.success(request, f'Acceso ilimitado otorgado a {user.username}')
+            messages.success(request, f'Acceso ilimitado otorgado a {user.username} con plan {enterprise_plan.name}')
         except UserSubscription.DoesNotExist:
             UserSubscription.objects.create(
                 user=user,
@@ -270,7 +281,7 @@ def subscription_unlimited(request, user_id):
                 payment_status='paid',
                 end_date=timezone.now() + timedelta(days=36500)
             )
-            messages.success(request, f'Suscripción ilimitada creada para {user.username}')
+            messages.success(request, f'Suscripción ilimitada creada para {user.username} con plan {enterprise_plan.name}')
         
         return redirect('admin_dashboard:user_detail', user_id=user_id)
     
@@ -397,23 +408,40 @@ def plan_create(request):
         from django.utils.text import slugify
         
         name = request.POST.get('name')
+        plan_type = request.POST.get('plan_type', 'basic')
         description = request.POST.get('description', '')
         monthly_price = request.POST.get('monthly_price')
         yearly_price = request.POST.get('yearly_price')
-        max_organizations = request.POST.get('max_organizations')
         max_users = request.POST.get('max_users')
         max_appointments = request.POST.get('max_appointments')
+        max_patients = request.POST.get('max_patients')
+        max_storage_mb = request.POST.get('max_storage_mb', 500)
         is_active = request.POST.get('is_active') == 'on'
+        
+        # Características (checkboxes)
+        whatsapp_integration = request.POST.get('whatsapp_integration') == '1'
+        custom_branding = request.POST.get('custom_branding') == '1'
+        api_access = request.POST.get('api_access') == '1'
+        priority_support = request.POST.get('priority_support') == '1'
+        analytics = request.POST.get('analytics') == '1'
+        multi_location = request.POST.get('multi_location') == '1'
         
         SubscriptionPlan.objects.create(
             name=name,
             slug=slugify(name),
-            plan_type='basic',  # Por defecto
+            plan_type=plan_type,
             price_monthly=monthly_price,
             price_yearly=yearly_price,
             max_users=max_users,
             max_appointments_month=max_appointments,
-            max_patients=max_organizations,  # Usamos max_patients para organizaciones
+            max_patients=max_patients,
+            max_storage_mb=max_storage_mb,
+            whatsapp_integration=whatsapp_integration,
+            custom_branding=custom_branding,
+            api_access=api_access,
+            priority_support=priority_support,
+            analytics=analytics,
+            multi_location=multi_location,
             is_active=is_active,
         )
         
@@ -430,13 +458,26 @@ def plan_edit(request, plan_id):
     plan = get_object_or_404(SubscriptionPlan, id=plan_id)
     
     if request.method == 'POST':
+        from django.utils.text import slugify
+        
         plan.name = request.POST.get('name')
-        plan.description = request.POST.get('description', '')
+        plan.slug = slugify(plan.name)
+        plan.plan_type = request.POST.get('plan_type', plan.plan_type)
         plan.price_monthly = request.POST.get('monthly_price')
         plan.price_yearly = request.POST.get('yearly_price')
         plan.max_users = request.POST.get('max_users')
         plan.max_appointments_month = request.POST.get('max_appointments')
-        plan.max_patients = request.POST.get('max_organizations')
+        plan.max_patients = request.POST.get('max_patients')
+        plan.max_storage_mb = request.POST.get('max_storage_mb', 500)
+        
+        # Características (checkboxes)
+        plan.whatsapp_integration = request.POST.get('whatsapp_integration') == '1'
+        plan.custom_branding = request.POST.get('custom_branding') == '1'
+        plan.api_access = request.POST.get('api_access') == '1'
+        plan.priority_support = request.POST.get('priority_support') == '1'
+        plan.analytics = request.POST.get('analytics') == '1'
+        plan.multi_location = request.POST.get('multi_location') == '1'
+        
         plan.is_active = request.POST.get('is_active') == 'on'
         
         plan.save()
