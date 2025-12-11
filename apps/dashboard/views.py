@@ -376,28 +376,28 @@ def configuration(request):
     blocked_dates = BlockedDate.objects.filter(date__gte=timezone.now().date(), **org_filter).order_by('date')
     specific_schedules = SpecificDateSchedule.objects.filter(date__gte=timezone.now().date(), **org_filter).order_by('date', 'start_time')
     
-    # Obtener todos los usuarios del grupo 'Doctores' (sin filtrar por organización)
-    doctors = []
-    doctor_group = Group.objects.filter(name='Doctores').first()
+    # Obtener doctores del modelo Doctor
+    from apps.patients.models import Doctor
     
-    # Debug: si no hay grupo, intentar buscar variantes
-    if not doctor_group:
-        doctor_group = Group.objects.filter(name__icontains='doctor').first()
+    doctors_queryset = Doctor.objects.filter(is_active=True)
     
-    if doctor_group:
-        from django.contrib.auth import get_user_model
-        User = get_user_model()
-        doctor_users = User.objects.filter(
-            groups=doctor_group,
-            is_active=True
-        )
-        
-        # Crear objetos pseudo-member para compatibilidad con el template
-        class PseudoMember:
-            def __init__(self, user):
-                self.user = user
-        
-        doctors = [PseudoMember(user) for user in doctor_users]
+    # Filtrar por organización si existe
+    if request.organization:
+        doctors_queryset = doctors_queryset.filter(organization=request.organization)
+    
+    # Crear objetos pseudo-member para compatibilidad con el template
+    class PseudoMember:
+        def __init__(self, doctor):
+            # Crear un objeto user falso con los datos del doctor
+            self.user = type('obj', (object,), {
+                'id': doctor.id,
+                'first_name': doctor.full_name.split()[0] if doctor.full_name else '',
+                'last_name': ' '.join(doctor.full_name.split()[1:]) if len(doctor.full_name.split()) > 1 else '',
+                'username': doctor.full_name,
+                'get_full_name': lambda: doctor.full_name
+            })()
+    
+    doctors = [PseudoMember(doc) for doc in doctors_queryset]
     
     context = {
         'config': config,

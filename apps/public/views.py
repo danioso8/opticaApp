@@ -84,16 +84,12 @@ def booking(request):
         except LandingPageConfig.DoesNotExist:
             pass
     
-    # Obtener doctores (usuarios con el grupo 'Doctores')
-    doctors_group = Group.objects.filter(name='Doctores').first()
-    available_doctors = []
-    if doctors_group:
-        from django.contrib.auth import get_user_model
-        User = get_user_model()
-        available_doctors = User.objects.filter(
-            groups=doctors_group,
-            is_active=True
-        ).values('id', 'first_name', 'last_name')
+    # Obtener doctores del modelo Doctor
+    from apps.patients.models import Doctor
+    
+    available_doctors = Doctor.objects.filter(
+        is_active=True
+    ).values('id', 'full_name')
     
     context = {
         'system_closed': False,
