@@ -87,7 +87,7 @@
                     {% csrf_token %}
                     
                     <!-- Step 1: Seleccionar Sucursal -->
-                    <div id="step1" class="step-content">
+                    <div id="step1" class="step-content {% if available_organizations.count == 1 %}hidden{% endif %}">
                         {% if available_organizations.count > 1 %}
                         <h3 class="text-xl md:text-2xl font-bold text-gray-800 mb-4 md:mb-6">Selecciona una Sucursal</h3>
                         {% if available_organizations %}
@@ -156,12 +156,14 @@
                     </div>
                     
                     <!-- Step 2: Seleccionar Fecha -->
-                    <div id="step2" class="step-content hidden">
+                    <div id="step2" class="step-content {% if available_organizations.count > 1 %}hidden{% endif %}">
                         <div class="flex justify-between items-center mb-6">
                             <h3 class="text-2xl font-bold text-gray-800">Selecciona una Fecha</h3>
+                            {% if available_organizations.count > 1 %}
                             <button type="button" onclick="prevStep(1)" class="text-blue-600 hover:text-blue-800 font-medium">
                                 <i class="fas fa-arrow-left mr-2"></i>Volver
                             </button>
+                            {% endif %}
                         </div>
                         
                         <!-- Selector de Doctor -->
@@ -305,6 +307,10 @@ document.addEventListener('DOMContentLoaded', function() {
     selectedOrganizationNeighborhood = '{{ available_organizations.first.neighborhood|default:''|escapejs }}';
     selectedOrganizationCity = '{{ available_organizations.first.city|default:''|escapejs }}';
     console.log('Auto-selected organization:', selectedOrganizationId);
+    
+    // Establecer currentStep en 2 y cargar fechas automáticamente
+    currentStep = 2;
+    loadAvailableDates(selectedOrganizationId);
 });
 {% endif %}
 

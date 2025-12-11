@@ -338,7 +338,13 @@
                     <option value="">Seleccionar doctor...</option>
                     {% for doctor in doctors %}
                         <option value="{{ doctor.user.id }}">
-                            {{ doctor.user.get_full_name|default:doctor.user.username }}
+                            {% if doctor.user.first_name and doctor.user.last_name %}
+                                Dr. {{ doctor.user.first_name }} {{ doctor.user.last_name }}
+                            {% elif doctor.user.first_name %}
+                                Dr. {{ doctor.user.first_name }}
+                            {% else %}
+                                Dr. {{ doctor.user.username }}
+                            {% endif %}
                         </option>
                     {% endfor %}
                 </select>

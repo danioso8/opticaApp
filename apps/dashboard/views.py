@@ -379,7 +379,7 @@ def configuration(request):
     # Obtener solo doctores de la organización
     doctors = []
     if request.organization:
-        doctor_group = Group.objects.filter(name__icontains='doctor').first()
+        doctor_group = Group.objects.filter(name='Doctores').first()
         if doctor_group:
             # Filtrar por grupo de doctor
             doctors = request.organization.members.filter(user__groups=doctor_group, is_active=True)
