@@ -179,10 +179,10 @@
                         <i class="far fa-clock mr-1"></i>
                         {{ schedule.start_time|time:"H:i" }} - {{ schedule.end_time|time:"H:i" }}
                     </p>
-                    {% if schedule.doctor %}
+                    {% if schedule.doctor_obj %}
                     <p class="text-xs text-gray-600 mt-1">
                         <i class="fas fa-user-md mr-1"></i>
-                        Dr. {{ schedule.doctor.get_full_name }}
+                        Dr. {{ schedule.doctor_obj.full_name }}
                     </p>
                     {% endif %}
                     <p class="text-xs text-gray-500 mt-1">

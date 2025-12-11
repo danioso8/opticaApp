@@ -399,6 +399,12 @@ def configuration(request):
     
     doctors = [PseudoMember(doc) for doc in doctors_queryset]
     
+    # Enriquecer specific_schedules con objetos Doctor
+    doctors_dict = {doc.id: doc for doc in doctors_queryset}
+    for schedule in specific_schedules:
+        if schedule.doctor_id:
+            schedule.doctor_obj = doctors_dict.get(schedule.doctor_id)
+    
     context = {
         'config': config,
         'working_hours': working_hours,
