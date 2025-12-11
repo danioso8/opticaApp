@@ -47,6 +47,7 @@ def home(request):
 def booking(request):
     """Página de agendamiento de citas"""
     from apps.organizations.models import Organization, LandingPageConfig
+    from django.contrib.auth.models import Group
     
     # Obtener todas las organizaciones activas que tienen horarios configurados
     from apps.appointments.models import SpecificDateSchedule
@@ -83,9 +84,21 @@ def booking(request):
         except LandingPageConfig.DoesNotExist:
             pass
     
+    # Obtener doctores (usuarios con el grupo 'Doctores')
+    doctors_group = Group.objects.filter(name='Doctores').first()
+    available_doctors = []
+    if doctors_group:
+        from django.contrib.auth import get_user_model
+        User = get_user_model()
+        available_doctors = User.objects.filter(
+            groups=doctors_group,
+            is_active=True
+        ).values('id', 'first_name', 'last_name')
+    
     context = {
         'system_closed': False,
         'available_organizations': available_organizations,
+        'available_doctors': available_doctors,
         'organization_data': first_organization,
         'landing_config': landing_config,
     }

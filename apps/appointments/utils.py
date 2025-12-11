@@ -34,13 +34,14 @@ def generate_time_slots(start_time, end_time, duration_minutes=30):
     return slots
 
 
-def get_available_slots_for_date(date, organization=None):
+def get_available_slots_for_date(date, organization=None, doctor_id=None):
     """
     Obtiene los horarios disponibles para una fecha específica
     
     Args:
         date: Fecha a consultar (date object)
         organization: Organización (opcional)
+        doctor_id: ID del doctor (opcional)
     
     Returns:
         Lista de diccionarios con información de slots disponibles
@@ -63,11 +64,17 @@ def get_available_slots_for_date(date, organization=None):
     
     # Primero verificar si hay horarios específicos para esta fecha
     from .models import SpecificDateSchedule
-    specific_schedules = SpecificDateSchedule.objects.filter(
-        date=date,
-        is_active=True,
+    specific_filters = {
+        'date': date,
+        'is_active': True,
         **org_filter
-    )
+    }
+    
+    # Filtrar por doctor si se especifica
+    if doctor_id:
+        specific_filters['doctor_id'] = doctor_id
+    
+    specific_schedules = SpecificDateSchedule.objects.filter(**specific_filters)
     
     # Si hay horarios específicos, usar esos (ignora WorkingHours)
     if specific_schedules.exists():

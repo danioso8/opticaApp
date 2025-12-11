@@ -127,13 +127,21 @@ def available_dates(request):
         )
     
     today = timezone.now().date()
+    doctor_id = request.query_params.get('doctor_id')
+    
+    # Construir filtros
+    filters = {
+        'organization': organization,
+        'date__gte': today,
+        'is_active': True
+    }
+    
+    # Filtrar por doctor si se especifica
+    if doctor_id:
+        filters['doctor_id'] = doctor_id
     
     # Obtener fechas con horarios específicos para esta organización
-    specific_dates = SpecificDateSchedule.objects.filter(
-        organization=organization,
-        date__gte=today,
-        is_active=True
-    ).values_list('date', flat=True).distinct().order_by('date')
+    specific_dates = SpecificDateSchedule.objects.filter(**filters).values_list('date', flat=True).distinct().order_by('date')
     
     # Filtrar fechas bloqueadas
     available_dates = []
@@ -189,7 +197,10 @@ def available_slots(request):
             status=status.HTTP_404_NOT_FOUND
         )
     
-    slots = get_available_slots_for_date(date, organization)
+    # Obtener doctor_id si está presente
+    doctor_id = request.query_params.get('doctor_id')
+    
+    slots = get_available_slots_for_date(date, organization, doctor_id)
     serializer = AvailableSlotsSerializer(slots, many=True)
     
     return Response({
