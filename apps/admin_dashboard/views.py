@@ -473,7 +473,8 @@ def verify_user_email(request, user_id):
         
         # Obtener o crear perfil de usuario
         profile, created = UserProfile.objects.get_or_create(user=user)
-        profile.email_verified = True
+        profile.is_email_verified = True
+        profile.email_verified_at = timezone.now()
         profile.save()
         
         # Activar el usuario
@@ -494,7 +495,8 @@ def unverify_user_email(request, user_id):
         
         # Obtener o crear perfil de usuario
         profile, created = UserProfile.objects.get_or_create(user=user)
-        profile.email_verified = False
+        profile.is_email_verified = False
+        profile.email_verified_at = None
         profile.save()
         
         messages.warning(request, f'Email de {user.username} marcado como no verificado')
