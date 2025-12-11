@@ -244,9 +244,9 @@ def subscription_unlimited(request, user_id):
     if request.method == 'POST':
         user = get_object_or_404(User, id=user_id)
         
-        # Obtener o crear plan Enterprise (o el más alto)
+        # Obtener o crear plan Enterprise (o el más alto) - case insensitive
         enterprise_plan = SubscriptionPlan.objects.filter(
-            plan_type='enterprise'
+            plan_type__iexact='enterprise'
         ).first()
         
         if not enterprise_plan:
