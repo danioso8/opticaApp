@@ -18,6 +18,8 @@ def remove_old_constraints(apps, schema_editor):
                         ALTER TABLE appointments_appointment 
                         DROP CONSTRAINT unique_active_appointment_slot;
                     END IF;
+                EXCEPTION WHEN OTHERS THEN
+                    -- Ignorar errores
                 END $$;
             """)
             
@@ -32,6 +34,8 @@ def remove_old_constraints(apps, schema_editor):
                         ALTER TABLE appointments_appointment 
                         DROP CONSTRAINT appointments_appointment_organization_id_appointm_3be4b45c_uniq;
                     END IF;
+                EXCEPTION WHEN OTHERS THEN
+                    -- Ignorar errores
                 END $$;
             """)
 
