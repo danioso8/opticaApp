@@ -316,6 +316,24 @@ def appointment_detail(request, pk):
     """Detalle de una cita"""
     appointment = get_object_or_404(Appointment, pk=pk)
     
+    # Manejar cambio de estado vía POST
+    if request.method == 'POST':
+        new_status = request.POST.get('status')
+        
+        if new_status and new_status in dict(Appointment.STATUS_CHOICES):
+            appointment.status = new_status
+            appointment.save()
+            
+            return JsonResponse({
+                'success': True,
+                'message': f'Estado actualizado a {appointment.get_status_display()}'
+            })
+        else:
+            return JsonResponse({
+                'success': False,
+                'message': 'Estado inválido'
+            }, status=400)
+    
     context = {
         'appointment': appointment,
     }
