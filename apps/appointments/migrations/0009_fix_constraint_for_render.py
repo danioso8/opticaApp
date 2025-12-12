@@ -67,22 +67,12 @@ class Migration(migrations.Migration):
         # Crear el constraint usando SQL directo con IF NOT EXISTS
         migrations.RunSQL(
             sql="""
-                DO $$ 
-                BEGIN
-                    IF NOT EXISTS (
-                        SELECT 1 FROM pg_constraint 
-                        WHERE conname = 'unique_active_appointment_slot'
-                    ) THEN
-                        ALTER TABLE appointments_appointment 
-                        ADD CONSTRAINT unique_active_appointment_slot 
-                        UNIQUE (organization_id, appointment_date, appointment_time)
-                        WHERE (status <> 'cancelled');
-                    END IF;
-                END $$;
+                CREATE UNIQUE INDEX IF NOT EXISTS unique_active_appointment_slot 
+                ON appointments_appointment (organization_id, appointment_date, appointment_time)
+                WHERE status <> 'cancelled';
             """,
             reverse_sql="""
-                ALTER TABLE appointments_appointment 
-                DROP CONSTRAINT IF EXISTS unique_active_appointment_slot;
+                DROP INDEX IF EXISTS unique_active_appointment_slot;
             """,
         ),
     ]
