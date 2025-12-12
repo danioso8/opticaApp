@@ -1881,6 +1881,12 @@ def notifications_demo(request):
 
 
 @login_required
+def test_notifications_page(request):
+    """Página de diagnóstico para el sistema de notificaciones push"""
+    return render(request, 'dashboard/test_notifications.html')
+
+
+@login_required
 def landing_page_config(request):
     """Vista para configurar la landing page"""
     from apps.organizations.models import LandingPageConfig

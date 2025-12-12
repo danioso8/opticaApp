@@ -1,0 +1,235 @@
+{% extends 'dashboard/base.html' %}
+{% load static %}
+
+{% block title %}Prueba de Notificaciones{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <div class="max-w-4xl mx-auto">
+        <h1 class="text-3xl font-bold mb-6">🔔 Sistema de Notificaciones - Diagnóstico</h1>
+        
+        <!-- Estado del Sistema -->
+        <div class="bg-white rounded-lg shadow p-6 mb-6">
+            <h2 class="text-xl font-semibold mb-4">Estado del Sistema</h2>
+            <div id="system-status" class="space-y-2">
+                <div class="flex items-center">
+                    <span id="status-js" class="w-4 h-4 rounded-full bg-gray-400 mr-3"></span>
+                    <span>JavaScript cargado</span>
+                </div>
+                <div class="flex items-center">
+                    <span id="status-sw" class="w-4 h-4 rounded-full bg-gray-400 mr-3"></span>
+                    <span>Service Worker registrado</span>
+                </div>
+                <div class="flex items-center">
+                    <span id="status-permission" class="w-4 h-4 rounded-full bg-gray-400 mr-3"></span>
+                    <span id="permission-text">Permiso de notificaciones</span>
+                </div>
+                <div class="flex items-center">
+                    <span id="status-polling" class="w-4 h-4 rounded-full bg-gray-400 mr-3"></span>
+                    <span>Polling activo</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Notificaciones Pendientes -->
+        <div class="bg-white rounded-lg shadow p-6 mb-6">
+            <h2 class="text-xl font-semibold mb-4">Notificaciones Pendientes</h2>
+            <div id="pending-notifications" class="text-gray-600">
+                Cargando...
+            </div>
+        </div>
+
+        <!-- Acciones -->
+        <div class="bg-white rounded-lg shadow p-6 mb-6">
+            <h2 class="text-xl font-semibold mb-4">Acciones de Prueba</h2>
+            <div class="space-y-3">
+                <button onclick="testRequestPermission()" class="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-3 rounded-lg transition">
+                    Solicitar Permiso de Notificaciones
+                </button>
+                <button onclick="testCheckNotifications()" class="w-full bg-green-600 hover:bg-green-700 text-white px-4 py-3 rounded-lg transition">
+                    Verificar Nuevas Notificaciones Manualmente
+                </button>
+                <button onclick="testShowNotification()" class="w-full bg-purple-600 hover:bg-purple-700 text-white px-4 py-3 rounded-lg transition">
+                    Mostrar Notificación de Prueba
+                </button>
+                <button onclick="testPlaySound()" class="w-full bg-yellow-600 hover:bg-yellow-700 text-white px-4 py-3 rounded-lg transition">
+                    Probar Sonido
+                </button>
+            </div>
+        </div>
+
+        <!-- Log de Actividad -->
+        <div class="bg-white rounded-lg shadow p-6">
+            <h2 class="text-xl font-semibold mb-4">Log de Actividad</h2>
+            <div id="activity-log" class="bg-gray-900 text-green-400 p-4 rounded font-mono text-sm h-64 overflow-y-auto">
+                <div>Sistema iniciado...</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let activityLog = [];
+
+function log(message, type = 'info') {
+    const timestamp = new Date().toLocaleTimeString();
+    const color = type === 'error' ? 'text-red-400' : type === 'success' ? 'text-green-400' : 'text-blue-400';
+    activityLog.push(`[${timestamp}] ${message}`);
+    
+    const logDiv = document.getElementById('activity-log');
+    const entry = document.createElement('div');
+    entry.className = color;
+    entry.textContent = `[${timestamp}] ${message}`;
+    logDiv.appendChild(entry);
+    logDiv.scrollTop = logDiv.scrollHeight;
+}
+
+// Verificar estado al cargar
+document.addEventListener('DOMContentLoaded', async () => {
+    log('Página cargada', 'info');
+    
+    // Verificar JavaScript
+    if (typeof dashboardNotifications !== 'undefined') {
+        document.getElementById('status-js').className = 'w-4 h-4 rounded-full bg-green-500 mr-3';
+        log('✓ JavaScript cargado correctamente', 'success');
+    } else {
+        document.getElementById('status-js').className = 'w-4 h-4 rounded-full bg-red-500 mr-3';
+        log('✗ JavaScript NO cargado', 'error');
+    }
+    
+    // Verificar Service Worker
+    if ('serviceWorker' in navigator) {
+        try {
+            const registration = await navigator.serviceWorker.getRegistration();
+            if (registration) {
+                document.getElementById('status-sw').className = 'w-4 h-4 rounded-full bg-green-500 mr-3';
+                log('✓ Service Worker registrado', 'success');
+            } else {
+                document.getElementById('status-sw').className = 'w-4 h-4 rounded-full bg-yellow-500 mr-3';
+                log('⚠ Service Worker no registrado aún', 'info');
+            }
+        } catch (error) {
+            log('✗ Error verificando Service Worker: ' + error, 'error');
+        }
+    }
+    
+    // Verificar permisos
+    if ('Notification' in window) {
+        const permission = Notification.permission;
+        const permissionText = document.getElementById('permission-text');
+        
+        if (permission === 'granted') {
+            document.getElementById('status-permission').className = 'w-4 h-4 rounded-full bg-green-500 mr-3';
+            permissionText.textContent = 'Permiso de notificaciones: OTORGADO';
+            log('✓ Permiso de notificaciones otorgado', 'success');
+        } else if (permission === 'denied') {
+            document.getElementById('status-permission').className = 'w-4 h-4 rounded-full bg-red-500 mr-3';
+            permissionText.textContent = 'Permiso de notificaciones: DENEGADO';
+            log('✗ Permiso de notificaciones denegado', 'error');
+        } else {
+            document.getElementById('status-permission').className = 'w-4 h-4 rounded-full bg-yellow-500 mr-3';
+            permissionText.textContent = 'Permiso de notificaciones: PENDIENTE';
+            log('⚠ Permiso de notificaciones pendiente', 'info');
+        }
+    }
+    
+    // Verificar polling
+    if (typeof dashboardNotifications !== 'undefined' && dashboardNotifications.intervalId) {
+        document.getElementById('status-polling').className = 'w-4 h-4 rounded-full bg-green-500 mr-3';
+        log('✓ Polling activo', 'success');
+    } else {
+        document.getElementById('status-polling').className = 'w-4 h-4 rounded-full bg-yellow-500 mr-3';
+        log('⚠ Polling no activo', 'info');
+    }
+    
+    // Cargar notificaciones pendientes
+    await loadPendingNotifications();
+});
+
+async function loadPendingNotifications() {
+    try {
+        log('Consultando notificaciones pendientes...');
+        const response = await fetch('/dashboard/api/notifications/new-appointments/');
+        const data = await response.json();
+        
+        const container = document.getElementById('pending-notifications');
+        
+        if (data.success && data.count > 0) {
+            container.innerHTML = `
+                <div class="text-green-600 font-semibold mb-3">
+                    ${data.count} notificación(es) pendiente(s)
+                </div>
+                <div class="space-y-2">
+                    ${data.notifications.map(n => `
+                        <div class="border-l-4 border-blue-500 bg-blue-50 p-3">
+                            <div class="font-semibold">${n.patient_name}</div>
+                            <div class="text-sm text-gray-600">${n.appointment_date} a las ${n.appointment_time}</div>
+                            <div class="text-sm text-gray-600">Doctor: ${n.doctor_name}</div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+            log(`✓ ${data.count} notificaciones pendientes encontradas`, 'success');
+        } else {
+            container.innerHTML = '<div class="text-gray-500">No hay notificaciones pendientes</div>';
+            log('Sin notificaciones pendientes', 'info');
+        }
+    } catch (error) {
+        log('✗ Error al cargar notificaciones: ' + error, 'error');
+        document.getElementById('pending-notifications').innerHTML = 
+            '<div class="text-red-600">Error al cargar notificaciones</div>';
+    }
+}
+
+async function testRequestPermission() {
+    log('Solicitando permiso de notificaciones...');
+    if ('Notification' in window) {
+        const permission = await Notification.requestPermission();
+        if (permission === 'granted') {
+            log('✓ Permiso otorgado', 'success');
+            location.reload();
+        } else {
+            log('✗ Permiso denegado', 'error');
+        }
+    }
+}
+
+async function testCheckNotifications() {
+    log('Verificando notificaciones manualmente...');
+    if (typeof dashboardNotifications !== 'undefined') {
+        await dashboardNotifications.checkNewAppointments();
+        log('✓ Verificación completada', 'success');
+        await loadPendingNotifications();
+    } else {
+        log('✗ Sistema de notificaciones no disponible', 'error');
+    }
+}
+
+function testShowNotification() {
+    log('Mostrando notificación de prueba...');
+    if (typeof dashboardNotifications !== 'undefined') {
+        const testNotification = {
+            patient_name: 'Juan Pérez (PRUEBA)',
+            appointment_date: '2025-12-15',
+            appointment_time: '10:00',
+            doctor_name: 'Dr. Test',
+            appointment_id: 999
+        };
+        dashboardNotifications.showNotification(testNotification);
+        log('✓ Notificación de prueba enviada', 'success');
+    } else {
+        log('✗ Sistema de notificaciones no disponible', 'error');
+    }
+}
+
+function testPlaySound() {
+    log('Reproduciendo sonido de prueba...');
+    if (typeof dashboardNotifications !== 'undefined') {
+        dashboardNotifications.playNotificationSound();
+        log('✓ Sonido reproducido', 'success');
+    } else {
+        log('✗ Sistema de notificaciones no disponible', 'error');
+    }
+}
+</script>
+{% endblock %}

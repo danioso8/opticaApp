@@ -144,6 +144,9 @@ urlpatterns = [
     path('api/notifications/new-appointments/', views.get_new_appointments, name='api_new_appointments'),
     path('api/notifications/mark-read/', views.mark_notification_read, name='api_mark_notification_read'),
     
+    # Testing
+    path('test-notifications/', views.test_notifications_page, name='test_notifications'),
+    
     # Demostración
     path('notifications-demo/', views.notifications_demo, name='notifications_demo'),
 ]
