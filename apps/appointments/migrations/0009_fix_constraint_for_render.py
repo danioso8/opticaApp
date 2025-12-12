@@ -64,13 +64,25 @@ class Migration(migrations.Migration):
             ],
         ),
         
-        # Ahora crear el constraint nuevo
-        migrations.AddConstraint(
-            model_name='appointment',
-            constraint=models.UniqueConstraint(
-                condition=~Q(status='cancelled'),
-                fields=('organization', 'appointment_date', 'appointment_time'),
-                name='unique_active_appointment_slot'
-            ),
+        # Crear el constraint usando SQL directo con IF NOT EXISTS
+        migrations.RunSQL(
+            sql="""
+                DO $$ 
+                BEGIN
+                    IF NOT EXISTS (
+                        SELECT 1 FROM pg_constraint 
+                        WHERE conname = 'unique_active_appointment_slot'
+                    ) THEN
+                        ALTER TABLE appointments_appointment 
+                        ADD CONSTRAINT unique_active_appointment_slot 
+                        UNIQUE (organization_id, appointment_date, appointment_time)
+                        WHERE (status <> 'cancelled');
+                    END IF;
+                END $$;
+            """,
+            reverse_sql="""
+                ALTER TABLE appointments_appointment 
+                DROP CONSTRAINT IF EXISTS unique_active_appointment_slot;
+            """,
         ),
     ]
