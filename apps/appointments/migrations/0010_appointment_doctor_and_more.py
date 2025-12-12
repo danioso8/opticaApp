@@ -5,6 +5,70 @@ from django.conf import settings
 from django.db import migrations, models
 
 
+def add_doctor_field_if_not_exists(apps, schema_editor):
+    """Agregar campo doctor solo si no existe"""
+    if schema_editor.connection.vendor == 'postgresql':
+        with schema_editor.connection.cursor() as cursor:
+            # Verificar si la columna existe
+            cursor.execute("""
+                SELECT column_name 
+                FROM information_schema.columns 
+                WHERE table_name='appointments_appointment' 
+                AND column_name='doctor_id';
+            """)
+            exists = cursor.fetchone()
+            
+            if not exists:
+                # Crear la columna si no existe
+                cursor.execute("""
+                    ALTER TABLE appointments_appointment 
+                    ADD COLUMN doctor_id INTEGER NULL 
+                    REFERENCES patients_doctor(id) ON DELETE SET NULL;
+                """)
+                
+                # Crear el índice
+                cursor.execute("""
+                    CREATE INDEX IF NOT EXISTS appointments_appointment_doctor_id_idx 
+                    ON appointments_appointment(doctor_id);
+                """)
+    else:
+        # SQLite - usar el schema_editor normal
+        from apps.appointments.models import Appointment
+        db_alias = schema_editor.connection.alias
+        
+        # Verificar si el campo existe
+        with schema_editor.connection.cursor() as cursor:
+            cursor.execute("PRAGMA table_info(appointments_appointment);")
+            columns = [row[1] for row in cursor.fetchall()]
+            
+            if 'doctor_id' not in columns:
+                from apps.patients.models import Doctor
+                field = models.ForeignKey(
+                    Doctor,
+                    on_delete=models.SET_NULL,
+                    null=True,
+                    blank=True,
+                    related_name='assigned_appointments',
+                    verbose_name='Doctor asignado'
+                )
+                field.set_attributes_from_name('doctor')
+                schema_editor.add_field(Appointment, field)
+
+
+def reverse_add_doctor_field(apps, schema_editor):
+    """Revertir la adición del campo doctor"""
+    if schema_editor.connection.vendor == 'postgresql':
+        with schema_editor.connection.cursor() as cursor:
+            cursor.execute("""
+                DO $$ 
+                BEGIN
+                    ALTER TABLE appointments_appointment DROP COLUMN IF EXISTS doctor_id CASCADE;
+                EXCEPTION
+                    WHEN undefined_column THEN NULL;
+                END $$;
+            """)
+
+
 class Migration(migrations.Migration):
 
     dependencies = [
@@ -15,10 +79,18 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.AddField(
-            model_name='appointment',
-            name='doctor',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='assigned_appointments', to='patients.doctor', verbose_name='Doctor asignado'),
+        # Primero actualizar el estado de Django
+        migrations.SeparateDatabaseAndState(
+            state_operations=[
+                migrations.AddField(
+                    model_name='appointment',
+                    name='doctor',
+                    field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='assigned_appointments', to='patients.doctor', verbose_name='Doctor asignado'),
+                ),
+            ],
+            database_operations=[
+                migrations.RunPython(add_doctor_field_if_not_exists, reverse_add_doctor_field),
+            ],
         ),
         migrations.AlterField(
             model_name='appointmentnotification',
