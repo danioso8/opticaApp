@@ -289,7 +289,7 @@ def appointments_list(request):
     stats = get_appointments_stats()
     
     # Obtener todos los doctores para el filtro
-    doctors = Doctor.objects.filter(**org_filter, is_active=True).order_by('first_name', 'last_name')
+    doctors = Doctor.objects.filter(**org_filter, is_active=True).order_by('full_name')
     
     context = {
         'today_appointments': today_appointments,
