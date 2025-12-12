@@ -242,10 +242,16 @@ class Appointment(TenantModel):
         verbose_name = "Cita"
         verbose_name_plural = "Citas"
         ordering = ['-appointment_date', '-appointment_time']
-        unique_together = [['organization', 'appointment_date', 'appointment_time']]
         indexes = [
             models.Index(fields=['organization', 'appointment_date', 'status']),
             models.Index(fields=['organization', 'phone_number']),
+        ]
+        constraints = [
+            models.UniqueConstraint(
+                fields=['organization', 'appointment_date', 'appointment_time'],
+                condition=~models.Q(status='cancelled'),
+                name='unique_active_appointment_slot'
+            )
         ]
 
     def __str__(self):
