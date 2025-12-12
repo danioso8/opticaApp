@@ -363,7 +363,22 @@ def appointment_edit(request, pk):
             
             # Convertir strings a objetos date y time
             new_date = datetime.strptime(new_date_str, '%Y-%m-%d').date()
-            new_time = datetime.strptime(new_time_str, '%H:%M').time()
+            
+            # Intentar múltiples formatos de hora
+            time_formats = ['%H:%M:%S', '%H:%M', '%I:%M %p', '%I:%M:%S %p']
+            new_time = None
+            for time_format in time_formats:
+                try:
+                    new_time = datetime.strptime(new_time_str, time_format).time()
+                    break
+                except ValueError:
+                    continue
+            
+            if new_time is None:
+                return JsonResponse({
+                    'success': False,
+                    'message': f'Formato de hora inválido: {new_time_str}. Use HH:MM'
+                }, status=400)
             
             # Verificar disponibilidad solo si cambió la fecha u hora
             if new_date != appointment.appointment_date or new_time != appointment.appointment_time:
