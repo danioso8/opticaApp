@@ -243,6 +243,8 @@ def dashboard_home(request):
 @login_required
 def appointments_list(request):
     """Vista unificada: Citas de hoy y todas las citas con filtros"""
+    from apps.patients.models import Doctor
+    
     today = timezone.now().date()
     
     # Filtrar por organización
@@ -252,14 +254,15 @@ def appointments_list(request):
     today_appointments = Appointment.objects.filter(
         appointment_date=today,
         **org_filter
-    ).select_related('patient', 'attended_by').order_by('appointment_time')
+    ).select_related('patient', 'attended_by', 'doctor').order_by('appointment_time')
     
     # Todas las citas con filtros
-    all_appointments = Appointment.objects.filter(**org_filter).select_related('patient', 'attended_by')
+    all_appointments = Appointment.objects.filter(**org_filter).select_related('patient', 'attended_by', 'doctor')
     
     # Aplicar filtros
     status_filter = request.GET.get('status')
     date_filter = request.GET.get('date')
+    doctor_filter = request.GET.get('doctor')
     search = request.GET.get('search')
     
     if status_filter:
@@ -267,6 +270,12 @@ def appointments_list(request):
     
     if date_filter:
         all_appointments = all_appointments.filter(appointment_date=date_filter)
+    
+    if doctor_filter:
+        if doctor_filter == 'unassigned':
+            all_appointments = all_appointments.filter(doctor__isnull=True)
+        else:
+            all_appointments = all_appointments.filter(doctor_id=doctor_filter)
     
     if search:
         all_appointments = all_appointments.filter(
@@ -279,10 +288,15 @@ def appointments_list(request):
     # Estadísticas
     stats = get_appointments_stats()
     
+    # Obtener todos los doctores para el filtro
+    doctors = Doctor.objects.filter(**org_filter, is_active=True).order_by('first_name', 'last_name')
+    
     context = {
         'today_appointments': today_appointments,
-        'all_appointments': all_appointments,
+        'appointments': all_appointments,  # Para list.html
+        'all_appointments': all_appointments,  # Para index.html
         'status_choices': Appointment.STATUS_CHOICES,
+        'doctors': doctors,
         'today': today,
         'stats': stats,
     }
@@ -354,6 +368,7 @@ def appointment_edit(request, pk):
             new_date_str = request.POST.get('appointment_date')
             new_time_str = request.POST.get('appointment_time')
             notes = request.POST.get('notes', '')
+            doctor_id = request.POST.get('doctor_id', '')
             
             if not new_date_str or not new_time_str:
                 return JsonResponse({
@@ -404,6 +419,17 @@ def appointment_edit(request, pk):
             appointment.appointment_time = new_time
             if notes:
                 appointment.notes = notes
+            
+            # Actualizar doctor asignado
+            if doctor_id:
+                try:
+                    doctor = Doctor.objects.get(id=doctor_id, organization=appointment.organization)
+                    appointment.doctor = doctor
+                except Doctor.DoesNotExist:
+                    pass
+            else:
+                appointment.doctor = None
+            
             appointment.save()
             
             # Notificar cambio

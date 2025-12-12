@@ -228,6 +228,16 @@ class Appointment(TenantModel):
         verbose_name="Paciente"
     )
 
+    # Doctor asignado para la cita
+    doctor = models.ForeignKey(
+        'patients.Doctor',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='assigned_appointments',
+        verbose_name="Doctor asignado"
+    )
+
     # Usuario que atendió (optometrista)
     attended_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,

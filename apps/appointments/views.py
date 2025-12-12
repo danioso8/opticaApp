@@ -421,7 +421,8 @@ def book_patient_appointment(request):
         "appointment_time": "10:00:00",
         "phone": "3001234567",
         "email": "paciente@email.com",
-        "notes": "Notas opcionales"
+        "notes": "Notas opcionales",
+        "doctor_id": 1  // Opcional
     }
     """
     import logging
@@ -440,6 +441,7 @@ def book_patient_appointment(request):
         phone = request.data.get('phone')
         email = request.data.get('email', '')
         notes = request.data.get('notes', '')
+        doctor_id = request.data.get('doctor_id', None)
         
         # Validar campos requeridos
         if not all([patient_id, appointment_date, appointment_time, phone]):
@@ -460,6 +462,21 @@ def book_patient_appointment(request):
                 'message': 'Paciente no encontrado'
             }, status=status.HTTP_404_NOT_FOUND)
         
+        # Obtener el doctor si se especifica
+        doctor = None
+        if doctor_id:
+            try:
+                from apps.patients.models import Doctor
+                doctor = Doctor.objects.get(
+                    id=doctor_id,
+                    organization=request.organization
+                )
+            except Doctor.DoesNotExist:
+                return Response({
+                    'success': False,
+                    'message': 'Doctor no encontrado'
+                }, status=status.HTTP_404_NOT_FOUND)
+        
         # Verificar que el horario esté disponible
         existing = Appointment.objects.filter(
             organization=request.organization,
@@ -477,6 +494,7 @@ def book_patient_appointment(request):
         appointment = Appointment.objects.create(
             organization=request.organization,
             patient=patient,
+            doctor=doctor,
             full_name=patient.full_name,
             phone_number=phone,
             email=email,
