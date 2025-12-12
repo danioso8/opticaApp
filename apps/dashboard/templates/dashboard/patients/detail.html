@@ -198,13 +198,6 @@
                                        title="Ver detalles">
                                         <i class="fas fa-eye mr-1"></i>Ver
                                     </a>
-                                    {% if appointment.status != 'completed' and appointment.status != 'cancelled' %}
-                                    <button onclick="quickEditAppointment({{ appointment.id }}, '{{ appointment.appointment_date|date:'Y-m-d' }}', '{{ appointment.appointment_time|time:'H:i' }}')"
-                                            class="text-orange-600 hover:text-orange-800 text-sm whitespace-nowrap"
-                                            title="Reagendar cita">
-                                        <i class="fas fa-edit mr-1"></i>Editar
-                                    </button>
-                                    {% endif %}
                                 </div>
                             </div>
                         </div>

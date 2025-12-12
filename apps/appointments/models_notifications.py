@@ -90,3 +90,46 @@ class NotificationSettings(TenantModel):
         elif self.email_enabled:
             return 'email'
         return None
+
+
+class AppointmentNotification(TenantModel):
+    """Modelo para rastrear notificaciones de citas nuevas en dashboard"""
+    
+    appointment = models.OneToOneField(
+        'appointments.Appointment',
+        on_delete=models.CASCADE,
+        related_name='push_notification',
+        verbose_name="Cita"
+    )
+    
+    is_notified = models.BooleanField(
+        default=False,
+        verbose_name="Notificación push enviada"
+    )
+    
+    notified_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        verbose_name="Fecha de notificación"
+    )
+    
+    created_from_landing = models.BooleanField(
+        default=False,
+        verbose_name="Creada desde landing page"
+    )
+    
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name="Fecha de creación"
+    )
+    
+    class Meta:
+        verbose_name = "Notificación Push de Cita"
+        verbose_name_plural = "Notificaciones Push de Citas"
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['organization', 'is_notified', 'created_from_landing']),
+        ]
+    
+    def __str__(self):
+        return f"Notificación Push - {self.appointment}"

@@ -140,6 +140,10 @@ urlpatterns = [
     path('api/whatsapp/status/', views.whatsapp_status_api, name='whatsapp_status'),
     path('api/whatsapp/test-send/', views.whatsapp_test_send, name='whatsapp_test_send'),
     
+    # Push Notifications API
+    path('api/notifications/new-appointments/', views.get_new_appointments, name='api_new_appointments'),
+    path('api/notifications/mark-read/', views.mark_notification_read, name='api_mark_notification_read'),
+    
     # Demostración
     path('notifications-demo/', views.notifications_demo, name='notifications_demo'),
 ]

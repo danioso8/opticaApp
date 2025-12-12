@@ -234,7 +234,20 @@ def book_appointment(request):
         if serializer.is_valid():
             appointment = serializer.save()
             
-            # Enviar notificación automáticamente (no fallar si hay error)
+            # Crear notificación push para el dashboard
+            try:
+                from apps.appointments.models_notifications import AppointmentNotification
+                AppointmentNotification.objects.create(
+                    appointment=appointment,
+                    organization=appointment.organization,
+                    created_from_landing=True,
+                    is_notified=False
+                )
+                logger.info(f"Notificación push creada para cita {appointment.id}")
+            except Exception as e:
+                logger.error(f"Error creando notificación push: {e}")
+            
+            # Enviar notificación por WhatsApp/Email (no fallar si hay error)
             try:
                 from apps.appointments.signals import notify_new_appointment
                 notify_new_appointment(appointment)

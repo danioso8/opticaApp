@@ -3,7 +3,7 @@ from django.utils import timezone
 from django.core.validators import RegexValidator
 from django.conf import settings
 from apps.organizations.base_models import TenantModel
-from apps.appointments.models_notifications import NotificationSettings
+from apps.appointments.models_notifications import NotificationSettings, AppointmentNotification
 
 
 class AppointmentConfiguration(TenantModel):

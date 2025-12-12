@@ -48,6 +48,9 @@ from apps.patients.views import (
     patient_search_api
 )
 
+# Importar vistas de API
+from .api_views import get_new_appointments, mark_notification_read
+
 
 # ==================== WHATSAPP STATUS ====================
 
