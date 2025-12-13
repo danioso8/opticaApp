@@ -421,6 +421,12 @@ function connectWebSocket() {
 // Inicializar WebSocket al cargar la página
 document.addEventListener('DOMContentLoaded', () => {
     connectWebSocket();
+    
+    // Si hay filtros en la URL, cambiar al tab "Todas las Citas"
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.has('search') || urlParams.has('status') || urlParams.has('doctor') || urlParams.has('date')) {
+        showTab('all');
+    }
 });
 </script>
 
