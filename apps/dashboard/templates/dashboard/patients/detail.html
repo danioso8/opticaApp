@@ -577,15 +577,24 @@ document.addEventListener('DOMContentLoaded', function() {
                 const formData = new FormData(this);
                 
                 // Convertir FormData a JSON para la API
+                const doctorId = formData.get('doctor_id');
                 const requestData = {
                     patient_id: formData.get('patient_id'),
                     appointment_date: appointmentDate,
                     appointment_time: appointmentTime,
                     phone: formData.get('phone'),
                     email: formData.get('email'),
-                    notes: formData.get('notes'),
-                    doctor_id: formData.get('doctor_id') || null
+                    notes: formData.get('notes')
                 };
+                
+                // Solo agregar doctor_id si tiene valor
+                if (doctorId && doctorId !== '') {
+                    requestData.doctor_id = parseInt(doctorId);
+                }
+                
+                // Debug: ver qué se está enviando
+                console.log('Doctor ID from form:', doctorId);
+                console.log('Request data:', requestData);
                 
                 const response = await fetch('/api/book-patient/', {
                     method: 'POST',

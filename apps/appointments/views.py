@@ -443,6 +443,10 @@ def book_patient_appointment(request):
         notes = request.data.get('notes', '')
         doctor_id = request.data.get('doctor_id', None)
         
+        # Debug logs
+        logger.info(f"book_patient_appointment called with doctor_id: {doctor_id}")
+        logger.info(f"Full request data: {request.data}")
+        
         # Validar campos requeridos
         if not all([patient_id, appointment_date, appointment_time, phone]):
             return Response({
@@ -503,6 +507,8 @@ def book_patient_appointment(request):
             notes=notes,
             status='pending'
         )
+        
+        logger.info(f"Appointment created with ID: {appointment.id}, Doctor: {appointment.doctor}")
         
         # Enviar notificación (no fallar si hay error)
         try:
