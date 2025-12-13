@@ -56,7 +56,7 @@ def patient_list(request):
 @login_required
 def patient_detail(request, pk):
     """Detalle de un paciente"""
-    from apps.users.models import User
+    from apps.patients.models import Doctor
     
     org_filter = {'organization': request.organization} if hasattr(request, 'organization') and request.organization else {}
     patient = get_object_or_404(Patient, pk=pk, **org_filter)
@@ -73,16 +73,7 @@ def patient_detail(request, pk):
     ).order_by('appointment_date', 'appointment_time')[:5]
     
     # Obtener doctores de la organización
-    if org_filter:
-        doctors = User.objects.filter(
-            organization_memberships__organization=request.organization,
-            organization_memberships__is_active=True,
-            is_active=True
-        ).distinct().order_by('username')
-    else:
-        doctors = User.objects.filter(
-            is_active=True
-        ).order_by('username')
+    doctors = Doctor.objects.filter(**org_filter, is_active=True).order_by('full_name')
     
     context = {
         'patient': patient,

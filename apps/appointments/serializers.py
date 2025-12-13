@@ -68,6 +68,7 @@ class AppointmentDetailSerializer(serializers.ModelSerializer):
 class AppointmentCreateSerializer(serializers.ModelSerializer):
     """Serializer para crear citas desde la landing page (público)"""
     organization_id = serializers.IntegerField(write_only=True, required=False)
+    doctor_id = serializers.IntegerField(write_only=True, required=False)
     
     class Meta:
         model = Appointment
@@ -77,7 +78,8 @@ class AppointmentCreateSerializer(serializers.ModelSerializer):
             'email',
             'appointment_date',
             'appointment_time',
-            'organization_id'
+            'organization_id',
+            'doctor_id'
         ]
     
     def validate(self, data):
@@ -190,11 +192,13 @@ class AppointmentCreateSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         """Crear cita y buscar/crear paciente si existe el teléfono"""
         from apps.organizations.models import Organization
+        from apps.patients.models import Doctor
         import logging
         logger = logging.getLogger(__name__)
         
         phone_number = validated_data.get('phone_number')
         organization_id = validated_data.pop('organization_id', None)
+        doctor_id = validated_data.pop('doctor_id', None)
         
         # Asignar organización si se proporciona
         if organization_id:
@@ -203,6 +207,14 @@ class AppointmentCreateSerializer(serializers.ModelSerializer):
                 validated_data['organization'] = organization
             except Organization.DoesNotExist:
                 logger.warning(f"Organization {organization_id} not found")
+        
+        # Asignar doctor si se proporciona
+        if doctor_id:
+            try:
+                doctor = Doctor.objects.get(id=doctor_id)
+                validated_data['doctor'] = doctor
+            except Doctor.DoesNotExist:
+                logger.warning(f"Doctor {doctor_id} not found")
         
         # Buscar si ya existe un paciente con ese teléfono en la misma organización
         try:
