@@ -6,7 +6,6 @@ USAR EN build.sh ANTES DE python manage.py migrate:
 python pre_migrate_check.py
 """
 
-from django.core.management import setup_environ
 import os
 import sys
 import django
