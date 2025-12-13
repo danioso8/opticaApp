@@ -92,62 +92,93 @@
     </div>
 
     <!-- Lista de Pacientes - Vista Cards -->
-    <div id="cardsView" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+    <div id="cardsView" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {% for patient in patients %}
-        <div class="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow cursor-pointer" 
+        <div class="bg-white rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden border border-gray-100 cursor-pointer"
              onclick="window.location.href='{% url 'dashboard:patient_detail' patient.id %}'">
-            <div class="flex items-start justify-between mb-3">
-                <div class="flex items-center">
-                    <div class="h-12 w-12 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white font-bold text-lg mr-3">
-                        {{ patient.full_name|first|upper }}
-                    </div>
-                    <div>
-                        <h3 class="font-semibold text-gray-900">{{ patient.full_name }}</h3>
-                        <p class="text-xs text-gray-500">{{ patient.identification }}</p>
+            <!-- Header de la tarjeta con foto -->
+            <div class="bg-gradient-to-r from-blue-500 to-cyan-600 h-32 relative">
+                <div class="absolute -bottom-12 left-1/2 transform -translate-x-1/2">
+                    <div class="w-24 h-24 rounded-full border-4 border-white shadow-lg bg-blue-600 flex items-center justify-center">
+                        <span class="text-4xl text-white font-bold">{{ patient.full_name|first|upper }}</span>
                     </div>
                 </div>
             </div>
-            
-            <div class="space-y-2 mb-3">
-                <div class="flex items-center text-sm text-gray-600">
-                    <i class="fas fa-phone w-5 text-green-600"></i>
-                    <span>{{ patient.phone_number }}</span>
+
+            <!-- Contenido de la tarjeta -->
+            <div class="pt-16 pb-6 px-6 text-center">
+                <h3 class="text-xl font-bold text-gray-800 mb-1">{{ patient.full_name }}</h3>
+                
+                <!-- Identificación badge -->
+                <div class="inline-block mb-3">
+                    {% if patient.identification %}
+                    <span class="bg-blue-100 text-blue-800 text-xs font-semibold px-3 py-1 rounded-full">
+                        <i class="fas fa-id-card mr-1"></i>{{ patient.identification_type }}: {{ patient.identification }}
+                    </span>
+                    {% else %}
+                    <span class="bg-gray-100 text-gray-600 text-xs font-semibold px-3 py-1 rounded-full">
+                        <i class="fas fa-user mr-1"></i>Sin identificación
+                    </span>
+                    {% endif %}
                 </div>
-                {% if patient.email %}
-                <div class="flex items-center text-sm text-gray-600">
-                    <i class="fas fa-envelope w-5 text-blue-600"></i>
-                    <span class="truncate">{{ patient.email }}</span>
+
+                <!-- Información de contacto -->
+                <div class="space-y-2 mb-4 text-sm text-gray-600">
+                    <p class="flex items-center justify-center">
+                        <i class="fas fa-phone text-blue-500 mr-2 w-4"></i>
+                        <span>{{ patient.phone_number }}</span>
+                    </p>
+                    {% if patient.email %}
+                    <p class="flex items-center justify-center">
+                        <i class="fas fa-envelope text-blue-500 mr-2 w-4"></i>
+                        <span class="truncate">{{ patient.email }}</span>
+                    </p>
+                    {% endif %}
+                    {% if patient.age %}
+                    <p class="flex items-center justify-center">
+                        <i class="fas fa-birthday-cake text-blue-500 mr-2 w-4"></i>
+                        <span>{{ patient.age }} años</span>
+                    </p>
+                    {% endif %}
+                </div>
+
+                <!-- Información adicional -->
+                {% if patient.occupation or patient.civil_status %}
+                <div class="mb-4 px-4 py-2 bg-blue-50 rounded-lg">
+                    {% if patient.occupation %}
+                    <p class="text-xs text-blue-800 font-medium">
+                        <i class="fas fa-briefcase mr-1"></i>{{ patient.occupation }}
+                    </p>
+                    {% endif %}
+                    {% if patient.civil_status %}
+                    <p class="text-xs text-blue-700">{{ patient.civil_status }}</p>
+                    {% endif %}
                 </div>
                 {% endif %}
-                {% if patient.age %}
-                <div class="flex items-center text-sm text-gray-600">
-                    <i class="fas fa-birthday-cake w-5 text-purple-600"></i>
-                    <span>{{ patient.age }} años</span>
+
+                <!-- Botones de acción -->
+                <div class="flex gap-2" onclick="event.stopPropagation()">
+                    <a href="{% url 'dashboard:clinical_history_list' patient.id %}" 
+                       class="flex-1 bg-purple-600 hover:bg-purple-700 text-white py-2 px-4 rounded-lg transition duration-200 text-sm font-medium"
+                       title="Historia Clínica">
+                        <i class="fas fa-file-medical mr-1"></i>Historia
+                    </a>
+                    <button onclick="openEditPatientModal({{ patient.id }})" 
+                            class="bg-yellow-500 hover:bg-yellow-600 text-white py-2 px-3 rounded-lg transition duration-200 text-sm" 
+                            title="Editar">
+                        <i class="fas fa-edit"></i>
+                    </button>
+                    <button onclick="confirmDeletePatient({{ patient.id }}, '{{ patient.full_name|escapejs }}')" 
+                            class="bg-red-600 hover:bg-red-700 text-white py-2 px-3 rounded-lg transition duration-200 text-sm"
+                            title="Eliminar">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                    <a href="https://wa.me/{{ patient.phone_number|cut:'+' }}" target="_blank"
+                       class="bg-emerald-600 hover:bg-emerald-700 text-white py-2 px-3 rounded-lg transition duration-200 text-sm"
+                       title="WhatsApp">
+                        <i class="fab fa-whatsapp"></i>
+                    </a>
                 </div>
-                {% endif %}
-            </div>
-            
-            <div class="flex gap-2 pt-3 border-t border-gray-200" onclick="event.stopPropagation()">
-                <a href="{% url 'dashboard:clinical_history_list' patient.id %}" 
-                   class="flex-1 text-center px-3 py-2 bg-purple-600 hover:bg-purple-700 text-white text-sm rounded-lg transition-colors"
-                   title="Historia Clínica">
-                    <i class="fas fa-file-medical mr-1"></i>Historia
-                </a>
-                <button onclick="openEditPatientModal({{ patient.id }})" 
-                        class="px-3 py-2 bg-yellow-500 hover:bg-yellow-600 text-white text-sm rounded-lg transition-colors" 
-                        title="Editar">
-                    <i class="fas fa-edit"></i>
-                </button>
-                <button onclick="confirmDeletePatient({{ patient.id }}, '{{ patient.full_name|escapejs }}')" 
-                        class="px-3 py-2 bg-red-600 hover:bg-red-700 text-white text-sm rounded-lg transition-colors"
-                        title="Eliminar">
-                    <i class="fas fa-trash"></i>
-                </button>
-                <a href="https://wa.me/{{ patient.phone_number|cut:'+' }}" target="_blank"
-                   class="px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-sm rounded-lg transition-colors"
-                   title="WhatsApp">
-                    <i class="fab fa-whatsapp"></i>
-                </a>
             </div>
         </div>
         {% empty %}
