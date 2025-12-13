@@ -8,8 +8,6 @@ class Migration(migrations.Migration):
 
     dependencies = [
         ('appointments', '0010_appointment_doctor_and_more'),
-        ('organizations', '0010_auto_20251211_1519'),
-        ('patients', '0017_fix_clinical_history_fields'),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 
