@@ -583,7 +583,8 @@ document.addEventListener('DOMContentLoaded', function() {
                     appointment_time: appointmentTime,
                     phone: formData.get('phone'),
                     email: formData.get('email'),
-                    notes: formData.get('notes')
+                    notes: formData.get('notes'),
+                    doctor_id: formData.get('doctor_id') || null
                 };
                 
                 const response = await fetch('/api/book-patient/', {
