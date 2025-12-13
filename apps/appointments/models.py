@@ -248,6 +248,27 @@ class Appointment(TenantModel):
         verbose_name="Atendido por"
     )
 
+    # Información del acompañante en esta cita específica
+    has_companion = models.BooleanField(
+        default=False,
+        verbose_name="Viene con acompañante"
+    )
+    companion_name = models.CharField(
+        max_length=200,
+        blank=True,
+        verbose_name="Nombre del acompañante"
+    )
+    companion_relationship = models.CharField(
+        max_length=100,
+        blank=True,
+        verbose_name="Relación con el paciente"
+    )
+    companion_phone = models.CharField(
+        max_length=17,
+        blank=True,
+        verbose_name="Teléfono del acompañante"
+    )
+
     class Meta:
         verbose_name = "Cita"
         verbose_name_plural = "Citas"

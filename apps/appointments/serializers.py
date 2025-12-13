@@ -79,7 +79,11 @@ class AppointmentCreateSerializer(serializers.ModelSerializer):
             'appointment_date',
             'appointment_time',
             'organization_id',
-            'doctor_id'
+            'doctor_id',
+            'has_companion',
+            'companion_name',
+            'companion_relationship',
+            'companion_phone'
         ]
     
     def validate(self, data):
