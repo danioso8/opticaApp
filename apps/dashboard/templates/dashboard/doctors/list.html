@@ -76,7 +76,8 @@
     <!-- Grid de tarjetas de doctores -->
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {% for doctor in doctors %}
-        <div class="bg-white rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden border border-gray-100">
+        <div class="bg-white rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden border border-gray-100 cursor-pointer"
+             onclick="window.location.href='{% url 'dashboard:doctor_detail' doctor.pk %}'">
             <!-- Header de la tarjeta con foto -->
             <div class="bg-gradient-to-r from-indigo-500 to-purple-600 h-32 relative">
                 <div class="absolute -bottom-12 left-1/2 transform -translate-x-1/2">
@@ -150,13 +151,9 @@
                 {% endif %}
 
                 <!-- Botones de acción -->
-                <div class="flex gap-2">
-                    <a href="{% url 'dashboard:doctor_detail' doctor.pk %}" 
-                       class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white py-2 px-4 rounded-lg transition duration-200 text-sm font-medium">
-                        <i class="fas fa-eye mr-1"></i>Ver Perfil
-                    </a>
+                <div class="flex gap-2" onclick="event.stopPropagation()">
                     <a href="{% url 'dashboard:doctor_edit' doctor.pk %}" 
-                       class="flex-1 bg-gray-600 hover:bg-gray-700 text-white py-2 px-4 rounded-lg transition duration-200 text-sm font-medium">
+                       class="flex-1 bg-yellow-500 hover:bg-yellow-600 text-white py-2 px-4 rounded-lg transition duration-200 text-sm font-medium">
                         <i class="fas fa-edit mr-1"></i>Editar
                     </a>
                 </div>
