@@ -140,6 +140,50 @@
             </div>
         </div>
 
+        <!-- Información Médica del Paciente (Alertas) -->
+        {% if patient.allergies or patient.medical_conditions or patient.current_medications %}
+        <div class="bg-gradient-to-r from-yellow-50 to-orange-50 border-l-4 border-orange-500 rounded-lg p-6 mb-6 shadow-sm">
+            <h3 class="text-lg font-bold text-gray-800 mb-4 flex items-center">
+                <i class="fas fa-exclamation-triangle text-orange-600 mr-2"></i>
+                INFORMACIÓN MÉDICA IMPORTANTE
+            </h3>
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {% if patient.allergies %}
+                <div class="bg-white rounded-lg p-4 border-2 border-red-200">
+                    <h4 class="text-sm font-bold text-red-700 mb-2 flex items-center">
+                        <i class="fas fa-allergies mr-2"></i>Alergias
+                    </h4>
+                    <p class="text-sm text-gray-700 whitespace-pre-line">{{ patient.allergies }}</p>
+                </div>
+                {% endif %}
+                
+                {% if patient.medical_conditions %}
+                <div class="bg-white rounded-lg p-4 border-2 border-blue-200">
+                    <h4 class="text-sm font-bold text-blue-700 mb-2 flex items-center">
+                        <i class="fas fa-heartbeat mr-2"></i>Condiciones Médicas
+                    </h4>
+                    <p class="text-sm text-gray-700 whitespace-pre-line">{{ patient.medical_conditions }}</p>
+                </div>
+                {% endif %}
+                
+                {% if patient.current_medications %}
+                <div class="bg-white rounded-lg p-4 border-2 border-green-200">
+                    <h4 class="text-sm font-bold text-green-700 mb-2 flex items-center">
+                        <i class="fas fa-pills mr-2"></i>Medicamentos Actuales
+                    </h4>
+                    <p class="text-sm text-gray-700 whitespace-pre-line">{{ patient.current_medications }}</p>
+                </div>
+                {% endif %}
+            </div>
+            
+            <div class="mt-4 flex items-center text-xs text-orange-700 bg-orange-100 rounded px-3 py-2">
+                <i class="fas fa-info-circle mr-2"></i>
+                <span>Esta información fue registrada en la ficha del paciente. Considera estos datos durante el examen.</span>
+            </div>
+        </div>
+        {% endif %}
+
         <!-- ANAMNESIS -->
         <div class="bg-gradient-to-r from-blue-50 to-blue-100 border-l-4 border-blue-600 rounded-lg p-6 mb-6 shadow-sm">
             <h3 class="text-xl font-bold text-gray-800 mb-5 flex items-center uppercase tracking-wide">
