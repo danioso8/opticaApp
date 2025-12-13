@@ -20,10 +20,20 @@
     <!-- Tab Content: Citas de Hoy -->
     <div id="content-today" class="tab-content">
         <div class="p-6">
-            <!-- Título y Fecha -->
-            <div class="mb-6">
-                <h2 class="text-2xl font-bold text-gray-800">{{ today|date:"l, d \d\e F \d\e Y" }}</h2>
-                <p class="text-gray-600">Vista en tiempo real de las citas del día</p>
+            <!-- Título, Fecha y Controles de Vista -->
+            <div class="mb-6 flex justify-between items-center">
+                <div>
+                    <h2 class="text-2xl font-bold text-gray-800">{{ today|date:"l, d \d\e F \d\e Y" }}</h2>
+                    <p class="text-gray-600">Vista en tiempo real de las citas del día</p>
+                </div>
+                <div class="flex gap-2">
+                    <button onclick="changeView('list')" id="view-today-list" class="view-btn px-4 py-2 rounded-lg transition">
+                        <i class="fas fa-list mr-2"></i>Lista
+                    </button>
+                    <button onclick="changeView('cards')" id="view-today-cards" class="view-btn px-4 py-2 rounded-lg transition">
+                        <i class="fas fa-th-large mr-2"></i>Cards
+                    </button>
+                </div>
             </div>
 
             <!-- Estadísticas del Día -->
@@ -128,6 +138,26 @@
     <!-- Tab Content: Todas las Citas -->
     <div id="content-all" class="tab-content hidden">
         <div class="p-6">
+            <!-- Controles de Vista -->
+            <div class="mb-4 flex justify-end gap-2">
+                <button onclick="changeView('list')" id="view-all-list" class="view-btn px-4 py-2 rounded-lg transition">
+                    <i class="fas fa-list mr-2"></i>Lista
+                </button>
+                <button onclick="changeView('cards')" id="view-all-cards" class="view-btn px-4 py-2 rounded-lg transition">
+                    <i class="fas fa-th-large mr-2"></i>Cards
+                </button>
+            </div>
+            
+            <!-- Controles de Vista -->
+            <div class="mb-4 flex justify-end gap-2">
+                <button onclick="changeView('list')" id="view-all-list" class="view-btn px-4 py-2 rounded-lg transition">
+                    <i class="fas fa-list mr-2"></i>Lista
+                </button>
+                <button onclick="changeView('cards')" id="view-all-cards" class="view-btn px-4 py-2 rounded-lg transition">
+                    <i class="fas fa-th-large mr-2"></i>Cards
+                </button>
+            </div>
+            
             <!-- Filtros -->
             <div class="bg-gray-50 rounded-lg p-4 mb-6 border border-gray-200">
                 <form method="GET" action="{% url 'dashboard:appointments_list' %}" class="grid grid-cols-1 md:grid-cols-5 gap-4">
@@ -178,8 +208,8 @@
                 </form>
             </div>
 
-            <!-- Tabla de Citas -->
-            <div class="overflow-x-auto">
+            <!-- Vista de Lista -->
+            <div id="all-appointments-list" class="overflow-x-auto">
                 <table class="min-w-full divide-y divide-gray-200">
                     <thead class="bg-gray-50">
                         <tr>
@@ -280,6 +310,71 @@
                     </tbody>
                 </table>
             </div>
+            
+            <!-- Vista de Cards -->\n            <div id="all-appointments-cards" class="hidden grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {% for appointment in all_appointments %}
+                <div class="border border-gray-200 rounded-lg p-4 hover:shadow-lg transition bg-white">
+                    <div class="flex items-start justify-between mb-3">
+                        <div class="flex items-center flex-1">
+                            <div class="w-12 h-12 bg-gradient-to-br from-blue-400 to-blue-600 rounded-full flex items-center justify-center text-white font-bold text-lg mr-3">
+                                {{ appointment.full_name|first|upper }}
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <h4 class="text-sm font-bold text-gray-800 truncate">{{ appointment.full_name }}</h4>
+                                {% if appointment.patient %}
+                                <span class="text-xs text-green-600"><i class="fas fa-user-check"></i> Registrado</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="space-y-2 text-sm text-gray-600 mb-3">
+                        <div class="flex items-center">
+                            <i class="fas fa-phone text-green-600 mr-2 w-4"></i>
+                            <span class="truncate">{{ appointment.phone_number }}</span>
+                        </div>
+                        {% if appointment.doctor %}
+                        <div class="flex items-center">
+                            <i class="fas fa-user-md text-purple-600 mr-2 w-4"></i>
+                            <span class="truncate">{{ appointment.doctor.full_name }}</span>
+                        </div>
+                        {% else %}
+                        <div class="flex items-center text-gray-400">
+                            <i class="fas fa-user-times mr-2 w-4"></i>
+                            <span class="italic">Sin asignar</span>
+                        </div>
+                        {% endif %}
+                        <div class="flex items-center">
+                            <i class="fas fa-calendar text-blue-600 mr-2 w-4"></i>
+                            <span>{{ appointment.appointment_date|date:"d/m/Y" }}</span>
+                        </div>
+                        <div class="flex items-center">
+                            <i class="fas fa-clock text-orange-600 mr-2 w-4"></i>
+                            <span>{{ appointment.appointment_time|time:"H:i" }}</span>
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-center justify-between">
+                        <span class="px-2 py-1 text-xs font-semibold rounded-full
+                            {% if appointment.status == 'pending' %}bg-yellow-100 text-yellow-800
+                            {% elif appointment.status == 'confirmed' %}bg-blue-100 text-blue-800
+                            {% elif appointment.status == 'completed' %}bg-green-100 text-green-800
+                            {% elif appointment.status == 'cancelled' %}bg-red-100 text-red-800
+                            {% else %}bg-gray-100 text-gray-800{% endif %}">
+                            {{ appointment.get_status_display }}
+                        </span>
+                        <a href="{% url 'dashboard:appointment_detail' appointment.id %}" class="text-blue-600 hover:text-blue-800">
+                            <i class="fas fa-eye"></i>
+                        </a>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="col-span-full text-center py-16">
+                    <i class="fas fa-calendar-times text-gray-300 text-6xl mb-4"></i>
+                    <p class="text-gray-500 text-lg">No hay citas que coincidan con los filtros</p>
+                </div>
+                {% endfor %}
+            </div>
 
             {% if all_appointments %}
             <div class="mt-4 text-sm text-gray-600 px-6">
@@ -293,6 +388,52 @@
 <!-- WebSocket y Scripts -->
 <script>
 let ws = null;
+
+// Función para cambiar la vista (lista/cards)
+function changeView(viewType) {
+    const currentTab = document.querySelector('.tab-content:not(.hidden)').id;
+    const isToday = currentTab === 'content-today';
+    
+    // Guardar preferencia en localStorage
+    localStorage.setItem('appointmentsView', viewType);
+    
+    if (isToday) {
+        // Para citas de hoy (solo cards actualmente)
+        updateViewButtons(viewType, 'today');
+    } else {
+        // Para todas las citas
+        const listView = document.getElementById('all-appointments-list');
+        const cardsView = document.getElementById('all-appointments-cards');
+        
+        if (viewType === 'list') {
+            listView.classList.remove('hidden');
+            cardsView.classList.add('hidden');
+        } else {
+            listView.classList.add('hidden');
+            cardsView.classList.remove('hidden');
+        }
+        
+        updateViewButtons(viewType, 'all');
+    }
+}
+
+// Actualizar estilo de botones de vista
+function updateViewButtons(viewType, tab) {
+    const listBtn = document.getElementById(`view-${tab}-list`);
+    const cardsBtn = document.getElementById(`view-${tab}-cards`);
+    
+    if (viewType === 'list') {
+        listBtn.classList.add('bg-blue-600', 'text-white');
+        listBtn.classList.remove('bg-gray-200', 'text-gray-700');
+        cardsBtn.classList.remove('bg-blue-600', 'text-white');
+        cardsBtn.classList.add('bg-gray-200', 'text-gray-700');
+    } else {
+        cardsBtn.classList.add('bg-blue-600', 'text-white');
+        cardsBtn.classList.remove('bg-gray-200', 'text-gray-700');
+        listBtn.classList.remove('bg-blue-600', 'text-white');
+        listBtn.classList.add('bg-gray-200', 'text-gray-700');
+    }
+}
 
 // Función para cambiar tabs
 function showTab(tabName) {
@@ -427,6 +568,10 @@ document.addEventListener('DOMContentLoaded', () => {
     if (urlParams.has('search') || urlParams.has('status') || urlParams.has('doctor') || urlParams.has('date')) {
         showTab('all');
     }
+    
+    // Restaurar vista guardada desde localStorage
+    const savedView = localStorage.getItem('appointmentsView') || 'list';
+    changeView(savedView);
 });
 </script>
 
@@ -437,5 +582,17 @@ document.addEventListener('DOMContentLoaded', () => {
 .status-select {
     transition: all 0.2s;
 }
+.view-btn {
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+.view-btn:not(.bg-blue-600) {
+    background-color: #e5e7eb;
+    color: #374151;
+}
+.view-btn:not(.bg-blue-600):hover {
+    background-color: #d1d5db;
+}
+</style>
 </style>
 {% endblock %}
