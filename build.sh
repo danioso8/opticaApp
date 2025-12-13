@@ -8,6 +8,10 @@ pip install -r requirements.txt
 echo "==> Recolectando archivos estáticos..."
 python manage.py collectstatic --no-input
 
+echo "==> Verificando estado de migraciones..."
+# Ejecutar script de verificación automática antes de las migraciones
+python pre_migrate_check.py || true
+
 echo "==> Aplicando migraciones..."
 # Marcar migración 0016 como fake si existe (evita error de triggers en PostgreSQL)
 python manage.py migrate patients 0016_auto_20251210_1329 --fake --noinput || true
