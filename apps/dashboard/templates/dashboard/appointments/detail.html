@@ -63,6 +63,34 @@
                 </div>
             </div>
 
+            {% if appointment.has_companion %}
+            <div class="mt-6 pt-6 border-t border-gray-200">
+                <label class="block text-sm font-medium text-gray-500 mb-3">
+                    <i class="fas fa-user-friends text-blue-600 mr-2"></i>Información del Acompañante
+                </label>
+                <div class="bg-blue-50 p-4 rounded-lg space-y-2">
+                    {% if appointment.companion_name %}
+                    <div class="flex items-center text-sm">
+                        <span class="font-medium text-gray-700 w-32">Nombre:</span>
+                        <span class="text-gray-900">{{ appointment.companion_name }}</span>
+                    </div>
+                    {% endif %}
+                    {% if appointment.companion_relationship %}
+                    <div class="flex items-center text-sm">
+                        <span class="font-medium text-gray-700 w-32">Relación:</span>
+                        <span class="text-gray-900">{{ appointment.companion_relationship }}</span>
+                    </div>
+                    {% endif %}
+                    {% if appointment.companion_phone %}
+                    <div class="flex items-center text-sm">
+                        <span class="font-medium text-gray-700 w-32">Teléfono:</span>
+                        <span class="text-gray-900">{{ appointment.companion_phone }}</span>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+
             {% if appointment.notes %}
             <div class="mt-6 pt-6 border-t border-gray-200">
                 <label class="block text-sm font-medium text-gray-500 mb-2">Notas</label>
@@ -312,6 +340,21 @@ function createPatientModal() {
     // Pre-llenar datos de la cita
     document.getElementById('patient_full_name').value = '{{ appointment.full_name }}';
     document.getElementById('patient_phone').value = '{{ appointment.phone_number }}';
+    
+    // Pre-llenar datos del acompañante si existen
+    {% if appointment.has_companion %}
+    document.getElementById('has_companion').checked = true;
+    toggleCompanionFields();
+    {% if appointment.companion_name %}
+    document.querySelector('input[name="companion_name"]').value = '{{ appointment.companion_name|escapejs }}';
+    {% endif %}
+    {% if appointment.companion_relationship %}
+    document.querySelector('select[name="companion_relationship"]').value = '{{ appointment.companion_relationship|escapejs }}';
+    {% endif %}
+    {% if appointment.companion_phone %}
+    document.querySelector('input[name="companion_phone"]').value = '{{ appointment.companion_phone|escapejs }}';
+    {% endif %}
+    {% endif %}
 }
 
 function closePatientModal() {
