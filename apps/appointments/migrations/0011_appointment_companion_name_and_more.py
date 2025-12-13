@@ -34,8 +34,4 @@ class Migration(migrations.Migration):
             name='has_companion',
             field=models.BooleanField(default=False, verbose_name='Viene con acompañante'),
         ),
-        migrations.AddConstraint(
-            model_name='appointment',
-            constraint=models.UniqueConstraint(condition=models.Q(('status', 'cancelled'), _negated=True), fields=('organization', 'appointment_date', 'appointment_time'), name='unique_active_appointment_slot'),
-        ),
     ]
