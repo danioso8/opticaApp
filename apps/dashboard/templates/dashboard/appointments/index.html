@@ -20,20 +20,10 @@
     <!-- Tab Content: Citas de Hoy -->
     <div id="content-today" class="tab-content">
         <div class="p-6">
-            <!-- Título, Fecha y Controles de Vista -->
-            <div class="mb-6 flex justify-between items-center">
-                <div>
-                    <h2 class="text-2xl font-bold text-gray-800">{{ today|date:"l, d \d\e F \d\e Y" }}</h2>
-                    <p class="text-gray-600">Vista en tiempo real de las citas del día</p>
-                </div>
-                <div class="flex gap-2">
-                    <button onclick="changeView('list')" id="view-today-list" class="view-btn px-4 py-2 rounded-lg transition">
-                        <i class="fas fa-list mr-2"></i>Lista
-                    </button>
-                    <button onclick="changeView('cards')" id="view-today-cards" class="view-btn px-4 py-2 rounded-lg transition">
-                        <i class="fas fa-th-large mr-2"></i>Cards
-                    </button>
-                </div>
+            <!-- Título y Fecha -->
+            <div class="mb-6">
+                <h2 class="text-2xl font-bold text-gray-800">{{ today|date:"l, d \d\e F \d\e Y" }}</h2>
+                <p class="text-gray-600">Vista en tiempo real de las citas del día</p>
             </div>
 
             <!-- Estadísticas del Día -->
@@ -138,16 +128,6 @@
     <!-- Tab Content: Todas las Citas -->
     <div id="content-all" class="tab-content hidden">
         <div class="p-6">
-            <!-- Controles de Vista -->
-            <div class="mb-4 flex justify-end gap-2">
-                <button onclick="changeView('list')" id="view-all-list" class="view-btn px-4 py-2 rounded-lg transition">
-                    <i class="fas fa-list mr-2"></i>Lista
-                </button>
-                <button onclick="changeView('cards')" id="view-all-cards" class="view-btn px-4 py-2 rounded-lg transition">
-                    <i class="fas fa-th-large mr-2"></i>Cards
-                </button>
-            </div>
-            
             <!-- Controles de Vista -->
             <div class="mb-4 flex justify-end gap-2">
                 <button onclick="changeView('list')" id="view-all-list" class="view-btn px-4 py-2 rounded-lg transition">
