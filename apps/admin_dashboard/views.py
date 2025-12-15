@@ -554,23 +554,24 @@ def plan_edit(request, plan_id):
     
     if request.method == 'POST':
         from django.utils.text import slugify
+        from decimal import Decimal
         
         plan.name = request.POST.get('name')
         plan.slug = slugify(plan.name)
         plan.plan_type = request.POST.get('plan_type', plan.plan_type)
-        plan.price_monthly = request.POST.get('monthly_price')
-        plan.price_yearly = request.POST.get('yearly_price')
+        plan.price_monthly = Decimal(request.POST.get('monthly_price', '0'))
+        plan.price_yearly = Decimal(request.POST.get('yearly_price', '0'))
         
         # Límites básicos
-        plan.max_users = request.POST.get('max_users')
-        plan.max_organizations = request.POST.get('max_organizations')
-        plan.max_appointments_month = request.POST.get('max_appointments')
-        plan.max_patients = request.POST.get('max_patients')
-        plan.max_storage_mb = request.POST.get('max_storage_mb', 500)
+        plan.max_users = int(request.POST.get('max_users', 1))
+        plan.max_organizations = int(request.POST.get('max_organizations', 1))
+        plan.max_appointments_month = int(request.POST.get('max_appointments', 50))
+        plan.max_patients = int(request.POST.get('max_patients', 100))
+        plan.max_storage_mb = int(request.POST.get('max_storage_mb', 500))
         
         # Facturación Electrónica
         plan.allow_electronic_invoicing = request.POST.get('allow_electronic_invoicing') == '1'
-        plan.max_invoices_month = request.POST.get('max_invoices_month', 0)
+        plan.max_invoices_month = int(request.POST.get('max_invoices_month', 0))
         
         # Características (checkboxes - legacy)
         plan.whatsapp_integration = request.POST.get('whatsapp_integration') == '1'
