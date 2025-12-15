@@ -16,11 +16,16 @@ echo "==> Aplicando migraciones..."
 # Marcar migración 0016 como fake si existe (evita error de triggers en PostgreSQL)
 python manage.py migrate patients 0016_auto_20251210_1329 --fake --noinput || true
 
-# Verificar y corregir migraciones problemáticas de appointments
-echo "==> Verificando migraciones de appointments..."
+# Verificar y corregir migraciones problemáticas de appointments y billing
+echo "==> Verificando migraciones de appointments y billing..."
 python manage.py shell << 'END'
 from django.db import connection
 import os
+
+def check_table_exists(table):
+    with connection.cursor() as cursor:
+        cursor.execute("SELECT to_regclass(%s)", [table])
+        return cursor.fetchone()[0] is not None
 
 def check_column_exists(table, column):
     with connection.cursor() as cursor:
@@ -36,6 +41,11 @@ def check_constraint_exists(constraint_name):
             WHERE conname = %s
         """, [constraint_name])
         return cursor.fetchone() is not None
+
+# Verificar migración inicial de billing
+if check_table_exists('billing_invoice'):
+    print('✅ Tabla billing_invoice ya existe, marcando 0001_initial como fake...')
+    os.system('python manage.py migrate billing 0001_initial --fake --noinput 2>/dev/null || true')
 
 # Verificar migración 0011 (campos companion)
 if check_column_exists('appointments_appointment', 'companion_name'):
