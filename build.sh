@@ -16,23 +16,33 @@ echo "==> Aplicando migraciones..."
 # Marcar migración 0016 como fake si existe (evita error de triggers en PostgreSQL)
 python manage.py migrate patients 0016_auto_20251210_1329 --fake --noinput || true
 
-# Verificar y corregir migración 0011 de appointments (campos companion ya existen)
-echo "==> Verificando migración 0011 de appointments..."
+# Verificar y corregir migraciones problemáticas de appointments
+echo "==> Verificando migraciones de appointments..."
 python manage.py shell << END
 from django.db import connection
+import os
+
 def check_column_exists(table, column):
     with connection.cursor() as cursor:
         cursor.execute("SELECT column_name FROM information_schema.columns WHERE table_name=%s AND column_name=%s", [table, column])
         return cursor.fetchone() is not None
 
-# Verificar si las columnas companion_name, companion_relationship, companion_phone existen
+def check_constraint_exists(constraint_name):
+    with connection.cursor() as cursor:
+        cursor.execute("SELECT constraint_name FROM information_schema.table_constraints WHERE constraint_name=%s", [constraint_name])
+        return cursor.fetchone() is not None
+
+# Verificar migración 0011 (campos companion)
 if check_column_exists('appointments_appointment', 'companion_name'):
-    print('✅ Las columnas de acompañante ya existen en la base de datos')
-    print('✅ Marcando migración 0011 como fake...')
-    import os
+    print('✅ Columnas companion ya existen, marcando 0011 como fake...')
     os.system('python manage.py migrate appointments 0011 --fake --noinput || true')
-else:
-    print('⏭️ Columnas no existen, la migración se ejecutará normalmente')
+
+# Verificar migración 0012 (constraint unique_active_appointment_slot)
+if check_constraint_exists('unique_active_appointment_slot'):
+    print('✅ Constraint unique_active_appointment_slot ya existe, marcando 0012 como fake...')
+    os.system('python manage.py migrate appointments 0012 --fake --noinput || true')
+
+print('✅ Verificaciones completadas')
 END
 
 # Aplicar todas las migraciones
