@@ -490,27 +490,34 @@ async function loadAvailableSlots(date) {
         const data = await response.json();
         
         if (data.slots && data.slots.length > 0) {
-            container.innerHTML = '';
-            data.slots.forEach(slot => {
-                const button = document.createElement('button');
-                button.type = 'button';
-                button.className = 'w-full px-4 py-3 border-2 border-gray-200 rounded-lg hover:border-green-500 hover:bg-green-50 transition-all';
-                button.innerHTML = `
-                    <div class="flex items-center justify-between">
-                        <div class="flex items-center">
-                            <i class="fas fa-clock text-gray-600 mr-3"></i>
-                            <span class="font-semibold text-gray-800">${slot.time}</span>
+            // Filtrar solo los slots disponibles
+            const availableSlots = data.slots.filter(slot => slot.available === true);
+            
+            if (availableSlots.length > 0) {
+                container.innerHTML = '';
+                availableSlots.forEach(slot => {
+                    const button = document.createElement('button');
+                    button.type = 'button';
+                    button.className = 'w-full px-4 py-3 border-2 border-gray-200 rounded-lg hover:border-green-500 hover:bg-green-50 transition-all';
+                    button.innerHTML = `
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center">
+                                <i class="fas fa-clock text-gray-600 mr-3"></i>
+                                <span class="font-semibold text-gray-800">${slot.time}</span>
+                            </div>
+                            <span class="px-2 py-1 bg-green-100 text-green-800 text-xs font-semibold rounded-full">
+                                Disponible
+                            </span>
                         </div>
-                        <span class="px-2 py-1 bg-green-100 text-green-800 text-xs font-semibold rounded-full">
-                            Disponible
-                        </span>
-                    </div>
-                `;
-                button.onclick = () => selectSlot(slot.time, button, date);
-                container.appendChild(button);
-            });
+                    `;
+                    button.onclick = () => selectSlot(slot.time, button, date);
+                    container.appendChild(button);
+                });
+            } else {
+                container.innerHTML = '<div class="text-center py-8 text-gray-500"><i class="fas fa-calendar-times text-2xl mb-2"></i><p>No hay horarios disponibles para esta fecha</p><p class="text-sm text-gray-400 mt-1">Todos los horarios están ocupados</p></div>';
+            }
         } else {
-            container.innerHTML = '<div class="text-center py-8 text-gray-500"><i class="fas fa-clock text-2xl mb-2"></i><p>No hay horarios disponibles</p></div>';
+            container.innerHTML = '<div class="text-center py-8 text-gray-500"><i class="fas fa-clock text-2xl mb-2"></i><p>No hay horarios de atención para esta fecha</p></div>';
         }
     } catch (error) {
         console.error('Error loading slots:', error);

@@ -186,6 +186,7 @@
                             <!-- Las fechas se cargarán dinámicamente -->
                         </div>
                         <input type="hidden" id="selectedDate" name="appointment_date" required>
+                        <input type="hidden" id="selectedDoctor" name="doctor_id">
                         <button type="button" onclick="nextStep(3)" disabled id="btnStep2" 
                                 class="w-full bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 rounded-lg font-semibold text-lg transition disabled:bg-gray-300 disabled:cursor-not-allowed">
                             Continuar
@@ -413,6 +414,10 @@ function selectOrganization(orgId, orgName, neighborhood, city) {
 function selectDoctor(doctorId) {
     selectedDoctorId = doctorId || null;
     console.log('Selected doctor:', selectedDoctorId);
+    
+    // Actualizar el campo oculto con el doctor seleccionado
+    document.getElementById('selectedDoctor').value = selectedDoctorId || '';
+    
     // Recargar fechas con el filtro de doctor
     if (selectedOrganizationId) {
         loadAvailableDates(selectedOrganizationId);

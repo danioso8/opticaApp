@@ -215,10 +215,15 @@ class AppointmentCreateSerializer(serializers.ModelSerializer):
         # Asignar doctor si se proporciona
         if doctor_id:
             try:
-                doctor = Doctor.objects.get(id=doctor_id)
+                # Filtrar por doctor_id y organización si está disponible
+                if organization_id:
+                    doctor = Doctor.objects.get(id=doctor_id, organization_id=organization_id)
+                else:
+                    doctor = Doctor.objects.get(id=doctor_id)
                 validated_data['doctor'] = doctor
+                logger.info(f"Doctor {doctor.full_name} (ID: {doctor_id}) asignado a la cita")
             except Doctor.DoesNotExist:
-                logger.warning(f"Doctor {doctor_id} not found")
+                logger.warning(f"Doctor {doctor_id} not found for organization {organization_id}")
         
         # Buscar si ya existe un paciente con ese teléfono en la misma organización
         try:
