@@ -18,7 +18,7 @@ python manage.py migrate patients 0016_auto_20251210_1329 --fake --noinput || tr
 
 # Verificar y corregir migraciones problemáticas de appointments
 echo "==> Verificando migraciones de appointments..."
-python manage.py shell << END
+python manage.py shell << 'END'
 from django.db import connection
 import os
 
@@ -28,19 +28,26 @@ def check_column_exists(table, column):
         return cursor.fetchone() is not None
 
 def check_constraint_exists(constraint_name):
+    """Verifica si un constraint existe en PostgreSQL"""
     with connection.cursor() as cursor:
-        cursor.execute("SELECT constraint_name FROM information_schema.table_constraints WHERE constraint_name=%s", [constraint_name])
+        # Buscar en pg_constraint que es más confiable
+        cursor.execute("""
+            SELECT 1 FROM pg_constraint 
+            WHERE conname = %s
+        """, [constraint_name])
         return cursor.fetchone() is not None
 
 # Verificar migración 0011 (campos companion)
 if check_column_exists('appointments_appointment', 'companion_name'):
     print('✅ Columnas companion ya existen, marcando 0011 como fake...')
-    os.system('python manage.py migrate appointments 0011 --fake --noinput || true')
+    os.system('python manage.py migrate appointments 0011 --fake --noinput 2>/dev/null || true')
 
 # Verificar migración 0012 (constraint unique_active_appointment_slot)
 if check_constraint_exists('unique_active_appointment_slot'):
     print('✅ Constraint unique_active_appointment_slot ya existe, marcando 0012 como fake...')
-    os.system('python manage.py migrate appointments 0012 --fake --noinput || true')
+    os.system('python manage.py migrate appointments 0012 --fake --noinput 2>/dev/null || true')
+else:
+    print('⏭️ Constraint no existe, migración 0012 se ejecutará normalmente')
 
 print('✅ Verificaciones completadas')
 END
