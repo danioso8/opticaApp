@@ -235,7 +235,6 @@ def subscription_edit(request, subscription_id):
         plan_id = request.POST.get('plan')
         billing_cycle = request.POST.get('billing_cycle')
         payment_status = request.POST.get('payment_status')
-        is_active = request.POST.get('is_active') == 'on'
         end_date = request.POST.get('end_date')
         
         print(f"\n{'='*70}")
@@ -256,13 +255,17 @@ def subscription_edit(request, subscription_id):
                 subscription.billing_cycle = billing_cycle
             if payment_status:
                 subscription.payment_status = payment_status
-            subscription.is_active = is_active
+            
+            # Activar automáticamente si el pago está confirmado
+            subscription.is_active = (payment_status == 'paid')
+            
             if end_date:
                 subscription.end_date = end_date
             
             subscription.save()
             subscription.refresh_from_db()
             print(f"✅ UserSubscription guardada: {subscription.plan.name}")
+            print(f"   is_active: {subscription.is_active} (payment_status: {payment_status})")
             
             # También actualizar la suscripción de la organización
             org_member = OrganizationMember.objects.filter(user=subscription.user).first()
