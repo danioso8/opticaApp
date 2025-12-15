@@ -563,6 +563,7 @@ def plan_edit(request, plan_id):
         
         # Límites básicos
         plan.max_users = request.POST.get('max_users')
+        plan.max_organizations = request.POST.get('max_organizations')
         plan.max_appointments_month = request.POST.get('max_appointments')
         plan.max_patients = request.POST.get('max_patients')
         plan.max_storage_mb = request.POST.get('max_storage_mb', 500)

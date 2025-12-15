@@ -50,6 +50,7 @@ class SubscriptionPlan(models.Model):
     
     # Límites del plan
     max_users = models.IntegerField(default=1, verbose_name='Máximo de Usuarios')
+    max_organizations = models.IntegerField(default=1, verbose_name='Máximo de Organizaciones')
     max_appointments_month = models.IntegerField(default=50, verbose_name='Máximo de Citas/Mes')
     max_patients = models.IntegerField(default=100, verbose_name='Máximo de Pacientes')
     max_storage_mb = models.IntegerField(default=100, verbose_name='Almacenamiento (MB)')
