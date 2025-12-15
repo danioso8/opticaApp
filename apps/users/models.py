@@ -86,8 +86,8 @@ class UserSubscription(models.Model):
         if not self.is_active or self.is_expired:
             return False
         
-        # Plan con max_users >= 999999 tiene acceso ilimitado
-        max_orgs = self.plan.max_users  # Usaremos max_users como max_organizations por ahora
+        # Plan con max_organizations >= 999999 tiene acceso ilimitado
+        max_orgs = self.plan.max_organizations
         if max_orgs >= 999999:
             return True
         

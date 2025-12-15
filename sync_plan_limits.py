@@ -72,6 +72,10 @@ for plan_type, config in PLAN_CONFIGURATIONS.items():
             changes.append(f"Max usuarios: {plan.max_users} → {limits['max_users']}")
             plan.max_users = limits['max_users']
         
+        if plan.max_organizations != limits['max_organizations']:
+            changes.append(f"Max organizaciones: {plan.max_organizations} → {limits['max_organizations']}")
+            plan.max_organizations = limits['max_organizations']
+        
         if plan.max_appointments_month != limits['max_appointments_month']:
             changes.append(f"Max citas/mes: {plan.max_appointments_month} → {limits['max_appointments_month']}")
             plan.max_appointments_month = limits['max_appointments_month']
@@ -138,7 +142,7 @@ for plan_type, config in PLAN_CONFIGURATIONS.items():
         print(f"\n   📊 Configuración actual:")
         print(f"      💰 Precio: ${plan.price_monthly:,.2f}/mes")
         print(f"      👥 Usuarios: {format_limit(plan.max_users)}")
-        print(f"      🏢 Organizaciones: {format_limit(plan.max_users)}")
+        print(f"      🏢 Organizaciones: {format_limit(plan.max_organizations)}")
         print(f"      📅 Citas/mes: {format_limit(plan.max_appointments_month)}")
         print(f"      🏥 Pacientes: {format_limit(plan.max_patients)}")
         print(f"      💾 Almacenamiento: {plan.max_storage_mb} MB")

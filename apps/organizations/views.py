@@ -27,10 +27,10 @@ def organization_list(request):
         from apps.users.models import UserSubscription
         user_subscription = UserSubscription.objects.get(user=request.user)
         current_count = request.user.owned_organizations.filter(is_active=True).count()
-        max_allowed = user_subscription.plan.max_users  # max_users usado como max_organizations
+        max_allowed = user_subscription.plan.max_organizations
         can_create_more = user_subscription.can_create_organizations()
         
-        # Detectar acceso ilimitado (max_users >= 999999)
+        # Detectar acceso ilimitado (max_organizations >= 999999)
         has_unlimited_access = max_allowed >= 999999
         
         # Detectar si tiene el plan más alto (Empresarial)
@@ -65,7 +65,7 @@ def organization_create(request):
         # Verificar si puede crear más organizaciones
         if not user_subscription.can_create_organizations():
             current_count = request.user.owned_organizations.filter(is_active=True).count()
-            max_allowed = user_subscription.plan.max_users  # max_users usado como max_organizations
+            max_allowed = user_subscription.plan.max_organizations
             messages.error(
                 request, 
                 f'Has alcanzado el límite de organizaciones ({current_count}/{max_allowed}). '
