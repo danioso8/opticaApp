@@ -59,8 +59,8 @@ os.system('python manage.py migrate appointments 0012 --fake --noinput 2>/dev/nu
 print('✅ Verificaciones completadas')
 END
 
-# Aplicar todas las migraciones
-python manage.py migrate --noinput
+# Aplicar todas las migraciones (--fake-initial marca como fake las migraciones iniciales si las tablas ya existen)
+python manage.py migrate --fake-initial --noinput
 
 echo "==> Creando superusuario..."
 python manage.py shell << END
