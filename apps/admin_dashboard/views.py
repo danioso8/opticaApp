@@ -556,6 +556,15 @@ def plan_edit(request, plan_id):
         from django.utils.text import slugify
         from decimal import Decimal
         
+        print("\n" + "="*70)
+        print("🔧 EDITANDO PLAN")
+        print("="*70)
+        print(f"Plan ID: {plan_id}")
+        print(f"Datos POST recibidos:")
+        for key, value in request.POST.items():
+            if key != 'csrfmiddlewaretoken':
+                print(f"   {key}: {value}")
+        
         plan.name = request.POST.get('name')
         plan.slug = slugify(plan.name)
         plan.plan_type = request.POST.get('plan_type', plan.plan_type)
@@ -588,7 +597,20 @@ def plan_edit(request, plan_id):
         plan.features.set(selected_features)
         
         plan.save()
-        messages.success(request, f'Plan {plan.name} actualizado con {plan.features.count()} módulo(s)')
+        
+        print(f"\n✅ Plan guardado:")
+        print(f"   Nombre: {plan.name}")
+        print(f"   Max usuarios: {plan.max_users}")
+        print(f"   Max organizaciones: {plan.max_organizations}")
+        print(f"   Max citas/mes: {plan.max_appointments_month}")
+        print(f"   Max pacientes: {plan.max_patients}")
+        print(f"   Max storage: {plan.max_storage_mb} MB")
+        print(f"   Facturación: {plan.allow_electronic_invoicing}")
+        print(f"   Max facturas/mes: {plan.max_invoices_month}")
+        print(f"   Activo: {plan.is_active}")
+        print("="*70 + "\n")
+        
+        messages.success(request, f'Plan {plan.name} actualizado correctamente')
         return redirect('admin_dashboard:plans_list')
     
     # GET - Mostrar formulario
