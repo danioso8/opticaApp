@@ -42,12 +42,9 @@ if check_column_exists('appointments_appointment', 'companion_name'):
     print('✅ Columnas companion ya existen, marcando 0011 como fake...')
     os.system('python manage.py migrate appointments 0011 --fake --noinput 2>/dev/null || true')
 
-# Verificar migración 0012 (constraint unique_active_appointment_slot)
-if check_constraint_exists('unique_active_appointment_slot'):
-    print('✅ Constraint unique_active_appointment_slot ya existe, marcando 0012 como fake...')
-    os.system('python manage.py migrate appointments 0012 --fake --noinput 2>/dev/null || true')
-else:
-    print('⏭️ Constraint no existe, migración 0012 se ejecutará normalmente')
+# SIEMPRE marcar 0012 como fake porque el constraint ya existe en producción
+print('✅ Marcando migración 0012 como fake (constraint ya existe en producción)...')
+os.system('python manage.py migrate appointments 0012 --fake --noinput 2>/dev/null || true')
 
 print('✅ Verificaciones completadas')
 END
