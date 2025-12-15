@@ -6,8 +6,8 @@
 {% block page_subtitle %}Gestiona tus empresas y sucursales{% endblock %}
 
 {% block content %}
-<!-- Información del Plan del Usuario (solo si NO tiene acceso ilimitado) -->
-{% if user_subscription and not has_unlimited_access %}
+<!-- Información del Plan del Usuario -->
+{% if user_subscription %}
 <div class="bg-gradient-to-r from-indigo-500 to-purple-600 rounded-lg shadow-lg p-6 mb-6 text-white">
     <div class="flex flex-col md:flex-row items-center justify-between gap-4">
         <div class="flex-1">
@@ -28,12 +28,12 @@
         </div>
         <div class="flex flex-col md:flex-row items-center gap-4">
             <div class="bg-white bg-opacity-20 rounded-lg p-4 backdrop-blur-sm">
-                <p class="text-3xl font-bold">{{ current_count }}/{{ max_allowed }}</p>
+                <p class="text-3xl font-bold">{{ current_count }}{% if has_unlimited_access %}/∞{% else %}/{{ max_allowed }}{% endif %}</p>
                 <p class="text-sm text-indigo-100">Empresas creadas</p>
             </div>
             <a href="{% url 'organizations:subscription_plans' %}" 
                class="bg-white text-indigo-600 hover:bg-indigo-50 px-6 py-3 rounded-lg font-semibold transition shadow-lg whitespace-nowrap">
-                <i class="fas fa-rocket mr-2"></i>Mejorar Plan
+                <i class="fas {% if is_highest_plan %}fa-crown{% else %}fa-rocket{% endif %} mr-2"></i>{% if is_highest_plan %}Ver Planes{% else %}Mejorar Plan{% endif %}
             </a>
         </div>
     </div>

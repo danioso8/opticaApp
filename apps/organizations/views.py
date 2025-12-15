@@ -30,8 +30,11 @@ def organization_list(request):
         max_allowed = user_subscription.plan.max_users  # max_users usado como max_organizations
         can_create_more = user_subscription.can_create_organizations()
         
-        # Detectar acceso ilimitado (año 2125)
-        has_unlimited_access = user_subscription.end_date.year >= 2125
+        # Detectar acceso ilimitado (max_users >= 999999)
+        has_unlimited_access = max_allowed >= 999999
+        
+        # Detectar si tiene el plan más alto (Empresarial)
+        is_highest_plan = user_subscription.plan.plan_type == 'enterprise'
     except UserSubscription.DoesNotExist:
         pass
     
@@ -42,6 +45,7 @@ def organization_list(request):
         'current_count': current_count,
         'max_allowed': max_allowed,
         'has_unlimited_access': has_unlimited_access,
+        'is_highest_plan': is_highest_plan,
     }
     return render(request, 'organizations/list.html', context)
 
@@ -194,13 +198,17 @@ def subscription_plans(request):
         from apps.users.models import UserSubscription
         current_subscription = UserSubscription.objects.get(user=request.user)
         has_unlimited_access = current_subscription.end_date.year >= 2125
+        # Detectar si tiene el plan más alto (Empresarial)
+        is_highest_plan = current_subscription.plan.plan_type == 'enterprise'
     except UserSubscription.DoesNotExist:
+        is_highest_plan = False
         pass
     
     context = {
         'plans': plans,
         'current_subscription': current_subscription,
         'has_unlimited_access': has_unlimited_access,
+        'is_highest_plan': is_highest_plan,
     }
     return render(request, 'organizations/plans.html', context)
 

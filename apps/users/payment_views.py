@@ -26,9 +26,6 @@ def subscription_checkout(request, plan_id):
     """Vista de checkout para seleccionar/pagar un plan"""
     plan = get_object_or_404(SubscriptionPlan, id=plan_id, is_active=True)
     
-    # Obtener métodos de pago del usuario
-    payment_methods = PaymentMethod.objects.filter(user=request.user, is_active=True)
-    
     # Determinar el ciclo de facturación (por defecto mensual)
     billing_cycle = request.GET.get('cycle', 'monthly')
     
@@ -37,6 +34,37 @@ def subscription_checkout(request, plan_id):
         amount = plan.price_yearly
     else:
         amount = plan.price_monthly
+    
+    # SI ES PLAN FREE ($0), ACTIVAR DIRECTAMENTE SIN PEDIR TARJETA
+    if amount == 0 or plan.plan_type == 'free':
+        # Activar suscripción gratuita inmediatamente
+        from apps.organizations.models import OrganizationMember
+        
+        org_member = OrganizationMember.objects.filter(user=request.user).first()
+        if org_member:
+            # Crear o actualizar suscripción
+            subscription, created = UserSubscription.objects.update_or_create(
+                user=request.user,
+                defaults={
+                    'plan': plan,
+                    'organization': org_member.organization,
+                    'billing_cycle': billing_cycle,
+                    'status': 'active',
+                    'payment_status': 'paid',  # Plan free siempre está pagado
+                    'current_period_start': timezone.now(),
+                    'current_period_end': timezone.now() + timedelta(days=365),  # 1 año
+                }
+            )
+            
+            messages.success(request, f'✅ ¡Bienvenido! Tu Plan Free ha sido activado exitosamente.')
+            return redirect('dashboard:home')
+        else:
+            messages.error(request, 'No se encontró tu organización.')
+            return redirect('organizations:subscription_plans')
+    
+    # Para planes de pago, mostrar formulario de tarjeta
+    # Obtener métodos de pago del usuario
+    payment_methods = PaymentMethod.objects.filter(user=request.user, is_active=True)
     
     context = {
         'plan': plan,

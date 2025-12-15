@@ -67,6 +67,7 @@ INSTALLED_APPS = [
     'apps.admin_dashboard',
     'apps.public',
     'apps.sales',
+    'apps.billing',  # Facturación electrónica y pagos
 ]
 
 MIDDLEWARE = [

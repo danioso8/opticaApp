@@ -33,6 +33,9 @@ urlpatterns = [
     # Dashboard URLs
     path('dashboard/', include('apps.dashboard.urls')),
     
+    # Billing URLs (Facturación Electrónica DIAN)
+    path('dashboard/billing/', include('apps.billing.urls')),
+    
     # Sales URLs
     path('dashboard/sales/', include('apps.sales.urls')),
     

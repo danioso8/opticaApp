@@ -54,6 +54,18 @@ class SubscriptionPlan(models.Model):
     max_patients = models.IntegerField(default=100, verbose_name='Máximo de Pacientes')
     max_storage_mb = models.IntegerField(default=100, verbose_name='Almacenamiento (MB)')
     
+    # Límites de Facturación Electrónica DIAN
+    allow_electronic_invoicing = models.BooleanField(
+        default=False,
+        verbose_name='Permite Facturación Electrónica',
+        help_text='¿Este plan incluye facturación electrónica DIAN?'
+    )
+    max_invoices_month = models.IntegerField(
+        default=0,
+        verbose_name='Máximo Facturas/Mes',
+        help_text='0 = Ilimitado (solo para plan empresarial full), N = cantidad específica'
+    )
+    
     # Características (DEPRECATED - usar features M2M)
     whatsapp_integration = models.BooleanField(default=False, verbose_name='Integración WhatsApp')
     custom_branding = models.BooleanField(default=False, verbose_name='Marca Personalizada')

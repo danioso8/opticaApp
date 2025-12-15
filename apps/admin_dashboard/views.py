@@ -8,7 +8,7 @@ from django.utils import timezone
 from datetime import timedelta
 from apps.users.models import UserSubscription
 from apps.users.email_verification_models import UserProfile
-from apps.organizations.models import Organization, OrganizationMember, SubscriptionPlan
+from apps.organizations.models import Organization, OrganizationMember, SubscriptionPlan, Subscription
 from django.db import transaction
 
 
@@ -231,15 +231,27 @@ def subscription_edit(request, subscription_id):
     plans = SubscriptionPlan.objects.all()
     
     if request.method == 'POST':
-        plan_id = request.POST.get('plan_id')
+        # El template envía 'plan' no 'plan_id'
+        plan_id = request.POST.get('plan')
         billing_cycle = request.POST.get('billing_cycle')
         payment_status = request.POST.get('payment_status')
         is_active = request.POST.get('is_active') == 'on'
         end_date = request.POST.get('end_date')
         
+        print(f"\n{'='*70}")
+        print(f"🔧 EDITANDO SUSCRIPCIÓN DEL USUARIO: {subscription.user.username}")
+        print(f"{'='*70}")
+        print(f"Plan anterior: {subscription.plan.name} (ID: {subscription.plan.id})")
+        print(f"Plan nuevo ID recibido: {plan_id}")
+        print(f"Billing cycle: {billing_cycle}")
+        print(f"Payment status: {payment_status}")
+        
         with transaction.atomic():
+            # Actualizar UserSubscription
+            old_plan_name = subscription.plan.name
+            
             if plan_id:
-                subscription.plan_id = plan_id
+                subscription.plan_id = int(plan_id)
             if billing_cycle:
                 subscription.billing_cycle = billing_cycle
             if payment_status:
@@ -249,7 +261,50 @@ def subscription_edit(request, subscription_id):
                 subscription.end_date = end_date
             
             subscription.save()
-            messages.success(request, 'Suscripción actualizada exitosamente')
+            subscription.refresh_from_db()
+            print(f"✅ UserSubscription guardada: {subscription.plan.name}")
+            
+            # También actualizar la suscripción de la organización
+            org_member = OrganizationMember.objects.filter(user=subscription.user).first()
+            if org_member and org_member.organization:
+                org = org_member.organization
+                print(f"📋 Organización encontrada: {org.name}")
+                
+                # IMPORTANTE: Desactivar TODAS las suscripciones anteriores
+                old_subs_count = Subscription.objects.filter(
+                    organization=org,
+                    is_active=True
+                ).count()
+                
+                Subscription.objects.filter(
+                    organization=org
+                ).update(is_active=False)
+                
+                print(f"🔴 Desactivadas {old_subs_count} suscripciones anteriores")
+                
+                # Crear nueva suscripción con el plan actualizado
+                new_plan = subscription.plan
+                new_sub = Subscription.objects.create(
+                    organization=org,
+                    plan=new_plan,
+                    billing_cycle=billing_cycle or subscription.billing_cycle,
+                    payment_status=payment_status or subscription.payment_status,
+                    is_active=True,
+                    end_date=end_date or subscription.end_date,
+                    start_date=timezone.now(),
+                    amount_paid=0 if new_plan.plan_type == 'free' else (
+                        new_plan.price_yearly if (billing_cycle or subscription.billing_cycle) == 'yearly' 
+                        else new_plan.price_monthly
+                    )
+                )
+                print(f"✅ Nueva Subscription de organización creada: {new_sub.plan.name} (ID: {new_sub.id})")
+                print(f"📅 End date: {new_sub.end_date}")
+            else:
+                print(f"⚠️ Usuario no tiene organización")
+            
+            print(f"{'='*70}\n")
+            
+            messages.success(request, f'✅ Suscripción actualizada de {old_plan_name} a {subscription.plan.name}')
         
         return redirect('admin_dashboard:user_detail', user_id=subscription.user.id)
     
@@ -505,10 +560,16 @@ def plan_edit(request, plan_id):
         plan.plan_type = request.POST.get('plan_type', plan.plan_type)
         plan.price_monthly = request.POST.get('monthly_price')
         plan.price_yearly = request.POST.get('yearly_price')
+        
+        # Límites básicos
         plan.max_users = request.POST.get('max_users')
         plan.max_appointments_month = request.POST.get('max_appointments')
         plan.max_patients = request.POST.get('max_patients')
         plan.max_storage_mb = request.POST.get('max_storage_mb', 500)
+        
+        # Facturación Electrónica
+        plan.allow_electronic_invoicing = request.POST.get('allow_electronic_invoicing') == '1'
+        plan.max_invoices_month = request.POST.get('max_invoices_month', 0)
         
         # Características (checkboxes - legacy)
         plan.whatsapp_integration = request.POST.get('whatsapp_integration') == '1'

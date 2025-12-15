@@ -41,18 +41,66 @@
                 </p>
             </div>
             
-            <div class="space-y-2 mb-6">
-                <div class="flex items-center text-sm text-gray-700">
+            <div class="space-y-2 mb-6 text-sm">
+                <!-- Límites principales -->
+                <div class="flex items-center text-gray-700">
                     <i class="fas fa-building text-indigo-600 w-5 mr-2"></i>
-                    <span>{{ plan.max_patients }} organizaciones</span>
+                    <span><strong>{% if plan.max_users >= 999999 %}∞{% else %}{{ plan.max_users }}{% endif %}</strong> organizaciones</span>
                 </div>
-                <div class="flex items-center text-sm text-gray-700">
-                    <i class="fas fa-users text-indigo-600 w-5 mr-2"></i>
-                    <span>{{ plan.max_users }} usuarios</span>
+                <div class="flex items-center text-gray-700">
+                    <i class="fas fa-users text-blue-600 w-5 mr-2"></i>
+                    <span><strong>{% if plan.max_users >= 999999 %}∞{% else %}{{ plan.max_users }}{% endif %}</strong> usuarios</span>
                 </div>
-                <div class="flex items-center text-sm text-gray-700">
-                    <i class="fas fa-calendar text-indigo-600 w-5 mr-2"></i>
-                    <span>{{ plan.max_appointments_month }} citas/mes</span>
+                <div class="flex items-center text-gray-700">
+                    <i class="fas fa-calendar-check text-green-600 w-5 mr-2"></i>
+                    <span><strong>{% if plan.max_appointments_month >= 999999 %}∞{% else %}{{ plan.max_appointments_month }}{% endif %}</strong> citas/mes</span>
+                </div>
+                <div class="flex items-center text-gray-700">
+                    <i class="fas fa-user-injured text-teal-600 w-5 mr-2"></i>
+                    <span><strong>{% if plan.max_patients >= 999999 %}∞{% else %}{{ plan.max_patients }}{% endif %}</strong> pacientes</span>
+                </div>
+                <div class="flex items-center text-gray-700">
+                    <i class="fas fa-database text-purple-600 w-5 mr-2"></i>
+                    <span><strong>{{ plan.max_storage_mb }} MB</strong> almacenamiento</span>
+                </div>
+                
+                <!-- Facturación Electrónica -->
+                <div class="pt-2 border-t mt-2">
+                    {% if plan.allow_electronic_invoicing %}
+                    <div class="flex items-center text-gray-700">
+                        <i class="fas fa-file-invoice text-emerald-600 w-5 mr-2"></i>
+                        <span><strong>{% if plan.max_invoices_month == 0 %}∞{% else %}{{ plan.max_invoices_month }}{% endif %}</strong> facturas DIAN/mes</span>
+                    </div>
+                    {% else %}
+                    <div class="flex items-center text-gray-400">
+                        <i class="fas fa-times w-5 mr-2"></i>
+                        <span>Sin facturación electrónica</span>
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <!-- Características adicionales (badges) -->
+                <div class="pt-2 mt-2 flex flex-wrap gap-1">
+                    {% if plan.whatsapp_integration %}
+                    <span class="px-2 py-1 bg-green-50 text-green-700 rounded text-xs">
+                        <i class="fab fa-whatsapp mr-1"></i>WhatsApp
+                    </span>
+                    {% endif %}
+                    {% if plan.api_access %}
+                    <span class="px-2 py-1 bg-blue-50 text-blue-700 rounded text-xs">
+                        <i class="fas fa-code mr-1"></i>API
+                    </span>
+                    {% endif %}
+                    {% if plan.priority_support %}
+                    <span class="px-2 py-1 bg-orange-50 text-orange-700 rounded text-xs">
+                        <i class="fas fa-headset mr-1"></i>Soporte
+                    </span>
+                    {% endif %}
+                    {% if plan.analytics %}
+                    <span class="px-2 py-1 bg-purple-50 text-purple-700 rounded text-xs">
+                        <i class="fas fa-chart-line mr-1"></i>Analytics
+                    </span>
+                    {% endif %}
                 </div>
             </div>
             

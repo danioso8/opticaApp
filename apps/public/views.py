@@ -49,25 +49,34 @@ def booking(request):
     from apps.organizations.models import Organization, LandingPageConfig
     from django.contrib.auth.models import Group
     
-    # Obtener todas las organizaciones activas que tienen horarios configurados
-    from apps.appointments.models import SpecificDateSchedule
-    today = timezone.now().date()
-    
-    # Obtener organizaciones que tienen horarios específicos configurados
-    orgs_with_schedules = SpecificDateSchedule.objects.filter(
-        date__gte=today,
-        is_active=True
-    ).values_list('organization_id', flat=True).distinct()
-    
-    available_organizations = Organization.objects.filter(
-        id__in=orgs_with_schedules,
-        is_active=True
-    ).order_by('name')
-    
-    # Si el usuario está autenticado, obtener su primera organización
+    # Si el usuario está autenticado, obtener solo SUS organizaciones
     first_organization = None
+    available_organizations = Organization.objects.none()
+    
     if request.user.is_authenticated:
         from apps.organizations.models import OrganizationMember
+        from apps.appointments.models import SpecificDateSchedule
+        today = timezone.now().date()
+        
+        # Obtener organizaciones del usuario que tienen horarios configurados
+        user_org_ids = OrganizationMember.objects.filter(
+            user=request.user,
+            is_active=True
+        ).values_list('organization_id', flat=True)
+        
+        # Filtrar organizaciones con horarios específicos configurados
+        orgs_with_schedules = SpecificDateSchedule.objects.filter(
+            date__gte=today,
+            is_active=True,
+            organization_id__in=user_org_ids  # Solo las del usuario
+        ).values_list('organization_id', flat=True).distinct()
+        
+        available_organizations = Organization.objects.filter(
+            id__in=orgs_with_schedules,
+            is_active=True
+        ).order_by('name')
+        
+        # Obtener primera organización del usuario
         first_membership = OrganizationMember.objects.filter(
             user=request.user,
             is_active=True
@@ -75,6 +84,20 @@ def booking(request):
         
         if first_membership:
             first_organization = first_membership.organization
+    else:
+        # Si no está autenticado, obtener todas las organizaciones públicas
+        from apps.appointments.models import SpecificDateSchedule
+        today = timezone.now().date()
+        
+        orgs_with_schedules = SpecificDateSchedule.objects.filter(
+            date__gte=today,
+            is_active=True
+        ).values_list('organization_id', flat=True).distinct()
+        
+        available_organizations = Organization.objects.filter(
+            id__in=orgs_with_schedules,
+            is_active=True
+        ).order_by('name')
     
     # Obtener configuración de la landing page
     landing_config = None
@@ -84,12 +107,26 @@ def booking(request):
         except LandingPageConfig.DoesNotExist:
             pass
     
-    # Obtener doctores del modelo Doctor
+    # Obtener doctores según las organizaciones disponibles
     from apps.patients.models import Doctor
     
-    available_doctors = Doctor.objects.filter(
-        is_active=True
-    ).values('id', 'full_name')
+    if request.user.is_authenticated and available_organizations.exists():
+        # Solo mostrar doctores de las organizaciones del usuario
+        org_ids = available_organizations.values_list('id', flat=True)
+        available_doctors = Doctor.objects.filter(
+            is_active=True,
+            organization_id__in=org_ids
+        ).values('id', 'full_name')
+    else:
+        # Para usuarios no autenticados, mostrar doctores de organizaciones públicas
+        if available_organizations.exists():
+            org_ids = available_organizations.values_list('id', flat=True)
+            available_doctors = Doctor.objects.filter(
+                is_active=True,
+                organization_id__in=org_ids
+            ).values('id', 'full_name')
+        else:
+            available_doctors = Doctor.objects.none()
     
     context = {
         'system_closed': False,

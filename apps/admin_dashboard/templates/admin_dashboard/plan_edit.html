@@ -60,6 +60,9 @@
             <!-- Límites -->
             <div class="border-t pt-4">
                 <h3 class="text-lg font-semibold text-gray-800 mb-4">Límites del Plan</h3>
+                <p class="text-sm text-gray-600 mb-4">
+                    💡 <strong>Tip:</strong> Usa <code class="bg-gray-100 px-2 py-1 rounded">999999</code> para indicar límite ilimitado
+                </p>
                 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
@@ -68,7 +71,19 @@
                             Máx. Usuarios *
                         </label>
                         <input type="number" name="max_users" value="{{ plan.max_users }}" required min="1"
-                               class="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-indigo-500">
+                               class="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-indigo-500"
+                               placeholder="Ej: 5 o 999999 para ilimitado">
+                        <p class="text-xs text-gray-500 mt-1">Usuarios que pueden acceder al sistema</p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            <i class="fas fa-building text-indigo-600 mr-1"></i>
+                            Máx. Organizaciones/Sucursales *
+                        </label>
+                        <input type="number" name="max_organizations" value="{{ plan.max_users }}" required min="1"
+                               class="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-indigo-500"
+                               placeholder="Ej: 2 o 999999 para ilimitado">
+                        <p class="text-xs text-gray-500 mt-1">Cantidad de empresas/sucursales que puede crear</p>
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">
@@ -76,7 +91,9 @@
                             Máx. Citas/mes *
                         </label>
                         <input type="number" name="max_appointments" value="{{ plan.max_appointments_month }}" required min="1"
-                               class="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-indigo-500">
+                               class="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-indigo-500"
+                               placeholder="Ej: 100">
+                        <p class="text-xs text-gray-500 mt-1">Citas que puede agendar por mes</p>
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">
@@ -84,7 +101,9 @@
                             Máx. Pacientes *
                         </label>
                         <input type="number" name="max_patients" value="{{ plan.max_patients }}" required min="1"
-                               class="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-indigo-500">
+                               class="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-indigo-500"
+                               placeholder="Ej: 500">
+                        <p class="text-xs text-gray-500 mt-1">Pacientes que puede registrar</p>
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">
@@ -92,7 +111,40 @@
                             Almacenamiento (MB) *
                         </label>
                         <input type="number" name="max_storage_mb" value="{{ plan.max_storage_mb }}" required min="10"
-                               class="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-indigo-500">
+                               class="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-indigo-500"
+                               placeholder="Ej: 1000">
+                        <p class="text-xs text-gray-500 mt-1">Espacio para archivos e imágenes</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Facturación Electrónica DIAN -->
+            <div class="border-t pt-4">
+                <h3 class="text-lg font-semibold text-gray-800 mb-4">
+                    <i class="fas fa-file-invoice text-green-600 mr-2"></i>
+                    Facturación Electrónica DIAN
+                </h3>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="md:col-span-2">
+                        <div class="flex items-center">
+                            <input type="checkbox" name="allow_electronic_invoicing" id="allow_invoicing" value="1"
+                                   {% if plan.allow_electronic_invoicing %}checked{% endif %}
+                                   class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded">
+                            <label for="allow_invoicing" class="ml-2 block text-sm font-medium text-gray-700">
+                                Permitir Facturación Electrónica
+                            </label>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            <i class="fas fa-receipt text-indigo-600 mr-1"></i>
+                            Máx. Facturas/Mes
+                        </label>
+                        <input type="number" name="max_invoices_month" value="{{ plan.max_invoices_month }}" min="0"
+                               class="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-indigo-500"
+                               placeholder="0 para ilimitado">
+                        <p class="text-xs text-gray-500 mt-1">0 = Ilimitado, N = cantidad específica</p>
                     </div>
                 </div>
             </div>
