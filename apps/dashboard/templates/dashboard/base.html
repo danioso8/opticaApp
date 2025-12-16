@@ -283,6 +283,11 @@
                             <span class="sidebar-text">Parámetros Clínicos</span>
                             <span class="sidebar-tooltip">Parámetros Clínicos</span>
                         </a>
+                        <a href="{% url 'billing:dian_configuration' %}" class="flex items-center px-8 py-2 hover:bg-indigo-800 text-sm {% if 'dian-configuration' in request.path %}bg-indigo-800{% endif %} relative">
+                            <i class="fas fa-file-invoice-dollar mr-3"></i>
+                            <span class="sidebar-text">Configuración DIAN</span>
+                            <span class="sidebar-tooltip">Configuración DIAN</span>
+                        </a>
                         <a href="{% url 'dashboard:landing_page_config' %}" class="flex items-center px-8 py-2 hover:bg-indigo-800 text-sm {% if 'landing-page' in request.path %}bg-indigo-800{% endif %} relative">
                             <i class="fas fa-paint-brush mr-3"></i>
                             <span class="sidebar-text">Landing Page</span>
