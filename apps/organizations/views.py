@@ -20,8 +20,8 @@ def organization_list(request):
     can_create_more = False
     current_count = 0
     max_allowed = 0
-    
     has_unlimited_access = False
+    is_highest_plan = False
     
     try:
         from apps.users.models import UserSubscription
@@ -30,8 +30,13 @@ def organization_list(request):
         max_allowed = user_subscription.plan.max_organizations
         can_create_more = user_subscription.can_create_organizations()
         
-        # Detectar acceso ilimitado (max_organizations >= 999999)
-        has_unlimited_access = max_allowed >= 999999
+        # Detectar acceso ilimitado:
+        # 1. max_organizations >= 999999 (plan ilimitado)
+        # 2. end_date >= año 2100 (acceso vitalicio otorgado manualmente)
+        has_unlimited_access = (
+            max_allowed >= 999999 or 
+            user_subscription.end_date.year >= 2100
+        )
         
         # Detectar si tiene el plan más alto (Empresarial)
         is_highest_plan = user_subscription.plan.plan_type == 'enterprise'
