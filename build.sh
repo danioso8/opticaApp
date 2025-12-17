@@ -13,51 +13,8 @@ echo "==> Verificando estado de migraciones..."
 python pre_migrate_check.py || true
 
 echo "==> Aplicando migraciones..."
-# Marcar migración 0016 como fake si existe (evita error de triggers en PostgreSQL)
-python manage.py migrate patients 0016_auto_20251210_1329 --fake --noinput || true
-
-# Verificar y corregir migraciones problemáticas de appointments y billing
-echo "==> Verificando migraciones de appointments y billing..."
-python manage.py shell << 'END'
-from django.db import connection
-import os
-
-def check_table_exists(table):
-    with connection.cursor() as cursor:
-        cursor.execute("SELECT to_regclass(%s)", [table])
-        return cursor.fetchone()[0] is not None
-
-def check_column_exists(table, column):
-    with connection.cursor() as cursor:
-        cursor.execute("SELECT column_name FROM information_schema.columns WHERE table_name=%s AND column_name=%s", [table, column])
-        return cursor.fetchone() is not None
-
-def check_constraint_exists(constraint_name):
-    """Verifica si un constraint existe en PostgreSQL"""
-    with connection.cursor() as cursor:
-        # Buscar en pg_constraint que es más confiable
-        cursor.execute("""
-            SELECT 1 FROM pg_constraint 
-            WHERE conname = %s
-        """, [constraint_name])
-        return cursor.fetchone() is not None
-
-# Verificar migración inicial de billing
-if check_table_exists('billing_invoice'):
-    print('✅ Tabla billing_invoice ya existe, marcando 0001_initial como fake...')
-    os.system('python manage.py migrate billing 0001_initial --fake --noinput 2>/dev/null || true')
-
-# Verificar migración 0011 (campos companion)
-if check_column_exists('appointments_appointment', 'companion_name'):
-    print('✅ Columnas companion ya existen, marcando 0011 como fake...')
-    os.system('python manage.py migrate appointments 0011 --fake --noinput 2>/dev/null || true')
-
-# SIEMPRE marcar 0012 como fake porque el constraint ya existe en producción
-print('✅ Marcando migración 0012 como fake (constraint ya existe en producción)...')
-os.system('python manage.py migrate appointments 0012 --fake --noinput 2>/dev/null || true')
-
-print('✅ Verificaciones completadas')
-END
+# Ejecutar script de reparación de migraciones (incluye sphere fix)
+python fix_render_migrations_sphere.py || true
 
 # Aplicar todas las migraciones (--fake-initial marca como fake las migraciones iniciales si las tablas ya existen)
 python manage.py migrate --fake-initial --noinput

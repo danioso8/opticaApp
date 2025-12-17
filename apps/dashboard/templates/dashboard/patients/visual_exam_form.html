@@ -69,6 +69,11 @@
     input[type="number"]::-webkit-outer-spin-button {
         opacity: 1;
     }
+    
+    /* Fijar textarea para que no se redimensionen */
+    textarea {
+        resize: none !important;
+    }
 </style>
 {% endblock %}
 
@@ -641,13 +646,14 @@
                     <label class="block text-sm font-medium text-gray-700 mb-2">
                         <i class="fas fa-eye mr-2"></i>Cartilla Visión Lejana (6 metros)
                     </label>
-                    <select name="distance_chart" class="w-full md:w-1/2 px-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500">
+                    <select name="distance_chart" id="distance_chart" class="w-full md:w-1/2 px-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500">
                         <option value="">-- Seleccionar cartilla --</option>
-                        <option value="ETDRS logMAR" {% if history and history.distance_chart == "ETDRS logMAR" %}selected{% endif %}>ETDRS logMAR a 6m</option>
-                        <option value="Snellen" {% if history and history.distance_chart == "Snellen" %}selected{% endif %}>Snellen</option>
-                        <option value="Anillos Landolt" {% if history and history.distance_chart == "Anillos Landolt" %}selected{% endif %}>Anillos Landolt</option>
-                        <option value="Figuras" {% if history and history.distance_chart == "Figuras" %}selected{% endif %}>Figuras</option>
-                        <option value="Números" {% if history and history.distance_chart == "Números" %}selected{% endif %}>Números</option>
+                        <option value="Snellen metros" {% if history and history.distance_chart == "Snellen metros" %}selected{% endif %}>Snellen (metros) - 6/6, 6/9, 6/12...</option>
+                        <option value="Snellen pies" {% if history and history.distance_chart == "Snellen pies" %}selected{% endif %}>Snellen (pies) - 20/20, 20/40, 20/60...</option>
+                        <option value="ETDRS logMAR" {% if history and history.distance_chart == "ETDRS logMAR" %}selected{% endif %}>ETDRS logMAR - 0.0, 0.1, 0.2...</option>
+                        <option value="Decimal" {% if history and history.distance_chart == "Decimal" %}selected{% endif %}>Decimal - 1.0, 0.8, 0.5...</option>
+                        <option value="Anillos Landolt" {% if history and history.distance_chart == "Anillos Landolt" %}selected{% endif %}>Anillos de Landolt</option>
+                        <option value="Figuras" {% if history and history.distance_chart == "Figuras" %}selected{% endif %}>Figuras (pediatría)</option>
                     </select>
                 </div>
             
@@ -733,11 +739,11 @@
                 <label class="block text-sm font-medium text-gray-700 mb-2">
                     <i class="fas fa-book-open mr-2"></i>Cartilla Visión Próxima
                 </label>
-                <select name="near_chart" class="w-full md:w-1/2 px-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-green-500">
+                <select name="near_chart" id="near_chart" class="w-full md:w-1/2 px-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-green-500">
                     <option value="">-- Seleccionar cartilla --</option>
-                    <option value="Tabla de Jaeger" {% if history and history.near_chart == "Tabla de Jaeger" %}selected{% endif %}>Tabla de Jaeger</option>
-                    <option value="Cartilla Rosenbaum" {% if history and history.near_chart == "Cartilla Rosenbaum" %}selected{% endif %}>Cartilla Rosenbaum</option>
-                    <option value="Cartilla Bailey-Lovie" {% if history and history.near_chart == "Cartilla Bailey-Lovie" %}selected{% endif %}>Cartilla Bailey-Lovie</option>
+                    <option value="Jaeger" {% if history and history.near_chart == "Jaeger" %}selected{% endif %}>Tabla de Jaeger (J) - J1, J2... a 40cm</option>
+                    <option value="Rosenbaum" {% if history and history.near_chart == "Rosenbaum" %}selected{% endif %}>Cartilla Rosenbaum - a 35-40cm</option>
+                    <option value="Snellen cerca" {% if history and history.near_chart == "Snellen cerca" %}selected{% endif %}>Snellen cerca - a 40cm</option>
                 </select>
             </div>
         </div>
@@ -3513,4 +3519,111 @@ document.addEventListener('keydown', function(event) {
         </form>
     </div>
 </div>
+
+<script>
+// ============ AUTOCOMPLETAR CAMPOS SEGÚN CARTILLA SELECCIONADA ============
+document.addEventListener('DOMContentLoaded', function() {
+    const distanceChartSelect = document.getElementById('distance_chart');
+    const nearChartSelect = document.getElementById('near_chart');
+    
+    // Valores por defecto según cada cartilla
+    const chartValues = {
+        'Snellen metros': {
+            distance: ['6/6', '6/9', '6/12', '6/15', '6/18', '6/24', '6/30', '6/60'],
+            unit: 'm'
+        },
+        'Snellen pies': {
+            distance: ['20/20', '20/25', '20/30', '20/40', '20/50', '20/60', '20/80', '20/100', '20/200'],
+            unit: 'pies'
+        },
+        'ETDRS logMAR': {
+            distance: ['0.0', '0.1', '0.2', '0.3', '0.4', '0.5', '0.6', '0.7', '0.8', '0.9', '1.0'],
+            unit: 'logMAR'
+        },
+        'Decimal': {
+            distance: ['1.0', '0.9', '0.8', '0.7', '0.6', '0.5', '0.4', '0.3', '0.2', '0.1'],
+            unit: 'decimal'
+        },
+        'Jaeger': {
+            near: ['J1 a 40cm', 'J2 a 40cm', 'J3 a 40cm', 'J4 a 40cm', 'J5 a 40cm', 'J6 a 40cm'],
+            unit: 'cm'
+        },
+        'Rosenbaum': {
+            near: ['20/20 a 35cm', '20/25 a 35cm', '20/30 a 35cm', '20/40 a 35cm', '20/50 a 35cm'],
+            unit: 'cm'
+        },
+        'Snellen cerca': {
+            near: ['20/20 a 40cm', '20/25 a 40cm', '20/30 a 40cm', '20/40 a 40cm'],
+            unit: 'cm'
+        }
+    };
+    
+    // Actualizar placeholders según cartilla de lejos
+    if (distanceChartSelect) {
+        distanceChartSelect.addEventListener('change', function() {
+            const selectedChart = this.value;
+            const chartData = chartValues[selectedChart];
+            
+            if (chartData && chartData.distance) {
+                const exampleValue = chartData.distance[0]; // Primer valor como ejemplo
+                const inputs = [
+                    'va_od_sc_distance',
+                    'va_od_cc_distance',
+                    'va_os_sc_distance',
+                    'va_os_cc_distance'
+                ];
+                
+                inputs.forEach(inputName => {
+                    const input = document.querySelector(`input[name="${inputName}"]`);
+                    if (input) {
+                        input.placeholder = exampleValue;
+                        // Mostrar tooltipcon opciones disponibles
+                        input.title = `Valores comunes: ${chartData.distance.slice(0, 5).join(', ')}...`;
+                    }
+                });
+                
+                console.log(`✓ Cartilla de lejos seleccionada: ${selectedChart} (${chartData.unit})`);
+            }
+        });
+    }
+    
+    // Actualizar placeholders según cartilla de cerca
+    if (nearChartSelect) {
+        nearChartSelect.addEventListener('change', function() {
+            const selectedChart = this.value;
+            const chartData = chartValues[selectedChart];
+            
+            if (chartData && chartData.near) {
+                const exampleValue = chartData.near[0]; // Primer valor como ejemplo
+                const inputs = [
+                    'va_od_sc_near',
+                    'va_od_cc_near',
+                    'va_os_sc_near',
+                    'va_os_cc_near'
+                ];
+                
+                inputs.forEach(inputName => {
+                    const input = document.querySelector(`input[name="${inputName}"]`);
+                    if (input) {
+                        input.placeholder = exampleValue;
+                        // Mostrar tooltip con opciones disponibles
+                        input.title = `Valores comunes: ${chartData.near.slice(0, 4).join(', ')}...`;
+                    }
+                });
+                
+                console.log(`✓ Cartilla de cerca seleccionada: ${selectedChart} (${chartData.unit})`);
+            }
+        });
+    }
+    
+    // Trigger inicial si ya hay una cartilla seleccionada
+    if (distanceChartSelect && distanceChartSelect.value) {
+        distanceChartSelect.dispatchEvent(new Event('change'));
+    }
+    if (nearChartSelect && nearChartSelect.value) {
+        nearChartSelect.dispatchEvent(new Event('change'));
+    }
+});
+</script>
+
 {% endblock %}
