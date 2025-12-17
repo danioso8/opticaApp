@@ -1473,31 +1473,43 @@
 
                 <!-- Medicamentos -->
                 <div class="bg-white p-3 rounded">
-                    <label class="block text-sm font-medium text-gray-700 mb-1">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
                         <i class="fas fa-pills mr-1"></i> Medicamentos
                         <button type="button" onclick="openMedicationModal()" class="text-pink-600 hover:text-pink-700 ml-1 text-xs" title="Agregar nuevo medicamento">
                             <i class="fas fa-plus-circle"></i>
                         </button>
                     </label>
-                    <select id="medication_select" 
+                    
+                    <!-- Área de medicamentos seleccionados -->
+                    <div class="mb-3">
+                        <p class="text-xs font-medium text-gray-600 mb-1">Medicamentos seleccionados:</p>
+                        <div id="selected-medications-visual" class="space-y-2 min-h-[50px] p-2 bg-gray-50 rounded border border-gray-200"></div>
+                    </div>
+                    
+                    <!-- Listado de medicamentos disponibles -->
+                    <p class="text-xs font-medium text-gray-600 mb-1">Seleccionar de la lista:</p>
+                    <select id="medication_select_visual" multiple
                             class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 mb-2"
-                            onchange="showMedicationDetails(this)">
-                        <option value="">Seleccionar medicamento...</option>
+                            style="height: 100px;"
+                            onchange="updateSelectedMedicationsVisual()">
+                        <option value="">-- Seleccionar medicamento --</option>
                         {% for med in medications %}
                         <option value="{{ med.name }}" 
                                 data-description="{{ med.description|default:'' }}"
                                 data-dosage="{{ med.dosage|default:'' }}"
                                 data-frequency="{{ med.frequency|default:'' }}"
                                 data-duration="{{ med.duration|default:'' }}"
-                                data-route="{{ med.administration_route|default:'' }}">
+                                data-route="{{ med.get_administration_route_display|default:'' }}">
                             {{ med.name }}
                         </option>
                         {% endfor %}
                     </select>
-                    <div id="medication-details" class="text-xs text-gray-600 mb-2"></div>
-                    <textarea name="medication_details" id="medication_details" rows="3"
-                              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
-                              placeholder="Medicamentos prescritos: nombre, dosis, frecuencia, duración...">{% if history %}{{ history.medication_details }}{% endif %}</textarea>
+                    <p class="text-xs text-gray-500 mt-1">
+                        <i class="fas fa-info-circle"></i> Mantén Ctrl/Cmd para seleccionar múltiples medicamentos
+                    </p>
+                    
+                    <!-- Campo oculto para enviar los datos -->
+                    <textarea name="medication_details" id="medication_details" rows="3" class="hidden">{% if history %}{{ history.medication_details }}{% endif %}</textarea>
                 </div>
 
                 <!-- 🔍 LENTES DE CONTACTO (Opcional) -->
@@ -2349,6 +2361,113 @@ function showMedicationDetails(select) {
     }
 }
 
+// Actualizar medicamentos seleccionados con detalles y botones X
+function updateSelectedMedicationsVisual() {
+    const select = document.getElementById('medication_select_visual');
+    const container = document.getElementById('selected-medications-visual');
+    const textarea = document.getElementById('medication_details');
+    
+    if (!select || !container) return;
+    
+    container.innerHTML = '';
+    
+    const selectedOptions = Array.from(select.selectedOptions).filter(opt => opt.value !== '');
+    
+    // Construir el texto para el textarea
+    let medicationText = [];
+    
+    selectedOptions.forEach(option => {
+        const dosage = option.getAttribute('data-dosage');
+        const frequency = option.getAttribute('data-frequency');
+        const duration = option.getAttribute('data-duration');
+        const route = option.getAttribute('data-route');
+        
+        const card = document.createElement('div');
+        card.className = 'bg-pink-50 border border-pink-200 rounded p-2 text-xs';
+        
+        const contentDiv = document.createElement('div');
+        contentDiv.className = 'flex justify-between items-start';
+        
+        const detailsDiv = document.createElement('div');
+        detailsDiv.className = 'flex-1';
+        
+        const nameP = document.createElement('p');
+        nameP.className = 'font-semibold text-pink-900';
+        nameP.innerHTML = `<i class="fas fa-pills mr-1"></i>${option.text}`;
+        detailsDiv.appendChild(nameP);
+        
+        // Construir texto para textarea
+        let medText = option.text;
+        
+        if (dosage && dosage !== 'None' && dosage !== '') {
+            const dosageP = document.createElement('p');
+            dosageP.className = 'text-gray-600';
+            dosageP.innerHTML = `<i class="fas fa-prescription-bottle mr-1"></i>${dosage}`;
+            detailsDiv.appendChild(dosageP);
+            medText += ` - ${dosage}`;
+        }
+        if (frequency && frequency !== 'None' && frequency !== '') {
+            const freqP = document.createElement('p');
+            freqP.className = 'text-gray-600';
+            freqP.innerHTML = `<i class="fas fa-clock mr-1"></i>${frequency}`;
+            detailsDiv.appendChild(freqP);
+            medText += `, ${frequency}`;
+        }
+        if (duration && duration !== 'None' && duration !== '') {
+            const durP = document.createElement('p');
+            durP.className = 'text-gray-600';
+            durP.innerHTML = `<i class="fas fa-calendar mr-1"></i>${duration}`;
+            detailsDiv.appendChild(durP);
+            medText += `, ${duration}`;
+        }
+        if (route && route !== 'None' && route !== '') {
+            const routeP = document.createElement('p');
+            routeP.className = 'text-gray-600';
+            routeP.innerHTML = `<i class="fas fa-syringe mr-1"></i>${route}`;
+            detailsDiv.appendChild(routeP);
+        }
+        
+        medicationText.push(medText);
+        
+        const removeBtn = document.createElement('button');
+        removeBtn.type = 'button';
+        removeBtn.className = 'bg-red-500 hover:bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center ml-2 flex-shrink-0';
+        removeBtn.title = 'Quitar';
+        removeBtn.innerHTML = '<i class="fas fa-times text-sm"></i>';
+        removeBtn.onclick = function() { removeMedicationVisual(option.value); };
+        
+        contentDiv.appendChild(detailsDiv);
+        contentDiv.appendChild(removeBtn);
+        card.appendChild(contentDiv);
+        container.appendChild(card);
+    });
+    
+    // Actualizar textarea
+    if (textarea) {
+        textarea.value = medicationText.join('\n');
+    }
+    
+    // Si no hay medicamentos seleccionados, mostrar mensaje
+    if (selectedOptions.length === 0) {
+        const emptyMsg = document.createElement('p');
+        emptyMsg.className = 'text-xs text-gray-500 italic';
+        emptyMsg.innerHTML = '<i class="fas fa-arrow-down mr-1"></i>Selecciona medicamentos del listado';
+        container.appendChild(emptyMsg);
+        if (textarea) textarea.value = '';
+    }
+}
+
+function removeMedicationVisual(value) {
+    const select = document.getElementById('medication_select_visual');
+    if (!select) return;
+    
+    const option = Array.from(select.options).find(opt => opt.value === value);
+    if (option) {
+        option.selected = false;
+        updateSelectedMedicationsVisual();
+    }
+}
+
 // ==================== AUTOGUARDADO LOCAL ====================
 const AUTOSAVE_KEY = 'visual_exam_draft_{{ patient.id }}';
 const AUTOSAVE_INTERVAL = 10000; // 10 segundos
@@ -2625,6 +2744,9 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Inicializar display
     updateRefractionDisplay();
+    
+    // Inicializar medicamentos seleccionados
+    updateSelectedMedicationsVisual();
     
     // Intentar restaurar datos guardados
     const restored = loadFormFromLocalStorage();
