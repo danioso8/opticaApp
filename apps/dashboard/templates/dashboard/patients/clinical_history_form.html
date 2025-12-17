@@ -1126,7 +1126,15 @@
                             <i class="fas fa-plus-circle"></i> Agregar nuevo
                         </button>
                     </label>
-                    <div id="selected-medications" class="mb-2 space-y-2"></div>
+                    
+                    <!-- Área de medicamentos seleccionados -->
+                    <div class="mb-3">
+                        <p class="text-xs font-medium text-gray-600 mb-1">Medicamentos seleccionados:</p>
+                        <div id="selected-medications" class="space-y-2 min-h-[50px] p-2 bg-gray-50 rounded border border-gray-200"></div>
+                    </div>
+                    
+                    <!-- Listado de medicamentos disponibles -->
+                    <p class="text-xs font-medium text-gray-600 mb-1">Seleccionar de la lista:</p>
                     <select name="medication_details" id="medication_details" multiple
                             class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500"
                             style="height: 100px;"
@@ -1737,22 +1745,40 @@ function updateSelectedTreatments() {
         const card = document.createElement('div');
         card.className = 'bg-pink-50 border border-pink-200 rounded p-2 text-xs w-full';
         
-        let details = '<div class="flex justify-between items-start">';
-        details += `<div class="flex-1">`;
-        details += `<p class="font-semibold text-pink-900"><i class="fas fa-shield-alt mr-1"></i>${option.text}</p>`;
+        const contentDiv = document.createElement('div');
+        contentDiv.className = 'flex justify-between items-start';
+        
+        const detailsDiv = document.createElement('div');
+        detailsDiv.className = 'flex-1';
+        
+        const nameP = document.createElement('p');
+        nameP.className = 'font-semibold text-pink-900';
+        nameP.innerHTML = `<i class="fas fa-shield-alt mr-1"></i>${option.text}`;
+        detailsDiv.appendChild(nameP);
+        
         if (category && category !== 'None' && category !== '') {
-            details += `<p class="text-gray-600 mt-1"><i class="fas fa-tag mr-1"></i><span class="font-medium">Categoría:</span> ${category}</p>`;
+            const categoryP = document.createElement('p');
+            categoryP.className = 'text-gray-600 mt-1';
+            categoryP.innerHTML = `<i class="fas fa-tag mr-1"></i><span class="font-medium">Categoría:</span> ${category}`;
+            detailsDiv.appendChild(categoryP);
         }
         if (description && description !== 'None' && description !== '') {
-            details += `<p class="text-gray-600 mt-1"><i class="fas fa-info-circle mr-1"></i>${description}</p>`;
+            const descP = document.createElement('p');
+            descP.className = 'text-gray-600 mt-1';
+            descP.innerHTML = `<i class="fas fa-info-circle mr-1"></i>${description}`;
+            detailsDiv.appendChild(descP);
         }
-        details += '</div>';
-        details += `<button type="button" onclick="removeTreatment('${option.value}')" class="text-pink-600 hover:text-pink-800 ml-2" title="Quitar">
-            <i class="fas fa-times"></i>
-        </button>`;
-        details += '</div>';
         
-        card.innerHTML = details;
+        const removeBtn = document.createElement('button');
+        removeBtn.type = 'button';
+        removeBtn.className = 'bg-red-500 hover:bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center ml-2 flex-shrink-0';
+        removeBtn.title = 'Quitar';
+        removeBtn.innerHTML = '<i class="fas fa-times text-sm"></i>';
+        removeBtn.onclick = function() { removeTreatment(option.value); };
+        
+        contentDiv.appendChild(detailsDiv);
+        contentDiv.appendChild(removeBtn);
+        card.appendChild(contentDiv);
         container.appendChild(card);
     });
     
@@ -1790,22 +1816,62 @@ function updateSelectedMedications() {
         const card = document.createElement('div');
         card.className = 'bg-pink-50 border border-pink-200 rounded p-2 text-xs';
         
-        let details = '<div class="flex justify-between items-start">';
-        details += `<div class="flex-1">`;
-        details += `<p class="font-semibold text-pink-900">${option.text}</p>`;
-        if (dosage && dosage !== 'None') details += `<p class="text-gray-600"><i class="fas fa-pills mr-1"></i>${dosage}</p>`;
-        if (frequency && frequency !== 'None') details += `<p class="text-gray-600"><i class="fas fa-clock mr-1"></i>${frequency}</p>`;
-        if (duration && duration !== 'None') details += `<p class="text-gray-600"><i class="fas fa-calendar mr-1"></i>${duration}</p>`;
-        if (route && route !== 'None') details += `<p class="text-gray-600"><i class="fas fa-syringe mr-1"></i>${route}</p>`;
-        details += '</div>';
-        details += `<button type="button" onclick="removeMedication('${option.value}')" class="text-pink-600 hover:text-pink-800 ml-2">
-            <i class="fas fa-times"></i>
-        </button>`;
-        details += '</div>';
+        const contentDiv = document.createElement('div');
+        contentDiv.className = 'flex justify-between items-start';
         
-        card.innerHTML = details;
+        const detailsDiv = document.createElement('div');
+        detailsDiv.className = 'flex-1';
+        
+        const nameP = document.createElement('p');
+        nameP.className = 'font-semibold text-pink-900';
+        nameP.innerHTML = `<i class="fas fa-pills mr-1"></i>${option.text}`;
+        detailsDiv.appendChild(nameP);
+        
+        if (dosage && dosage !== 'None') {
+            const dosageP = document.createElement('p');
+            dosageP.className = 'text-gray-600';
+            dosageP.innerHTML = `<i class="fas fa-pills mr-1"></i>${dosage}`;
+            detailsDiv.appendChild(dosageP);
+        }
+        if (frequency && frequency !== 'None') {
+            const freqP = document.createElement('p');
+            freqP.className = 'text-gray-600';
+            freqP.innerHTML = `<i class="fas fa-clock mr-1"></i>${frequency}`;
+            detailsDiv.appendChild(freqP);
+        }
+        if (duration && duration !== 'None') {
+            const durP = document.createElement('p');
+            durP.className = 'text-gray-600';
+            durP.innerHTML = `<i class="fas fa-calendar mr-1"></i>${duration}`;
+            detailsDiv.appendChild(durP);
+        }
+        if (route && route !== 'None') {
+            const routeP = document.createElement('p');
+            routeP.className = 'text-gray-600';
+            routeP.innerHTML = `<i class="fas fa-syringe mr-1"></i>${route}`;
+            detailsDiv.appendChild(routeP);
+        }
+        
+        const removeBtn = document.createElement('button');
+        removeBtn.type = 'button';
+        removeBtn.className = 'bg-red-500 hover:bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center ml-2 flex-shrink-0';
+        removeBtn.title = 'Quitar';
+        removeBtn.innerHTML = '<i class="fas fa-times text-sm"></i>';
+        removeBtn.onclick = function() { removeMedication(option.value); };
+        
+        contentDiv.appendChild(detailsDiv);
+        contentDiv.appendChild(removeBtn);
+        card.appendChild(contentDiv);
         container.appendChild(card);
     });
+    
+    // Si no hay medicamentos seleccionados, mostrar mensaje
+    if (selectedOptions.length === 0) {
+        const emptyMsg = document.createElement('p');
+        emptyMsg.className = 'text-xs text-gray-500 italic';
+        emptyMsg.innerHTML = '<i class="fas fa-arrow-down mr-1"></i>Selecciona medicamentos del listado';
+        container.appendChild(emptyMsg);
+    }
 }
 
 function removeMedication(value) {

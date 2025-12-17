@@ -53,7 +53,7 @@ def sales_dashboard(request):
     invoices = Invoice.objects.filter(
         fecha_emision__gte=start_date,
         fecha_emision__lte=end_date,
-        estado__in=['draft', 'sent', 'paid'],  # Excluir cancelled
+        estado_pago__in=['unpaid', 'partial', 'paid'],  # Todos los estados activos
         **org_filter
     )
     
@@ -153,7 +153,7 @@ def sales_dashboard(request):
         })
     
     # Facturas recientes
-    for invoice in Invoice.objects.filter(**org_filter).exclude(estado='cancelled').order_by('-fecha_emision')[:5]:
+    for invoice in Invoice.objects.filter(**org_filter, estado_pago__in=['unpaid', 'partial', 'paid']).order_by('-fecha_emision')[:5]:
         # Obtener método de pago de los pagos asociados
         first_payment = invoice.payments.filter(status='approved').first()
         payment_method = 'Pendiente'
@@ -164,7 +164,7 @@ def sales_dashboard(request):
             'type': 'invoice',
             'id': invoice.id,
             'number': invoice.numero_completo or f"#{invoice.id}",
-            'customer': invoice.cliente.nombre if invoice.cliente else (invoice.paciente.full_name if invoice.paciente else 'N/A'),
+            'customer': invoice.cliente_nombre or (invoice.patient.full_name if invoice.patient else 'N/A'),
             'total': invoice.total,
             'payment_method': payment_method,
             'date': invoice.fecha_emision,
