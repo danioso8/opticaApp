@@ -1965,10 +1965,10 @@ def visual_exam_pdf(request, patient_id, history_id):
     doc = SimpleDocTemplate(
         buffer,
         pagesize=letter,
-        rightMargin=0.75*inch,
-        leftMargin=0.75*inch,
-        topMargin=0.75*inch,
-        bottomMargin=0.75*inch
+        rightMargin=0.5*inch,
+        leftMargin=0.5*inch,
+        topMargin=0.4*inch,
+        bottomMargin=0.4*inch
     )
     
     # Estilos
@@ -1977,9 +1977,9 @@ def visual_exam_pdf(request, patient_id, history_id):
     title_style = ParagraphStyle(
         'Title',
         parent=styles['Heading1'],
-        fontSize=16,
+        fontSize=12,
         textColor=colors.Color(0.1, 0.3, 0.5),
-        spaceAfter=20,
+        spaceAfter=10,
         alignment=TA_CENTER,
         fontName='Helvetica-Bold'
     )
@@ -1987,17 +1987,17 @@ def visual_exam_pdf(request, patient_id, history_id):
     heading_style = ParagraphStyle(
         'Heading',
         parent=styles['Heading2'],
-        fontSize=11,
+        fontSize=9,
         textColor=colors.Color(0.2, 0.2, 0.2),
-        spaceAfter=8,
+        spaceAfter=4,
         fontName='Helvetica-Bold'
     )
     
     normal_style = ParagraphStyle(
         'Normal',
         parent=styles['Normal'],
-        fontSize=9,
-        spaceAfter=6
+        fontSize=7,
+        spaceAfter=3
     )
     
     # Contenido del PDF
@@ -2014,42 +2014,42 @@ def visual_exam_pdf(request, patient_id, history_id):
     header_org_style = ParagraphStyle(
         'HeaderOrg',
         parent=styles['Normal'],
-        fontSize=18,
+        fontSize=14,
         textColor=colors.Color(0.0, 0.2, 0.5),
         fontName='Helvetica-Bold',
         alignment=TA_CENTER,
-        leading=20
+        leading=16
     )
     
     header_subtitle_style = ParagraphStyle(
         'HeaderSubtitle',
         parent=styles['Normal'],
-        fontSize=10,
+        fontSize=8,
         textColor=colors.Color(0.2, 0.2, 0.2),
         fontName='Helvetica',
         alignment=TA_CENTER,
-        leading=12
+        leading=10
     )
     
     header_title_style = ParagraphStyle(
         'HeaderTitle',
         parent=styles['Normal'],
-        fontSize=14,
+        fontSize=11,
         textColor=colors.black,
         fontName='Helvetica-Bold',
         alignment=TA_CENTER,
-        leading=16,
-        spaceAfter=4
+        leading=12,
+        spaceAfter=2
     )
     
     header_date_style = ParagraphStyle(
         'HeaderDate',
         parent=styles['Normal'],
-        fontSize=10,
+        fontSize=8,
         textColor=colors.black,
         fontName='Helvetica',
         alignment=TA_CENTER,
-        leading=12
+        leading=10
     )
     
     # Tabla del encabezado (3 columnas: Logo | Info Central | Código)
@@ -2090,7 +2090,7 @@ def visual_exam_pdf(request, patient_id, history_id):
     ]))
     
     story.append(header_table)
-    story.append(Spacer(1, 0.15*inch))
+    story.append(Spacer(1, 0.08*inch))
     
     # Línea separadora
     line_separator = Table([['']], colWidths=[7*inch])
@@ -2098,33 +2098,81 @@ def visual_exam_pdf(request, patient_id, history_id):
         ('LINEABOVE', (0, 0), (-1, 0), 2, colors.Color(0.0, 0.2, 0.5)),
     ]))
     story.append(line_separator)
-    story.append(Spacer(1, 0.15*inch))
+    story.append(Spacer(1, 0.08*inch))
     
-    # Información del paciente
+    # Información del paciente (sin cuadrícula, 3 filas)
     patient_data = [
-        ['Identificación:', f"{patient.identification}" if patient.identification else 'N/A', 'Edad:', f"{history.age_at_exam or patient.age} años" if hasattr(patient, 'age') or history.age_at_exam else 'N/A'],
-        ['Nombre:', patient.full_name, 'Número de HC:', str(history.id)],
-        ['Dirección:', patient.address[:40] if patient.address else 'N/A', 'Afiliación:', 'Particular'],
-        ['Teléfono:', patient.phone_number or 'N/A', 'Edad:', f"{history.age_at_exam or 'N/A'} años"],
-        ['', '', 'Relac:', 'S'],
+        ['Identificación:', f"{patient.identification}" if patient.identification else 'N/A', '', 'Edad:', f"{history.age_at_exam or patient.age} años" if hasattr(patient, 'age') or history.age_at_exam else 'N/A', '', 'Número de HC:', str(history.id)],
+        ['Nombre:', patient.full_name, '', 'Teléfono:', patient.phone_number or 'N/A', '', 'Afiliación:', 'Particular'],
+        ['Dirección:', patient.address[:40] if patient.address else 'N/A', '', '', '', '', '', ''],
     ]
     
-    patient_table = Table(patient_data, colWidths=[1.3*inch, 2.5*inch, 1.2*inch, 2*inch])
+    patient_table = Table(patient_data, colWidths=[0.9*inch, 1.8*inch, 0.2*inch, 0.8*inch, 1.3*inch, 0.2*inch, 1.0*inch, 0.8*inch])
     patient_table.setStyle(TableStyle([
-        ('FONTSIZE', (0, 0), (-1, -1), 9),
+        ('FONTSIZE', (0, 0), (-1, -1), 7),
         ('FONTNAME', (0, 0), (0, -1), 'Helvetica-Bold'),
-        ('FONTNAME', (2, 0), (2, -1), 'Helvetica-Bold'),
-        ('GRID', (0, 0), (-1, -1), 0.5, colors.black),
+        ('FONTNAME', (3, 0), (3, -1), 'Helvetica-Bold'),
+        ('FONTNAME', (6, 0), (6, -1), 'Helvetica-Bold'),
         ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-        ('TOPPADDING', (0, 0), (-1, -1), 6),
-        ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
-        ('LEFTPADDING', (0, 0), (-1, -1), 8),
+        ('TOPPADDING', (0, 0), (-1, -1), 2),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 2),
+        ('LEFTPADDING', (0, 0), (-1, -1), 2),
     ]))
     
     story.append(patient_table)
-    story.append(Spacer(1, 0.3*inch))
+    story.append(Spacer(1, 0.15*inch))
     
-    # Tabla de fórmula principal
+    # ========== SECCIONES CONDICIONALES ==========
+    
+    # MOTIVO DE CONSULTA
+    if (include_all or 'motivo' in selected_sections) and history.chief_complaint:
+        story.append(Paragraph("<b>MOTIVO DE CONSULTA</b>", heading_style))
+        story.append(Paragraph(history.chief_complaint, normal_style))
+        story.append(Spacer(1, 0.1*inch))
+    
+    # AGUDEZA VISUAL
+    if (include_all or 'agudeza' in selected_sections) and (history.va_od_sc_distance or history.va_os_sc_distance):
+        story.append(Paragraph("<b>AGUDEZA VISUAL</b>", heading_style))
+        
+        va_data = [
+            ['', 'Sin Corrección', '', 'Con Corrección', ''],
+            ['', 'Lejos', 'Cerca', 'Lejos', 'Cerca'],
+            ['OD', 
+             history.va_od_sc_distance or '-', 
+             history.va_od_sc_near or '-',
+             history.va_od_cc_distance or '-',
+             history.va_od_cc_near or '-'],
+            ['OS', 
+             history.va_os_sc_distance or '-', 
+             history.va_os_sc_near or '-',
+             history.va_os_cc_distance or '-',
+             history.va_os_cc_near or '-'],
+        ]
+        
+        va_table = Table(va_data, colWidths=[0.8*inch, 1.5*inch, 1.5*inch, 1.5*inch, 1.5*inch])
+        va_table.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 1), colors.Color(0.3, 0.4, 0.6)),
+            ('TEXTCOLOR', (0, 0), (-1, 1), colors.whitesmoke),
+            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+            ('FONTNAME', (0, 0), (-1, 1), 'Helvetica-Bold'),
+            ('FONTSIZE', (0, 0), (-1, 1), 7),
+            ('FONTSIZE', (0, 2), (-1, -1), 8),
+            ('GRID', (0, 0), (-1, -1), 1, colors.black),
+            ('SPAN', (1, 0), (2, 0)),
+            ('SPAN', (3, 0), (4, 0)),
+            ('TOPPADDING', (0, 0), (-1, -1), 3),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 3),
+        ]))
+        
+        story.append(va_table)
+        story.append(Spacer(1, 0.1*inch))
+    
+    # FÓRMULA OFTÁLMICA (REFRACCIÓN)
+    if (include_all or 'refraccion' in selected_sections) and (history.refraction_od_sphere or history.refraction_os_sphere):
+        story.append(Paragraph("<b>FÓRMULA OFTÁLMICA</b>", heading_style))
+        
+        # Tabla de fórmula principal
     formula_data = [
         ['', 'ESFERA', 'CILINDRO', 'EJE', 'ADICIÓN', 'PRISMA BASE', 'GRADUADOS', 'AV LEJOS', 'AV CERCA'],
         [
@@ -2159,52 +2207,126 @@ def visual_exam_pdf(request, patient_id, history_id):
         ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
         ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
         ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-        ('FONTSIZE', (0, 0), (-1, 0), 8),
+        ('FONTSIZE', (0, 0), (-1, 0), 7),
         # Filas de datos
-        ('FONTSIZE', (0, 1), (-1, -1), 10),
+        ('FONTSIZE', (0, 1), (-1, -1), 8),
         ('FONTNAME', (0, 1), (0, -1), 'Helvetica-Bold'),
         # Bordes
         ('GRID', (0, 0), (-1, -1), 1, colors.black),
         ('LINEABOVE', (0, 0), (-1, 0), 2, colors.Color(0.2, 0.4, 0.6)),
         ('LINEBELOW', (0, -1), (-1, -1), 2, colors.Color(0.2, 0.4, 0.6)),
         # Padding
-        ('TOPPADDING', (0, 0), (-1, -1), 8),
-        ('BOTTOMPADDING', (0, 0), (-1, -1), 8),
+        ('TOPPADDING', (0, 0), (-1, -1), 4),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 4),
     ]))
     
     story.append(formula_table)
-    story.append(Spacer(1, 0.3*inch))
+    story.append(Spacer(1, 0.15*inch))
     
-    # Detalles adicionales
-    details_data = [
-        ['Tipo Lentes:', history.lens_type or '-', 'Detalle:', 'AR'],
-        ['Color y Tins:', history.lens_material or '-', 'Dip:', f"{history.pd_distance or 'N/A'} / {history.pd_near or 'N/A'}"],
-    ]
+    # Detalles adicionales de lentes
+    if (include_all or 'refraccion' in selected_sections):
+        details_data = [
+            ['Tipo Lentes:', history.lens_type or '-', 'Detalle:', 'AR'],
+            ['Color y Tins:', history.lens_material or '-', 'Dip:', f"{history.pd_distance or 'N/A'} / {history.pd_near or 'N/A'}"],
+        ]
+        
+        # Agregar distancia pupilar si existe
+        if history.pd_distance or history.pd_near:
+            details_data.append(['Distancia Pupilar (mm):', f"Lejos: {history.pd_distance or 'N/A'} mm  |  Cerca: {history.pd_near or 'N/A'} mm", 'Altura:', f"OD: {history.pd_od or 'N/A'} / OI: {history.pd_os or 'N/A'}"])
+        
+        details_data.append(['Uso Dispositivo:', 'Permanente', 'Control:', '1 año'])
+        
+        details_table = Table(details_data, colWidths=[1.5*inch, 2.5*inch, 1.2*inch, 1.8*inch])
+        details_table.setStyle(TableStyle([
+            ('FONTSIZE', (0, 0), (-1, -1), 7),
+            ('FONTNAME', (0, 0), (0, -1), 'Helvetica-Bold'),
+            ('FONTNAME', (2, 0), (2, -1), 'Helvetica-Bold'),
+            ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),
+            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+            ('TOPPADDING', (0, 0), (-1, -1), 3),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 3),
+            ('LEFTPADDING', (0, 0), (-1, -1), 4),
+        ]))
+        
+        story.append(details_table)
+        story.append(Spacer(1, 0.1*inch))
     
-    # Agregar distancia pupilar si existe
-    if history.pd_distance or history.pd_near:
-        details_data.append(['Distancia Pupilar (mm):', f"Lejos: {history.pd_distance or 'N/A'} mm  |  Cerca: {history.pd_near or 'N/A'} mm", 'Altura:', f"OD: {history.pd_od or 'N/A'} / OI: {history.pd_os or 'N/A'}"])
+    # LENTES DE CONTACTO
+    if (include_all or 'contacto' in selected_sections) and (history.contact_lens_type or history.contact_lens_brand):
+        story.append(Paragraph("<b>LENTES DE CONTACTO</b>", heading_style))
+        lc_text = ""
+        if history.contact_lens_type:
+            lc_text += f"<b>Tipo:</b> {history.contact_lens_type}. "
+        if history.contact_lens_brand:
+            lc_text += f"<b>Marca:</b> {history.contact_lens_brand}. "
+        if history.contact_lens_material:
+            lc_text += f"<b>Material:</b> {history.contact_lens_material}. "
+        if history.contact_lens_wearing:
+            lc_text += f"<b>Régimen:</b> {history.contact_lens_wearing}. "
+        story.append(Paragraph(lc_text, normal_style))
+        story.append(Spacer(1, 0.1*inch))
     
-    details_data.append(['Uso Dispositivo:', 'Permanente', 'Control:', '1 año'])
+    # MEDICAMENTOS
+    if (include_all or 'medicamentos' in selected_sections) and history.medication_details:
+        story.append(Paragraph("<b>MEDICAMENTOS PRESCRITOS</b>", heading_style))
+        medications = history.medication_details.split('\n')
+        for med in medications:
+            if med.strip():
+                story.append(Paragraph(f"• {med.strip()}", normal_style))
+        story.append(Spacer(1, 0.1*inch))
     
-    details_table = Table(details_data, colWidths=[1.5*inch, 2.5*inch, 1.2*inch, 1.8*inch])
-    details_table.setStyle(TableStyle([
-        ('FONTSIZE', (0, 0), (-1, -1), 9),
-        ('FONTNAME', (0, 0), (0, -1), 'Helvetica-Bold'),
-        ('FONTNAME', (2, 0), (2, -1), 'Helvetica-Bold'),
-        ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),
-        ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-        ('TOPPADDING', (0, 0), (-1, -1), 6),
-        ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
-        ('LEFTPADDING', (0, 0), (-1, -1), 8),
-    ]))
+    # DIAGNÓSTICO
+    if (include_all or 'diagnostico' in selected_sections) and history.diagnosis:
+        story.append(Paragraph("<b>DIAGNÓSTICO</b>", heading_style))
+        story.append(Paragraph(history.diagnosis, normal_style))
+        story.append(Spacer(1, 0.1*inch))
     
-    story.append(details_table)
-    story.append(Spacer(1, 0.3*inch))
+    # PLAN DE TRATAMIENTO
+    if (include_all or 'tratamiento' in selected_sections):
+        has_treatment_content = False
+        treatment_content = []
+        
+        if history.treatment_plan:
+            has_treatment_content = True
+            treatment_content.append(Paragraph("<b>PLAN DE TRATAMIENTO</b>", heading_style))
+            treatment_content.append(Paragraph(history.treatment_plan, normal_style))
+            treatment_content.append(Spacer(1, 0.1*inch))
+        
+        if history.therapy:
+            has_treatment_content = True
+            treatment_content.append(Paragraph("<b>Terapias Coadyuvantes:</b>", normal_style))
+            treatment_content.append(Paragraph(history.therapy, normal_style))
+            treatment_content.append(Spacer(1, 0.1*inch))
+        
+        if history.visual_therapy:
+            has_treatment_content = True
+            treatment_content.append(Paragraph("<b>Terapias Visuales:</b>", normal_style))
+            treatment_content.append(Paragraph(history.visual_therapy, normal_style))
+            treatment_content.append(Spacer(1, 0.1*inch))
+        
+        if history.recommendation:
+            has_treatment_content = True
+            treatment_content.append(Paragraph("<b>Recomendaciones:</b>", normal_style))
+            treatment_content.append(Paragraph(history.recommendation, normal_style))
+        
+        if has_treatment_content:
+            story.extend(treatment_content)
+            story.append(Spacer(1, 0.1*inch))
     
-    # Observaciones
-    if history.optical_prescription_notes or history.lens_coating:
-        story.append(Paragraph("Observaciones:", heading_style))
+    # SEGUIMIENTO
+    if (include_all or 'seguimiento' in selected_sections) and (history.follow_up_reason or history.referral_specialty):
+        story.append(Paragraph("<b>SEGUIMIENTO Y REMISIÓN</b>", heading_style))
+        seg_text = ""
+        if history.follow_up_reason:
+            seg_text += f"<b>Motivo de Seguimiento:</b> {history.follow_up_reason}. "
+        if history.referral_specialty:
+            seg_text += f"<b>Remisión a:</b> {history.referral_specialty}. "
+        story.append(Paragraph(seg_text, normal_style))
+        story.append(Spacer(1, 0.1*inch))
+    
+    # Si hay información de lentes en refracción, agregar observaciones
+    if (include_all or 'refraccion' in selected_sections) and (history.optical_prescription_notes or history.lens_coating):
+        story.append(Paragraph("<b>Observaciones:</b>", heading_style))
         obs_text = ""
         if history.lens_coating:
             obs_text += f"<b>Tratamientos:</b> {history.lens_coating}. "
@@ -2233,24 +2355,28 @@ def visual_exam_pdf(request, patient_id, history_id):
     story.append(Spacer(1, 0.4*inch))
     
     # Pie de página con información del optómetra
+    doctor_name = history.doctor.full_name if history.doctor else ''
+    professional_card = f"T.P: {history.doctor.professional_card}" if (history.doctor and history.doctor.professional_card) else ''
+    
     footer_data = [
-        ['Optómetra:', history.doctor.full_name if history.doctor else 'N/A', 'Rep Médico:', ''],
-        ['', '', '', ''],
-        ['_' * 40, '', '_' * 40, ''],
-        ['Firma del Optómetra', '', 'Firma del Paciente', ''],
+        ['', '', ''],
+        ['_' * 40, '', '_' * 40],
+        ['Firma del Optómetra', '', 'Firma del Paciente'],
+        [doctor_name, '', ''],
+        [professional_card, '', ''],
     ]
     
-    if history.doctor and history.doctor.professional_card:
-        footer_data[0][3] = history.doctor.professional_card
-    
-    footer_table = Table(footer_data, colWidths=[1.5*inch, 2*inch, 1.5*inch, 2*inch])
+    footer_table = Table(footer_data, colWidths=[3.5*inch, 0.5*inch, 3.5*inch])
     footer_table.setStyle(TableStyle([
-        ('FONTSIZE', (0, 0), (-1, -1), 9),
-        ('FONTNAME', (0, 0), (0, 0), 'Helvetica-Bold'),
-        ('FONTNAME', (2, 0), (2, 0), 'Helvetica-Bold'),
-        ('ALIGN', (0, 2), (-1, 3), 'CENTER'),
+        ('FONTSIZE', (0, 0), (-1, -1), 8),
+        ('FONTNAME', (0, 2), (0, 2), 'Helvetica-Bold'),
+        ('FONTNAME', (2, 2), (2, 2), 'Helvetica-Bold'),
+        ('ALIGN', (0, 1), (-1, -1), 'CENTER'),
+        ('FONTSIZE', (0, 2), (-1, 2), 8),
         ('FONTSIZE', (0, 3), (-1, 3), 8),
-        ('TOPPADDING', (0, 0), (-1, -1), 3),
+        ('FONTSIZE', (0, 4), (-1, 4), 7),
+        ('TOPPADDING', (0, 0), (-1, -1), 2),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 2),
     ]))
     
     story.append(footer_table)
