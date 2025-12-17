@@ -65,6 +65,25 @@ def clinical_history_create(request, patient_id):
     
     if request.method == 'POST':
         try:
+            # Función auxiliar para convertir valores numéricos
+            def safe_float(value):
+                """Convierte un valor a float, retorna None si no es válido"""
+                if not value or value in ['', 'N/A', 'n/a', 'NA']:
+                    return None
+                try:
+                    return float(value)
+                except (ValueError, TypeError):
+                    return None
+            
+            def safe_int(value):
+                """Convierte un valor a int, retorna None si no es válido"""
+                if not value or value in ['', 'N/A', 'n/a', 'NA']:
+                    return None
+                try:
+                    return int(value)
+                except (ValueError, TypeError):
+                    return None
+            
             # Obtener el doctor seleccionado
             doctor_id = request.POST.get('doctor')
             doctor = None
@@ -141,8 +160,8 @@ def clinical_history_create(request, patient_id):
                 family_history_notes=request.POST.get('family_history_notes', ''),
                 
                 occupation_visual_demand=request.POST.get('occupation_visual_demand', ''),
-                screen_hours_daily=request.POST.get('screen_hours_daily') or None,
-                reading_hours_daily=request.POST.get('reading_hours_daily') or None,
+                screen_hours_daily=safe_int(request.POST.get('screen_hours_daily')),
+                reading_hours_daily=safe_int(request.POST.get('reading_hours_daily')),
                 
                 # Agudeza Visual
                 distance_chart=request.POST.get('distance_chart', ''),
@@ -171,25 +190,25 @@ def clinical_history_create(request, patient_id):
                 refraction_os_add=request.POST.get('refraction_os_add') or None,
                 refraction_os_prism=request.POST.get('refraction_os_prism', ''),
                 
-                pd_distance=request.POST.get('pd_distance') or None,
-                pd_near=request.POST.get('pd_near') or None,
-                pd_od=request.POST.get('pd_od') or None,
-                pd_os=request.POST.get('pd_os') or None,
+                pd_distance=safe_float(request.POST.get('pd_distance')),
+                pd_near=safe_float(request.POST.get('pd_near')),
+                pd_od=safe_float(request.POST.get('pd_od')),
+                pd_os=safe_float(request.POST.get('pd_os')),
                 
                 # Queratometría
-                keratometry_od_k1=request.POST.get('keratometry_od_k1') or None,
-                keratometry_od_k1_axis=request.POST.get('keratometry_od_k1_axis') or None,
-                keratometry_od_k2=request.POST.get('keratometry_od_k2') or None,
-                keratometry_od_k2_axis=request.POST.get('keratometry_od_k2_axis') or None,
+                keratometry_od_k1=safe_float(request.POST.get('keratometry_od_k1')),
+                keratometry_od_k1_axis=safe_int(request.POST.get('keratometry_od_k1_axis')),
+                keratometry_od_k2=safe_float(request.POST.get('keratometry_od_k2')),
+                keratometry_od_k2_axis=safe_int(request.POST.get('keratometry_od_k2_axis')),
                 
-                keratometry_os_k1=request.POST.get('keratometry_os_k1') or None,
-                keratometry_os_k1_axis=request.POST.get('keratometry_os_k1_axis') or None,
-                keratometry_os_k2=request.POST.get('keratometry_os_k2') or None,
-                keratometry_os_k2_axis=request.POST.get('keratometry_os_k2_axis') or None,
+                keratometry_os_k1=safe_float(request.POST.get('keratometry_os_k1')),
+                keratometry_os_k1_axis=safe_int(request.POST.get('keratometry_os_k1_axis')),
+                keratometry_os_k2=safe_float(request.POST.get('keratometry_os_k2')),
+                keratometry_os_k2_axis=safe_int(request.POST.get('keratometry_os_k2_axis')),
                 
                 # Tonometría
-                iop_od=request.POST.get('iop_od') or None,
-                iop_os=request.POST.get('iop_os') or None,
+                iop_od=safe_float(request.POST.get('iop_od')),
+                iop_os=safe_float(request.POST.get('iop_os')),
                 iop_method=request.POST.get('iop_method', ''),
                 
                 # Examen Externo
@@ -1304,6 +1323,33 @@ def visual_exam_create(request, patient_id):
     
     if request.method == 'POST':
         try:
+            # Función auxiliar para convertir valores numéricos
+            def safe_float(value):
+                """Convierte un valor a float, retorna None si no es válido"""
+                if not value or value in ['', 'N/A', 'n/a', 'NA']:
+                    return None
+                try:
+                    return float(value)
+                except (ValueError, TypeError):
+                    return None
+            
+            def safe_int(value):
+                """Convierte un valor a int, retorna None si no es válido"""
+                if not value or value in ['', 'N/A', 'n/a', 'NA']:
+                    return None
+                try:
+                    return int(value)
+                except (ValueError, TypeError):
+                    return None
+            
+            # DEBUG: Imprimir campos numéricos que se están enviando
+            print("=" * 50)
+            print("DEBUG - Campos numéricos recibidos:")
+            for key in request.POST.keys():
+                if any(x in key for x in ['refraction', 'keratometry', 'pd_', 'iop', 'dnp', 'axis', 'cylinder', 'add']):
+                    print(f"  {key}: '{request.POST.get(key)}'")
+            print("=" * 50)
+            
             # Crear historia clínica con solo los datos del examen visual
             history = ClinicalHistory.objects.create(
                 patient=patient,
@@ -1329,35 +1375,35 @@ def visual_exam_create(request, patient_id):
                 
                 # Refracción OD
                 refraction_od_sphere=request.POST.get('refraction_od_sphere', ''),
-                refraction_od_cylinder=float(request.POST.get('refraction_od_cylinder') or 0) if request.POST.get('refraction_od_cylinder') else None,
-                refraction_od_axis=int(request.POST.get('refraction_od_axis') or 0) if request.POST.get('refraction_od_axis') else None,
-                refraction_od_add=float(request.POST.get('refraction_od_add') or 0) if request.POST.get('refraction_od_add') else None,
+                refraction_od_cylinder=safe_float(request.POST.get('refraction_od_cylinder')),
+                refraction_od_axis=safe_int(request.POST.get('refraction_od_axis')),
+                refraction_od_add=safe_float(request.POST.get('refraction_od_add')),
                 refraction_od_prism=request.POST.get('refraction_od_prism', ''),
-                refraction_od_dnp=float(request.POST.get('refraction_od_dnp') or 0) if request.POST.get('refraction_od_dnp') else None,
+                refraction_od_dnp=safe_float(request.POST.get('refraction_od_dnp')),
                 
                 # Refracción OS
                 refraction_os_sphere=request.POST.get('refraction_os_sphere', ''),
-                refraction_os_cylinder=float(request.POST.get('refraction_os_cylinder') or 0) if request.POST.get('refraction_os_cylinder') else None,
-                refraction_os_axis=int(request.POST.get('refraction_os_axis') or 0) if request.POST.get('refraction_os_axis') else None,
-                refraction_os_add=float(request.POST.get('refraction_os_add') or 0) if request.POST.get('refraction_os_add') else None,
+                refraction_os_cylinder=safe_float(request.POST.get('refraction_os_cylinder')),
+                refraction_os_axis=safe_int(request.POST.get('refraction_os_axis')),
+                refraction_os_add=safe_float(request.POST.get('refraction_os_add')),
                 refraction_os_prism=request.POST.get('refraction_os_prism', ''),
-                refraction_os_dnp=float(request.POST.get('refraction_os_dnp') or 0) if request.POST.get('refraction_os_dnp') else None,
+                refraction_os_dnp=safe_float(request.POST.get('refraction_os_dnp')),
                 
                 # Distancia Pupilar
-                pd_distance=float(request.POST.get('pd_distance') or 0) if request.POST.get('pd_distance') else None,
-                pd_near=float(request.POST.get('pd_near') or 0) if request.POST.get('pd_near') else None,
-                pd_od=float(request.POST.get('pd_od') or 0) if request.POST.get('pd_od') else None,
-                pd_os=float(request.POST.get('pd_os') or 0) if request.POST.get('pd_os') else None,
+                pd_distance=safe_float(request.POST.get('pd_distance')),
+                pd_near=safe_float(request.POST.get('pd_near')),
+                pd_od=safe_float(request.POST.get('pd_od')),
+                pd_os=safe_float(request.POST.get('pd_os')),
                 
                 # Queratometría OD
-                keratometry_od_k1=float(request.POST.get('keratometry_od_k1') or 0) if request.POST.get('keratometry_od_k1') else None,
-                keratometry_od_k2=float(request.POST.get('keratometry_od_k2') or 0) if request.POST.get('keratometry_od_k2') else None,
-                keratometry_od_k1_axis=int(request.POST.get('keratometry_od_axis') or 0) if request.POST.get('keratometry_od_axis') else None,
+                keratometry_od_k1=safe_float(request.POST.get('keratometry_od_k1')),
+                keratometry_od_k2=safe_float(request.POST.get('keratometry_od_k2')),
+                keratometry_od_k1_axis=safe_int(request.POST.get('keratometry_od_axis')),
                 
                 # Queratometría OS
-                keratometry_os_k1=float(request.POST.get('keratometry_os_k1') or 0) if request.POST.get('keratometry_os_k1') else None,
-                keratometry_os_k2=float(request.POST.get('keratometry_os_k2') or 0) if request.POST.get('keratometry_os_k2') else None,
-                keratometry_os_k1_axis=int(request.POST.get('keratometry_os_axis') or 0) if request.POST.get('keratometry_os_axis') else None,
+                keratometry_os_k1=safe_float(request.POST.get('keratometry_os_k1')),
+                keratometry_os_k2=safe_float(request.POST.get('keratometry_os_k2')),
+                keratometry_os_k1_axis=safe_int(request.POST.get('keratometry_os_axis')),
                 
                 # ANAMNESIS
                 chief_complaint=request.POST.get('chief_complaint', 'Examen visual de rutina'),
