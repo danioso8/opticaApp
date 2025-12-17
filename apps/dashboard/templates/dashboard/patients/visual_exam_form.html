@@ -641,20 +641,36 @@
                     </div>
                 </div>
                 
-                <!-- Cartilla de Visión Lejana -->
-                <div class="bg-blue-50 p-3 rounded mb-3">
-                    <label class="block text-sm font-medium text-gray-700 mb-2">
-                        <i class="fas fa-eye mr-2"></i>Cartilla Visión Lejana (6 metros)
-                    </label>
-                    <select name="distance_chart" id="distance_chart" class="w-full md:w-1/2 px-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500">
-                        <option value="">-- Seleccionar cartilla --</option>
-                        <option value="Snellen metros" {% if history and history.distance_chart == "Snellen metros" %}selected{% endif %}>Snellen (metros) - 6/6, 6/9, 6/12...</option>
-                        <option value="Snellen pies" {% if history and history.distance_chart == "Snellen pies" %}selected{% endif %}>Snellen (pies) - 20/20, 20/40, 20/60...</option>
-                        <option value="ETDRS logMAR" {% if history and history.distance_chart == "ETDRS logMAR" %}selected{% endif %}>ETDRS logMAR - 0.0, 0.1, 0.2...</option>
-                        <option value="Decimal" {% if history and history.distance_chart == "Decimal" %}selected{% endif %}>Decimal - 1.0, 0.8, 0.5...</option>
-                        <option value="Anillos Landolt" {% if history and history.distance_chart == "Anillos Landolt" %}selected{% endif %}>Anillos de Landolt</option>
-                        <option value="Figuras" {% if history and history.distance_chart == "Figuras" %}selected{% endif %}>Figuras (pediatría)</option>
-                    </select>
+                <!-- Cartillas en una fila -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-3">
+                    <!-- Cartilla de Visión Lejana -->
+                    <div class="bg-blue-50 p-3 rounded">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            <i class="fas fa-eye mr-2"></i>Cartilla Visión Lejana (6 metros)
+                        </label>
+                        <select name="distance_chart" id="distance_chart" class="w-full px-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500">
+                            <option value="">-- Seleccionar cartilla --</option>
+                            <option value="Snellen metros" {% if history and history.distance_chart == "Snellen metros" %}selected{% endif %}>Snellen (metros) - 6/6, 6/9, 6/12...</option>
+                            <option value="Snellen pies" {% if history and history.distance_chart == "Snellen pies" %}selected{% endif %}>Snellen (pies) - 20/20, 20/40, 20/60...</option>
+                            <option value="ETDRS logMAR" {% if history and history.distance_chart == "ETDRS logMAR" %}selected{% endif %}>ETDRS logMAR - 0.0, 0.1, 0.2...</option>
+                            <option value="Decimal" {% if history and history.distance_chart == "Decimal" %}selected{% endif %}>Decimal - 1.0, 0.8, 0.5...</option>
+                            <option value="Anillos Landolt" {% if history and history.distance_chart == "Anillos Landolt" %}selected{% endif %}>Anillos de Landolt</option>
+                            <option value="Figuras" {% if history and history.distance_chart == "Figuras" %}selected{% endif %}>Figuras (pediatría)</option>
+                        </select>
+                    </div>
+                    
+                    <!-- Cartilla de Visión Próxima -->
+                    <div class="bg-green-50 p-3 rounded">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            <i class="fas fa-book-open mr-2"></i>Cartilla Visión Próxima (40 cm)
+                        </label>
+                        <select name="near_chart" id="near_chart" class="w-full px-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-green-500">
+                            <option value="">-- Seleccionar cartilla --</option>
+                            <option value="Jaeger" {% if history and history.near_chart == "Jaeger" %}selected{% endif %}>Tabla de Jaeger (J) - J1, J2... a 40cm</option>
+                            <option value="Rosenbaum" {% if history and history.near_chart == "Rosenbaum" %}selected{% endif %}>Cartilla Rosenbaum - a 35-40cm</option>
+                            <option value="Snellen cerca" {% if history and history.near_chart == "Snellen cerca" %}selected{% endif %}>Snellen cerca - a 40cm</option>
+                        </select>
+                    </div>
                 </div>
             
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -732,19 +748,6 @@
                         </div>
                     </div>
                 </div>
-            </div>
-
-            <!-- Cartilla de Visión Próxima -->
-            <div class="bg-green-50 p-3 rounded mt-3">
-                <label class="block text-sm font-medium text-gray-700 mb-2">
-                    <i class="fas fa-book-open mr-2"></i>Cartilla Visión Próxima
-                </label>
-                <select name="near_chart" id="near_chart" class="w-full md:w-1/2 px-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-green-500">
-                    <option value="">-- Seleccionar cartilla --</option>
-                    <option value="Jaeger" {% if history and history.near_chart == "Jaeger" %}selected{% endif %}>Tabla de Jaeger (J) - J1, J2... a 40cm</option>
-                    <option value="Rosenbaum" {% if history and history.near_chart == "Rosenbaum" %}selected{% endif %}>Cartilla Rosenbaum - a 35-40cm</option>
-                    <option value="Snellen cerca" {% if history and history.near_chart == "Snellen cerca" %}selected{% endif %}>Snellen cerca - a 40cm</option>
-                </select>
             </div>
         </div>
 
@@ -3202,10 +3205,11 @@ function saveMaterial() {
     btn.disabled = true;
     btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Guardando...';
     
-    fetch('/dashboard/clinical-parameters/create/', {
+    fetch('/dashboard/configuration/clinical-parameters/create/', {
         method: 'POST',
         headers: {
             'X-CSRFToken': '{{ csrf_token }}',
+            'X-Requested-With': 'XMLHttpRequest'
         },
         body: formData
     })
@@ -3242,10 +3246,11 @@ function saveTreatment() {
     btn.disabled = true;
     btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Guardando...';
     
-    fetch('/dashboard/clinical-parameters/create/', {
+    fetch('/dashboard/configuration/clinical-parameters/create/', {
         method: 'POST',
         headers: {
             'X-CSRFToken': '{{ csrf_token }}',
+            'X-Requested-With': 'XMLHttpRequest'
         },
         body: formData
     })
@@ -3282,10 +3287,11 @@ function saveMedication() {
     btn.disabled = true;
     btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Guardando...';
     
-    fetch('/dashboard/clinical-parameters/create/', {
+    fetch('/dashboard/configuration/clinical-parameters/create/', {
         method: 'POST',
         headers: {
             'X-CSRFToken': '{{ csrf_token }}',
+            'X-Requested-With': 'XMLHttpRequest'
         },
         body: formData
     })

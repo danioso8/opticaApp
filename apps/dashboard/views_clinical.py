@@ -46,19 +46,19 @@ def clinical_history_create(request, patient_id):
     # Obtener parámetros clínicos
     from apps.patients.models import ClinicalParameter
     lens_materials = ClinicalParameter.objects.filter(
-        organization=request.organization,
+        Q(organization=request.organization) | Q(organization__isnull=True),
         parameter_type='lens_material',
         is_active=True
     ).order_by('display_order', 'name')
     
     lens_coatings = ClinicalParameter.objects.filter(
-        organization=request.organization,
+        Q(organization=request.organization) | Q(organization__isnull=True),
         parameter_type='treatment',
         is_active=True
     ).order_by('display_order', 'name')
     
     medications = ClinicalParameter.objects.filter(
-        organization=request.organization,
+        Q(organization=request.organization) | Q(organization__isnull=True),
         parameter_type__in=['medication', 'topical_medication', 'systemic_medication'],
         is_active=True
     ).order_by('display_order', 'name')
@@ -355,19 +355,19 @@ def clinical_history_edit(request, patient_id, history_id):
     # Obtener parámetros clínicos
     from apps.patients.models import ClinicalParameter
     lens_materials = ClinicalParameter.objects.filter(
-        organization=request.organization,
+        Q(organization=request.organization) | Q(organization__isnull=True),
         parameter_type='lens_material',
         is_active=True
     ).order_by('display_order', 'name')
     
     lens_coatings = ClinicalParameter.objects.filter(
-        organization=request.organization,
+        Q(organization=request.organization) | Q(organization__isnull=True),
         parameter_type='treatment',
         is_active=True
     ).order_by('display_order', 'name')
     
     medications = ClinicalParameter.objects.filter(
-        organization=request.organization,
+        Q(organization=request.organization) | Q(organization__isnull=True),
         parameter_type__in=['medication', 'topical_medication', 'systemic_medication'],
         is_active=True
     ).order_by('display_order', 'name')
@@ -1549,7 +1549,7 @@ def visual_exam_create(request, patient_id):
         if isinstance(param_types, str):
             param_types = [param_types]
         return ClinicalParameter.objects.filter(
-            organization=request.organization,
+            Q(organization=request.organization) | Q(organization__isnull=True),
             parameter_type__in=param_types,
             is_active=True
         ).order_by('display_order', 'name')
@@ -1857,7 +1857,7 @@ def visual_exam_edit(request, patient_id, history_id):
         if isinstance(param_types, str):
             param_types = [param_types]
         return ClinicalParameter.objects.filter(
-            organization=request.organization,
+            Q(organization=request.organization) | Q(organization__isnull=True),
             parameter_type__in=param_types,
             is_active=True
         ).order_by('display_order', 'name')
