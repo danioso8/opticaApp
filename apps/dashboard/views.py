@@ -31,6 +31,8 @@ from apps.appointments.models import (
 )
 from apps.patients.models import Patient
 from apps.sales.models import Sale
+from apps.billing.models import Invoice, Payment
+from decimal import Decimal
 from apps.appointments.utils import (
     get_available_slots_for_date,
     get_appointments_stats
@@ -229,10 +231,49 @@ def dashboard_home(request):
         **org_filter
     ).exclude(status__in=['cancelled', 'completed']).order_by('appointment_date', 'appointment_time')[:5]
     
+    # ===== ESTADÍSTICAS DE FACTURACIÓN =====
+    # Facturas del mes actual
+    invoices_month = Invoice.objects.filter(
+        fecha_emision__year=today.year,
+        fecha_emision__month=today.month,
+        **org_filter
+    )
+    
+    # Facturas pendientes de pago
+    invoices_unpaid = Invoice.objects.filter(
+        estado_pago__in=['unpaid', 'partial'],
+        **org_filter
+    ).order_by('-fecha_emision')[:5]
+    
+    # Pagos recientes (últimos 5)
+    recent_payments = Payment.objects.filter(
+        status='approved',
+        **org_filter
+    ).select_related('invoice').order_by('-payment_date')[:5]
+    
+    # Totales de facturación
+    total_facturado_mes = sum(inv.total for inv in invoices_month)
+    total_cobrado_mes = sum(inv.total_pagado for inv in invoices_month)
+    total_por_cobrar = sum(inv.saldo_pendiente for inv in Invoice.objects.filter(**org_filter, estado_pago__in=['unpaid', 'partial']))
+    
+    billing_stats = {
+        'month': {
+            'total_invoices': invoices_month.count(),
+            'total_facturado': total_facturado_mes,
+            'total_cobrado': total_cobrado_mes,
+            'total_pendiente': total_facturado_mes - total_cobrado_mes,
+        },
+        'unpaid_count': invoices_unpaid.count(),
+        'total_por_cobrar': total_por_cobrar,
+    }
+    
     context = {
         'stats': stats,
         'upcoming_appointments': upcoming_appointments,
         'today': today,
+        'billing_stats': billing_stats,
+        'invoices_unpaid': invoices_unpaid,
+        'recent_payments': recent_payments,
     }
     
     return render(request, 'dashboard/home.html', context)
@@ -821,9 +862,11 @@ def patient_search_api(request):
     
     results = [{
         'id': p.id,
-        'name': p.full_name,
-        'phone': p.phone_number,
-        'identification': p.identification or 'N/A'
+        'full_name': p.full_name,
+        'phone_number': p.phone_number or '',
+        'email': p.email or '',
+        'identification': p.identification or '',
+        'age': p.age if hasattr(p, 'age') else ''
     } for p in patients]
     
     return JsonResponse({'results': results})

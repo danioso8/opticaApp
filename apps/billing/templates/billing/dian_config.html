@@ -2,8 +2,8 @@
 
 {% block title %}Configuración DIAN{% endblock %}
 
-{% block page_title %}Facturación Electrónica DIAN{% endblock %}
-{% block page_subtitle %}Configure los parámetros de facturación electrónica según resolución DIAN{% endblock %}
+{% block page_title %}Configuración DIAN - Facturación Electrónica{% endblock %}
+{% block page_subtitle %}Configuración única de facturación electrónica según resolución DIAN{% endblock %}
 
 {% block content %}
 
@@ -43,6 +43,17 @@
 </div>
 {% endif %}
 
+<!-- Nota informativa de configuración única -->
+<div class="bg-indigo-50 border-l-4 border-indigo-500 p-4 mb-6 rounded-lg">
+    <div class="flex items-center">
+        <i class="fas fa-info-circle text-indigo-600 text-xl mr-3"></i>
+        <div>
+            <h4 class="font-semibold text-indigo-800 text-sm">Configuración Única DIAN por Organización</h4>
+            <p class="text-indigo-700 text-sm">Esta es la configuración de facturación electrónica para <strong>{{ organization.name }}</strong>. Solo puede haber una configuración DIAN activa.</p>
+        </div>
+    </div>
+</div>
+
 <!-- Formulario de Configuración -->
 <div class="bg-white rounded-lg shadow p-6">
     <form method="POST" {% if not can_use_invoicing %}style="pointer-events: none; opacity: 0.6;"{% endif %}>
@@ -69,14 +80,29 @@
                 </div>
                 
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">NIT *</label>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Tipo de Documento *</label>
+                    <select 
+                        name="tipo_documento"
+                        required
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-emerald-500 focus:border-emerald-500"
+                    >
+                        <option value="NIT" {% if dian_config.tipo_documento == 'NIT' or not dian_config.tipo_documento %}selected{% endif %}>NIT - Número de Identificación Tributaria</option>
+                        <option value="RUT" {% if dian_config.tipo_documento == 'RUT' %}selected{% endif %}>RUT - Registro Único Tributario</option>
+                        <option value="CC" {% if dian_config.tipo_documento == 'CC' %}selected{% endif %}>CC - Cédula de Ciudadanía</option>
+                        <option value="CE" {% if dian_config.tipo_documento == 'CE' %}selected{% endif %}>CE - Cédula de Extranjería</option>
+                        <option value="PA" {% if dian_config.tipo_documento == 'PA' %}selected{% endif %}>PA - Pasaporte</option>
+                    </select>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Número de Documento *</label>
                     <input 
                         type="text" 
                         name="nit" 
                         value="{{ dian_config.nit }}"
                         required
                         class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-emerald-500 focus:border-emerald-500"
-                        placeholder="900123456"
+                        placeholder="900123456 o documento según tipo"
                         maxlength="20"
                     >
                 </div>
@@ -347,7 +373,7 @@
                 class="px-6 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition"
                 {% if not can_use_invoicing %}disabled{% endif %}
             >
-                <i class="fas fa-save mr-1"></i> Guardar Configuración
+                <i class="fas fa-sync-alt mr-1"></i> Actualizar Configuración
             </button>
         </div>
     </form>

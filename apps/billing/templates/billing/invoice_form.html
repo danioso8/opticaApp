@@ -1,0 +1,1029 @@
+{% extends 'dashboard/base.html' %}
+{% load static %}
+
+{% block title %}Crear Factura Electrónica{% endblock %}
+
+{% block page_title %}Nueva Factura Electrónica{% endblock %}
+{% block page_subtitle %}Generar factura electrónica DIAN{% endblock %}
+
+{% block content %}
+
+<!-- Mensaje de límite del plan -->
+{% if not can_create %}
+<div class="bg-red-50 border-l-4 border-red-500 p-4 mb-6">
+    <div class="flex">
+        <div class="flex-shrink-0">
+            <i class="fas fa-exclamation-circle text-red-500"></i>
+        </div>
+        <div class="ml-3">
+            <p class="text-sm text-red-700">{{ plan_message }}</p>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Formulario de Factura -->
+<div class="bg-white rounded-lg shadow">
+    <form method="POST" id="invoiceForm" class="p-6">
+        {% csrf_token %}
+        
+        <!-- Información del Cliente -->
+        <div class="mb-8">
+            <h3 class="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+                <i class="fas fa-user mr-2 text-blue-600"></i>
+                Información del Cliente
+            </h3>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="md:col-span-2">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        Paciente/Cliente *
+                    </label>
+                    <div class="flex gap-2">
+                        <select name="patient_id" id="patient_id" required
+                                class="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                onchange="handlePatientSelection()">
+                            <option value="">Seleccione un paciente...</option>
+                            {% for patient in patients %}
+                            <option value="{{ patient.id }}" 
+                                    data-name="{{ patient.full_name }}"
+                                    data-identification="{{ patient.identification }}"
+                                    data-phone="{{ patient.phone_number }}"
+                                    data-email="{{ patient.email }}">
+                                {{ patient.full_name }} - {{ patient.identification }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                        <button type="button" onclick="openPatientSearchModal()" 
+                                class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition flex items-center justify-center"
+                                title="Búsqueda avanzada de pacientes">
+                            <i class="fas fa-search"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Campos de información del cliente (ocultos inicialmente) -->
+                <div id="clientInfoFields" class="hidden md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4 bg-blue-50 p-4 rounded-lg border-2 border-blue-200">
+                    <div class="md:col-span-2 mb-2">
+                        <div class="flex items-center text-blue-800">
+                            <i class="fas fa-info-circle mr-2"></i>
+                            <span class="font-semibold">Información del Cliente Seleccionado</span>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            Tipo de Documento *
+                        </label>
+                        <select name="tipo_documento" required
+                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                            <option value="CC">Cédula de Ciudadanía</option>
+                            <option value="CE">Cédula de Extranjería</option>
+                            <option value="NIT">NIT</option>
+                            <option value="PA">Pasaporte</option>
+                        </select>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            Número de Documento *
+                        </label>
+                        <input type="text" name="numero_documento" id="numero_documento" required
+                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                               placeholder="Número de identificación">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            Nombre Completo *
+                        </label>
+                        <input type="text" name="nombre_cliente" id="nombre_cliente" required
+                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                               placeholder="Nombre del cliente">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            Email
+                        </label>
+                        <input type="email" name="email_cliente" id="email_cliente"
+                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                               placeholder="correo@ejemplo.com">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            Teléfono
+                        </label>
+                        <input type="tel" name="telefono_cliente" id="telefono_cliente"
+                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                               placeholder="3001234567">
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Items de la Factura -->
+        <div class="mb-8">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-semibold text-gray-800 flex items-center">
+                    <i class="fas fa-list mr-2 text-green-600"></i>
+                    Items de la Factura
+                </h3>
+                <button type="button" onclick="addItem()" 
+                        class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition">
+                    <i class="fas fa-plus mr-2"></i>Agregar Item
+                </button>
+            </div>
+            
+            <div id="items-container" class="space-y-4">
+                <!-- Items se agregarán dinámicamente aquí -->
+            </div>
+        </div>
+        
+        <!-- Totales -->
+        <div class="mb-8 bg-gray-50 p-6 rounded-lg">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div class="text-right md:col-start-3">
+                    <div class="flex justify-between mb-2">
+                        <span class="text-gray-600">Subtotal:</span>
+                        <span class="font-semibold" id="subtotal">$0.00</span>
+                    </div>
+                    <div class="flex justify-between mb-2">
+                        <span class="text-gray-600">IVA:</span>
+                        <span class="font-semibold" id="iva">$0.00</span>
+                    </div>
+                    <div class="flex justify-between text-lg font-bold text-blue-600 border-t pt-2">
+                        <span>Total:</span>
+                        <span id="total">$0.00</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pagos / Abonos -->
+        <div class="mb-8">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-semibold text-gray-800 flex items-center">
+                    <i class="fas fa-credit-card mr-2 text-green-600"></i>
+                    Pagos y Abonos
+                </h3>
+                <button type="button" onclick="addPayment()" 
+                        class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition">
+                    <i class="fas fa-plus mr-2"></i>Agregar Pago
+                </button>
+            </div>
+            
+            <div id="payments-container" class="space-y-3">
+                <!-- Pagos se agregarán dinámicamente aquí -->
+            </div>
+            
+            <!-- Resumen de pagos -->
+            <div class="mt-4 bg-blue-50 p-4 rounded-lg">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="text-center">
+                        <div class="text-sm text-gray-600">Total Factura</div>
+                        <div class="text-xl font-bold text-gray-900" id="total-factura">$0.00</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-sm text-gray-600">Total Pagado</div>
+                        <div class="text-xl font-bold text-green-600" id="total-pagado">$0.00</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-sm text-gray-600">Saldo Pendiente</div>
+                        <div class="text-xl font-bold text-red-600" id="saldo-pendiente">$0.00</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Observaciones -->
+        <div class="mb-8">
+            <label class="block text-sm font-medium text-gray-700 mb-2">
+                Observaciones
+            </label>
+            <textarea name="observaciones" rows="3"
+                      class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      placeholder="Notas adicionales (opcional)"></textarea>
+        </div>
+        
+        <!-- Botones de Acción -->
+        <div class="flex justify-end space-x-4">
+            <a href="{% url 'billing:invoice_list' %}" 
+               class="bg-gray-300 hover:bg-gray-400 text-gray-800 px-6 py-3 rounded-lg transition">
+                <i class="fas fa-times mr-2"></i>Cancelar
+            </a>
+            <button type="submit" 
+                    class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg transition"
+                    {% if not can_create %}disabled{% endif %}>
+                <i class="fas fa-save mr-2"></i>Generar Factura
+            </button>
+        </div>
+    </form>
+</div>
+
+<!-- Template para pagos -->
+<template id="payment-template">
+    <div class="payment-row bg-white border border-gray-200 rounded-lg p-4">
+        <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Método de Pago *</label>
+                <select name="payment_metodo[]" required
+                        class="payment-metodo w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                    <option value="Efectivo">Efectivo</option>
+                    <option value="Tarjeta">Tarjeta</option>
+                    <option value="Transferencia">Transferencia</option>
+                    <option value="Cheque">Cheque</option>
+                    <option value="Crédito">Crédito</option>
+                </select>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Monto *</label>
+                <input type="number" name="payment_monto[]" required min="0" step="0.01"
+                       class="payment-monto w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                       placeholder="0.00"
+                       onchange="calculatePayments()">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Referencia</label>
+                <input type="text" name="payment_referencia[]"
+                       class="payment-referencia w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                       placeholder="# Transacción">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Fecha</label>
+                <input type="date" name="payment_fecha[]"
+                       class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                       value="{{ today|date:'Y-m-d' }}">
+            </div>
+            <div class="flex items-end">
+                <button type="button" onclick="removePayment(this)" 
+                        class="w-full bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg transition">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+</template>
+
+<!-- Template para nuevo item -->
+<template id="item-template">
+    <div class="item-row bg-white border border-gray-200 rounded-lg p-4">
+        <!-- Primera fila: Descripción y Botón de búsqueda -->
+        <div class="grid grid-cols-1 gap-4 mb-3">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Descripción *</label>
+                <div class="flex gap-2">
+                    <input type="text" name="item_descripcion[]" required
+                           class="item-descripcion flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                           placeholder="Ej: Gafas de sol">
+                    <button type="button" onclick="openProductModal(this)" 
+                            class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg transition" title="Buscar producto">
+                        <i class="fas fa-search"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Segunda fila: Cantidad, Precio, Descuento, IVA, Eliminar -->
+        <div class="grid grid-cols-2 md:grid-cols-5 gap-3">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Cantidad *</label>
+                <input type="number" name="item_cantidad[]" required min="1" value="1" step="1"
+                       class="item-cantidad w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                       oninput="calculateTotals()">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Precio Unit. *</label>
+                <input type="number" name="item_precio[]" required min="0" step="0.01"
+                       class="item-precio w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                       placeholder="0.00"
+                       oninput="calculateTotals()">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">% Desc.</label>
+                <input type="number" name="item_descuento[]" min="0" max="100" step="0.01" value="{{ config.descuento_maximo_porcentaje|default:'0' }}"
+                       class="item-descuento w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                       placeholder="0"
+                       oninput="calculateTotals()">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">% IVA</label>
+                <input type="number" name="item_iva[]" min="0" step="0.01" value="{{ config.iva_porcentaje|default:'0' }}"
+                       class="item-iva w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                       oninput="calculateTotals()">
+            </div>
+            <div class="flex items-end">
+                <button type="button" onclick="removeItem(this)" 
+                        class="w-full bg-red-500 hover:bg-red-600 text-white px-3 py-2 rounded-lg transition">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+</template>
+
+<!-- Modal de búsqueda de productos -->
+<div id="productModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+    <div class="relative top-10 mx-auto p-5 border w-full max-w-4xl shadow-lg rounded-md bg-white">
+        <div class="flex justify-between items-center mb-4">
+            <h3 class="text-xl font-semibold text-gray-900">
+                <i class="fas fa-search mr-2 text-blue-600"></i>
+                Buscar Producto
+            </h3>
+            <div class="flex gap-2">
+                <button type="button" onclick="openNewProductModal()" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition">
+                    <i class="fas fa-plus mr-2"></i>Nuevo Producto
+                </button>
+                <button onclick="closeProductModal()" class="text-gray-400 hover:text-gray-600">
+                    <i class="fas fa-times text-2xl"></i>
+                </button>
+            </div>
+        </div>
+        
+        <!-- Búsqueda -->
+        <div class="mb-4">
+            <input type="text" id="productSearch" placeholder="Buscar por código o nombre..." 
+                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                   onkeyup="filterProducts()">
+        </div>
+        
+        <!-- Lista de productos -->
+        <div class="max-h-96 overflow-y-auto">
+            <table class="w-full">
+                <thead class="bg-gray-50 sticky top-0">
+                    <tr>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Código</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Producto</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Precio</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Stock</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Acción</th>
+                    </tr>
+                </thead>
+                <tbody id="productTableBody">
+                    {% for product in products %}
+                    <tr class="product-row border-b hover:bg-gray-50 transition"
+                        data-name="{{ product.nombre }}"
+                        data-code="{{ product.codigo }}">
+                        <td class="px-4 py-3 text-sm font-medium text-gray-900">{{ product.codigo }}</td>
+                        <td class="px-4 py-3">
+                            <div class="text-sm font-medium text-gray-900">{{ product.nombre }}</div>
+                            {% if product.marca %}
+                            <div class="text-xs text-gray-500">{{ product.marca }}</div>
+                            {% endif %}
+                        </td>
+                        <td class="px-4 py-3 text-sm font-semibold text-indigo-600">
+                            ${{ product.precio_venta|floatformat:0 }}
+                            {% if product.aplica_iva %}
+                            <div class="text-xs text-gray-500">IVA: {{ product.porcentaje_iva }}%</div>
+                            {% endif %}
+                        </td>
+                        <td class="px-4 py-3 text-sm {% if product.stock_actual <= product.stock_minimo %}text-red-600{% else %}text-gray-900{% endif %}">
+                            {{ product.stock_actual }} unid.
+                        </td>
+                        <td class="px-4 py-3">
+                            <button type="button" onclick="selectProduct(this, '{{ product.nombre }}', {{ product.precio_venta }}, {{ product.porcentaje_iva|default:19 }})"
+                                    class="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-sm transition">
+                                <i class="fas fa-plus mr-1"></i>Agregar
+                            </button>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" class="px-4 py-8 text-center text-gray-500">
+                            No hay productos registrados
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para Nuevo Producto -->
+<div id="newProductModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+    <div class="relative top-10 mx-auto p-5 border w-full max-w-2xl shadow-lg rounded-md bg-white">
+        <div class="flex justify-between items-center mb-4">
+            <h3 class="text-xl font-semibold text-gray-900">
+                <i class="fas fa-plus mr-2 text-green-600"></i>
+                Nuevo Producto Rápido
+            </h3>
+            <button onclick="closeNewProductModal()" class="text-gray-400 hover:text-gray-600">
+                <i class="fas fa-times text-2xl"></i>
+            </button>
+        </div>
+        
+        <form id="newProductForm" class="space-y-4">
+            {% csrf_token %}
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Código *</label>
+                    <input type="text" id="new_codigo" required
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Categoría *</label>
+                    <select id="new_categoria" required
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500">
+                        <option value="MONTURAS">Monturas</option>
+                        <option value="LENTES_FORMULA">Lentes con Fórmula</option>
+                        <option value="LENTES_SOL">Lentes de Sol</option>
+                        <option value="LENTES_CONTACTO">Lentes de Contacto</option>
+                        <option value="ACCESORIOS">Accesorios</option>
+                        <option value="LIQUIDOS">Líquidos</option>
+                        <option value="OTROS">Otros</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Nombre del Producto *</label>
+                <input type="text" id="new_nombre" required
+                       class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500">
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Marca</label>
+                    <input type="text" id="new_marca"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Modelo</label>
+                    <input type="text" id="new_modelo"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500">
+                </div>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Precio de Venta *</label>
+                    <input type="number" id="new_precio_venta" required min="0" step="0.01"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">% IVA</label>
+                    <input type="number" id="new_iva" value="19" min="0" step="0.01"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500">
+                </div>
+            </div>
+            
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Stock Inicial</label>
+                <input type="number" id="new_stock" value="0" min="0"
+                       class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500">
+            </div>
+            
+            <div id="new_product_error" class="hidden text-red-600 text-sm"></div>
+            
+            <div class="flex justify-end space-x-3 pt-4">
+                <button type="button" onclick="closeNewProductModal()" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">
+                    Cancelar
+                </button>
+                <button type="submit" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">
+                    <i class="fas fa-save mr-2"></i>Guardar y Usar
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+let currentItemRow = null;
+
+// Abrir modal de productos
+function openProductModal(button) {
+    currentItemRow = button.closest('.item-row');
+    document.getElementById('productModal').classList.remove('hidden');
+    document.getElementById('productSearch').value = '';
+    document.getElementById('productSearch').focus();
+    filterProducts();
+}
+
+// Cerrar modal de productos
+function closeProductModal() {
+    document.getElementById('productModal').classList.add('hidden');
+    currentItemRow = null;
+}
+
+// Filtrar productos en el modal
+function filterProducts() {
+    const searchTerm = document.getElementById('productSearch').value.toLowerCase();
+    const rows = document.querySelectorAll('.product-row');
+    
+    rows.forEach(row => {
+        const name = row.dataset.name.toLowerCase();
+        const code = row.dataset.code.toLowerCase();
+        
+        if (name.includes(searchTerm) || code.includes(searchTerm)) {
+            row.style.display = '';
+        } else {
+            row.style.display = 'none';
+        }
+    });
+}
+
+// Seleccionar producto del modal
+function selectProduct(button, nombre, precio, iva) {
+    if (currentItemRow) {
+        const descripcion = currentItemRow.querySelector('.item-descripcion');
+        const precioInput = currentItemRow.querySelector('.item-precio');
+        const ivaInput = currentItemRow.querySelector('.item-iva');
+        
+        descripcion.value = nombre;
+        precioInput.value = parseFloat(precio).toFixed(2);
+        ivaInput.value = parseFloat(iva).toFixed(2);
+        
+        calculateTotals();
+        closeProductModal();
+    }
+}
+
+// Abrir modal de nuevo producto
+function openNewProductModal() {
+    // Cerrar el modal de búsqueda
+    closeProductModal();
+    // Abrir el modal de nuevo producto
+    document.getElementById('newProductModal').classList.remove('hidden');
+    document.getElementById('new_codigo').focus();
+}
+
+// Cerrar modal de nuevo producto
+function closeNewProductModal() {
+    document.getElementById('newProductModal').classList.add('hidden');
+    document.getElementById('newProductForm').reset();
+    document.getElementById('new_product_error').classList.add('hidden');
+}
+
+// Guardar nuevo producto
+document.getElementById('newProductForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const formData = {
+        codigo: document.getElementById('new_codigo').value,
+        nombre: document.getElementById('new_nombre').value,
+        categoria: document.getElementById('new_categoria').value,
+        marca: document.getElementById('new_marca').value || '',
+        modelo: document.getElementById('new_modelo').value || '',
+        precio_venta: document.getElementById('new_precio_venta').value,
+        porcentaje_iva: document.getElementById('new_iva').value || 0,
+        stock_actual: document.getElementById('new_stock').value || 0
+    };
+    
+    fetch('{% url "billing:product_create_ajax" %}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+        },
+        body: JSON.stringify(formData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Agregar el nuevo producto a la tabla del modal
+            const productTableBody = document.querySelector('#productModal tbody');
+            const newRow = document.createElement('tr');
+            newRow.className = 'product-row hover:bg-gray-50 cursor-pointer';
+            newRow.dataset.name = data.product.nombre.toLowerCase();
+            newRow.dataset.code = data.product.codigo.toLowerCase();
+            
+            newRow.innerHTML = `
+                <td class="px-4 py-3 text-sm text-gray-900">${data.product.codigo}</td>
+                <td class="px-4 py-3">
+                    <div class="text-sm font-medium text-gray-900">${data.product.nombre}</div>
+                    ${data.product.marca ? `<div class="text-xs text-gray-500">${data.product.marca}</div>` : ''}
+                </td>
+                <td class="px-4 py-3 text-sm font-semibold text-indigo-600">
+                    $${parseFloat(data.product.precio_venta).toFixed(0)}
+                    <div class="text-xs text-gray-500">IVA: ${data.product.porcentaje_iva}%</div>
+                </td>
+                <td class="px-4 py-3 text-sm text-gray-900">
+                    ${data.product.stock_actual || 0} unid.
+                </td>
+                <td class="px-4 py-3">
+                    <button type="button" onclick="selectProduct(this, '${data.product.nombre}', ${data.product.precio_venta}, ${data.product.porcentaje_iva})"
+                            class="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-sm transition">
+                        <i class="fas fa-plus mr-1"></i>Agregar
+                    </button>
+                </td>
+            `;
+            
+            // Insertar al inicio de la tabla
+            if (productTableBody.querySelector('tr td[colspan]')) {
+                // Si existe el mensaje "No hay productos", reemplazarlo
+                productTableBody.innerHTML = '';
+            }
+            productTableBody.insertBefore(newRow, productTableBody.firstChild);
+            
+            // Si se creó correctamente, llenar el item con los datos
+            if (currentItemRow) {
+                const descripcion = currentItemRow.querySelector('.item-descripcion');
+                const precioInput = currentItemRow.querySelector('.item-precio');
+                const ivaInput = currentItemRow.querySelector('.item-iva');
+                
+                descripcion.value = data.product.nombre;
+                precioInput.value = parseFloat(data.product.precio_venta).toFixed(2);
+                ivaInput.value = parseFloat(data.product.porcentaje_iva).toFixed(2);
+                
+                calculateTotals();
+            }
+            
+            closeNewProductModal();
+            
+            // Mostrar mensaje de éxito
+            const successMsg = document.createElement('div');
+            successMsg.className = 'fixed top-4 right-4 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded z-50';
+            successMsg.innerHTML = '<i class="fas fa-check-circle mr-2"></i>Producto creado y agregado exitosamente';
+            document.body.appendChild(successMsg);
+            setTimeout(() => successMsg.remove(), 3000);
+        } else {
+            document.getElementById('new_product_error').textContent = data.error || 'Error al crear el producto';
+            document.getElementById('new_product_error').classList.remove('hidden');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        document.getElementById('new_product_error').textContent = 'Error de conexión';
+        document.getElementById('new_product_error').classList.remove('hidden');
+    });
+});
+
+// Auto-completar datos del paciente
+document.getElementById('patient_id').addEventListener('change', function() {
+    const selected = this.options[this.selectedIndex];
+    if (selected.value) {
+        document.getElementById('numero_documento').value = selected.dataset.identification || '';
+        document.getElementById('nombre_cliente').value = selected.dataset.name || '';
+        document.getElementById('email_cliente').value = selected.dataset.email || '';
+        document.getElementById('telefono_cliente').value = selected.dataset.phone || '';
+    }
+});
+
+// Agregar primer item automáticamente
+document.addEventListener('DOMContentLoaded', function() {
+    addItem();
+});
+
+function addItem() {
+    const template = document.getElementById('item-template');
+    const clone = template.content.cloneNode(true);
+    document.getElementById('items-container').appendChild(clone);
+    calculateTotals();
+}
+
+function removeItem(button) {
+    const itemsContainer = document.getElementById('items-container');
+    if (itemsContainer.children.length > 1) {
+        button.closest('.item-row').remove();
+        calculateTotals();
+    } else {
+        alert('Debe haber al menos un item en la factura');
+    }
+}
+
+function addPayment() {
+    const template = document.getElementById('payment-template');
+    const clone = template.content.cloneNode(true);
+    document.getElementById('payments-container').appendChild(clone);
+    calculatePayments();
+}
+
+function removePayment(button) {
+    button.closest('.payment-row').remove();
+    calculatePayments();
+}
+
+function calculatePayments() {
+    let totalPagado = 0;
+    
+    document.querySelectorAll('.payment-row').forEach(row => {
+        const monto = parseFloat(row.querySelector('.payment-monto').value) || 0;
+        totalPagado += monto;
+    });
+    
+    const totalFactura = parseFloat(document.getElementById('total').textContent.replace('$', '').replace(',', '')) || 0;
+    const saldoPendiente = totalFactura - totalPagado;
+    
+    document.getElementById('total-factura').textContent = '$' + totalFactura.toFixed(2);
+    document.getElementById('total-pagado').textContent = '$' + totalPagado.toFixed(2);
+    document.getElementById('saldo-pendiente').textContent = '$' + saldoPendiente.toFixed(2);
+    
+    // Cambiar color del saldo según estado
+    const saldoElement = document.getElementById('saldo-pendiente');
+    if (saldoPendiente <= 0) {
+        saldoElement.classList.remove('text-red-600', 'text-orange-600');
+        saldoElement.classList.add('text-green-600');
+    } else if (totalPagado > 0) {
+        saldoElement.classList.remove('text-red-600', 'text-green-600');
+        saldoElement.classList.add('text-orange-600');
+    } else {
+        saldoElement.classList.remove('text-green-600', 'text-orange-600');
+        saldoElement.classList.add('text-red-600');
+    }
+}
+
+// Calcular totales generales
+function calculateTotals() {
+    let subtotal = 0;
+    let totalDescuento = 0;
+    let totalIva = 0;
+    
+    document.querySelectorAll('.item-row').forEach(row => {
+        const cantidad = parseFloat(row.querySelector('.item-cantidad').value) || 0;
+        const precio = parseFloat(row.querySelector('.item-precio').value) || 0;
+        const descuentoPct = parseFloat(row.querySelector('.item-descuento').value) || 0;
+        const porcentajeIva = parseFloat(row.querySelector('.item-iva').value) || 0;
+        
+        // Subtotal del item
+        const subtotalItem = cantidad * precio;
+        subtotal += subtotalItem;
+        
+        // Descuento del item
+        const descuentoItem = subtotalItem * (descuentoPct / 100);
+        totalDescuento += descuentoItem;
+        
+        // Base imponible (subtotal - descuento)
+        const baseImponible = subtotalItem - descuentoItem;
+        
+        // IVA del item
+        const ivaItem = baseImponible * (porcentajeIva / 100);
+        totalIva += ivaItem;
+    });
+    
+    const total = subtotal - totalDescuento + totalIva;
+    
+    document.getElementById('subtotal').textContent = '$' + subtotal.toFixed(2);
+    document.getElementById('iva').textContent = '$' + totalIva.toFixed(2);
+    document.getElementById('total').textContent = '$' + total.toFixed(2);
+    
+    // Recalcular pagos cuando cambie el total
+    calculatePayments();
+}
+
+// Enviar formulario
+document.getElementById('invoiceForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    // Validar que haya items
+    const items = [];
+    document.querySelectorAll('.item-row').forEach(row => {
+        const descripcion = row.querySelector('.item-descripcion').value.trim();
+        const cantidad = parseFloat(row.querySelector('.item-cantidad').value) || 0;
+        const precio = parseFloat(row.querySelector('.item-precio').value) || 0;
+        const descuento = parseFloat(row.querySelector('.item-descuento').value) || 0;
+        const iva = parseFloat(row.querySelector('.item-iva').value) || 0;
+        
+        if (descripcion && cantidad > 0 && precio > 0) {
+            items.push({
+                descripcion: descripcion,
+                cantidad: cantidad,
+                precio: precio,
+                descuento: descuento,
+                iva: iva
+            });
+        }
+    });
+    
+    if (items.length === 0) {
+        alert('Debe agregar al menos un item a la factura');
+        return;
+    }
+    
+    // Recopilar pagos
+    const pagos = [];
+    document.querySelectorAll('.payment-row').forEach(row => {
+        const metodo = row.querySelector('.payment-metodo').value;
+        const monto = parseFloat(row.querySelector('.payment-monto').value) || 0;
+        const referencia = row.querySelector('.payment-referencia').value.trim();
+        
+        if (monto > 0) {
+            pagos.push({
+                metodo: metodo,
+                monto: monto,
+                referencia: referencia
+            });
+        }
+    });
+    
+    // Crear campos hidden con los datos JSON
+    const itemsInput = document.createElement('input');
+    itemsInput.type = 'hidden';
+    itemsInput.name = 'items';
+    itemsInput.value = JSON.stringify(items);
+    this.appendChild(itemsInput);
+    
+    const pagosInput = document.createElement('input');
+    pagosInput.type = 'hidden';
+    pagosInput.name = 'pagos';
+    pagosInput.value = JSON.stringify(pagos);
+    this.appendChild(pagosInput);
+    
+    // Enviar formulario
+    this.submit();
+});
+
+// ===== BÚSQUEDA AVANZADA DE PACIENTES =====
+
+function openPatientSearchModal() {
+    document.getElementById('patientSearchModal').classList.remove('hidden');
+    document.getElementById('searchPatientInput').focus();
+}
+
+function closePatientSearchModal() {
+    document.getElementById('patientSearchModal').classList.add('hidden');
+    document.getElementById('searchPatientInput').value = '';
+    document.getElementById('searchResults').innerHTML = '';
+}
+
+// Búsqueda con debounce
+let searchTimeout;
+function searchPatients() {
+    const query = document.getElementById('searchPatientInput').value.trim();
+    
+    if (query.length < 2) {
+        document.getElementById('searchResults').innerHTML = 
+            '<div class="text-center text-gray-500 py-4">Ingrese al menos 2 caracteres para buscar</div>';
+        return;
+    }
+    
+    clearTimeout(searchTimeout);
+    searchTimeout = setTimeout(() => {
+        document.getElementById('searchResults').innerHTML = 
+            '<div class="text-center text-gray-500 py-4"><i class="fas fa-spinner fa-spin mr-2"></i>Buscando...</div>';
+        
+        fetch(`/dashboard/patients/search-api/?q=${encodeURIComponent(query)}`)
+            .then(response => response.json())
+            .then(data => {
+                displaySearchResults(data.results);
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                document.getElementById('searchResults').innerHTML = 
+                    '<div class="text-center text-red-500 py-4">Error al buscar pacientes</div>';
+            });
+    }, 300);
+}
+
+function displaySearchResults(results) {
+    const container = document.getElementById('searchResults');
+    
+    if (results.length === 0) {
+        container.innerHTML = 
+            '<div class="text-center text-gray-500 py-4">No se encontraron pacientes</div>';
+        return;
+    }
+    
+    let html = '<div class="divide-y divide-gray-200">';
+    results.forEach(patient => {
+        // Escapar valores para evitar problemas con comillas y undefined
+        const safeName = (patient.full_name || '').replace(/'/g, "\\'").replace(/"/g, '\\"');
+        const safeIdentification = (patient.identification || '').replace(/'/g, "\\'");
+        const safePhone = (patient.phone_number || '').replace(/'/g, "\\'");
+        const safeEmail = (patient.email || '').replace(/'/g, "\\'");
+        
+        html += `
+            <div class="p-4 hover:bg-blue-50 cursor-pointer transition" 
+                 onclick="selectPatientFromSearch('${patient.id}', '${safeName}', '${safeIdentification}', '${safePhone}', '${safeEmail}')">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <div class="font-semibold text-gray-900">${patient.full_name || 'Sin nombre'}</div>
+                        <div class="text-sm text-gray-600">
+                            <i class="fas fa-id-card mr-1"></i>CC: ${patient.identification || 'N/A'}
+                            ${patient.phone_number ? `<span class="ml-3"><i class="fas fa-phone mr-1"></i>${patient.phone_number}</span>` : ''}
+                            ${patient.age ? `<span class="ml-3"><i class="fas fa-calendar mr-1"></i>${patient.age} años</span>` : ''}
+                        </div>
+                    </div>
+                    <div>
+                        <i class="fas fa-chevron-right text-gray-400"></i>
+                    </div>
+                </div>
+            </div>
+        `;
+    });
+    html += '</div>';
+    
+    container.innerHTML = html;
+}
+
+function selectPatientFromSearch(id, name, identification, phone, email) {
+    // Buscar si el paciente ya existe en el select
+    let option = document.querySelector(`#patient_id option[value="${id}"]`);
+    
+    if (!option) {
+        // Si no existe, agregarlo al select
+        option = document.createElement('option');
+        option.value = id;
+        option.textContent = `${name} - ${identification}`;
+        option.setAttribute('data-name', name);
+        option.setAttribute('data-identification', identification);
+        option.setAttribute('data-phone', phone || '');
+        option.setAttribute('data-email', email || '');
+        document.getElementById('patient_id').appendChild(option);
+    }
+    
+    // Seleccionar el paciente
+    document.getElementById('patient_id').value = id;
+    
+    // Trigger handlePatientSelection para mostrar los campos y autocompletar
+    handlePatientSelection();
+    
+    // Cerrar el modal
+    closePatientSearchModal();
+}
+
+// ===== MOSTRAR/OCULTAR CAMPOS DE CLIENTE =====
+
+function handlePatientSelection() {
+    const patientSelect = document.getElementById('patient_id');
+    const clientInfoFields = document.getElementById('clientInfoFields');
+    const selectedOption = patientSelect.options[patientSelect.selectedIndex];
+    
+    if (patientSelect.value) {
+        // Mostrar los campos de información del cliente
+        clientInfoFields.classList.remove('hidden');
+        
+        // Autocompletar con los datos del paciente seleccionado
+        const name = selectedOption.getAttribute('data-name');
+        const identification = selectedOption.getAttribute('data-identification');
+        const phone = selectedOption.getAttribute('data-phone');
+        const email = selectedOption.getAttribute('data-email');
+        
+        document.getElementById('nombre_cliente').value = name || '';
+        document.getElementById('numero_documento').value = identification || '';
+        document.getElementById('telefono_cliente').value = phone || '';
+        document.getElementById('email_cliente').value = email || '';
+    } else {
+        // Ocultar los campos si no hay paciente seleccionado
+        clientInfoFields.classList.add('hidden');
+    }
+}
+
+// Event listener para búsqueda en tiempo real
+document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.getElementById('searchPatientInput');
+    if (searchInput) {
+        searchInput.addEventListener('input', searchPatients);
+        searchInput.addEventListener('keyup', function(e) {
+            if (e.key === 'Escape') {
+                closePatientSearchModal();
+            }
+        });
+    }
+    
+    // Ocultar campos de cliente al cargar la página si no hay paciente seleccionado
+    const patientSelect = document.getElementById('patient_id');
+    if (patientSelect && !patientSelect.value) {
+        document.getElementById('clientInfoFields').classList.add('hidden');
+    }
+});
+</script>
+
+<!-- Modal de Búsqueda Avanzada de Pacientes -->
+<div id="patientSearchModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+    <div class="relative top-20 mx-auto p-5 border w-11/12 md:w-3/4 lg:w-1/2 shadow-lg rounded-lg bg-white">
+        <!-- Header -->
+        <div class="flex items-center justify-between border-b pb-3 mb-4">
+            <h3 class="text-xl font-semibold text-gray-900">
+                <i class="fas fa-search mr-2 text-blue-600"></i>
+                Búsqueda Avanzada de Pacientes
+            </h3>
+            <button onclick="closePatientSearchModal()" class="text-gray-400 hover:text-gray-600">
+                <i class="fas fa-times text-2xl"></i>
+            </button>
+        </div>
+        
+        <!-- Campo de búsqueda -->
+        <div class="mb-4">
+            <div class="relative">
+                <input type="text" id="searchPatientInput" 
+                       placeholder="Buscar por nombre, cédula o teléfono..."
+                       class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 pl-10">
+                <i class="fas fa-search absolute left-3 top-4 text-gray-400"></i>
+            </div>
+            <p class="text-xs text-gray-500 mt-2">
+                <i class="fas fa-info-circle mr-1"></i>
+                Puede buscar por nombre completo, número de cédula o teléfono
+            </p>
+        </div>
+        
+        <!-- Resultados de búsqueda -->
+        <div id="searchResults" class="max-h-96 overflow-y-auto border border-gray-200 rounded-lg">
+            <div class="text-center text-gray-500 py-8">
+                <i class="fas fa-search text-4xl mb-3 text-gray-300"></i>
+                <p>Ingrese un término de búsqueda</p>
+            </div>
+        </div>
+        
+        <!-- Footer -->
+        <div class="mt-4 flex justify-end">
+            <button onclick="closePatientSearchModal()" 
+                    class="bg-gray-300 hover:bg-gray-400 text-gray-800 px-6 py-2 rounded-lg transition">
+                <i class="fas fa-times mr-2"></i>Cancelar
+            </button>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

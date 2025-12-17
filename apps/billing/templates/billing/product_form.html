@@ -1,0 +1,372 @@
+{% extends 'dashboard/base.html' %}
+{% load static %}
+
+{% block title %}{% if product %}Editar{% else %}Nuevo{% endif %} Producto{% endblock %}
+
+{% block page_title %}{% if product %}Editar Producto{% else %}Nuevo Producto{% endif %}{% endblock %}
+{% block page_subtitle %}Gestión de productos{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-6 max-w-6xl">
+    
+    <form method="post" enctype="multipart/form-data" class="bg-white rounded-lg shadow-md p-6">
+        {% csrf_token %}
+        
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            
+            <!-- Columna Izquierda: Imágenes -->
+            <div class="lg:col-span-1">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">Imágenes del Producto</h3>
+                
+                <div class="space-y-4">
+                    <!-- Imagen Principal -->
+                    <div class="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center">
+                        <label class="cursor-pointer">
+                            <div class="mb-2">
+                                {% if product.imagen_principal %}
+                                <img src="{{ product.imagen_principal.url }}" alt="Imagen principal" class="w-full h-48 object-cover rounded-md mb-2">
+                                {% else %}
+                                <div class="w-full h-48 bg-gray-100 rounded-md flex items-center justify-center mb-2">
+                                    <i class="fas fa-camera text-gray-400 text-4xl"></i>
+                                </div>
+                                {% endif %}
+                            </div>
+                            <p class="text-sm text-gray-600 font-medium">Imagen Principal</p>
+                            <input type="file" name="imagen_principal" accept="image/*" class="hidden" onchange="previewImage(this, 0)">
+                            <p class="text-xs text-gray-500 mt-2">Click para seleccionar</p>
+                        </label>
+                    </div>
+                    
+                    <!-- Imágenes Adicionales -->
+                    <div class="grid grid-cols-3 gap-2">
+                        {% for i in "234" %}
+                        <div class="border border-gray-300 rounded-lg p-2 text-center">
+                            <label class="cursor-pointer">
+                                {% if product %}
+                                    {% if forloop.counter == 1 and product.imagen_2 %}
+                                    <img src="{{ product.imagen_2.url }}" class="w-full h-20 object-cover rounded mb-1">
+                                    {% elif forloop.counter == 2 and product.imagen_3 %}
+                                    <img src="{{ product.imagen_3.url }}" class="w-full h-20 object-cover rounded mb-1">
+                                    {% elif forloop.counter == 3 and product.imagen_4 %}
+                                    <img src="{{ product.imagen_4.url }}" class="w-full h-20 object-cover rounded mb-1">
+                                    {% else %}
+                                    <div class="w-full h-20 bg-gray-50 rounded flex items-center justify-center mb-1">
+                                        <i class="fas fa-image text-gray-300 text-xl"></i>
+                                    </div>
+                                    {% endif %}
+                                {% else %}
+                                <div class="w-full h-20 bg-gray-50 rounded flex items-center justify-center mb-1">
+                                    <i class="fas fa-image text-gray-300 text-xl"></i>
+                                </div>
+                                {% endif %}
+                                <input type="file" name="imagen_{{ i }}" accept="image/*" class="hidden">
+                                <p class="text-xs text-gray-500">Img {{ i }}</p>
+                            </label>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Columna Derecha: Información -->
+            <div class="lg:col-span-2">
+                
+                <!-- Información Básica -->
+                <div class="mb-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4">Información Básica</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Código/SKU *</label>
+                            <input type="text" name="codigo" value="{{ product.codigo|default:'' }}" required
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Código de Barras</label>
+                            <input type="text" name="codigo_barras" value="{{ product.codigo_barras|default:'' }}"
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        </div>
+                        <div class="md:col-span-2">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Nombre del Producto *</label>
+                            <input type="text" name="nombre" value="{{ product.nombre|default:'' }}" required
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        </div>
+                        <div class="md:col-span-2">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Descripción</label>
+                            <textarea name="descripcion" rows="3"
+                                      class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">{{ product.descripcion|default:'' }}</textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Categorización -->
+                <div class="mb-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4">Categorización</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Categoría *</label>
+                            <select name="categoria" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                                <option value="MONTURAS" {% if product.categoria == 'MONTURAS' %}selected{% endif %}>Monturas</option>
+                                <option value="LENTES_FORMULA" {% if product.categoria == 'LENTES_FORMULA' %}selected{% endif %}>Lentes con Fórmula</option>
+                                <option value="LENTES_SOL" {% if product.categoria == 'LENTES_SOL' %}selected{% endif %}>Lentes de Sol</option>
+                                <option value="LENTES_CONTACTO" {% if product.categoria == 'LENTES_CONTACTO' %}selected{% endif %}>Lentes de Contacto</option>
+                                <option value="ACCESORIOS" {% if product.categoria == 'ACCESORIOS' %}selected{% endif %}>Accesorios</option>
+                                <option value="LIQUIDOS" {% if product.categoria == 'LIQUIDOS' %}selected{% endif %}>Líquidos</option>
+                                <option value="OTROS" {% if product.categoria == 'OTROS' %}selected{% endif %}>Otros</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Marca</label>
+                            <input type="text" name="marca" value="{{ product.marca|default:'' }}"
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Modelo</label>
+                            <input type="text" name="modelo" value="{{ product.modelo|default:'' }}"
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        </div>
+                        <div class="md:col-span-3">
+                            <div class="flex items-center justify-between mb-2">
+                                <label class="block text-sm font-medium text-gray-700">Proveedor</label>
+                                <button type="button" onclick="openSupplierModal()" class="text-green-600 hover:text-green-700 transition-colors text-xs" title="Agregar nuevo proveedor">
+                                    <i class="fas fa-plus-circle text-lg"></i>
+                                </button>
+                            </div>
+                            <select name="supplier" id="supplier_select" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                                <option value="">Sin proveedor</option>
+                                {% for supplier in suppliers %}
+                                <option value="{{ supplier.id }}" {% if product.supplier.id == supplier.id %}selected{% endif %}>{{ supplier.nombre }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Precios e Impuestos -->
+                <div class="mb-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4">Precios e Impuestos</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Precio de Compra</label>
+                            <input type="number" step="0.01" name="precio_compra" value="{{ product.precio_compra|default:'0' }}"
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Precio de Venta *</label>
+                            <input type="number" step="0.01" name="precio_venta" value="{{ product.precio_venta|default:'0' }}" required
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">% IVA</label>
+                            <input type="number" step="0.01" name="porcentaje_iva" value="{{ product.porcentaje_iva|default:'19' }}"
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        </div>
+                        <div class="md:col-span-3">
+                            <label class="flex items-center">
+                                <input type="checkbox" name="aplica_iva" {% if not product or product.aplica_iva %}checked{% endif %}
+                                       class="rounded border-gray-300 text-indigo-600 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
+                                <span class="ml-2 text-sm text-gray-700">Aplica IVA</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Inventario -->
+                <div class="mb-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4">Control de Inventario</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Tipo</label>
+                            <select name="tipo_inventario" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                                <option value="FISICO" {% if product.tipo_inventario == 'FISICO' %}selected{% endif %}>Producto Físico</option>
+                                <option value="SERVICIO" {% if product.tipo_inventario == 'SERVICIO' %}selected{% endif %}>Servicio</option>
+                                <option value="DIGITAL" {% if product.tipo_inventario == 'DIGITAL' %}selected{% endif %}>Producto Digital</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Stock Actual</label>
+                            <input type="number" name="stock_actual" value="{{ product.stock_actual|default:'0' }}"
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Stock Mínimo</label>
+                            <input type="number" name="stock_minimo" value="{{ product.stock_minimo|default:'5' }}"
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Stock Máximo</label>
+                            <input type="number" name="stock_maximo" value="{{ product.stock_maximo|default:'100' }}"
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        </div>
+                        <div class="md:col-span-4">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Ubicación en Bodega</label>
+                            <input type="text" name="ubicacion_fisica" value="{{ product.ubicacion_fisica|default:'' }}" placeholder="Ej: Estante A-3"
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        </div>
+                    </div>
+                </div>
+
+                {% if product %}
+                <div class="mb-6">
+                    <label class="flex items-center">
+                        <input type="checkbox" name="is_active" {% if product.is_active %}checked{% endif %}
+                               class="rounded border-gray-300 text-indigo-600 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
+                        <span class="ml-2 text-sm text-gray-700">Producto Activo</span>
+                    </label>
+                </div>
+                {% endif %}
+
+                <!-- Botones -->
+                <div class="flex justify-end space-x-3 pt-4 border-t">
+                    <a href="{% url 'billing:product_list' %}" class="px-6 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50">
+                        Cancelar
+                    </a>
+                    <button type="submit" class="px-6 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700">
+                        <i class="fas fa-save mr-2"></i>Guardar Producto
+                    </button>
+                </div>
+            </div>
+        </div>
+    </form>
+
+</div>
+
+<!-- Modal para Nuevo Proveedor -->
+<div id="supplierModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+    <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+        <div class="flex justify-between items-center mb-4">
+            <h3 class="text-lg font-semibold text-gray-900">Nuevo Proveedor</h3>
+            <button onclick="closeSupplierModal()" class="text-gray-400 hover:text-gray-600">
+                <i class="fas fa-times text-xl"></i>
+            </button>
+        </div>
+        
+        <form id="supplierForm" class="space-y-4">
+            {% csrf_token %}
+            
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Tipo de Documento *</label>
+                <select id="supplier_tipo_documento" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    <option value="NIT">NIT</option>
+                    <option value="RUT">RUT</option>
+                    <option value="CC">Cédula de Ciudadanía</option>
+                    <option value="CE">Cédula de Extranjería</option>
+                    <option value="PA">Pasaporte</option>
+                </select>
+            </div>
+            
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Número de Documento *</label>
+                <input type="text" id="supplier_numero_documento" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
+            </div>
+            
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Nombre/Razón Social *</label>
+                <input type="text" id="supplier_nombre" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
+            </div>
+            
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Nombre Comercial</label>
+                <input type="text" id="supplier_nombre_comercial" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
+            </div>
+            
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Teléfono</label>
+                <input type="tel" id="supplier_telefono" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
+            </div>
+            
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Email</label>
+                <input type="email" id="supplier_email" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
+            </div>
+            
+            <div id="supplier_error" class="hidden text-red-600 text-sm"></div>
+            
+            <div class="flex justify-end space-x-3 pt-4">
+                <button type="button" onclick="closeSupplierModal()" class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50">
+                    Cancelar
+                </button>
+                <button type="submit" class="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700">
+                    <i class="fas fa-save mr-2"></i>Guardar
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+function previewImage(input, index) {
+    if (input.files && input.files[0]) {
+        var reader = new FileReader();
+        reader.onload = function(e) {
+            var img = input.parentElement.querySelector('img');
+            if (!img) {
+                var div = input.parentElement.querySelector('div');
+                if (div) {
+                    div.innerHTML = '<img src="' + e.target.result + '" class="w-full h-48 object-cover rounded-md mb-2">';
+                }
+            } else {
+                img.src = e.target.result;
+            }
+        }
+        reader.readAsDataURL(input.files[0]);
+    }
+}
+
+// Modal de proveedor
+function openSupplierModal() {
+    document.getElementById('supplierModal').classList.remove('hidden');
+}
+
+function closeSupplierModal() {
+    document.getElementById('supplierModal').classList.add('hidden');
+    document.getElementById('supplierForm').reset();
+    document.getElementById('supplier_error').classList.add('hidden');
+}
+
+// Guardar proveedor
+document.getElementById('supplierForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const formData = {
+        tipo_documento: document.getElementById('supplier_tipo_documento').value,
+        numero_documento: document.getElementById('supplier_numero_documento').value,
+        nombre: document.getElementById('supplier_nombre').value,
+        nombre_comercial: document.getElementById('supplier_nombre_comercial').value,
+        telefono: document.getElementById('supplier_telefono').value,
+        email: document.getElementById('supplier_email').value,
+        csrfmiddlewaretoken: document.querySelector('[name=csrfmiddlewaretoken]').value
+    };
+    
+    fetch("{% url 'billing:supplier_create_ajax' %}", {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': formData.csrfmiddlewaretoken
+        },
+        body: JSON.stringify(formData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Agregar nuevo proveedor al select
+            const select = document.getElementById('supplier_select');
+            const option = new Option(data.supplier.nombre, data.supplier.id, true, true);
+            select.add(option);
+            
+            // Cerrar modal
+            closeSupplierModal();
+            
+            // Mostrar mensaje de éxito
+            alert('Proveedor creado exitosamente');
+        } else {
+            document.getElementById('supplier_error').textContent = data.error || 'Error al crear proveedor';
+            document.getElementById('supplier_error').classList.remove('hidden');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        document.getElementById('supplier_error').textContent = 'Error de conexión';
+        document.getElementById('supplier_error').classList.remove('hidden');
+    });
+});</script>
+{% endblock %}

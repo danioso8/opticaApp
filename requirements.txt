@@ -14,3 +14,9 @@ requests==2.31.0
 twilio==8.10.0
 dj-database-url==2.1.0
 reportlab==4.0.7
+
+# Facturación Electrónica DIAN
+lxml==4.9.3
+pyOpenSSL==23.2.0
+cryptography==41.0.3
+qrcode[pil]==7.4.2

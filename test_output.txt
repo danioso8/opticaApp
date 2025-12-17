@@ -1,0 +1,16 @@
+﻿================================================================================
+­ƒº¬ SISTEMA DE PRUEBAS - FACTURACI├ôN ELECTR├ôNICA DIAN
+================================================================================
+
+Ô£à Organizaci├│n: CompuEasys
+Ô£à Paciente: Juan P├®rez Test
+Ô£à Usuario: admin
+
+Ô£à Facturaci├│n electr├│nica activada (Modo: pruebas)
+Ô£à Prefijo configurado: FE-TEST
+
+Ô£à Configuraci├│n DIAN actualizada
+   NIT: 900123456-7
+   Resoluci├│n: RES-TEST-001
+   Ambiente: Pruebas
+

@@ -2,7 +2,10 @@ from django.contrib import admin
 from django.utils.html import format_html
 from django.urls import reverse
 from django.utils import timezone
-from .models import DianConfiguration, Invoice, InvoiceItem, Payment
+from .models import (
+    DianConfiguration, Invoice, InvoiceItem, Payment,
+    Supplier, InvoiceProduct, InvoiceConfiguration
+)
 
 
 @admin.register(DianConfiguration)
@@ -336,3 +339,190 @@ class PaymentAdmin(admin.ModelAdmin):
             obj.get_status_display()
         )
     status_badge.short_description = 'Estado'
+
+
+# ========== ADMINISTRACIÓN DE PROVEEDORES ==========
+
+@admin.register(Supplier)
+class SupplierAdmin(admin.ModelAdmin):
+    list_display = [
+        'codigo', 'nombre', 'numero_documento', 'categoria',
+        'telefono', 'calificacion_display', 'is_active'
+    ]
+    list_filter = ['is_active', 'categoria', 'tipo_documento']
+    search_fields = ['codigo', 'nombre', 'nombre_comercial', 'numero_documento', 'email']
+    readonly_fields = ['created_at', 'updated_at']
+    
+    fieldsets = (
+        ('Información Básica', {
+            'fields': ('organization', 'codigo', 'nombre', 'nombre_comercial', 'tipo_documento', 'numero_documento')
+        }),
+        ('Categorización', {
+            'fields': ('categoria',)
+        }),
+        ('Contacto', {
+            'fields': ('email', 'telefono', 'celular', 'sitio_web')
+        }),
+        ('Ubicación', {
+            'fields': ('direccion', 'ciudad', 'pais')
+        }),
+        ('Contacto Principal', {
+            'fields': ('nombre_contacto', 'cargo_contacto', 'email_contacto', 'telefono_contacto')
+        }),
+        ('Información Comercial', {
+            'fields': ('condiciones_pago', 'descuento_comercial', 'tiempo_entrega_dias')
+        }),
+        ('Calificación', {
+            'fields': ('calificacion', 'notas')
+        }),
+        ('Estado', {
+            'fields': ('is_active',)
+        }),
+        ('Auditoría', {
+            'fields': ('created_at', 'updated_at'),
+            'classes': ('collapse',)
+        }),
+    )
+    
+    def calificacion_display(self, obj):
+        if obj.calificacion:
+            stars = '⭐' * obj.calificacion
+            return format_html('<span title="{}/5 estrellas">{}</span>', obj.calificacion, stars)
+        return '-'
+    calificacion_display.short_description = 'Calificación'
+
+
+# ========== ADMINISTRACIÓN DE PRODUCTOS ==========
+
+@admin.register(InvoiceProduct)
+class InvoiceProductAdmin(admin.ModelAdmin):
+    list_display = [
+        'codigo', 'nombre', 'categoria', 'marca', 'precio_display',
+        'stock_display', 'supplier', 'is_active'
+    ]
+    list_filter = ['is_active', 'categoria', 'tipo_inventario', 'aplica_iva', 'is_featured']
+    search_fields = ['codigo', 'codigo_barras', 'nombre', 'marca', 'modelo']
+    readonly_fields = ['created_at', 'updated_at', 'margen_utilidad']
+    list_editable = ['is_active']
+    
+    fieldsets = (
+        ('Organización', {
+            'fields': ('organization',)
+        }),
+        ('Información Básica', {
+            'fields': ('codigo', 'codigo_barras', 'nombre', 'descripcion', 'descripcion_corta')
+        }),
+        ('Categorización', {
+            'fields': ('categoria', 'subcategoria', 'marca', 'modelo', 'supplier')
+        }),
+        ('Precios', {
+            'fields': ('precio_compra', 'precio_venta', 'precio_mayorista', 'margen_utilidad')
+        }),
+        ('Impuestos', {
+            'fields': ('aplica_iva', 'porcentaje_iva')
+        }),
+        ('Inventario', {
+            'fields': (
+                'tipo_inventario', 'stock_actual', 'stock_minimo', 'stock_maximo',
+                'ubicacion_fisica'
+            )
+        }),
+        ('Características Ópticas', {
+            'fields': ('material', 'color', 'tamanio', 'genero'),
+            'classes': ('collapse',)
+        }),
+        ('Especificaciones Técnicas', {
+            'fields': ('especificaciones',),
+            'classes': ('collapse',)
+        }),
+        ('Imágenes', {
+            'fields': ('imagen_principal', 'imagen_2', 'imagen_3', 'imagen_4')
+        }),
+        ('SEO', {
+            'fields': ('slug', 'meta_descripcion', 'palabras_clave'),
+            'classes': ('collapse',)
+        }),
+        ('Estado', {
+            'fields': ('is_active', 'is_featured', 'permitir_venta_sin_stock')
+        }),
+        ('Auditoría', {
+            'fields': ('created_at', 'updated_at'),
+            'classes': ('collapse',)
+        }),
+    )
+    
+    def precio_display(self, obj):
+        return format_html(
+            '<strong>${:,.0f}</strong><br><small>Con IVA: ${:,.0f}</small>',
+            obj.precio_venta,
+            obj.precio_con_iva
+        )
+    precio_display.short_description = 'Precio'
+    
+    def stock_display(self, obj):
+        if obj.tipo_inventario != 'FISICO':
+            return format_html('<span style="color: #6c757d;">N/A</span>')
+        
+        if obj.necesita_reabastecimiento:
+            color = '#dc3545'  # Rojo
+            icon = '⚠️'
+        elif obj.stock_actual > obj.stock_maximo:
+            color = '#28a745'  # Verde
+            icon = '✓'
+        else:
+            color = '#ffc107'  # Amarillo
+            icon = '●'
+        
+        return format_html(
+            '<span style="color: {};">{} {} unidades</span>',
+            color, icon, obj.stock_actual
+        )
+    stock_display.short_description = 'Stock'
+
+
+# ========== ADMINISTRACIÓN DE CONFIGURACIÓN DE FACTURACIÓN ==========
+
+@admin.register(InvoiceConfiguration)
+class InvoiceConfigurationAdmin(admin.ModelAdmin):
+    list_display = [
+        'organization', 'iva_porcentaje', 'descuento_maximo_porcentaje',
+        'prefijo_factura', 'siguiente_numero'
+    ]
+    search_fields = ['organization__name']
+    readonly_fields = ['created_at', 'updated_at']
+    
+    fieldsets = (
+        ('Organización', {
+            'fields': ('organization',)
+        }),
+        ('Configuración de IVA', {
+            'fields': ('iva_porcentaje', 'aplicar_iva_automatico')
+        }),
+        ('Configuración de Descuentos', {
+            'fields': (
+                'descuento_maximo_porcentaje', 'permitir_descuento_items'
+            )
+        }),
+        ('Retenciones', {
+            'fields': (
+                'aplicar_retefuente', 'retefuente_porcentaje',
+                'aplicar_reteiva', 'reteiva_porcentaje'
+            )
+        }),
+        ('Numeración', {
+            'fields': ('prefijo_factura', 'siguiente_numero')
+        }),
+        ('Notas y Términos', {
+            'fields': ('nota_predeterminada', 'terminos_condiciones')
+        }),
+        ('Métodos de Pago', {
+            'fields': ('metodos_pago_disponibles',)
+        }),
+        ('Configuración Visual', {
+            'fields': ('logo_factura', 'color_principal')
+        }),
+        ('Auditoría', {
+            'fields': ('created_at', 'updated_at'),
+            'classes': ('collapse',)
+        }),
+    )

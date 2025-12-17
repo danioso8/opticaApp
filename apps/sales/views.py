@@ -2,17 +2,18 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
 from django.utils import timezone
-from django.db.models import Sum, Count, Q, Avg
+from django.db.models import Sum, Count, Q, Avg, F
 from datetime import datetime, timedelta
 from decimal import Decimal
 import json
 
 from .models import Sale, SaleItem, Product, Category
+from apps.billing.models import Invoice, Payment  # Importar modelos de facturación
 
 
 @login_required
 def sales_dashboard(request):
-    """Dashboard principal de ventas con estadísticas y gráficos"""
+    """Dashboard principal de ventas con estadísticas y gráficos - SINCRONIZADO con facturas"""
     today = timezone.now().date()
     
     # Filtros de fecha
@@ -37,7 +38,7 @@ def sales_dashboard(request):
     # Filtrar por organización
     org_filter = {'organization': request.organization} if hasattr(request, 'organization') and request.organization else {}
     
-    # Ventas del período
+    # ==================== VENTAS DEL MÓDULO DE VENTAS ====================
     sales = Sale.objects.filter(
         created_at__date__gte=start_date,
         created_at__date__lte=end_date,
@@ -45,27 +46,87 @@ def sales_dashboard(request):
         **org_filter
     )
     
-    # Estadísticas principales
-    total_revenue = sales.aggregate(Sum('total'))['total__sum'] or Decimal('0')
-    total_sales = sales.count()
-    avg_sale = sales.aggregate(Avg('total'))['total__avg'] or Decimal('0')
+    sales_revenue = sales.aggregate(Sum('total'))['total__sum'] or Decimal('0')
+    sales_count = sales.count()
     
-    # Ventas por método de pago
-    payment_methods = sales.values('payment_method').annotate(
+    # ==================== FACTURAS DEL MÓDULO DE FACTURACIÓN ====================
+    invoices = Invoice.objects.filter(
+        fecha_emision__gte=start_date,
+        fecha_emision__lte=end_date,
+        estado__in=['draft', 'sent', 'paid'],  # Excluir cancelled
+        **org_filter
+    )
+    
+    invoices_revenue = invoices.aggregate(Sum('total'))['total__sum'] or Decimal('0')
+    invoices_count = invoices.count()
+    
+    # ==================== ESTADÍSTICAS COMBINADAS ====================
+    total_revenue = sales_revenue + invoices_revenue
+    total_transactions = sales_count + invoices_count
+    avg_sale = total_revenue / total_transactions if total_transactions > 0 else Decimal('0')
+    
+    # ==================== MÉTODOS DE PAGO COMBINADOS ====================
+    # Pagos de ventas
+    sales_payment_methods = sales.values('payment_method').annotate(
         count=Count('id'),
         total=Sum('total')
-    ).order_by('-total')
+    )
+    
+    # Pagos de facturas
+    invoice_payments = Payment.objects.filter(
+        invoice__fecha_emision__gte=start_date,
+        invoice__fecha_emision__lte=end_date,
+        status='approved',
+        **{f'invoice__{k}': v for k, v in org_filter.items()}
+    ).values('payment_method').annotate(
+        count=Count('id'),
+        total=Sum('amount')
+    )
+    
+    # Combinar y normalizar métodos de pago
+    payment_methods_dict = {}
+    
+    # Mapeo de métodos de pago para normalizar
+    method_mapping = {
+        'cash': 'Efectivo',
+        'card': 'Tarjeta',
+        'card_credit': 'Tarjeta de Crédito',
+        'card_debit': 'Tarjeta Débito',
+        'transfer': 'Transferencia',
+        'mixed': 'Mixto',
+        'check': 'Cheque',
+        'other': 'Otro',
+    }
+    
+    # Agregar ventas
+    for pm in sales_payment_methods:
+        method = pm['payment_method']
+        display_name = method_mapping.get(method, method.title())
+        if display_name not in payment_methods_dict:
+            payment_methods_dict[display_name] = {'count': 0, 'total': Decimal('0')}
+        payment_methods_dict[display_name]['count'] += pm['count']
+        payment_methods_dict[display_name]['total'] += pm['total']
+    
+    # Agregar pagos de facturas
+    for pm in invoice_payments:
+        method = pm['payment_method']
+        display_name = method_mapping.get(method, method.title())
+        if display_name not in payment_methods_dict:
+            payment_methods_dict[display_name] = {'count': 0, 'total': Decimal('0')}
+        payment_methods_dict[display_name]['count'] += pm['count']
+        payment_methods_dict[display_name]['total'] += pm['total']
     
     # Convertir a lista para JSON
     payment_methods_json = []
-    for pm in payment_methods:
+    for method_name, data in sorted(payment_methods_dict.items(), key=lambda x: x[1]['total'], reverse=True):
         payment_methods_json.append({
-            'payment_method': pm['payment_method'],
-            'count': pm['count'],
-            'total': float(pm['total'])
+            'payment_method': method_name,
+            'count': data['count'],
+            'total': float(data['total'])
         })
     
-    # Productos más vendidos
+    # ==================== PRODUCTOS MÁS VENDIDOS ====================
+    # Solo del módulo de ventas (las facturas no tienen items de producto rastreables de la misma forma)
     top_products = SaleItem.objects.filter(
         sale__created_at__date__gte=start_date,
         sale__created_at__date__lte=end_date,
@@ -75,13 +136,48 @@ def sales_dashboard(request):
         revenue=Sum('subtotal')
     ).order_by('-quantity')[:10]
     
-    # Últimas ventas
-    recent_sales = Sale.objects.filter(status='completed', **org_filter).order_by('-created_at')[:10]
+    # ==================== ÚLTIMAS TRANSACCIONES (VENTAS + FACTURAS) ====================
+    # Crear lista combinada de ventas y facturas
+    recent_transactions = []
     
-    # Productos con bajo stock
+    # Ventas recientes
+    for sale in Sale.objects.filter(status='completed', **org_filter).order_by('-created_at')[:5]:
+        recent_transactions.append({
+            'type': 'sale',
+            'id': sale.id,
+            'number': sale.sale_number,
+            'customer': sale.get_customer_display(),
+            'total': sale.total,
+            'payment_method': dict(sale.PAYMENT_METHODS).get(sale.payment_method, sale.payment_method),
+            'date': sale.created_at,
+        })
+    
+    # Facturas recientes
+    for invoice in Invoice.objects.filter(**org_filter).exclude(estado='cancelled').order_by('-fecha_emision')[:5]:
+        # Obtener método de pago de los pagos asociados
+        first_payment = invoice.payments.filter(status='approved').first()
+        payment_method = 'Pendiente'
+        if first_payment:
+            payment_method = method_mapping.get(first_payment.payment_method, first_payment.payment_method.title())
+        
+        recent_transactions.append({
+            'type': 'invoice',
+            'id': invoice.id,
+            'number': invoice.numero_completo or f"#{invoice.id}",
+            'customer': invoice.cliente.nombre if invoice.cliente else (invoice.paciente.full_name if invoice.paciente else 'N/A'),
+            'total': invoice.total,
+            'payment_method': payment_method,
+            'date': invoice.fecha_emision,
+        })
+    
+    # Ordenar por fecha
+    recent_transactions.sort(key=lambda x: x['date'], reverse=True)
+    recent_transactions = recent_transactions[:10]  # Top 10
+    
+    # ==================== PRODUCTOS CON BAJO STOCK ====================
     low_stock_products = Product.objects.filter(
         is_active=True,
-        stock__lte=models.F('min_stock'),
+        stock__lte=F('min_stock'),
         **org_filter
     ).order_by('stock')[:5]
     
@@ -90,14 +186,19 @@ def sales_dashboard(request):
         'start_date': start_date,
         'end_date': end_date,
         'total_revenue': total_revenue,
-        'total_sales': total_sales,
+        'total_sales': total_transactions,
         'avg_sale': avg_sale,
-        'payment_methods': payment_methods,
+        'payment_methods': payment_methods_json,
         'payment_methods_json': json.dumps(payment_methods_json),
         'top_products': top_products,
-        'recent_sales': recent_sales,
+        'recent_transactions': recent_transactions,  # Cambiado de recent_sales
         'low_stock_products': low_stock_products,
         'today': today,
+        # Estadísticas separadas
+        'sales_count': sales_count,
+        'invoices_count': invoices_count,
+        'sales_revenue': sales_revenue,
+        'invoices_revenue': invoices_revenue,
     }
     
     return render(request, 'sales/dashboard.html', context)

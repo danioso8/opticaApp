@@ -1,0 +1,754 @@
+{% extends 'dashboard/base.html' %}
+{% load static %}
+{% load l10n %}
+
+{% block title %}Configuración de Facturación{% endblock %}
+
+{% block page_title %}Configuración de Facturación{% endblock %}
+{% block page_subtitle %}Configuración única de parámetros de facturación para {{ organization.name }}{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-6 max-w-5xl">
+    
+    <!-- DEBUG: Mostrar valores actuales -->
+    {% if user.is_superuser %}
+    <div class="bg-yellow-50 border-l-4 border-yellow-500 p-4 mb-6 rounded-lg text-xs font-mono">
+        <strong class="text-yellow-900">🔍 DEBUG (solo superusuario):</strong><br>
+        <div class="mt-2 space-y-1 text-yellow-800">
+            <div>IVA: <strong>{{ config.iva_porcentaje }}</strong>% (length: {{ config.iva_porcentaje|length }})</div>
+            <div>Descuento: <strong>{{ config.descuento_maximo_porcentaje }}</strong>%</div>
+            <div>Email remitente: "<strong>{{ config.email_remitente }}</strong>" (length: {{ config.email_remitente|length }})</div>
+            <div>SMTP Host: "<strong>{{ config.smtp_host }}</strong>"</div>
+            <div>SMTP Puerto: <strong>{{ config.smtp_port }}</strong></div>
+            <div>SMTP Usuario: "<strong>{{ config.smtp_username }}</strong>" (length: {{ config.smtp_username|length }})</div>
+            <div>SMTP Password: {% if config.smtp_password %}<strong>"***guardada ({{ config.smtp_password|length }} chars)***"</strong>{% else %}<strong class="text-red-600">"vacía"</strong>{% endif %}</div>
+        </div>
+    </div>
+    {% endif %}
+    
+    <!-- Nota informativa -->
+    <div class="bg-blue-50 border-l-4 border-blue-500 p-4 mb-6 rounded-lg">
+        <div class="flex items-center">
+            <i class="fas fa-info-circle text-blue-600 text-xl mr-3"></i>
+            <div>
+                <h4 class="font-semibold text-blue-800 text-sm">Configuración Única por Organización</h4>
+                <p class="text-blue-700 text-sm">Esta es la configuración de facturación para <strong>{{ organization.name }}</strong>. Los cambios se aplican a todas las facturas.</p>
+            </div>
+        </div>
+    </div>
+    
+    <form method="post" enctype="multipart/form-data" class="space-y-6">
+        {% csrf_token %}
+        
+        <!-- Configuración de IVA -->
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <div class="flex items-center mb-4">
+                <div class="bg-indigo-100 p-3 rounded-full mr-4">
+                    <i class="fas fa-percent text-indigo-600 text-xl"></i>
+                </div>
+                <h3 class="text-xl font-semibold text-gray-900">Configuración de IVA</h3>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">IVA por Defecto (%)</label>
+                    <input type="number" step="0.01" name="iva_porcentaje" value="{{ config.iva_porcentaje|unlocalize }}"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    <p class="text-xs text-gray-500 mt-1">Porcentaje de IVA aplicado por defecto a productos</p>
+                </div>
+                <div class="flex items-center">
+                    <label class="flex items-center cursor-pointer">
+                        <input type="checkbox" name="aplicar_iva_automatico" {% if config.aplicar_iva_automatico %}checked{% endif %}
+                               class="rounded border-gray-300 text-indigo-600 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
+                        <span class="ml-2 text-sm text-gray-700">Aplicar IVA automático a todos los productos</span>
+                    </label>
+                </div>
+            </div>
+        </div>
+
+        <!-- Configuración de Descuentos -->
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <div class="flex items-center mb-4">
+                <div class="bg-green-100 p-3 rounded-full mr-4">
+                    <i class="fas fa-tags text-green-600 text-xl"></i>
+                </div>
+                <h3 class="text-xl font-semibold text-gray-900">Configuración de Descuentos</h3>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                <div class="md:col-span-2">
+                    <label class="flex items-center cursor-pointer">
+                        <input type="checkbox" name="permitir_descuento_items" {% if config.permitir_descuento_items %}checked{% endif %}
+                               class="rounded border-gray-300 text-indigo-600 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
+                        <span class="ml-2 text-sm text-gray-700 font-medium">Permitir aplicar descuentos en facturas</span>
+                    </label>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Descuento Máximo (%)</label>
+                    <input type="number" step="0.01" name="descuento_maximo_porcentaje" value="{{ config.descuento_maximo_porcentaje|unlocalize }}"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    <p class="text-xs text-gray-500 mt-1">Descuento máximo permitido por factura</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Configuración de Retenciones -->
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <div class="flex items-center mb-4">
+                <div class="bg-yellow-100 p-3 rounded-full mr-4">
+                    <i class="fas fa-calculator text-yellow-600 text-xl"></i>
+                </div>
+                <h3 class="text-xl font-semibold text-gray-900">Retenciones</h3>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label class="flex items-center cursor-pointer mb-3">
+                        <input type="checkbox" name="aplicar_retefuente" {% if config.aplicar_retefuente %}checked{% endif %}
+                               class="rounded border-gray-300 text-indigo-600 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
+                        <span class="ml-2 text-sm text-gray-700 font-medium">Aplicar Retención en la Fuente</span>
+                    </label>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Porcentaje Retención Fuente (%)</label>
+                    <input type="number" step="0.01" name="retefuente_porcentaje" value="{{ config.retefuente_porcentaje|unlocalize }}"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                </div>
+                <div>
+                    <label class="flex items-center cursor-pointer mb-3">
+                        <input type="checkbox" name="aplicar_reteiva" {% if config.aplicar_reteiva %}checked{% endif %}
+                               class="rounded border-gray-300 text-indigo-600 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
+                        <span class="ml-2 text-sm text-gray-700 font-medium">Aplicar Retención de IVA</span>
+                    </label>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Porcentaje Retención IVA (%)</label>
+                    <input type="number" step="0.01" name="reteiva_porcentaje" value="{{ config.reteiva_porcentaje|unlocalize }}"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                </div>
+            </div>
+        </div>
+
+        <!-- Configuración de Pagos -->
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <div class="flex items-center mb-4">
+                <div class="bg-blue-100 p-3 rounded-full mr-4">
+                    <i class="fas fa-credit-card text-blue-600 text-xl"></i>
+                </div>
+                <h3 class="text-xl font-semibold text-gray-900">Métodos de Pago</h3>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                <div class="md:col-span-2">
+                    <p class="text-sm font-medium text-gray-700 mb-3">Métodos de pago habilitados:</p>
+                    <div class="space-y-2">
+                        <label class="flex items-center cursor-pointer">
+                            <input type="checkbox" name="metodos_pago_disponibles" value="Efectivo" 
+                                   {% if 'Efectivo' in config.metodos_pago_disponibles or not config %}checked{% endif %}
+                                   class="rounded border-gray-300 text-indigo-600 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
+                            <span class="ml-2 text-sm text-gray-700"><i class="fas fa-money-bill-wave mr-2 text-green-600"></i>Efectivo</span>
+                        </label>
+                        <label class="flex items-center cursor-pointer">
+                            <input type="checkbox" name="metodos_pago_disponibles" value="Tarjeta"
+                                   {% if 'Tarjeta' in config.metodos_pago_disponibles or not config %}checked{% endif %}
+                                   class="rounded border-gray-300 text-indigo-600 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
+                            <span class="ml-2 text-sm text-gray-700"><i class="fas fa-credit-card mr-2 text-blue-600"></i>Tarjeta de Crédito/Débito</span>
+                        </label>
+                        <label class="flex items-center cursor-pointer">
+                            <input type="checkbox" name="metodos_pago_disponibles" value="Transferencia"
+                                   {% if 'Transferencia' in config.metodos_pago_disponibles or not config %}checked{% endif %}
+                                   class="rounded border-gray-300 text-indigo-600 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
+                            <span class="ml-2 text-sm text-gray-700"><i class="fas fa-exchange-alt mr-2 text-purple-600"></i>Transferencia Bancaria</span>
+                        </label>
+                        <label class="flex items-center cursor-pointer">
+                            <input type="checkbox" name="metodos_pago_disponibles" value="Cheque"
+                                   {% if 'Cheque' in config.metodos_pago_disponibles %}checked{% endif %}
+                                   class="rounded border-gray-300 text-indigo-600 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
+                            <span class="ml-2 text-sm text-gray-700"><i class="fas fa-file-invoice mr-2 text-orange-600"></i>Cheque</span>
+                        </label>
+                        <label class="flex items-center cursor-pointer">
+                            <input type="checkbox" name="metodos_pago_disponibles" value="Crédito"
+                                   {% if 'Crédito' in config.metodos_pago_disponibles %}checked{% endif %}
+                                   class="rounded border-gray-300 text-indigo-600 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
+                            <span class="ml-2 text-sm text-gray-700"><i class="fas fa-handshake mr-2 text-red-600"></i>Crédito</span>
+                        </label>
+                    </div>
+                </div>
+                <div class="md:col-span-2">
+                    <label class="flex items-center cursor-pointer">
+                        <input type="checkbox" name="permitir_pagos_parciales" {% if not config or config.permitir_pagos_parciales %}checked{% endif %}
+                               class="rounded border-gray-300 text-indigo-600 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
+                        <span class="ml-2 text-sm text-gray-700 font-medium">Permitir pagos parciales (abonos)</span>
+                    </label>
+                </div>
+            </div>
+        </div>
+
+        <!-- Numeración y Formato -->
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <div class="flex items-center mb-4">
+                <div class="bg-purple-100 p-3 rounded-full mr-4">
+                    <i class="fas fa-hashtag text-purple-600 text-xl"></i>
+                </div>
+                <h3 class="text-xl font-semibold text-gray-900">Numeración y Formato</h3>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Prefijo de Factura</label>
+                    <input type="text" name="prefijo_factura" value="{{ config.prefijo_factura|default:'FE' }}" maxlength="10"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    <p class="text-xs text-gray-500 mt-1">Prefijo para facturas (Ej: FE, FV, INV)</p>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Siguiente Número</label>
+                    <input type="number" name="siguiente_numero" value="{{ config.siguiente_numero|default:'1' }}" readonly
+                           class="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-100 cursor-not-allowed">
+                    <p class="text-xs text-gray-500 mt-1">Próximo número de factura (solo lectura)</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Notas y Términos -->
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <div class="flex items-center mb-4">
+                <div class="bg-indigo-100 p-3 rounded-full mr-4">
+                    <i class="fas fa-file-alt text-indigo-600 text-xl"></i>
+                </div>
+                <h3 class="text-xl font-semibold text-gray-900">Notas y Términos</h3>
+            </div>
+            <div class="grid grid-cols-1 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Nota Predeterminada</label>
+                    <textarea name="nota_predeterminada" rows="2"
+                              placeholder="Nota que aparece en todas las facturas..."
+                              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">{{ config.nota_predeterminada|default:'' }}</textarea>
+                    <p class="text-xs text-gray-500 mt-1">Nota que aparece en cada factura</p>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Términos y Condiciones</label>
+                    <textarea name="terminos_condiciones" rows="3"
+                              placeholder="Términos y condiciones de venta..."
+                              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">{{ config.terminos_condiciones|default:'' }}</textarea>
+                    <p class="text-xs text-gray-500 mt-1">Términos legales de la venta</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Logo y Presentación -->
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <div class="flex items-center mb-4">
+                <div class="bg-yellow-100 p-3 rounded-full mr-4">
+                    <i class="fas fa-image text-yellow-600 text-xl"></i>
+                </div>
+                <h3 class="text-xl font-semibold text-gray-900">Logo y Presentación</h3>
+            </div>
+            <div class="grid grid-cols-1 gap-4">
+                <div>
+                    <div class="flex items-center space-x-4 mb-4">
+                        {% if config.logo_factura %}
+                        <img src="{{ config.logo_factura.url }}" alt="Logo" class="h-24 w-auto object-contain border rounded p-2">
+                        {% endif %}
+                        <div class="flex-1">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Logo para Facturas</label>
+                            <input type="file" name="logo_factura" accept="image/*"
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                            <p class="text-xs text-gray-500 mt-1">Imagen que aparecerá en las facturas (PNG, JPG)</p>
+                        </div>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Color Principal</label>
+                    <input type="color" name="color_principal" value="{{ config.color_principal|default:'#3B82F6' }}"
+                           class="h-10 w-20 border border-gray-300 rounded-md cursor-pointer">
+                    <p class="text-xs text-gray-500 mt-1">Color usado en encabezados y elementos de la factura</p>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Términos y Condiciones</label>
+                    <textarea name="terminos_condiciones" rows="3" placeholder="Términos y condiciones de venta..."
+                              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">{{ config.terminos_condiciones|default:'' }}</textarea>
+                </div>
+            </div>
+        </div>
+
+        <!-- Configuración de Envío de Emails -->
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <div class="flex items-center justify-between mb-4">
+                <div class="flex items-center">
+                    <div class="bg-purple-100 p-3 rounded-full mr-4">
+                        <i class="fas fa-envelope text-purple-600 text-xl"></i>
+                    </div>
+                    <h3 class="text-xl font-semibold text-gray-900">Configuración de Envío de Emails</h3>
+                </div>
+                <button type="button" onclick="openEmailHelpModal()" 
+                        class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition flex items-center gap-2">
+                    <i class="fas fa-question-circle"></i>
+                    <span>¿Cómo configurar?</span>
+                </button>
+            </div>
+            
+            <div class="space-y-4">
+                <!-- Activar envío automático -->
+                <div class="bg-purple-50 border border-purple-200 rounded-lg p-4">
+                    <label class="flex items-center cursor-pointer">
+                        <input type="checkbox" name="enviar_email_factura" {% if config.enviar_email_factura %}checked{% endif %}
+                               class="rounded border-gray-300 text-purple-600 shadow-sm focus:border-purple-300 focus:ring focus:ring-purple-200 focus:ring-opacity-50">
+                        <span class="ml-3 text-sm font-medium text-gray-900">
+                            <i class="fas fa-paper-plane mr-2 text-purple-600"></i>
+                            Enviar factura por email automáticamente a los clientes
+                        </span>
+                    </label>
+                    <p class="text-xs text-gray-600 mt-2 ml-8">Las facturas se enviarán automáticamente al email del cliente registrado</p>
+                </div>
+                
+                <!-- Email remitente -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        <i class="fas fa-at mr-1 text-purple-600"></i>
+                        Email Remitente
+                    </label>
+                    <input type="email" name="email_remitente" value="{{ config.email_remitente|default:'' }}"
+                           placeholder="facturacion@miempresa.com (opcional)"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500">
+                    <p class="text-xs text-gray-500 mt-1">Email desde el cual se enviarán las facturas. Dejar vacío para usar el email de la organización.</p>
+                </div>
+                
+                <!-- Asunto del email -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        <i class="fas fa-heading mr-1 text-purple-600"></i>
+                        Asunto del Email
+                    </label>
+                    <input type="text" name="email_asunto" value="{{ config.email_asunto }}"
+                           placeholder="Factura Electrónica #{numero_factura}"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500">
+                    <p class="text-xs text-gray-500 mt-1">
+                        Variables disponibles: <code class="bg-gray-100 px-1 rounded">{numero_factura}</code>, 
+                        <code class="bg-gray-100 px-1 rounded">{cliente}</code>, 
+                        <code class="bg-gray-100 px-1 rounded">{total}</code>
+                    </p>
+                </div>
+                
+                <!-- Mensaje del email -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        <i class="fas fa-comment-alt mr-1 text-purple-600"></i>
+                        Mensaje del Email
+                    </label>
+                    <textarea name="email_mensaje" rows="5"
+                              placeholder="Estimado(a) cliente,&#10;&#10;Adjuntamos su factura electrónica.&#10;&#10;Gracias por su compra."
+                              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500">{{ config.email_mensaje }}</textarea>
+                    <p class="text-xs text-gray-500 mt-1">Mensaje que aparecerá en el cuerpo del correo electrónico enviado al cliente</p>
+                </div>
+                
+                <!-- Separador -->
+                <div class="border-t border-purple-200 my-6"></div>
+                
+                <!-- Configuración SMTP -->
+                <div class="bg-purple-50 border-l-4 border-purple-500 p-4 mb-4">
+                    <h4 class="font-semibold text-purple-900 mb-2">
+                        <i class="fas fa-server mr-2"></i>Configuración del Servidor SMTP
+                    </h4>
+                    <p class="text-sm text-purple-800 mb-3">
+                        Configure su propio servidor SMTP para enviar emails desde su cuenta personal. 
+                        Esta configuración es independiente para cada organización.
+                    </p>
+                    <div class="bg-purple-100 rounded p-3 text-xs text-purple-900">
+                        <strong>💡 Para Gmail:</strong> Usa <code>smtp.gmail.com</code>, puerto <code>587</code>, TLS activado, 
+                        y genera una <a href="https://myaccount.google.com/apppasswords" target="_blank" class="underline font-semibold">contraseña de aplicación</a>
+                    </div>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <!-- Servidor SMTP -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            <i class="fas fa-server mr-1 text-purple-600"></i>
+                            Servidor SMTP *
+                        </label>
+                        <input type="text" name="smtp_host" value="{{ config.smtp_host }}"
+                               placeholder="smtp.gmail.com"
+                               required
+                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500">
+                        <p class="text-xs text-gray-500 mt-1">Dirección del servidor SMTP</p>
+                    </div>
+                    
+                    <!-- Puerto SMTP -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            <i class="fas fa-plug mr-1 text-purple-600"></i>
+                            Puerto SMTP *
+                        </label>
+                        <input type="number" name="smtp_port" value="{{ config.smtp_port }}"
+                               placeholder="587"
+                               required
+                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500">
+                        <p class="text-xs text-gray-500 mt-1">587 (TLS) o 465 (SSL)</p>
+                    </div>
+                    
+                    <!-- Usuario SMTP -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            <i class="fas fa-user mr-1 text-purple-600"></i>
+                            Usuario SMTP (Email) *
+                        </label>
+                        <input type="email" name="smtp_username" value="{{ config.smtp_username|default:'' }}"
+                               placeholder="tu-email@gmail.com"
+                               {% if not config.smtp_username %}required{% endif %}
+                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500">
+                        <p class="text-xs text-gray-500 mt-1">Email completo para autenticación</p>
+                    </div>
+                    
+                    <!-- Contraseña SMTP -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            <i class="fas fa-key mr-1 text-purple-600"></i>
+                            Contraseña SMTP *
+                        </label>
+                        <input type="password" name="smtp_password" 
+                               value="{{ config.smtp_password }}"
+                               placeholder="Contraseña de aplicación"
+                               {% if not config.smtp_password %}required{% endif %}
+                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500">
+                        <p class="text-xs text-gray-500 mt-1">
+                            {% if config.smtp_password %}
+                            Dejar vacío para mantener la contraseña actual
+                            {% else %}
+                            Contraseña o contraseña de aplicación
+                            {% endif %}
+                        </p>
+                    </div>
+                    
+                    <!-- Usar TLS -->
+                    <div class="md:col-span-2">
+                        <label class="flex items-center cursor-pointer">
+                            <input type="checkbox" name="smtp_use_tls" {% if config.smtp_use_tls %}checked{% endif %}
+                                   class="rounded border-gray-300 text-purple-600 shadow-sm focus:border-purple-300 focus:ring focus:ring-purple-200 focus:ring-opacity-50">
+                            <span class="ml-2 text-sm text-gray-700">
+                                <i class="fas fa-lock mr-1 text-purple-600"></i>
+                                Usar TLS (Transport Layer Security) - Recomendado
+                            </span>
+                        </label>
+                    </div>
+                </div>
+                
+                <!-- Vista previa ejemplo -->
+                <div class="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                    <p class="text-xs font-semibold text-gray-600 mb-2">
+                        <i class="fas fa-eye mr-1"></i>Vista previa del email:
+                    </p>
+                    <div class="bg-white p-3 rounded border border-gray-300 text-sm">
+                        <div class="mb-2"><strong>Para:</strong> cliente@ejemplo.com</div>
+                        <div class="mb-2"><strong>De:</strong> <span id="preview-email">{{ config.email_remitente|default:"tu-email@empresa.com" }}</span></div>
+                        <div class="mb-3"><strong>Asunto:</strong> <span id="preview-asunto">{{ config.email_asunto }}</span></div>
+                        <div class="border-t pt-3 text-gray-700 whitespace-pre-line" id="preview-mensaje">{{ config.email_mensaje }}</div>
+                        <div class="mt-3 text-xs text-gray-500">
+                            <i class="fas fa-paperclip mr-1"></i>Adjunto: factura_FE001.pdf
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Botones de Acción -->
+        <div class="flex justify-end space-x-3 pt-4">
+            <a href="{% url 'billing:invoice_list' %}" class="px-6 py-3 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 transition">
+                <i class="fas fa-times mr-2"></i>Cancelar
+            </a>
+            <button type="submit" class="px-6 py-3 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition">
+                <i class="fas fa-sync-alt mr-2"></i>Actualizar Configuración
+            </button>
+        </div>
+    </form>
+
+</div>
+
+<!-- Modal de Ayuda para Configuración de Email -->
+<div id="emailHelpModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+    <div class="relative top-10 mx-auto p-5 border w-11/12 max-w-4xl shadow-lg rounded-lg bg-white mb-10">
+        <!-- Header -->
+        <div class="flex items-center justify-between border-b pb-4 mb-4">
+            <h3 class="text-2xl font-bold text-gray-900 flex items-center">
+                <i class="fas fa-graduation-cap mr-3 text-blue-600"></i>
+                Guía Completa: Configuración de Email para Facturación
+            </h3>
+            <button onclick="closeEmailHelpModal()" class="text-gray-400 hover:text-gray-600">
+                <i class="fas fa-times text-2xl"></i>
+            </button>
+        </div>
+        
+        <!-- Content -->
+        <div class="space-y-6 max-h-[70vh] overflow-y-auto pr-2">
+            
+            <!-- Introducción -->
+            <div class="bg-blue-50 border-l-4 border-blue-500 p-4 rounded">
+                <h4 class="font-bold text-blue-900 mb-2 flex items-center">
+                    <i class="fas fa-info-circle mr-2"></i>¿Para qué sirve esta configuración?
+                </h4>
+                <p class="text-blue-800 text-sm">
+                    Esta configuración permite que <strong>tu organización</strong> envíe facturas electrónicas y notificaciones 
+                    directamente desde <strong>tu propio correo electrónico</strong> a tus clientes de forma automática. 
+                    Cada organización tiene su configuración independiente.
+                </p>
+            </div>
+
+            <!-- Paso 1: Elegir Proveedor -->
+            <div>
+                <h4 class="font-bold text-gray-900 text-lg mb-3 flex items-center">
+                    <span class="bg-purple-600 text-white rounded-full w-8 h-8 flex items-center justify-center mr-3 text-sm">1</span>
+                    Elige tu proveedor de correo
+                </h4>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    <div class="border border-gray-200 rounded-lg p-3 hover:border-blue-500 transition cursor-pointer" onclick="showGmailInstructions()">
+                        <div class="flex items-center gap-2 mb-2">
+                            <i class="fab fa-google text-red-600 text-xl"></i>
+                            <span class="font-semibold">Gmail</span>
+                        </div>
+                        <p class="text-xs text-gray-600">Google Mail (recomendado)</p>
+                    </div>
+                    <div class="border border-gray-200 rounded-lg p-3 hover:border-blue-500 transition cursor-pointer" onclick="showOutlookInstructions()">
+                        <div class="flex items-center gap-2 mb-2">
+                            <i class="fab fa-microsoft text-blue-600 text-xl"></i>
+                            <span class="font-semibold">Outlook</span>
+                        </div>
+                        <p class="text-xs text-gray-600">Outlook / Hotmail</p>
+                    </div>
+                    <div class="border border-gray-200 rounded-lg p-3 hover:border-blue-500 transition cursor-pointer" onclick="showOtherInstructions()">
+                        <div class="flex items-center gap-2 mb-2">
+                            <i class="fas fa-envelope text-gray-600 text-xl"></i>
+                            <span class="font-semibold">Otro</span>
+                        </div>
+                        <p class="text-xs text-gray-600">Otro proveedor SMTP</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Instrucciones Gmail -->
+            <div id="gmailInstructions" class="border-2 border-blue-500 rounded-lg p-5 bg-blue-50">
+                <h5 class="font-bold text-blue-900 text-lg mb-4 flex items-center">
+                    <i class="fab fa-google mr-2"></i>Configuración para Gmail
+                </h5>
+                
+                <div class="space-y-4">
+                    <!-- Paso 1 Gmail -->
+                    <div class="bg-white rounded-lg p-4 shadow-sm">
+                        <div class="flex items-start gap-3">
+                            <div class="bg-blue-600 text-white rounded-full w-7 h-7 flex items-center justify-center flex-shrink-0 text-sm font-bold">1</div>
+                            <div class="flex-1">
+                                <h6 class="font-semibold text-gray-900 mb-2">Crea una Contraseña de Aplicación</h6>
+                                <p class="text-sm text-gray-700 mb-3">
+                                    Gmail requiere una contraseña especial para aplicaciones. <strong>NO uses tu contraseña normal</strong>.
+                                </p>
+                                <a href="https://myaccount.google.com/apppasswords" target="_blank" 
+                                   class="inline-block bg-blue-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-blue-700 transition">
+                                    <i class="fas fa-external-link-alt mr-2"></i>Ir a Contraseñas de Aplicación
+                                </a>
+                                <div class="mt-3 bg-yellow-50 border-l-4 border-yellow-400 p-3">
+                                    <p class="text-xs text-yellow-800">
+                                        <strong>⚠️ Importante:</strong> Necesitas tener activada la verificación en 2 pasos en tu cuenta de Gmail.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Paso 2 Gmail -->
+                    <div class="bg-white rounded-lg p-4 shadow-sm">
+                        <div class="flex items-start gap-3">
+                            <div class="bg-blue-600 text-white rounded-full w-7 h-7 flex items-center justify-center flex-shrink-0 text-sm font-bold">2</div>
+                            <div class="flex-1">
+                                <h6 class="font-semibold text-gray-900 mb-2">Completa los campos en OpticaApp</h6>
+                                <div class="bg-gray-50 rounded p-3 font-mono text-sm space-y-2">
+                                    <div><strong>Servidor SMTP:</strong> <code class="bg-gray-200 px-2 py-1 rounded">smtp.gmail.com</code></div>
+                                    <div><strong>Puerto:</strong> <code class="bg-gray-200 px-2 py-1 rounded">587</code></div>
+                                    <div><strong>Usuario:</strong> <code class="bg-gray-200 px-2 py-1 rounded">tucorreo@gmail.com</code></div>
+                                    <div><strong>Contraseña:</strong> <code class="bg-gray-200 px-2 py-1 rounded">xxxx xxxx xxxx xxxx</code> (la contraseña de aplicación)</div>
+                                    <div><strong>Usar TLS:</strong> <code class="bg-gray-200 px-2 py-1 rounded">✓ Activado</code></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Paso 3 Gmail -->
+                    <div class="bg-white rounded-lg p-4 shadow-sm">
+                        <div class="flex items-start gap-3">
+                            <div class="bg-green-600 text-white rounded-full w-7 h-7 flex items-center justify-center flex-shrink-0 text-sm font-bold">✓</div>
+                            <div class="flex-1">
+                                <h6 class="font-semibold text-gray-900 mb-2">¡Listo! Guarda la configuración</h6>
+                                <p class="text-sm text-gray-700">
+                                    Haz clic en "Actualizar Configuración" y tus facturas se enviarán automáticamente desde tu Gmail.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Instrucciones Outlook -->
+            <div id="outlookInstructions" class="hidden border-2 border-blue-500 rounded-lg p-5 bg-blue-50">
+                <h5 class="font-bold text-blue-900 text-lg mb-4 flex items-center">
+                    <i class="fab fa-microsoft mr-2"></i>Configuración para Outlook/Hotmail
+                </h5>
+                
+                <div class="space-y-4">
+                    <div class="bg-white rounded-lg p-4 shadow-sm">
+                        <div class="flex items-start gap-3">
+                            <div class="bg-blue-600 text-white rounded-full w-7 h-7 flex items-center justify-center flex-shrink-0 text-sm font-bold">1</div>
+                            <div class="flex-1">
+                                <h6 class="font-semibold text-gray-900 mb-2">Completa los campos</h6>
+                                <div class="bg-gray-50 rounded p-3 font-mono text-sm space-y-2">
+                                    <div><strong>Servidor SMTP:</strong> <code class="bg-gray-200 px-2 py-1 rounded">smtp.office365.com</code></div>
+                                    <div><strong>Puerto:</strong> <code class="bg-gray-200 px-2 py-1 rounded">587</code></div>
+                                    <div><strong>Usuario:</strong> <code class="bg-gray-200 px-2 py-1 rounded">tucorreo@outlook.com</code> o @hotmail.com</div>
+                                    <div><strong>Contraseña:</strong> <code class="bg-gray-200 px-2 py-1 rounded">Tu contraseña normal</code></div>
+                                    <div><strong>Usar TLS:</strong> <code class="bg-gray-200 px-2 py-1 rounded">✓ Activado</code></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Instrucciones Otros -->
+            <div id="otherInstructions" class="hidden border-2 border-gray-400 rounded-lg p-5 bg-gray-50">
+                <h5 class="font-bold text-gray-900 text-lg mb-4 flex items-center">
+                    <i class="fas fa-server mr-2"></i>Configuración para Otro Proveedor
+                </h5>
+                
+                <div class="space-y-4">
+                    <div class="bg-white rounded-lg p-4 shadow-sm">
+                        <p class="text-sm text-gray-700 mb-3">
+                            Contacta a tu proveedor de correo y solicita los siguientes datos de servidor SMTP:
+                        </p>
+                        <ul class="list-disc list-inside space-y-2 text-sm text-gray-700">
+                            <li><strong>Servidor SMTP:</strong> Dirección del servidor (ej: smtp.tuproveedor.com)</li>
+                            <li><strong>Puerto:</strong> Generalmente 587 (TLS) o 465 (SSL)</li>
+                            <li><strong>Usuario:</strong> Tu correo completo</li>
+                            <li><strong>Contraseña:</strong> Contraseña de tu cuenta de correo</li>
+                            <li><strong>Seguridad:</strong> TLS o SSL (pregunta a tu proveedor)</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Problemas Comunes -->
+            <div>
+                <h4 class="font-bold text-gray-900 text-lg mb-3 flex items-center">
+                    <i class="fas fa-exclamation-triangle text-yellow-600 mr-2"></i>
+                    Problemas Comunes y Soluciones
+                </h4>
+                
+                <div class="space-y-3">
+                    <div class="border border-gray-200 rounded-lg p-3">
+                        <h6 class="font-semibold text-red-700 text-sm mb-1">❌ Error de autenticación</h6>
+                        <p class="text-xs text-gray-700">
+                            <strong>Solución:</strong> Verifica que el usuario y contraseña sean correctos. En Gmail, asegúrate de usar la contraseña de aplicación, no tu contraseña normal.
+                        </p>
+                    </div>
+                    
+                    <div class="border border-gray-200 rounded-lg p-3">
+                        <h6 class="font-semibold text-red-700 text-sm mb-1">❌ No se puede conectar al servidor</h6>
+                        <p class="text-xs text-gray-700">
+                            <strong>Solución:</strong> Verifica que el servidor SMTP y puerto sean correctos. Prueba cambiar entre TLS activado/desactivado.
+                        </p>
+                    </div>
+                    
+                    <div class="border border-gray-200 rounded-lg p-3">
+                        <h6 class="font-semibold text-red-700 text-sm mb-1">❌ Los emails van a spam</h6>
+                        <p class="text-xs text-gray-700">
+                            <strong>Solución:</strong> Esto es normal al principio. Pide a tus clientes que marquen tus emails como "No spam" o agrega tu email a sus contactos.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Consejos finales -->
+            <div class="bg-green-50 border-l-4 border-green-500 p-4 rounded">
+                <h5 class="font-bold text-green-900 mb-2 flex items-center">
+                    <i class="fas fa-lightbulb mr-2"></i>Consejos Importantes
+                </h5>
+                <ul class="space-y-1 text-sm text-green-800">
+                    <li>✓ Usa un correo profesional de tu negocio para mayor confianza</li>
+                    <li>✓ Personaliza el asunto y mensaje del email para tu marca</li>
+                    <li>✓ Prueba enviando una factura de prueba a tu propio correo primero</li>
+                    <li>✓ Mantén tu contraseña segura, nadie más debe conocerla</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="mt-6 flex justify-end border-t pt-4">
+            <button onclick="closeEmailHelpModal()" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg transition">
+                <i class="fas fa-check mr-2"></i>Entendido, comenzar configuración
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+// ===== MODAL DE AYUDA EMAIL =====
+
+function openEmailHelpModal() {
+    document.getElementById('emailHelpModal').classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+}
+
+function closeEmailHelpModal() {
+    document.getElementById('emailHelpModal').classList.add('hidden');
+    document.body.style.overflow = 'auto';
+}
+
+function showGmailInstructions() {
+    document.getElementById('gmailInstructions').classList.remove('hidden');
+    document.getElementById('outlookInstructions').classList.add('hidden');
+    document.getElementById('otherInstructions').classList.add('hidden');
+}
+
+function showOutlookInstructions() {
+    document.getElementById('gmailInstructions').classList.add('hidden');
+    document.getElementById('outlookInstructions').classList.remove('hidden');
+    document.getElementById('otherInstructions').classList.add('hidden');
+}
+
+function showOtherInstructions() {
+    document.getElementById('gmailInstructions').classList.add('hidden');
+    document.getElementById('outlookInstructions').classList.add('hidden');
+    document.getElementById('otherInstructions').classList.remove('hidden');
+}
+
+// Cerrar modal con ESC
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        closeEmailHelpModal();
+    }
+});
+
+// ===== VISTA PREVIA EMAIL =====
+
+// Actualizar vista previa de email en tiempo real
+document.addEventListener('DOMContentLoaded', function() {
+    const emailRemitenteInput = document.querySelector('input[name="email_remitente"]');
+    const emailAsuntoInput = document.querySelector('input[name="email_asunto"]');
+    const emailMensajeTextarea = document.querySelector('textarea[name="email_mensaje"]');
+    
+    const previewEmail = document.getElementById('preview-email');
+    const previewAsunto = document.getElementById('preview-asunto');
+    const previewMensaje = document.getElementById('preview-mensaje');
+    
+    if (emailRemitenteInput) {
+        emailRemitenteInput.addEventListener('input', function() {
+            previewEmail.textContent = this.value || 'tu-email@empresa.com';
+        });
+    }
+    
+    if (emailAsuntoInput) {
+        emailAsuntoInput.addEventListener('input', function() {
+            let asunto = this.value || 'Factura Electrónica #{numero_factura}';
+            // Reemplazar variables con ejemplos
+            asunto = asunto.replace('{numero_factura}', 'FE001')
+                          .replace('{cliente}', 'Juan Pérez')
+                          .replace('{total}', '$150,000');
+            previewAsunto.textContent = asunto;
+        });
+    }
+    
+    if (emailMensajeTextarea) {
+        emailMensajeTextarea.addEventListener('input', function() {
+            previewMensaje.textContent = this.value || 'Estimado(a) cliente,\n\nAdjuntamos su factura electrónica.\n\nGracias por su compra.';
+        });
+    }
+});
+</script>
+
+{% endblock %}

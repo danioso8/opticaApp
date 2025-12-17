@@ -1,0 +1,365 @@
+{% extends 'dashboard/base.html' %}
+{% load static %}
+
+{% block title %}{% if supplier %}Editar{% else %}Nuevo{% endif %} Proveedor{% endblock %}
+
+{% block page_title %}{% if supplier %}Editar Proveedor{% else %}Nuevo Proveedor{% endif %}{% endblock %}
+{% block page_subtitle %}Gestión de proveedores{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-6 max-w-4xl">
+    
+    <form method="post" class="bg-white rounded-lg shadow-md p-6">
+        {% csrf_token %}
+        
+        <!-- Información Básica -->
+        <div class="mb-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">Información Básica</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Código *</label>
+                    <input type="text" name="codigo" value="{{ supplier.codigo|default:'' }}" required
+                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Nombre/Razón Social *</label>
+                    <input type="text" name="nombre" value="{{ supplier.nombre|default:'' }}" required
+                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Nombre Comercial</label>
+                    <input type="text" name="nombre_comercial" value="{{ supplier.nombre_comercial|default:'' }}"
+                           placeholder="Nombre con el que se conoce comercialmente"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Tipo de Documento *</label>
+                    <select name="tipo_documento" required
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        <option value="NIT" {% if supplier.tipo_documento == 'NIT' or not supplier %}selected{% endif %}>NIT - Número de Identificación Tributaria</option>
+                        <option value="CC" {% if supplier.tipo_documento == 'CC' %}selected{% endif %}>CC - Cédula de Ciudadanía</option>
+                        <option value="CE" {% if supplier.tipo_documento == 'CE' %}selected{% endif %}>CE - Cédula de Extranjería</option>
+                        <option value="PA" {% if supplier.tipo_documento == 'PA' %}selected{% endif %}>PA - Pasaporte</option>
+                        <option value="RUT" {% if supplier.tipo_documento == 'RUT' %}selected{% endif %}>RUT - Registro Único Tributario</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Número de Documento *</label>
+                    <input type="text" name="numero_documento" value="{{ supplier.numero_documento|default:'' }}" required
+                           placeholder="Ej: 900123456-7"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Categoría</label>
+                    <div class="flex gap-2">
+                        <select name="categoria" id="categoriaSelect" class="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                            <option value="">-- Seleccione --</option>
+                            
+                            {% if categorias_db %}
+                            <optgroup label="Categorías Personalizadas">
+                                {% for cat in categorias_db %}
+                                <option value="{{ cat.codigo }}" {% if supplier.categoria == cat.codigo %}selected{% endif %}>
+                                    {{ cat.nombre }}
+                                </option>
+                                {% endfor %}
+                            </optgroup>
+                            {% endif %}
+                            
+                            <optgroup label="Categorías Estándar">
+                                {% for codigo, nombre in categorias_default %}
+                                <option value="{{ codigo }}" {% if supplier.categoria == codigo %}selected{% endif %}>
+                                    {{ nombre }}
+                                </option>
+                                {% endfor %}
+                            </optgroup>
+                        </select>
+                        <button type="button" onclick="openCategoriaModal()" 
+                                class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 flex items-center gap-2"
+                                title="Agregar nueva categoría">
+                            <i class="fas fa-plus"></i>
+                            <span class="hidden sm:inline">Nueva</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Contacto -->
+        <div class="mb-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">Información de Contacto</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Email</label>
+                    <input type="email" name="email" value="{{ supplier.email|default:'' }}"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Teléfono</label>
+                    <input type="text" name="telefono" value="{{ supplier.telefono|default:'' }}"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Celular</label>
+                    <input type="text" name="celular" value="{{ supplier.celular|default:'' }}"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Sitio Web</label>
+                    <input type="url" name="sitio_web" value="{{ supplier.sitio_web|default:'' }}"
+                           placeholder="https://www.ejemplo.com"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                </div>
+            </div>
+        </div>
+
+        <!-- Contacto Principal -->
+        <div class="mb-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">Contacto Principal</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Nombre del Contacto</label>
+                    <input type="text" name="nombre_contacto" value="{{ supplier.nombre_contacto|default:'' }}"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Cargo</label>
+                    <input type="text" name="cargo_contacto" value="{{ supplier.cargo_contacto|default:'' }}"
+                           placeholder="Ej: Gerente Comercial"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Email del Contacto</label>
+                    <input type="email" name="email_contacto" value="{{ supplier.email_contacto|default:'' }}"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Teléfono del Contacto</label>
+                    <input type="text" name="telefono_contacto" value="{{ supplier.telefono_contacto|default:'' }}"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                </div>
+            </div>
+        </div>
+
+        <!-- Ubicación -->
+        <div class="mb-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">Ubicación</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="md:col-span-2">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Dirección</label>
+                    <textarea name="direccion" rows="2"
+                              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">{{ supplier.direccion|default:'' }}</textarea>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Ciudad</label>
+                    <input type="text" name="ciudad" value="{{ supplier.ciudad|default:'' }}"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">País</label>
+                    <input type="text" name="pais" value="{{ supplier.pais|default:'Colombia' }}"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                </div>
+            </div>
+        </div>
+
+        <!-- Información Comercial -->
+        <div class="mb-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">Información Comercial</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Condiciones de Pago</label>
+                    <textarea name="condiciones_pago" rows="2"
+                              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">{{ supplier.condiciones_pago|default:'' }}</textarea>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Notas</label>
+                    <textarea name="notas" rows="2"
+                              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">{{ supplier.notas|default:'' }}</textarea>
+                </div>
+            </div>
+        </div>
+
+        {% if supplier %}
+        <div class="mb-6">
+            <label class="flex items-center">
+                <input type="checkbox" name="is_active" {% if supplier.is_active %}checked{% endif %}
+                       class="rounded border-gray-300 text-indigo-600 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
+                <span class="ml-2 text-sm text-gray-700">Proveedor Activo</span>
+            </label>
+        </div>
+        {% endif %}
+
+        <!-- Botones -->
+        <div class="flex justify-end space-x-3 pt-4 border-t">
+            <a href="{% url 'billing:supplier_list' %}" class="px-6 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50">
+                Cancelar
+            </a>
+            <button type="submit" class="px-6 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700">
+                <i class="fas fa-save mr-2"></i>Guardar
+            </button>
+        </div>
+    </form>
+
+</div>
+
+<!-- Modal para agregar categoría -->
+<div id="categoriaModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden overflow-y-auto h-full w-full z-50">
+    <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+        <div class="flex justify-between items-center mb-4">
+            <h3 class="text-lg font-semibold text-gray-900">Nueva Categoría</h3>
+            <button type="button" onclick="closeCategoriaModal()" class="text-gray-400 hover:text-gray-600">
+                <i class="fas fa-times text-xl"></i>
+            </button>
+        </div>
+        
+        <form id="categoriaForm" class="space-y-4">
+            {% csrf_token %}
+            
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Código de Categoría *</label>
+                <input type="text" id="categoriaCodigo" name="codigo" required
+                       placeholder="Ej: MICAS"
+                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                       maxlength="50">
+                <p class="text-xs text-gray-500 mt-1">Use MAYÚSCULAS sin espacios</p>
+            </div>
+            
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Nombre de Categoría *</label>
+                <input type="text" id="categoriaNombre" name="nombre" required
+                       placeholder="Ej: Micas Oftálmicas"
+                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                       maxlength="100">
+            </div>
+            
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Descripción</label>
+                <textarea id="categoriaDescripcion" name="descripcion" rows="2"
+                          placeholder="Descripción opcional de la categoría"
+                          class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"></textarea>
+            </div>
+            
+            <div id="categoriaError" class="hidden">
+                <div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded relative" role="alert">
+                    <span class="block sm:inline" id="categoriaErrorMsg"></span>
+                </div>
+            </div>
+            
+            <div class="flex justify-end space-x-3 pt-4 border-t">
+                <button type="button" onclick="closeCategoriaModal()"
+                        class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50">
+                    Cancelar
+                </button>
+                <button type="submit" 
+                        class="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700">
+                    <i class="fas fa-save mr-2"></i>Guardar Categoría
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+function openCategoriaModal() {
+    document.getElementById('categoriaModal').classList.remove('hidden');
+    document.getElementById('categoriaCodigo').focus();
+}
+
+function closeCategoriaModal() {
+    document.getElementById('categoriaModal').classList.add('hidden');
+    document.getElementById('categoriaForm').reset();
+    document.getElementById('categoriaError').classList.add('hidden');
+}
+
+// Cerrar modal al hacer clic fuera
+document.getElementById('categoriaModal').addEventListener('click', function(e) {
+    if (e.target === this) {
+        closeCategoriaModal();
+    }
+});
+
+// Convertir código a mayúsculas automáticamente
+document.getElementById('categoriaCodigo').addEventListener('input', function(e) {
+    e.target.value = e.target.value.toUpperCase().replace(/\s+/g, '_');
+});
+
+// Enviar formulario de categoría
+document.getElementById('categoriaForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    const codigo = document.getElementById('categoriaCodigo').value.trim();
+    const nombre = document.getElementById('categoriaNombre').value.trim();
+    const descripcion = document.getElementById('categoriaDescripcion').value.trim();
+    
+    if (!codigo || !nombre) {
+        showCategoriaError('Por favor complete todos los campos requeridos');
+        return;
+    }
+    
+    try {
+        const formData = new FormData();
+        formData.append('codigo', codigo);
+        formData.append('nombre', nombre);
+        formData.append('descripcion', descripcion);
+        formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
+        
+        const response = await fetch('{% url "billing:supplier_categoria_create" %}', {
+            method: 'POST',
+            body: formData
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            // Agregar nueva opción al select en el optgroup de categorías personalizadas
+            const select = document.getElementById('categoriaSelect');
+            let customOptgroup = select.querySelector('optgroup[label="Categorías Personalizadas"]');
+            
+            // Si no existe el optgroup, crearlo
+            if (!customOptgroup) {
+                customOptgroup = document.createElement('optgroup');
+                customOptgroup.label = 'Categorías Personalizadas';
+                select.insertBefore(customOptgroup, select.querySelector('optgroup[label="Categorías Estándar"]'));
+            }
+            
+            // Crear y agregar la nueva opción
+            const option = new Option(data.categoria.nombre, data.categoria.codigo, true, true);
+            customOptgroup.appendChild(option);
+            
+            // Cerrar modal
+            closeCategoriaModal();
+            
+            // Mostrar mensaje de éxito (opcional)
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({
+                    icon: 'success',
+                    title: '¡Categoría creada!',
+                    text: 'La categoría se ha agregado correctamente',
+                    timer: 2000,
+                    showConfirmButton: false
+                });
+            } else {
+                alert('✅ Categoría creada exitosamente');
+            }
+        } else {
+            showCategoriaError(data.error || 'Error al crear la categoría');
+        }
+    } catch (error) {
+        showCategoriaError('Error de conexión. Por favor intente nuevamente.');
+        console.error('Error:', error);
+    }
+});
+
+function showCategoriaError(message) {
+    document.getElementById('categoriaErrorMsg').textContent = message;
+    document.getElementById('categoriaError').classList.remove('hidden');
+}
+
+// Cerrar modal con ESC
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        closeCategoriaModal();
+    }
+});
+</script>
+{% endblock %}

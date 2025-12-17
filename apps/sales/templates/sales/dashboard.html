@@ -58,6 +58,16 @@
             <div>
                 <p class="text-emerald-100 text-sm font-medium">Ingresos Totales</p>
                 <h3 class="text-4xl font-bold mt-2">${{ total_revenue|floatformat:0 }}</h3>
+                <div class="mt-2 text-xs text-emerald-100 space-y-1">
+                    <div class="flex justify-between">
+                        <span>Ventas:</span>
+                        <span class="font-semibold">${{ sales_revenue|floatformat:0 }}</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span>Facturas:</span>
+                        <span class="font-semibold">${{ invoices_revenue|floatformat:0 }}</span>
+                    </div>
+                </div>
             </div>
             <div class="bg-white bg-opacity-20 rounded-full p-4">
                 <i class="fas fa-dollar-sign text-3xl"></i>
@@ -72,12 +82,22 @@
         </div>
     </div>
     
-    <!-- Total de Ventas -->
+    <!-- Total de Transacciones -->
     <div class="stat-card bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg shadow-lg p-6 text-white">
         <div class="flex items-center justify-between">
             <div>
-                <p class="text-blue-100 text-sm font-medium">Total de Ventas</p>
+                <p class="text-blue-100 text-sm font-medium">Total Transacciones</p>
                 <h3 class="text-4xl font-bold mt-2">{{ total_sales }}</h3>
+                <div class="mt-2 text-xs text-blue-100 space-y-1">
+                    <div class="flex justify-between">
+                        <span>Ventas:</span>
+                        <span class="font-semibold">{{ sales_count }}</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span>Facturas:</span>
+                        <span class="font-semibold">{{ invoices_count }}</span>
+                    </div>
+                </div>
             </div>
             <div class="bg-white bg-opacity-20 rounded-full p-4">
                 <i class="fas fa-shopping-cart text-3xl"></i>
@@ -85,7 +105,7 @@
         </div>
         <div class="mt-4 text-blue-100 text-sm">
             <i class="fas fa-shopping-bag mr-1"></i>
-            Transacciones completadas
+            Completadas
         </div>
     </div>
     
@@ -183,37 +203,61 @@
 
 <!-- Tablas de Datos -->
 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-    <!-- Últimas Ventas -->
+    <!-- Últimas Transacciones (Ventas + Facturas) -->
     <div class="bg-white rounded-lg shadow-md p-6">
         <div class="flex items-center justify-between mb-4">
             <h3 class="text-lg font-semibold text-gray-800">
                 <i class="fas fa-history mr-2 text-indigo-600"></i>
-                Últimas Ventas
+                Últimas Transacciones
             </h3>
         </div>
         
-        {% if recent_sales %}
+        {% if recent_transactions %}
         <div class="overflow-x-auto">
             <table class="min-w-full">
                 <thead class="bg-gray-50">
                     <tr>
-                        <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">N° Venta</th>
+                        <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Tipo</th>
+                        <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">N°</th>
                         <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Cliente</th>
                         <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Total</th>
+                        <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Pago</th>
                         <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Fecha</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-200">
-                    {% for sale in recent_sales %}
+                    {% for transaction in recent_transactions %}
                     <tr class="hover:bg-gray-50">
                         <td class="px-4 py-3 text-sm">
-                            <a href="{% url 'sales:sale_detail' sale.id %}" class="text-indigo-600 hover:text-indigo-800 font-medium">
-                                {{ sale.sale_number }}
-                            </a>
+                            {% if transaction.type == 'sale' %}
+                                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                    <i class="fas fa-shopping-cart mr-1"></i>Venta
+                                </span>
+                            {% else %}
+                                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                                    <i class="fas fa-file-invoice mr-1"></i>Factura
+                                </span>
+                            {% endif %}
                         </td>
-                        <td class="px-4 py-3 text-sm text-gray-800">{{ sale.get_customer_display }}</td>
-                        <td class="px-4 py-3 text-sm font-semibold text-emerald-600">${{ sale.total|floatformat:0 }}</td>
-                        <td class="px-4 py-3 text-sm text-gray-600">{{ sale.created_at|date:"d/m/Y H:i" }}</td>
+                        <td class="px-4 py-3 text-sm">
+                            {% if transaction.type == 'sale' %}
+                                <a href="{% url 'sales:sale_detail' transaction.id %}" class="text-indigo-600 hover:text-indigo-800 font-medium">
+                                    {{ transaction.number }}
+                                </a>
+                            {% else %}
+                                <a href="{% url 'billing:invoice_detail' transaction.id %}" class="text-indigo-600 hover:text-indigo-800 font-medium">
+                                    {{ transaction.number }}
+                                </a>
+                            {% endif %}
+                        </td>
+                        <td class="px-4 py-3 text-sm text-gray-800 truncate max-w-xs">{{ transaction.customer }}</td>
+                        <td class="px-4 py-3 text-sm font-semibold text-emerald-600">${{ transaction.total|floatformat:0 }}</td>
+                        <td class="px-4 py-3 text-sm">
+                            <span class="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-gray-100 text-gray-700">
+                                {{ transaction.payment_method }}
+                            </span>
+                        </td>
+                        <td class="px-4 py-3 text-sm text-gray-600">{{ transaction.date|date:"d/m/Y H:i" }}</td>
                     </tr>
                     {% endfor %}
                 </tbody>
@@ -222,7 +266,7 @@
         {% else %}
         <div class="text-center py-8 text-gray-500">
             <i class="fas fa-receipt text-4xl mb-3"></i>
-            <p>No hay ventas registradas</p>
+            <p>No hay transacciones registradas</p>
         </div>
         {% endif %}
     </div>
