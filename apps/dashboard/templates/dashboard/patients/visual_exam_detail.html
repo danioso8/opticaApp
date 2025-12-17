@@ -5,245 +5,644 @@
 {% block title %}Examen Visual - {{ patient.full_name }} - {{ history.date }}{% endblock %}
 
 {% block content %}
-<div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-    <!-- Header -->
-    <div class="mb-6 pb-6 border-b flex justify-between items-start">
-        <div>
-            <div class="flex items-center gap-3 mb-2">
-                <a href="{% url 'dashboard:patient_detail' patient.id %}" class="text-gray-600 hover:text-gray-800">
-                    <i class="fas fa-arrow-left"></i>
+<div class="max-w-7xl mx-auto">
+    <!-- Header con Logo y Membrete -->
+    <div class="bg-gradient-to-r from-purple-600 to-blue-600 rounded-t-lg shadow-lg p-6 text-white">
+        <div class="flex justify-between items-start">
+            <div class="flex-1">
+                <div class="flex items-center gap-3 mb-3">
+                    <a href="{% url 'dashboard:patient_detail' patient.id %}" class="text-white hover:text-gray-200">
+                        <i class="fas fa-arrow-left text-xl"></i>
+                    </a>
+                    <div>
+                        <h1 class="text-3xl font-bold flex items-center">
+                            <i class="fas fa-eye mr-3"></i>
+                            EXAMEN VISUAL COMPLETO
+                        </h1>
+                        <p class="text-blue-100 text-sm mt-1">Fecha: {{ history.date|date:"d \d\e F \d\e Y" }}</p>
+                    </div>
+                </div>
+                
+                <!-- Información del Paciente -->
+                <div class="bg-white/10 backdrop-blur-sm rounded-lg p-4 mt-4">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <div>
+                            <p class="text-sm text-blue-100">Paciente</p>
+                            <p class="text-lg font-semibold">{{ patient.full_name }}</p>
+                        </div>
+                        {% if patient.identification %}
+                        <div>
+                            <p class="text-sm text-blue-100">Identificación</p>
+                            <p class="text-lg font-semibold">{{ patient.identification }}</p>
+                        </div>
+                        {% endif %}
+                        {% if patient.date_of_birth %}
+                        <div>
+                            <p class="text-sm text-blue-100">Edad</p>
+                            <p class="text-lg font-semibold">{{ patient.date_of_birth|timesince }} años</p>
+                        </div>
+                        {% endif %}
+                        {% if history.doctor %}
+                        <div>
+                            <p class="text-sm text-blue-100">Profesional</p>
+                            <p class="text-lg font-semibold">
+                                {{ history.doctor.full_name }}
+                                {% if history.doctor.professional_card %}
+                                <span class="text-sm text-blue-200">T.P: {{ history.doctor.professional_card }}</span>
+                                {% endif %}
+                            </p>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Botones de Acción -->
+            <div class="flex flex-col gap-2 ml-4">
+                <button onclick="showPdfModal()" class="px-4 py-2 bg-white text-purple-600 hover:bg-gray-100 rounded-lg transition-colors font-medium shadow-lg">
+                    <i class="fas fa-file-pdf mr-2"></i>Generar PDF
+                </button>
+                <a href="{% url 'dashboard:visual_exam_edit' patient.id history.id %}"
+                   class="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors font-medium text-center">
+                    <i class="fas fa-edit mr-2"></i>Editar
                 </a>
-                <h1 class="text-2xl font-bold text-gray-800">
-                    <i class="fas fa-eye text-purple-600 mr-2"></i>
-                    Examen Visual - {{ history.date|date:"d/m/Y" }}
-                </h1>
+                <button onclick="confirmDelete()"
+                        class="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg transition-colors font-medium">
+                    <i class="fas fa-trash mr-2"></i>Eliminar
+                </button>
             </div>
-            <div class="ml-9 space-y-1">
-                <p class="text-lg text-gray-700"><strong>Paciente:</strong> {{ patient.full_name }}</p>
-                {% if patient.identification %}
-                <p class="text-sm text-gray-600"><strong>Identificación:</strong> {{ patient.identification }}</p>
-                {% endif %}
-                {% if history.doctor %}
-                <p class="text-sm text-gray-600">
-                    <strong>Atendido por:</strong> {{ history.doctor.full_name }}
-                    {% if history.doctor.specialty %}
-                    <span class="text-gray-500">({{ history.doctor.get_specialty_display }})</span>
+        </div>
+    </div>
+
+    <!-- Contenido del Examen -->
+    <div class="bg-white rounded-b-lg shadow-lg p-6">
+
+    <!-- Contenido del Examen -->
+    <div class="bg-white rounded-b-lg shadow-lg p-6">
+        
+        <!-- Motivo de Consulta -->
+        {% if history.chief_complaint %}
+        <div id="section-motivo" class="mb-6 border-l-4 border-green-500 bg-green-50 rounded-r-lg p-5">
+            <h3 class="text-xl font-bold text-gray-800 mb-3 flex items-center">
+                <i class="fas fa-comment-medical text-green-600 mr-3"></i>
+                MOTIVO DE CONSULTA
+            </h3>
+            <p class="text-gray-700 text-base leading-relaxed">{{ history.chief_complaint }}</p>
+        </div>
+        {% endif %}
+
+        <!-- SECCIÓN: AGUDEZA VISUAL -->
+        {% if history.va_od_sc_distance or history.va_os_sc_distance %}
+        <div id="section-agudeza" class="mb-6 border-l-4 border-indigo-500 bg-indigo-50 rounded-r-lg p-5">
+            <h3 class="text-xl font-bold text-gray-800 mb-4 flex items-center">
+                <i class="fas fa-eye text-indigo-600 mr-3"></i>
+                AGUDEZA VISUAL
+            </h3>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <!-- Sin Corrección -->
+                <div class="bg-white rounded-lg p-4 shadow-sm">
+                    <p class="font-semibold text-indigo-700 mb-3 text-sm uppercase">Sin Corrección</p>
+                    <div class="space-y-2">
+                        <div class="flex justify-between items-center">
+                            <span class="text-gray-600">OD Lejos:</span>
+                            <span class="font-bold text-lg">{{ history.va_od_sc_distance|default:"-" }}</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-gray-600">OS Lejos:</span>
+                            <span class="font-bold text-lg">{{ history.va_os_sc_distance|default:"-" }}</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-gray-600">OD Cerca:</span>
+                            <span class="font-bold text-lg">{{ history.va_od_sc_near|default:"-" }}</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-gray-600">OS Cerca:</span>
+                            <span class="font-bold text-lg">{{ history.va_os_sc_near|default:"-" }}</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Con Corrección -->
+                <div class="bg-white rounded-lg p-4 shadow-sm">
+                    <p class="font-semibold text-indigo-700 mb-3 text-sm uppercase">Con Corrección</p>
+                    <div class="space-y-2">
+                        <div class="flex justify-between items-center">
+                            <span class="text-gray-600">OD Lejos:</span>
+                            <span class="font-bold text-lg">{{ history.va_od_cc_distance|default:"-" }}</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-gray-600">OS Lejos:</span>
+                            <span class="font-bold text-lg">{{ history.va_os_cc_distance|default:"-" }}</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-gray-600">OD Cerca:</span>
+                            <span class="font-bold text-lg">{{ history.va_od_cc_near|default:"-" }}</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-gray-600">OS Cerca:</span>
+                            <span class="font-bold text-lg">{{ history.va_os_cc_near|default:"-" }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- SECCIÓN: REFRACCIÓN Y FÓRMULA -->
+        {% if history.refraction_od_sphere or history.refraction_os_sphere %}
+        <!-- SECCIÓN: REFRACCIÓN Y FÓRMULA -->
+        {% if history.refraction_od_sphere or history.refraction_os_sphere %}
+        <div id="section-refraccion" class="mb-6 border-l-4 border-blue-500 bg-blue-50 rounded-r-lg p-5">
+            <h3 class="text-xl font-bold text-gray-800 mb-4 flex items-center">
+                <i class="fas fa-glasses text-blue-600 mr-3"></i>
+                FÓRMULA OFTÁLMICA
+            </h3>
+            
+            <div class="bg-white rounded-lg overflow-hidden shadow-md">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gradient-to-r from-blue-600 to-purple-600 text-white">
+                        <tr>
+                            <th class="px-6 py-4 text-left text-sm font-bold uppercase tracking-wider">Ojo</th>
+                            <th class="px-6 py-4 text-center text-sm font-bold uppercase tracking-wider">Esfera</th>
+                            <th class="px-6 py-4 text-center text-sm font-bold uppercase tracking-wider">Cilindro</th>
+                            <th class="px-6 py-4 text-center text-sm font-bold uppercase tracking-wider">Eje</th>
+                            <th class="px-6 py-4 text-center text-sm font-bold uppercase tracking-wider">Adición</th>
+                            <th class="px-6 py-4 text-center text-sm font-bold uppercase tracking-wider">DNP</th>
+                            <th class="px-6 py-4 text-center text-sm font-bold uppercase tracking-wider">AV Lejos</th>
+                            <th class="px-6 py-4 text-center text-sm font-bold uppercase tracking-wider">AV Cerca</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        <tr class="hover:bg-blue-50 transition-colors">
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-bold bg-blue-100 text-blue-800">
+                                    <i class="fas fa-eye mr-1"></i> OD
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 text-center text-base font-semibold">{{ history.refraction_od_sphere|default:"-" }}</td>
+                            <td class="px-6 py-4 text-center text-base font-semibold">{{ history.refraction_od_cylinder|default:"-" }}</td>
+                            <td class="px-6 py-4 text-center text-base font-semibold">{% if history.refraction_od_axis %}{{ history.refraction_od_axis }}°{% else %}-{% endif %}</td>
+                            <td class="px-6 py-4 text-center text-base font-semibold">{% if history.refraction_od_add %}+{{ history.refraction_od_add }}{% else %}-{% endif %}</td>
+                            <td class="px-6 py-4 text-center text-base font-semibold">{{ history.refraction_od_dnp|default:"-" }}</td>
+                            <td class="px-6 py-4 text-center text-base font-bold text-green-600">{{ history.va_od_cc_distance|default:"-" }}</td>
+                            <td class="px-6 py-4 text-center text-base font-bold text-green-600">{{ history.va_od_cc_near|default:"-" }}</td>
+                        </tr>
+                        <tr class="hover:bg-blue-50 transition-colors">
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-bold bg-purple-100 text-purple-800">
+                                    <i class="fas fa-eye mr-1"></i> OS
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 text-center text-base font-semibold">{{ history.refraction_os_sphere|default:"-" }}</td>
+                            <td class="px-6 py-4 text-center text-base font-semibold">{{ history.refraction_os_cylinder|default:"-" }}</td>
+                            <td class="px-6 py-4 text-center text-base font-semibold">{% if history.refraction_os_axis %}{{ history.refraction_os_axis }}°{% else %}-{% endif %}</td>
+                            <td class="px-6 py-4 text-center text-base font-semibold">{% if history.refraction_os_add %}+{{ history.refraction_os_add }}{% else %}-{% endif %}</td>
+                            <td class="px-6 py-4 text-center text-base font-semibold">{{ history.refraction_os_dnp|default:"-" }}</td>
+                            <td class="px-6 py-4 text-center text-base font-bold text-green-600">{{ history.va_os_cc_distance|default:"-" }}</td>
+                            <td class="px-6 py-4 text-center text-base font-bold text-green-600">{{ history.va_os_cc_near|default:"-" }}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Detalles de la prescripción -->
+            {% if history.lens_type or history.lens_material or history.lens_coating or history.lens_brand or history.frame_type %}
+            <div class="mt-4 bg-white rounded-lg p-5 shadow-sm border border-blue-200">
+                <h4 class="font-bold text-gray-800 mb-3 flex items-center">
+                    <i class="fas fa-info-circle text-blue-600 mr-2"></i>
+                    Especificaciones de Lentes
+                </h4>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {% if history.lens_type %}
+                    <div class="flex items-start">
+                        <i class="fas fa-circle text-blue-500 text-xs mt-1 mr-2"></i>
+                        <div>
+                            <p class="text-xs text-gray-500 uppercase">Tipo de Lente</p>
+                            <p class="font-semibold text-gray-800">{{ history.lens_type }}</p>
+                        </div>
+                    </div>
                     {% endif %}
-                    {% if history.doctor.professional_card %}
-                    <span class="text-gray-500">- T.P: {{ history.doctor.professional_card }}</span>
+                    {% if history.lens_material %}
+                    <div class="flex items-start">
+                        <i class="fas fa-circle text-blue-500 text-xs mt-1 mr-2"></i>
+                        <div>
+                            <p class="text-xs text-gray-500 uppercase">Material</p>
+                            <p class="font-semibold text-gray-800">{{ history.lens_material }}</p>
+                        </div>
+                    </div>
                     {% endif %}
-                </p>
-                {% endif %}
+                    {% if history.lens_coating %}
+                    <div class="flex items-start">
+                        <i class="fas fa-circle text-blue-500 text-xs mt-1 mr-2"></i>
+                        <div>
+                            <p class="text-xs text-gray-500 uppercase">Tratamientos</p>
+                            <p class="font-semibold text-gray-800">{{ history.lens_coating }}</p>
+                        </div>
+                    </div>
+                    {% endif %}
+                    {% if history.lens_brand %}
+                    <div class="flex items-start">
+                        <i class="fas fa-circle text-blue-500 text-xs mt-1 mr-2"></i>
+                        <div>
+                            <p class="text-xs text-gray-500 uppercase">Marca</p>
+                            <p class="font-semibold text-gray-800">{{ history.lens_brand }}</p>
+                        </div>
+                    </div>
+                    {% endif %}
+                    {% if history.frame_type %}
+                    <div class="flex items-start">
+                        <i class="fas fa-circle text-blue-500 text-xs mt-1 mr-2"></i>
+                        <div>
+                            <p class="text-xs text-gray-500 uppercase">Tipo de Montura</p>
+                            <p class="font-semibold text-gray-800">{{ history.frame_type }}</p>
+                        </div>
+                    </div>
+                    {% endif %}
+                    {% if history.pd_distance %}
+                    <div class="flex items-start">
+                        <i class="fas fa-circle text-blue-500 text-xs mt-1 mr-2"></i>
+                        <div>
+                            <p class="text-xs text-gray-500 uppercase">DP Lejos</p>
+                            <p class="font-semibold text-gray-800">{{ history.pd_distance }} mm</p>
+                        </div>
+                    </div>
+                    {% endif %}
+                    {% if history.pd_near %}
+                    <div class="flex items-start">
+                        <i class="fas fa-circle text-blue-500 text-xs mt-1 mr-2"></i>
+                        <div>
+                            <p class="text-xs text-gray-500 uppercase">DP Cerca</p>
+                            <p class="font-semibold text-gray-800">{{ history.pd_near }} mm</p>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
             </div>
-        </div>
-        
-        <div class="flex gap-2">
-            <a href="{% url 'dashboard:visual_exam_pdf' patient.id history.id %}"
-               target="_blank"
-               class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors">
-                <i class="fas fa-file-pdf mr-2"></i>Generar PDF
-            </a>
-            <a href="{% url 'dashboard:visual_exam_edit' patient.id history.id %}"
-               class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors">
-                <i class="fas fa-edit mr-2"></i>Editar
-            </a>
-            <button onclick="confirmDelete()"
-                    class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors">
-                <i class="fas fa-trash mr-2"></i>Eliminar
-            </button>
-        </div>
-    </div>
-
-    <!-- Motivo de Consulta -->
-    {% if history.chief_complaint %}
-    <div class="mb-6 bg-green-50 rounded-lg p-5">
-        <h3 class="text-lg font-semibold text-gray-800 mb-2 flex items-center">
-            <i class="fas fa-comment-medical text-green-600 mr-2"></i>
-            Motivo de Consulta
-        </h3>
-        <p class="text-gray-700">{{ history.chief_complaint }}</p>
-    </div>
-    {% endif %}
-
-    <!-- Refracción -->
-    {% if history.refraction_od_sphere or history.refraction_os_sphere %}
-    <div class="mb-6 bg-blue-50 rounded-lg p-5">
-        <h3 class="text-lg font-semibold text-gray-800 mb-4 flex items-center">
-            <i class="fas fa-glasses text-blue-600 mr-2"></i>
-            Fórmula de Lentes
-        </h3>
-        
-        <div class="overflow-x-auto">
-            <table class="min-w-full bg-white border border-gray-300 rounded-lg">
-                <thead class="bg-blue-600 text-white">
-                    <tr>
-                        <th class="px-4 py-3 text-left text-sm font-semibold"></th>
-                        <th class="px-4 py-3 text-center text-sm font-semibold">ESFERA</th>
-                        <th class="px-4 py-3 text-center text-sm font-semibold">CILINDRO</th>
-                        <th class="px-4 py-3 text-center text-sm font-semibold">EJE</th>
-                        <th class="px-4 py-3 text-center text-sm font-semibold">ADICIÓN</th>
-                        <th class="px-4 py-3 text-center text-sm font-semibold">DNP</th>
-                        <th class="px-4 py-3 text-center text-sm font-semibold">AV LEJOS</th>
-                        <th class="px-4 py-3 text-center text-sm font-semibold">AV CERCA</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr class="border-b border-gray-200 hover:bg-gray-50">
-                        <td class="px-4 py-3 font-semibold bg-gray-100">OD</td>
-                        <td class="px-4 py-3 text-center">{{ history.refraction_od_sphere|default:"-" }}</td>
-                        <td class="px-4 py-3 text-center">{{ history.refraction_od_cylinder|default:"-" }}</td>
-                        <td class="px-4 py-3 text-center">{% if history.refraction_od_axis %}{{ history.refraction_od_axis }}°{% else %}-{% endif %}</td>
-                        <td class="px-4 py-3 text-center">{% if history.refraction_od_add %}+{{ history.refraction_od_add }}{% else %}-{% endif %}</td>
-                        <td class="px-4 py-3 text-center">{{ history.refraction_od_dnp|default:"-" }}</td>
-                        <td class="px-4 py-3 text-center">{{ history.va_od_cc_distance|default:"-" }}</td>
-                        <td class="px-4 py-3 text-center">{{ history.va_od_cc_near|default:"-" }}</td>
-                    </tr>
-                    <tr class="border-b border-gray-200 hover:bg-gray-50">
-                        <td class="px-4 py-3 font-semibold bg-gray-100">OS</td>
-                        <td class="px-4 py-3 text-center">{{ history.refraction_os_sphere|default:"-" }}</td>
-                        <td class="px-4 py-3 text-center">{{ history.refraction_os_cylinder|default:"-" }}</td>
-                        <td class="px-4 py-3 text-center">{% if history.refraction_os_axis %}{{ history.refraction_os_axis }}°{% else %}-{% endif %}</td>
-                        <td class="px-4 py-3 text-center">{% if history.refraction_os_add %}+{{ history.refraction_os_add }}{% else %}-{% endif %}</td>
-                        <td class="px-4 py-3 text-center">{{ history.refraction_os_dnp|default:"-" }}</td>
-                        <td class="px-4 py-3 text-center">{{ history.va_os_cc_distance|default:"-" }}</td>
-                        <td class="px-4 py-3 text-center">{{ history.va_os_cc_near|default:"-" }}</td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-
-        <!-- Detalles de la prescripción -->
-        {% if history.lens_type or history.lens_material or history.lens_coating %}
-        <div class="mt-4 p-4 bg-gray-50 rounded-lg">
-            <h4 class="font-semibold text-gray-700 mb-2">Detalles de la Prescripción:</h4>
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm">
-                {% if history.lens_type %}
-                <div><span class="font-medium">Tipo:</span> {{ history.lens_type }}</div>
-                {% endif %}
-                {% if history.lens_material %}
-                <div><span class="font-medium">Material:</span> {{ history.lens_material }}</div>
-                {% endif %}
-                {% if history.lens_coating %}
-                <div><span class="font-medium">Tratamientos:</span> {{ history.lens_coating }}</div>
-                {% endif %}
-                {% if history.lens_brand %}
-                <div><span class="font-medium">Marca:</span> {{ history.lens_brand }}</div>
-                {% endif %}
-                {% if history.frame_type %}
-                <div><span class="font-medium">Montura:</span> {{ history.frame_type }}</div>
-                {% endif %}
-                {% if history.pd_distance %}
-                <div><span class="font-medium">DP Lejos:</span> {{ history.pd_distance }} mm</div>
-                {% endif %}
-                {% if history.pd_near %}
-                <div><span class="font-medium">DP Cerca:</span> {{ history.pd_near }} mm</div>
-                {% endif %}
-            </div>
-        </div>
-        {% endif %}
-    </div>
-    {% endif %}
-
-    <!-- Diagnóstico -->
-    {% if history.diagnosis %}
-    <div class="mb-6 bg-yellow-50 rounded-lg p-5">
-        <h3 class="text-lg font-semibold text-gray-800 mb-2 flex items-center">
-            <i class="fas fa-stethoscope text-yellow-600 mr-2"></i>
-            Diagnóstico
-        </h3>
-        <p class="text-gray-700">{{ history.diagnosis }}</p>
-    </div>
-    {% endif %}
-
-    <!-- Observaciones y Tratamiento -->
-    {% if history.treatment_plan or history.therapy or history.visual_therapy %}
-    <div class="mb-6 bg-pink-50 rounded-lg p-5">
-        <h3 class="text-lg font-semibold text-gray-800 mb-4 flex items-center">
-            <i class="fas fa-clipboard-list text-pink-600 mr-2"></i>
-            Observaciones y Tratamiento
-        </h3>
-        
-        {% if history.treatment_plan %}
-        <div class="mb-3">
-            <p class="font-semibold text-gray-700 mb-1">Plan de Tratamiento:</p>
-            <p class="text-gray-600">{{ history.treatment_plan }}</p>
+            {% endif %}
         </div>
         {% endif %}
 
-        {% if history.therapy %}
-        <div class="mb-3">
-            <p class="font-semibold text-gray-700 mb-2">Terapias Coadyuvantes:</p>
-            <div class="flex flex-wrap gap-2">
-                {% for item in history.therapy|split:", " %}
-                <span class="inline-flex items-center px-3 py-1 rounded-full text-xs bg-indigo-100 text-indigo-800">
-                    <i class="fas fa-check-circle mr-1"></i> {{ item }}
-                </span>
-                {% endfor %}
+        <!-- SECCIÓN: LENTES DE CONTACTO -->
+        {% if history.contact_lens_type or history.contact_lens_brand or history.contact_lens_material %}
+        <div id="section-contacto" class="mb-6 border-l-4 border-teal-500 bg-teal-50 rounded-r-lg p-5">
+            <h3 class="text-xl font-bold text-gray-800 mb-4 flex items-center">
+                <i class="fas fa-eye text-teal-600 mr-3"></i>
+                LENTES DE CONTACTO
+            </h3>
+            <div class="bg-white rounded-lg p-5 shadow-sm">
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                    {% if history.contact_lens_type %}
+                    <div>
+                        <p class="text-xs text-gray-500 uppercase mb-1">Tipo</p>
+                        <p class="font-semibold text-gray-800">{{ history.contact_lens_type }}</p>
+                    </div>
+                    {% endif %}
+                    {% if history.contact_lens_brand %}
+                    <div>
+                        <p class="text-xs text-gray-500 uppercase mb-1">Marca</p>
+                        <p class="font-semibold text-gray-800">{{ history.contact_lens_brand }}</p>
+                    </div>
+                    {% endif %}
+                    {% if history.contact_lens_material %}
+                    <div>
+                        <p class="text-xs text-gray-500 uppercase mb-1">Material</p>
+                        <p class="font-semibold text-gray-800">{{ history.contact_lens_material }}</p>
+                    </div>
+                    {% endif %}
+                    {% if history.contact_lens_wearing %}
+                    <div>
+                        <p class="text-xs text-gray-500 uppercase mb-1">Régimen de Uso</p>
+                        <p class="font-semibold text-gray-800">{{ history.contact_lens_wearing }}</p>
+                    </div>
+                    {% endif %}
+                </div>
             </div>
         </div>
         {% endif %}
 
-        {% if history.visual_therapy %}
-        <div class="mb-3">
-            <p class="font-semibold text-gray-700 mb-2">Terapias Visuales:</p>
-            <div class="flex flex-wrap gap-2">
-                {% for item in history.visual_therapy|split:", " %}
-                <span class="inline-flex items-center px-3 py-1 rounded-full text-xs bg-indigo-100 text-indigo-800">
-                    <i class="fas fa-check-circle mr-1"></i> {{ item }}
-                </span>
-                {% endfor %}
+        <!-- SECCIÓN: MEDICAMENTOS -->
+        {% if history.medication_details %}
+        <div id="section-medicamentos" class="mb-6 border-l-4 border-pink-500 bg-pink-50 rounded-r-lg p-5">
+            <h3 class="text-xl font-bold text-gray-800 mb-4 flex items-center">
+                <i class="fas fa-pills text-pink-600 mr-3"></i>
+                MEDICAMENTOS PRESCRITOS
+            </h3>
+            <div class="bg-white rounded-lg p-5 shadow-sm">
+                <div class="space-y-2">
+                    {% for med in history.medication_details|split:"\n" %}
+                    {% if med %}
+                    <div class="flex items-start p-3 bg-pink-50 rounded border-l-2 border-pink-400">
+                        <i class="fas fa-prescription-bottle text-pink-600 mt-1 mr-3"></i>
+                        <p class="text-gray-800">{{ med }}</p>
+                    </div>
+                    {% endif %}
+                    {% endfor %}
+                </div>
             </div>
         </div>
         {% endif %}
 
-        {% if history.recommendation %}
-        <div class="mb-3">
-            <p class="font-semibold text-gray-700 mb-2">Recomendaciones:</p>
-            <div class="flex flex-wrap gap-2">
-                {% for item in history.recommendation|split:", " %}
-                <span class="inline-flex items-center px-3 py-1 rounded-full text-xs bg-green-100 text-green-800">
-                    <i class="fas fa-lightbulb mr-1"></i> {{ item }}
-                </span>
-                {% endfor %}
+        <!-- SECCIÓN: DIAGNÓSTICO -->
+        {% if history.diagnosis %}
+        <!-- SECCIÓN: DIAGNÓSTICO -->
+        {% if history.diagnosis %}
+        <div id="section-diagnostico" class="mb-6 border-l-4 border-yellow-500 bg-yellow-50 rounded-r-lg p-5">
+            <h3 class="text-xl font-bold text-gray-800 mb-3 flex items-center">
+                <i class="fas fa-stethoscope text-yellow-600 mr-3"></i>
+                DIAGNÓSTICO
+            </h3>
+            <div class="bg-white rounded-lg p-5 shadow-sm">
+                <p class="text-gray-800 text-base leading-relaxed">{{ history.diagnosis }}</p>
             </div>
         </div>
         {% endif %}
+
+        <!-- SECCIÓN: PLAN DE TRATAMIENTO Y TERAPIAS -->
+        {% if history.treatment_plan or history.therapy or history.visual_therapy or history.recommendation %}
+        <div id="section-tratamiento" class="mb-6 border-l-4 border-purple-500 bg-purple-50 rounded-r-lg p-5">
+            <h3 class="text-xl font-bold text-gray-800 mb-4 flex items-center">
+                <i class="fas fa-clipboard-list text-purple-600 mr-3"></i>
+                PLAN DE TRATAMIENTO Y RECOMENDACIONES
+            </h3>
+            
+            {% if history.treatment_plan %}
+            <div class="bg-white rounded-lg p-5 shadow-sm mb-4">
+                <h4 class="font-bold text-purple-700 mb-2 flex items-center">
+                    <i class="fas fa-file-medical mr-2"></i>
+                    Plan General
+                </h4>
+                <p class="text-gray-800 leading-relaxed">{{ history.treatment_plan }}</p>
+            </div>
+            {% endif %}
+
+            {% if history.therapy %}
+            <div class="bg-white rounded-lg p-5 shadow-sm mb-4">
+                <h4 class="font-bold text-indigo-700 mb-3 flex items-center">
+                    <i class="fas fa-heartbeat mr-2"></i>
+                    Terapias Coadyuvantes
+                </h4>
+                <div class="flex flex-wrap gap-2">
+                    {% for item in history.therapy|split:", " %}
+                    <span class="inline-flex items-center px-4 py-2 rounded-full text-sm font-medium bg-indigo-100 text-indigo-800 border border-indigo-300">
+                        <i class="fas fa-check-circle mr-2"></i> {{ item }}
+                    </span>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            {% if history.visual_therapy %}
+            <div class="bg-white rounded-lg p-5 shadow-sm mb-4">
+                <h4 class="font-bold text-indigo-700 mb-3 flex items-center">
+                    <i class="fas fa-eye mr-2"></i>
+                    Terapias Visuales
+                </h4>
+                <div class="flex flex-wrap gap-2">
+                    {% for item in history.visual_therapy|split:", " %}
+                    <span class="inline-flex items-center px-4 py-2 rounded-full text-sm font-medium bg-blue-100 text-blue-800 border border-blue-300">
+                        <i class="fas fa-check-circle mr-2"></i> {{ item }}
+                    </span>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            {% if history.recommendation %}
+            <div class="bg-white rounded-lg p-5 shadow-sm">
+                <h4 class="font-bold text-green-700 mb-3 flex items-center">
+                    <i class="fas fa-lightbulb mr-2"></i>
+                    Recomendaciones
+                </h4>
+                <div class="flex flex-wrap gap-2">
+                    {% for item in history.recommendation|split:", " %}
+                    <span class="inline-flex items-center px-4 py-2 rounded-full text-sm font-medium bg-green-100 text-green-800 border border-green-300">
+                        <i class="fas fa-check mr-2"></i> {{ item }}
+                    </span>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+        {% endif %}
+
+        <!-- SECCIÓN: SEGUIMIENTO -->
+        {% if history.follow_up_reason or history.referral_specialty %}
+        <div id="section-seguimiento" class="mb-6 border-l-4 border-orange-500 bg-orange-50 rounded-r-lg p-5">
+            <h3 class="text-xl font-bold text-gray-800 mb-4 flex items-center">
+                <i class="fas fa-calendar-check text-orange-600 mr-3"></i>
+                SEGUIMIENTO Y REMISIÓN
+            </h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {% if history.follow_up_reason %}
+                <div class="bg-white rounded-lg p-4 shadow-sm">
+                    <p class="text-xs text-gray-500 uppercase mb-2">Motivo de Seguimiento</p>
+                    <p class="font-semibold text-gray-800">{{ history.follow_up_reason }}</p>
+                </div>
+                {% endif %}
+                {% if history.referral_specialty %}
+                <div class="bg-white rounded-lg p-4 shadow-sm">
+                    <p class="text-xs text-gray-500 uppercase mb-2">Remisión a Especialista</p>
+                    <p class="font-semibold text-gray-800">{{ history.referral_specialty }}</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+
     </div>
-    {% endif %}
-
 </div>
 
-<!-- Modal de Confirmación de Eliminación -->
-<div id="deleteModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-    <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
-        <div class="mt-3 text-center">
-            <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100">
-                <i class="fas fa-exclamation-triangle text-red-600 text-2xl"></i>
+<!-- Modal de Selección de Secciones para PDF -->
+<div id="pdfModal" class="hidden fixed inset-0 bg-gray-900 bg-opacity-60 overflow-y-auto h-full w-full z-50">
+    <div class="relative top-10 mx-auto p-6 border w-full max-w-2xl shadow-2xl rounded-lg bg-white">
+        <div class="flex justify-between items-center mb-5 pb-4 border-b">
+            <h3 class="text-2xl font-bold text-gray-800 flex items-center">
+                <i class="fas fa-file-pdf text-red-600 mr-3"></i>
+                Generar PDF del Examen
+            </h3>
+            <button onclick="closePdfModal()" class="text-gray-400 hover:text-gray-600">
+                <i class="fas fa-times text-2xl"></i>
+            </button>
+        </div>
+        
+        <p class="text-gray-600 mb-4">Selecciona las secciones que deseas incluir en el PDF:</p>
+        
+        <form id="pdfForm" method="GET" action="{% url 'dashboard:visual_exam_pdf' patient.id history.id %}" target="_blank">
+            <div class="space-y-3 mb-6">
+                <label class="flex items-center p-4 bg-gray-50 rounded-lg hover:bg-gray-100 cursor-pointer transition-colors border border-gray-200">
+                    <input type="checkbox" name="sections" value="all" checked onclick="toggleAllSections(this)" class="w-5 h-5 text-purple-600 rounded focus:ring-2 focus:ring-purple-500">
+                    <span class="ml-3 font-bold text-gray-800">Examen Completo</span>
+                </label>
+                
+                {% if history.chief_complaint %}
+                <label class="flex items-center p-4 bg-green-50 rounded-lg hover:bg-green-100 cursor-pointer transition-colors border border-green-200 section-checkbox">
+                    <input type="checkbox" name="sections" value="motivo" checked class="w-5 h-5 text-green-600 rounded focus:ring-2 focus:ring-green-500">
+                    <span class="ml-3 text-gray-700">
+                        <i class="fas fa-comment-medical text-green-600 mr-2"></i>
+                        Motivo de Consulta
+                    </span>
+                </label>
+                {% endif %}
+                
+                {% if history.va_od_sc_distance or history.va_os_sc_distance %}
+                <label class="flex items-center p-4 bg-indigo-50 rounded-lg hover:bg-indigo-100 cursor-pointer transition-colors border border-indigo-200 section-checkbox">
+                    <input type="checkbox" name="sections" value="agudeza" checked class="w-5 h-5 text-indigo-600 rounded focus:ring-2 focus:ring-indigo-500">
+                    <span class="ml-3 text-gray-700">
+                        <i class="fas fa-eye text-indigo-600 mr-2"></i>
+                        Agudeza Visual
+                    </span>
+                </label>
+                {% endif %}
+                
+                {% if history.refraction_od_sphere or history.refraction_os_sphere %}
+                <label class="flex items-center p-4 bg-blue-50 rounded-lg hover:bg-blue-100 cursor-pointer transition-colors border border-blue-200 section-checkbox">
+                    <input type="checkbox" name="sections" value="refraccion" checked class="w-5 h-5 text-blue-600 rounded focus:ring-2 focus:ring-blue-500">
+                    <span class="ml-3 text-gray-700">
+                        <i class="fas fa-glasses text-blue-600 mr-2"></i>
+                        Fórmula Oftálmica (Refracción)
+                    </span>
+                </label>
+                {% endif %}
+                
+                {% if history.contact_lens_type %}
+                <label class="flex items-center p-4 bg-teal-50 rounded-lg hover:bg-teal-100 cursor-pointer transition-colors border border-teal-200 section-checkbox">
+                    <input type="checkbox" name="sections" value="contacto" checked class="w-5 h-5 text-teal-600 rounded focus:ring-2 focus:ring-teal-500">
+                    <span class="ml-3 text-gray-700">
+                        <i class="fas fa-eye text-teal-600 mr-2"></i>
+                        Lentes de Contacto
+                    </span>
+                </label>
+                {% endif %}
+                
+                {% if history.medication_details %}
+                <label class="flex items-center p-4 bg-pink-50 rounded-lg hover:bg-pink-100 cursor-pointer transition-colors border border-pink-200 section-checkbox">
+                    <input type="checkbox" name="sections" value="medicamentos" checked class="w-5 h-5 text-pink-600 rounded focus:ring-2 focus:ring-pink-500">
+                    <span class="ml-3 text-gray-700">
+                        <i class="fas fa-pills text-pink-600 mr-2"></i>
+                        Medicamentos
+                    </span>
+                </label>
+                {% endif %}
+                
+                {% if history.diagnosis %}
+                <label class="flex items-center p-4 bg-yellow-50 rounded-lg hover:bg-yellow-100 cursor-pointer transition-colors border border-yellow-200 section-checkbox">
+                    <input type="checkbox" name="sections" value="diagnostico" checked class="w-5 h-5 text-yellow-600 rounded focus:ring-2 focus:ring-yellow-500">
+                    <span class="ml-3 text-gray-700">
+                        <i class="fas fa-stethoscope text-yellow-600 mr-2"></i>
+                        Diagnóstico
+                    </span>
+                </label>
+                {% endif %}
+                
+                {% if history.treatment_plan or history.therapy or history.visual_therapy %}
+                <label class="flex items-center p-4 bg-purple-50 rounded-lg hover:bg-purple-100 cursor-pointer transition-colors border border-purple-200 section-checkbox">
+                    <input type="checkbox" name="sections" value="tratamiento" checked class="w-5 h-5 text-purple-600 rounded focus:ring-2 focus:ring-purple-500">
+                    <span class="ml-3 text-gray-700">
+                        <i class="fas fa-clipboard-list text-purple-600 mr-2"></i>
+                        Plan de Tratamiento
+                    </span>
+                </label>
+                {% endif %}
+                
+                {% if history.follow_up_reason or history.referral_specialty %}
+                <label class="flex items-center p-4 bg-orange-50 rounded-lg hover:bg-orange-100 cursor-pointer transition-colors border border-orange-200 section-checkbox">
+                    <input type="checkbox" name="sections" value="seguimiento" checked class="w-5 h-5 text-orange-600 rounded focus:ring-2 focus:ring-orange-500">
+                    <span class="ml-3 text-gray-700">
+                        <i class="fas fa-calendar-check text-orange-600 mr-2"></i>
+                        Seguimiento
+                    </span>
+                </label>
+                {% endif %}
             </div>
-            <h3 class="text-lg leading-6 font-medium text-gray-900 mt-4">Eliminar Examen Visual</h3>
-            <div class="mt-2 px-7 py-3">
-                <p class="text-sm text-gray-500">
-                    ¿Está seguro de que desea eliminar este examen visual? Esta acción no se puede deshacer.
-                </p>
-            </div>
-            <div class="items-center px-4 py-3">
-                <form method="POST" action="{% url 'dashboard:visual_exam_delete' patient.id history.id %}">
-                    {% csrf_token %}
-                    <button type="submit"
-                            class="px-4 py-2 bg-red-600 text-white text-base font-medium rounded-md w-full shadow-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-300">
-                        Eliminar
-                    </button>
-                </form>
-                <button onclick="closeDeleteModal()"
-                        class="mt-3 px-4 py-2 bg-gray-100 text-gray-700 text-base font-medium rounded-md w-full shadow-sm hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-300">
+            
+            <div class="flex gap-3">
+                <button type="submit" class="flex-1 px-6 py-3 bg-red-600 hover:bg-red-700 text-white font-medium rounded-lg transition-colors shadow-lg">
+                    <i class="fas fa-file-pdf mr-2"></i>
+                    Generar PDF
+                </button>
+                <button type="button" onclick="closePdfModal()" class="px-6 py-3 bg-gray-200 hover:bg-gray-300 text-gray-700 font-medium rounded-lg transition-colors">
                     Cancelar
                 </button>
             </div>
+        </form>
+    </div>
+</div>
+
+<!-- Modal de Confirmación de Eliminación -->
+<div id="deleteModal" class="hidden fixed inset-0 bg-gray-900 bg-opacity-60 overflow-y-auto h-full w-full z-50">
+    <div class="relative top-20 mx-auto p-6 border w-96 shadow-2xl rounded-lg bg-white">
+        <div class="text-center">
+            <div class="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-red-100 mb-4">
+                <i class="fas fa-exclamation-triangle text-red-600 text-3xl"></i>
+            </div>
+            <h3 class="text-xl font-bold text-gray-900 mb-3">Eliminar Examen Visual</h3>
+            <p class="text-gray-600 mb-6">
+                ¿Está seguro de que desea eliminar este examen visual? Esta acción no se puede deshacer.
+            </p>
+            <form method="POST" action="{% url 'dashboard:visual_exam_delete' patient.id history.id %}">
+                {% csrf_token %}
+                <div class="flex gap-3">
+                    <button type="submit"
+                            class="flex-1 px-4 py-3 bg-red-600 hover:bg-red-700 text-white font-medium rounded-lg transition-colors shadow-lg">
+                        <i class="fas fa-trash mr-2"></i>Eliminar
+                    </button>
+                    <button type="button" onclick="closeDeleteModal()"
+                            class="flex-1 px-4 py-3 bg-gray-200 hover:bg-gray-300 text-gray-700 font-medium rounded-lg transition-colors">
+                        Cancelar
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
 </div>
 
 <script>
+// Modal de PDF
+function showPdfModal() {
+    document.getElementById('pdfModal').classList.remove('hidden');
+}
+
+function closePdfModal() {
+    document.getElementById('pdfModal').classList.add('hidden');
+}
+
+// Toggle de "Examen Completo"
+function toggleAllSections(checkbox) {
+    const sectionCheckboxes = document.querySelectorAll('.section-checkbox input[type="checkbox"]');
+    sectionCheckboxes.forEach(cb => {
+        cb.checked = checkbox.checked;
+    });
+}
+
+// Detectar cambios en checkboxes individuales
+document.addEventListener('DOMContentLoaded', function() {
+    const allCheckbox = document.querySelector('input[value="all"]');
+    const sectionCheckboxes = document.querySelectorAll('.section-checkbox input[type="checkbox"]');
+    
+    sectionCheckboxes.forEach(cb => {
+        cb.addEventListener('change', function() {
+            // Si alguno se desmarca, desmarcar "Examen Completo"
+            if (!this.checked) {
+                allCheckbox.checked = false;
+            }
+            // Si todos están marcados, marcar "Examen Completo"
+            const allChecked = Array.from(sectionCheckboxes).every(checkbox => checkbox.checked);
+            if (allChecked) {
+                allCheckbox.checked = true;
+            }
+        });
+    });
+    
+    // Cerrar modal PDF si se hace clic fuera
+    document.getElementById('pdfModal').addEventListener('click', function(event) {
+        if (event.target === this) {
+            closePdfModal();
+        }
+    });
+});
+
+// Modal de Eliminación
 function confirmDelete() {
     document.getElementById('deleteModal').classList.remove('hidden');
 }
@@ -252,7 +651,7 @@ function closeDeleteModal() {
     document.getElementById('deleteModal').classList.add('hidden');
 }
 
-// Cerrar modal si se hace clic fuera de él
+// Cerrar modal de eliminación si se hace clic fuera
 document.getElementById('deleteModal').addEventListener('click', function(event) {
     if (event.target === this) {
         closeDeleteModal();
@@ -261,3 +660,4 @@ document.getElementById('deleteModal').addEventListener('click', function(event)
 </script>
 
 {% endblock %}
+

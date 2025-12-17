@@ -1942,7 +1942,7 @@ def visual_exam_delete(request, patient_id, history_id):
 
 @login_required
 def visual_exam_pdf(request, patient_id, history_id):
-    """Generar PDF específico de fórmula de lentes ópticos"""
+    """Generar PDF del examen visual con secciones seleccionables"""
     from reportlab.lib.pagesizes import letter
     from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
     from reportlab.lib.units import inch
@@ -1953,6 +1953,10 @@ def visual_exam_pdf(request, patient_id, history_id):
     org_filter = {'organization': request.organization} if hasattr(request, 'organization') and request.organization else {}
     patient = get_object_or_404(Patient, id=patient_id, **org_filter)
     history = get_object_or_404(ClinicalHistory, id=history_id, patient=patient, **org_filter)
+    
+    # Obtener secciones seleccionadas del GET
+    selected_sections = request.GET.getlist('sections')
+    include_all = 'all' in selected_sections
     
     # Crear buffer para el PDF
     buffer = BytesIO()
