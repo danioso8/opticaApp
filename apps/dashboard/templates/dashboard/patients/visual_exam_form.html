@@ -1431,7 +1431,7 @@
                             <select name="lens_coating" id="lens_coating" multiple
                                     class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500"
                                     style="height: 60px;"
-                                    onchange="updateSelectedTreatments()">
+                                    onchange="updateSelectedTreatmentsVisual()">
                                 {% for coating in lens_coatings %}
                                 <option value="{{ coating.name }}" 
                                         data-description="{{ coating.description|default:'' }}"
@@ -1446,7 +1446,8 @@
                             <p class="text-xs text-gray-500 mt-1">
                                 <i class="fas fa-info-circle"></i> Mantén Ctrl/Cmd para múltiples
                             </p>
-                            <div id="treatment-details" class="hidden mt-2"></div>
+                            <!-- Área de tratamientos seleccionados con botones X -->
+                            <div id="selected-treatments-visual" class="mt-2 space-y-2"></div>
                         </div>
                         
                         <div>
@@ -2254,50 +2255,79 @@ function showMaterialDetails(select) {
     }
 }
 
-// Mostrar tratamientos seleccionados con sus descripciones
-function updateSelectedTreatments() {
+// Actualizar tratamientos seleccionados con detalles y botones X
+function updateSelectedTreatmentsVisual() {
+    const select = document.getElementById('lens_coating');
+    const container = document.getElementById('selected-treatments-visual');
+    
+    if (!select || !container) return;
+    
+    container.innerHTML = '';
+    
+    const selectedOptions = Array.from(select.selectedOptions).filter(opt => opt.value !== '');
+    
+    selectedOptions.forEach(option => {
+        const description = option.getAttribute('data-description');
+        const category = option.getAttribute('data-category');
+        
+        const card = document.createElement('div');
+        card.className = 'bg-purple-50 border border-purple-200 rounded p-2 text-xs';
+        
+        const contentDiv = document.createElement('div');
+        contentDiv.className = 'flex justify-between items-start';
+        
+        const detailsDiv = document.createElement('div');
+        detailsDiv.className = 'flex-1';
+        
+        const nameP = document.createElement('p');
+        nameP.className = 'font-semibold text-purple-900';
+        nameP.innerHTML = `<i class="fas fa-shield-alt mr-1"></i>${option.text}`;
+        detailsDiv.appendChild(nameP);
+        
+        if (category && category !== 'None' && category !== '') {
+            const categoryP = document.createElement('p');
+            categoryP.className = 'text-gray-600';
+            categoryP.innerHTML = `<i class="fas fa-tag mr-1"></i>${category}`;
+            detailsDiv.appendChild(categoryP);
+        }
+        
+        if (description && description !== 'None' && description !== '') {
+            const descP = document.createElement('p');
+            descP.className = 'text-gray-600 leading-relaxed';
+            descP.innerHTML = `<i class="fas fa-info-circle mr-1"></i>${description}`;
+            detailsDiv.appendChild(descP);
+        }
+        
+        const removeBtn = document.createElement('button');
+        removeBtn.type = 'button';
+        removeBtn.className = 'bg-red-500 hover:bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center ml-2 flex-shrink-0';
+        removeBtn.title = 'Quitar';
+        removeBtn.innerHTML = '<i class="fas fa-times text-sm"></i>';
+        removeBtn.onclick = function() { removeTreatmentVisual(option.value); };
+        
+        contentDiv.appendChild(detailsDiv);
+        contentDiv.appendChild(removeBtn);
+        card.appendChild(contentDiv);
+        container.appendChild(card);
+    });
+    
+    // Si no hay tratamientos seleccionados, mostrar mensaje
+    if (selectedOptions.length === 0) {
+        const emptyMsg = document.createElement('p');
+        emptyMsg.className = 'text-xs text-gray-500 italic';
+        emptyMsg.innerHTML = '<i class="fas fa-arrow-down mr-1"></i>Selecciona tratamientos del listado';
+        container.appendChild(emptyMsg);
+    }
+}
+
+function removeTreatmentVisual(value) {
     const select = document.getElementById('lens_coating');
     if (!select) return;
     
-    const selectedOptions = Array.from(select.selectedOptions);
-    let detailsContainer = document.getElementById('treatment-details');
-    
-    if (!detailsContainer) {
-        // Crear el contenedor si no existe
-        const container = document.createElement('div');
-        container.id = 'treatment-details';
-        container.className = 'mt-2 space-y-1';
-        select.parentElement.appendChild(container);
-        detailsContainer = container;
-    }
-    
-    const detailsDiv = detailsContainer;
-    
-    if (selectedOptions.length > 0) {
-        let html = '<div class="text-xs font-medium text-gray-700 mb-1"><i class="fas fa-info-circle mr-1"></i>Tratamientos seleccionados:</div>';
-        html += '<div class="space-y-2">';
-        selectedOptions.forEach(option => {
-            const description = option.getAttribute('data-description');
-            const category = option.getAttribute('data-category');
-            
-            html += `<div class="p-3 bg-purple-50 rounded-lg border border-purple-200 shadow-sm">`;
-            html += `<div class="font-medium text-purple-800"><i class="fas fa-check-circle mr-1"></i>${option.value}</div>`;
-            
-            if (category && category !== 'None' && category !== '') {
-                html += `<div class="text-xs text-purple-600 mt-1"><i class="fas fa-tag mr-1"></i><strong>Categoría:</strong> ${category}</div>`;
-            }
-            if (description && description !== 'None' && description !== '') {
-                html += `<div class="text-xs text-gray-700 mt-1 leading-relaxed"><i class="fas fa-info-circle mr-1"></i>${description}</div>`;
-            }
-            html += `</div>`;
-        });
-        html += '</div>';
-        
-        detailsDiv.innerHTML = html;
-        detailsDiv.classList.remove('hidden');
-    } else {
-        detailsDiv.innerHTML = '';
-        detailsDiv.classList.add('hidden');
+    const option = Array.from(select.options).find(opt => opt.value === value);
+    if (option) {
+        option.selected = false;
+        updateSelectedTreatmentsVisual();
     }
 }
 
@@ -2307,7 +2337,7 @@ document.addEventListener('DOMContentLoaded', function() {
     if (treatmentSelect) {
         // Escuchar clicks en el select
         treatmentSelect.addEventListener('click', function() {
-            setTimeout(updateSelectedTreatments, 50);
+            setTimeout(updateSelectedTreatmentsVisual, 50);
         });
         
         // Escuchar cambios con teclado
@@ -2748,6 +2778,9 @@ document.addEventListener('DOMContentLoaded', function() {
     // Inicializar medicamentos seleccionados
     updateSelectedMedicationsVisual();
     
+    // Inicializar tratamientos seleccionados
+    updateSelectedTreatmentsVisual();
+    
     // Intentar restaurar datos guardados
     const restored = loadFormFromLocalStorage();
     
@@ -2758,13 +2791,13 @@ document.addEventListener('DOMContentLoaded', function() {
     if (restored) {
         updateRefractionDisplay();
         if (typeof updateRadarChart === 'function') updateRadarChart();
-        if (typeof updateSelectedTreatments === 'function') updateSelectedTreatments();
+        if (typeof updateSelectedTreatmentsVisual === 'function') updateSelectedTreatmentsVisual();
     }
     
     // Inicializar visualización de tratamientos si hay pre-seleccionados
-    if (typeof updateSelectedTreatments === 'function') {
+    if (typeof updateSelectedTreatmentsVisual === 'function') {
         setTimeout(function() {
-            updateSelectedTreatments();
+            updateSelectedTreatmentsVisual();
         }, 100);
         if (typeof updatePolarChart === 'function') updatePolarChart();
         if (typeof updateSeverityIndicators === 'function') updateSeverityIndicators();

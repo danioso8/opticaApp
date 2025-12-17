@@ -1491,7 +1491,7 @@ def visual_exam_create(request, patient_id):
                 # LENTES OFTÁLMICOS
                 lens_type=request.POST.get('lens_type', ''),
                 lens_material=request.POST.get('lens_material', ''),
-                lens_coating=request.POST.get('lens_coating', ''),
+                lens_coating=', '.join(request.POST.getlist('lens_coating')),
                 lens_brand=request.POST.get('lens_brand', ''),
                 frame_type=request.POST.get('frame_type', ''),
                 
@@ -1798,7 +1798,7 @@ def visual_exam_edit(request, patient_id, history_id):
             # LENTES OFTÁLMICOS
             history.lens_type = request.POST.get('lens_type', '')
             history.lens_material = request.POST.get('lens_material', '')
-            history.lens_coating = request.POST.get('lens_coating', '')
+            history.lens_coating = ', '.join(request.POST.getlist('lens_coating'))
             history.lens_brand = request.POST.get('lens_brand', '')
             history.frame_type = request.POST.get('frame_type', '')
             
