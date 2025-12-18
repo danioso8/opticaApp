@@ -16,6 +16,20 @@ from .models_clinical_config import (
     OpticalPrescriptionTemplate
 )
 
+# Importar modelos de exámenes especiales
+from .models_clinical_exams import (
+    ExamOrder,
+    Tonometry,
+    VisualFieldTest,
+    Retinography,
+    OCTExam,
+    CornealTopography,
+    Pachymetry,
+    Keratometry,
+    ColorVisionTest,
+    MotilityExam
+)
+
 
 class Patient(TenantModel):
     """Modelo de Paciente/Cliente"""

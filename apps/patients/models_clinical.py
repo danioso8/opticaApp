@@ -16,6 +16,12 @@ class ClinicalHistory(TenantModel):
     )
     
     date = models.DateField(verbose_name='Fecha del Examen')
+    last_eye_checkup = models.CharField(
+        max_length=200,
+        verbose_name='Tiempo del Último Control de Ojos',
+        blank=True,
+        help_text='Ej: Hace 1 año, Hace 6 meses, Primera vez, etc.'
+    )
     doctor = models.ForeignKey(
         'patients.Doctor',
         on_delete=models.SET_NULL,
@@ -51,7 +57,33 @@ class ClinicalHistory(TenantModel):
     ocular_pharmacological_history = models.TextField(verbose_name='Farmacológicos Oculares', blank=True)
     ocular_surgical_history = models.TextField(verbose_name='Quirúrgicos Oculares', blank=True)
     ocular_trauma_history = models.TextField(verbose_name='Traumatológicos Oculares', blank=True)
-    ocular_therapeutic_history = models.TextField(verbose_name='Terapéuticos Oculares', blank=True)
+    
+    # Lensometría - Medición de lentes actuales
+    lensometry_lens_type = models.ForeignKey(
+        'patients.ClinicalParameter',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='lensometry_histories',
+        verbose_name='Tipo de Lente (Lensometría)',
+        limit_choices_to={'parameter_type': 'lens_type', 'is_active': True}
+    )
+    lensometry_notes = models.TextField(verbose_name='Notas de Lensometría', blank=True, help_text='Mediciones de lentes actuales del paciente')
+    
+    # Fórmula de Lentes Actuales - OD
+    current_rx_od_sphere = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True, verbose_name='Fórmula Actual OD Esfera')
+    current_rx_od_cylinder = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True, verbose_name='Fórmula Actual OD Cilindro')
+    current_rx_od_axis = models.IntegerField(null=True, blank=True, verbose_name='Fórmula Actual OD Eje')
+    current_rx_od_add = models.DecimalField(max_digits=4, decimal_places=2, null=True, blank=True, verbose_name='Fórmula Actual OD ADD')
+    
+    # Fórmula de Lentes Actuales - OS
+    current_rx_os_sphere = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True, verbose_name='Fórmula Actual OS Esfera')
+    current_rx_os_cylinder = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True, verbose_name='Fórmula Actual OS Cilindro')
+    current_rx_os_axis = models.IntegerField(null=True, blank=True, verbose_name='Fórmula Actual OS Eje')
+    current_rx_os_add = models.DecimalField(max_digits=4, decimal_places=2, null=True, blank=True, verbose_name='Fórmula Actual OS ADD')
+    
+    # Backward compatibility
+    ocular_therapeutic_history = models.TextField(verbose_name='Terapéuticos Oculares (Legacy)', blank=True, help_text='Campo antiguo - usar lensometría')
     
     # Signos y Síntomas (Semiología Clínica)
     blurred_vision = models.BooleanField(default=False, verbose_name='Visión Borrosa')

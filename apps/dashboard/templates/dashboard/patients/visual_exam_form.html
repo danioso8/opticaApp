@@ -129,6 +129,19 @@
                 
                 <div class="md:col-span-2">
                     <label class="block text-sm font-medium text-gray-700 mb-1">
+                        Tiempo del Último Control de Ojos
+                    </label>
+                    <input type="text" name="last_eye_checkup" 
+                           value="{% if history %}{{ history.last_eye_checkup }}{% endif %}"
+                           placeholder="Ej: Hace 1 año, Hace 6 meses, Primera vez"
+                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent">
+                    <p class="text-xs text-gray-500 mt-1">Indique cuánto tiempo hace del último examen visual</p>
+                </div>
+            </div>
+            
+            <div class="grid grid-cols-1 mt-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">
                         Médico/Optómetra <span class="text-red-500">*</span>
                     </label>
                     <select name="doctor" required
@@ -316,10 +329,17 @@
 
         <!-- ANTECEDENTES OCULARES -->
         <div class="bg-gradient-to-r from-teal-50 to-teal-100 border-l-4 border-teal-600 rounded-lg p-6 mb-6 shadow-sm">
-            <h3 class="text-xl font-bold text-gray-800 mb-5 flex items-center uppercase tracking-wide">
-                <i class="fas fa-eye text-teal-600 mr-2"></i>
-                ANTECEDENTES OCULARES
-            </h3>
+            <div class="flex items-center justify-between mb-5">
+                <h3 class="text-xl font-bold text-gray-800 flex items-center uppercase tracking-wide">
+                    <i class="fas fa-eye text-teal-600 mr-2"></i>
+                    ANTECEDENTES OCULARES
+                </h3>
+                <button type="button" onclick="fillOcularHistoryWithNA()" 
+                        class="px-4 py-2 bg-teal-600 hover:bg-teal-700 text-black rounded-lg shadow transition-all duration-200 flex items-center gap-2 text-sm font-medium">
+                    <i class="fas fa-magic"></i>
+                    <span>Rellenar Sección con N/A</span>
+                </button>
+            </div>
             
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <!-- Patológicos Oculares -->
@@ -374,27 +394,134 @@
                               placeholder="Traumatismos oculares previos... o escriba N/A">{% if history %}{{ history.ocular_trauma_history }}{% endif %}</textarea>
                 </div>
 
-                <!-- Terapéuticos Oculares -->
-                <div class="bg-white rounded-lg p-4 shadow-sm">
-                    <label class="block text-sm font-bold text-gray-800 mb-2">
-                        <i class="fas fa-glasses text-indigo-600 mr-1"></i> Terapéuticos
-                    </label>
-                    <div class="space-y-2">
-                        <div class="flex items-center space-x-4">
-                            <label class="flex items-center space-x-2 cursor-pointer">
-                                <input type="checkbox" name="previous_glasses" {% if history.previous_glasses %}checked{% endif %}
-                                       class="w-4 h-4 text-teal-600 border-gray-300 rounded focus:ring-teal-500">
-                                <span class="text-sm text-gray-700 font-medium">Usa Lentes</span>
-                            </label>
-                            <label class="flex items-center space-x-2 cursor-pointer">
-                                <input type="checkbox" name="previous_contact_lenses" {% if history.previous_contact_lenses %}checked{% endif %}
-                                       class="w-4 h-4 text-teal-600 border-gray-300 rounded focus:ring-teal-500">
-                                <span class="text-sm text-gray-700 font-medium">Lentes de Contacto</span>
-                            </label>
+                <!-- Lensometría y Fórmula Actual - 2 Cards -->
+                <div class="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <!-- Card 1: Lensometría -->
+                    <div class="bg-white rounded-lg p-4 shadow-sm">
+                        <label class="block text-sm font-bold text-gray-800 mb-2 flex items-center justify-between">
+                            <span><i class="fas fa-glasses text-indigo-600 mr-1"></i> Lensometría</span>
+                            <button type="button" onclick="fillWithNA('lensometry_notes')" class="text-xs px-2 py-1 bg-gray-200 hover:bg-gray-300 rounded" title="Rellenar con N/A">
+                                N/A
+                            </button>
+                        </label>
+                        <div class="space-y-2">
+                            <!-- Tipo de Lente con opción de crear nuevo -->
+                            <div>
+                                <label class="block text-xs font-medium text-gray-700 mb-1">Tipo de Lente</label>
+                                <div class="flex gap-2">
+                                    <select name="lensometry_lens_type" id="lensometry_lens_type"
+                                            class="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 text-sm">
+                                        <option value="">-- Seleccione tipo de lente --</option>
+                                        {% for lens_type in lens_types %}
+                                        <option value="{{ lens_type.id }}" 
+                                                {% if history and history.lensometry_lens_type and history.lensometry_lens_type.id == lens_type.id %}selected{% endif %}>
+                                            {{ lens_type.name }}
+                                        </option>
+                                        {% endfor %}
+                                    </select>
+                                    <button type="button" onclick="showCreateLensTypeModal()" 
+                                            class="px-3 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-medium whitespace-nowrap">
+                                        <i class="fas fa-plus mr-1"></i> Crear
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <!-- Checkboxes de uso de lentes -->
+                            <div class="flex items-center space-x-4 mt-2">
+                                <label class="flex items-center space-x-2 cursor-pointer">
+                                    <input type="checkbox" name="previous_glasses" {% if history.previous_glasses %}checked{% endif %}
+                                           class="w-4 h-4 text-teal-600 border-gray-300 rounded focus:ring-teal-500">
+                                    <span class="text-xs text-gray-700 font-medium">Usa Lentes</span>
+                                </label>
+                                <label class="flex items-center space-x-2 cursor-pointer">
+                                    <input type="checkbox" name="previous_contact_lenses" {% if history.previous_contact_lenses %}checked{% endif %}
+                                           class="w-4 h-4 text-teal-600 border-gray-300 rounded focus:ring-teal-500">
+                                    <span class="text-xs text-gray-700 font-medium">LC</span>
+                                </label>
+                            </div>
+                            
+                            <!-- Notas de Lensometría -->
+                            <textarea name="lensometry_notes" rows="3"
+                                      class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 text-xs"
+                                      placeholder="Notas adicionales...">{% if history %}{{ history.lensometry_notes }}{% endif %}</textarea>
                         </div>
-                        <textarea name="ocular_therapeutic_history" rows="1"
-                                  class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500"
-                                  placeholder="Detalles de uso de lentes, terapias visuales... o escriba N/A">{% if history %}{{ history.ocular_therapeutic_history }}{% endif %}</textarea>
+                    </div>
+
+                    <!-- Card 2: Fórmula de Lentes Actuales -->
+                    <div class="bg-white rounded-lg p-4 shadow-sm border-2 border-indigo-200">
+                        <label class="block text-sm font-bold text-gray-800 mb-3 flex items-center">
+                            <i class="fas fa-prescription text-indigo-600 mr-1"></i> Fórmula Lentes Actuales
+                        </label>
+                        
+                        <!-- OD -->
+                        <div class="mb-3">
+                            <div class="text-xs font-bold text-white bg-blue-500 px-2 py-1 rounded mb-2">OD (Ojo Derecho)</div>
+                            <div class="grid grid-cols-4 gap-2">
+                                <div>
+                                    <label class="text-xs text-gray-600">Esfera</label>
+                                    <input type="number" step="0.25" name="current_rx_od_sphere" 
+                                           value="{% if history.current_rx_od_sphere %}{{ history.current_rx_od_sphere }}{% endif %}"
+                                           class="w-full px-2 py-1 border border-gray-300 rounded text-xs focus:ring-2 focus:ring-blue-500"
+                                           placeholder="±0.00">
+                                </div>
+                                <div>
+                                    <label class="text-xs text-gray-600">Cilindro</label>
+                                    <input type="number" step="0.25" name="current_rx_od_cylinder" 
+                                           value="{% if history.current_rx_od_cylinder %}{{ history.current_rx_od_cylinder }}{% endif %}"
+                                           class="w-full px-2 py-1 border border-gray-300 rounded text-xs focus:ring-2 focus:ring-blue-500"
+                                           placeholder="±0.00">
+                                </div>
+                                <div>
+                                    <label class="text-xs text-gray-600">Eje</label>
+                                    <input type="number" min="0" max="180" name="current_rx_od_axis" 
+                                           value="{% if history.current_rx_od_axis %}{{ history.current_rx_od_axis }}{% endif %}"
+                                           class="w-full px-2 py-1 border border-gray-300 rounded text-xs focus:ring-2 focus:ring-blue-500"
+                                           placeholder="0-180°">
+                                </div>
+                                <div>
+                                    <label class="text-xs text-gray-600">ADD</label>
+                                    <input type="number" step="0.25" name="current_rx_od_add" 
+                                           value="{% if history.current_rx_od_add %}{{ history.current_rx_od_add }}{% endif %}"
+                                           class="w-full px-2 py-1 border border-gray-300 rounded text-xs focus:ring-2 focus:ring-blue-500"
+                                           placeholder="+0.00">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- OS -->
+                        <div>
+                            <div class="text-xs font-bold text-white bg-green-500 px-2 py-1 rounded mb-2">OS (Ojo Izquierdo)</div>
+                            <div class="grid grid-cols-4 gap-2">
+                                <div>
+                                    <label class="text-xs text-gray-600">Esfera</label>
+                                    <input type="number" step="0.25" name="current_rx_os_sphere" 
+                                           value="{% if history.current_rx_os_sphere %}{{ history.current_rx_os_sphere }}{% endif %}"
+                                           class="w-full px-2 py-1 border border-gray-300 rounded text-xs focus:ring-2 focus:ring-green-500"
+                                           placeholder="±0.00">
+                                </div>
+                                <div>
+                                    <label class="text-xs text-gray-600">Cilindro</label>
+                                    <input type="number" step="0.25" name="current_rx_os_cylinder" 
+                                           value="{% if history.current_rx_os_cylinder %}{{ history.current_rx_os_cylinder }}{% endif %}"
+                                           class="w-full px-2 py-1 border border-gray-300 rounded text-xs focus:ring-2 focus:ring-green-500"
+                                           placeholder="±0.00">
+                                </div>
+                                <div>
+                                    <label class="text-xs text-gray-600">Eje</label>
+                                    <input type="number" min="0" max="180" name="current_rx_os_axis" 
+                                           value="{% if history.current_rx_os_axis %}{{ history.current_rx_os_axis }}{% endif %}"
+                                           class="w-full px-2 py-1 border border-gray-300 rounded text-xs focus:ring-2 focus:ring-green-500"
+                                           placeholder="0-180°">
+                                </div>
+                                <div>
+                                    <label class="text-xs text-gray-600">ADD</label>
+                                    <input type="number" step="0.25" name="current_rx_os_add" 
+                                           value="{% if history.current_rx_os_add %}{{ history.current_rx_os_add }}{% endif %}"
+                                           class="w-full px-2 py-1 border border-gray-300 rounded text-xs focus:ring-2 focus:ring-green-500"
+                                           placeholder="+0.00">
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -410,8 +537,11 @@
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <!-- Generales -->
                 <div class="bg-white rounded-lg p-4 shadow-sm">
-                    <label class="block text-sm font-bold text-gray-800 mb-2">
-                        <i class="fas fa-heartbeat text-pink-600 mr-1"></i> Generales
+                    <label class="block text-sm font-bold text-gray-800 mb-2 flex items-center justify-between">
+                        <span><i class="fas fa-heartbeat text-pink-600 mr-1"></i> Generales</span>
+                        <button type="button" onclick="fillWithNA('family_general_notes')" class="text-xs px-2 py-1 bg-gray-200 hover:bg-gray-300 rounded" title="Rellenar con N/A">
+                            N/A
+                        </button>
                     </label>
                     <div class="grid grid-cols-2 gap-2 mb-2">
                         <label class="flex items-center space-x-2 cursor-pointer">
@@ -442,8 +572,11 @@
 
                 <!-- Oculares -->
                 <div class="bg-white rounded-lg p-4 shadow-sm">
-                    <label class="block text-sm font-bold text-gray-800 mb-2">
-                        <i class="fas fa-eye text-pink-600 mr-1"></i> Oculares
+                    <label class="block text-sm font-bold text-gray-800 mb-2 flex items-center justify-between">
+                        <span><i class="fas fa-eye text-pink-600 mr-1"></i> Oculares</span>
+                        <button type="button" onclick="fillWithNA('family_ocular_notes')" class="text-xs px-2 py-1 bg-gray-200 hover:bg-gray-300 rounded" title="Rellenar con N/A">
+                            N/A
+                        </button>
                     </label>
                     <div class="grid grid-cols-2 gap-2 mb-2">
                         <label class="flex items-center space-x-2 cursor-pointer">
@@ -2030,6 +2163,41 @@ function fillGeneralHistoryWithNA() {
         saveFormDataToLocalStorage();
     } else {
         showNotification('ℹ️ No hay campos vacíos en Antecedentes Generales', 'info');
+    }
+}
+
+// Rellenar solo ANTECEDENTES OCULARES con N/A
+function fillOcularHistoryWithNA() {
+    const fieldsToFill = [
+        'ocular_pathological_history',
+        'ocular_pharmacological_history',
+        'ocular_surgical_history',
+        'ocular_trauma_history',
+        'lensometry_notes'
+    ];
+    
+    let filledCount = 0;
+    
+    fieldsToFill.forEach(fieldName => {
+        const field = document.querySelector(`[name="${fieldName}"]`);
+        if (field && !field.value.trim()) {
+            field.value = 'N/A';
+            filledCount++;
+            
+            // Efecto visual
+            field.classList.add('bg-teal-100', 'transition-all', 'duration-300');
+            setTimeout(() => {
+                field.classList.remove('bg-teal-100');
+            }, 1000);
+        }
+    });
+    
+    if (filledCount > 0) {
+        showNotification(`✅ ${filledCount} campo(s) de Antecedentes Oculares rellenado(s) con "N/A"`, 'success');
+        // Trigger autosave
+        saveFormDataToLocalStorage();
+    } else {
+        showNotification('ℹ️ No hay campos vacíos en Antecedentes Oculares', 'info');
     }
 }
 
@@ -3785,6 +3953,146 @@ document.addEventListener('DOMContentLoaded', function() {
         nearChartSelect.dispatchEvent(new Event('change'));
     }
 });
+
+// ========== MODAL PARA CREAR TIPO DE LENTE ==========
+function showCreateLensTypeModal() {
+    const modalHtml = `
+        <div id="lensTypeModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" onclick="closeLensTypeModal(event)">
+            <div class="bg-white rounded-lg shadow-xl max-w-md w-full mx-4" onclick="event.stopPropagation()">
+                <div class="bg-indigo-600 text-white px-6 py-4 rounded-t-lg flex items-center justify-between">
+                    <h3 class="text-lg font-bold flex items-center">
+                        <i class="fas fa-glasses mr-2"></i>
+                        Crear Nuevo Tipo de Lente
+                    </h3>
+                    <button type="button" onclick="closeLensTypeModal()" class="text-white hover:text-gray-200">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+                </div>
+                
+                <div class="p-6">
+                    <form id="lensTypeForm" onsubmit="submitLensType(event)">
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">
+                                    Nombre del Tipo de Lente <span class="text-red-500">*</span>
+                                </label>
+                                <input type="text" id="lens_type_name" required
+                                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                                       placeholder="Ej: Monofocal, Bifocal, Progresivo, etc.">
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">
+                                    Código/Abreviatura
+                                </label>
+                                <input type="text" id="lens_type_code"
+                                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                                       placeholder="Ej: MONO, BIF, PROG">
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">
+                                    Descripción
+                                </label>
+                                <textarea id="lens_type_description" rows="2"
+                                          class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                                          placeholder="Descripción opcional del tipo de lente"></textarea>
+                            </div>
+                        </div>
+                        
+                        <div class="mt-6 flex justify-end space-x-3">
+                            <button type="button" onclick="closeLensTypeModal()"
+                                    class="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-800 rounded-lg font-medium">
+                                Cancelar
+                            </button>
+                            <button type="submit"
+                                    class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-medium">
+                                <i class="fas fa-save mr-1"></i> Guardar
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+    document.getElementById('lens_type_name').focus();
+}
+
+function closeLensTypeModal(event) {
+    if (!event || event.target.id === 'lensTypeModal') {
+        const modal = document.getElementById('lensTypeModal');
+        if (modal) {
+            modal.remove();
+        }
+    }
+}
+
+function submitLensType(event) {
+    event.preventDefault();
+    
+    const name = document.getElementById('lens_type_name').value.trim();
+    const code = document.getElementById('lens_type_code').value.trim();
+    const description = document.getElementById('lens_type_description').value.trim();
+    
+    if (!name) {
+        alert('Por favor ingrese el nombre del tipo de lente');
+        return;
+    }
+    
+    // Preparar datos
+    const formData = new FormData();
+    formData.append('parameter_type', 'lens_type');
+    formData.append('name', name);
+    formData.append('code', code);
+    formData.append('description', description);
+    formData.append('is_active', 'true');
+    
+    // Enviar a servidor
+    fetch('{% url "dashboard:clinical_parameter_create" %}', {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+        },
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Agregar nueva opción al select
+            const select = document.getElementById('lensometry_lens_type');
+            const option = new Option(data.parameter.name, data.parameter.id, true, true);
+            select.add(option);
+            
+            // Cerrar modal
+            closeLensTypeModal();
+            
+            // Mostrar mensaje de éxito
+            showSuccessMessage('Tipo de lente creado exitosamente');
+        } else {
+            alert('Error al crear tipo de lente: ' + (data.error || 'Error desconocido'));
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error al crear tipo de lente. Por favor intente nuevamente.');
+    });
+}
+
+function showSuccessMessage(message) {
+    const messageDiv = document.createElement('div');
+    messageDiv.className = 'fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-50 flex items-center';
+    messageDiv.innerHTML = `
+        <i class="fas fa-check-circle mr-2"></i>
+        <span>${message}</span>
+    `;
+    document.body.appendChild(messageDiv);
+    
+    setTimeout(() => {
+        messageDiv.remove();
+    }, 3000);
+}
 </script>
 
 {% endblock %}

@@ -1,0 +1,251 @@
+{% extends 'dashboard/base.html' %}
+{% load static %}
+
+{% block title %}{{ title }} - {{ patient.full_name }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'dashboard:patient_list' %}">Pacientes</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'dashboard:patient_detail' patient.id %}">{{ patient.full_name }}</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'dashboard:clinical_history_detail' patient.id history.id %}">Historia Clínica</a></li>
+            <li class="breadcrumb-item active">Resultado Tonometría</li>
+        </ol>
+    </nav>
+
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card border-primary">
+                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="fas fa-eye"></i> Resultado de Tonometría
+                    </h5>
+                    <div>
+                        <a href="{% url 'dashboard:tonometry_pdf' patient.id history.id tonometry.id %}" 
+                           class="btn btn-light btn-sm" target="_blank">
+                            <i class="fas fa-print"></i> Imprimir PDF
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <p class="mb-1"><strong>Paciente:</strong> {{ patient.full_name }}</p>
+                            <p class="mb-1"><strong>Identificación:</strong> {{ patient.identification|default:"N/A" }}</p>
+                        </div>
+                        <div class="col-md-4">
+                            <p class="mb-1"><strong>Fecha del Examen:</strong> {{ tonometry.exam_date|date:"d/m/Y" }}</p>
+                            <p class="mb-1"><strong>Hora:</strong> {{ tonometry.time_measured|time:"H:i" }}</p>
+                        </div>
+                        <div class="col-md-4">
+                            <p class="mb-1"><strong>Realizado por:</strong> {{ tonometry.performed_by.full_name|default:"N/A" }}</p>
+                            <p class="mb-1"><strong>Método:</strong> {{ tonometry.get_method_display }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Resultados -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <!-- OD -->
+            <div class="card h-100 {% if tonometry.od_pressure > 21 %}border-danger{% else %}border-success{% endif %}">
+                <div class="card-header {% if tonometry.od_pressure > 21 %}bg-danger{% else %}bg-success{% endif %} text-white">
+                    <h5 class="mb-0"><i class="fas fa-eye"></i> OJO DERECHO (OD)</h5>
+                </div>
+                <div class="card-body text-center">
+                    <h1 class="display-3 mb-0 {% if tonometry.od_pressure > 21 %}text-danger{% else %}text-success{% endif %}">
+                        {{ tonometry.od_pressure }}
+                    </h1>
+                    <p class="text-muted mb-3">mmHg</p>
+                    
+                    {% if tonometry.od_pressure > 21 %}
+                    <div class="alert alert-danger mb-3">
+                        <i class="fas fa-exclamation-triangle"></i> <strong>ELEVADA</strong> - Por encima del rango normal
+                    </div>
+                    {% elif tonometry.od_pressure < 10 %}
+                    <div class="alert alert-warning mb-3">
+                        <i class="fas fa-exclamation-circle"></i> <strong>BAJA</strong> - Por debajo del rango normal
+                    </div>
+                    {% else %}
+                    <div class="alert alert-success mb-3">
+                        <i class="fas fa-check-circle"></i> <strong>NORMAL</strong> - Dentro del rango esperado
+                    </div>
+                    {% endif %}
+                    
+                    {% if tonometry.od_notes %}
+                    <div class="text-start">
+                        <p class="mb-0"><strong>Notas:</strong></p>
+                        <p class="text-muted">{{ tonometry.od_notes }}</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <!-- OS -->
+            <div class="card h-100 {% if tonometry.os_pressure > 21 %}border-danger{% else %}border-success{% endif %}">
+                <div class="card-header {% if tonometry.os_pressure > 21 %}bg-danger{% else %}bg-success{% endif %} text-white">
+                    <h5 class="mb-0"><i class="fas fa-eye"></i> OJO IZQUIERDO (OS)</h5>
+                </div>
+                <div class="card-body text-center">
+                    <h1 class="display-3 mb-0 {% if tonometry.os_pressure > 21 %}text-danger{% else %}text-success{% endif %}">
+                        {{ tonometry.os_pressure }}
+                    </h1>
+                    <p class="text-muted mb-3">mmHg</p>
+                    
+                    {% if tonometry.os_pressure > 21 %}
+                    <div class="alert alert-danger mb-3">
+                        <i class="fas fa-exclamation-triangle"></i> <strong>ELEVADA</strong> - Por encima del rango normal
+                    </div>
+                    {% elif tonometry.os_pressure < 10 %}
+                    <div class="alert alert-warning mb-3">
+                        <i class="fas fa-exclamation-circle"></i> <strong>BAJA</strong> - Por debajo del rango normal
+                    </div>
+                    {% else %}
+                    <div class="alert alert-success mb-3">
+                        <i class="fas fa-check-circle"></i> <strong>NORMAL</strong> - Dentro del rango esperado
+                    </div>
+                    {% endif %}
+                    
+                    {% if tonometry.os_notes %}
+                    <div class="text-start">
+                        <p class="mb-0"><strong>Notas:</strong></p>
+                        <p class="text-muted">{{ tonometry.os_notes }}</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Información del Examen -->
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header bg-light">
+                    <h6 class="mb-0"><i class="fas fa-info-circle"></i> Detalles del Examen</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p><strong>Equipo Utilizado:</strong> {{ tonometry.equipment_used|default:"No especificado" }}</p>
+                            <p><strong>Corregido por Paquimetría:</strong> 
+                                {% if tonometry.pachymetry_corrected %}
+                                <span class="badge bg-info">Sí</span>
+                                {% else %}
+                                <span class="badge bg-secondary">No</span>
+                                {% endif %}
+                            </p>
+                        </div>
+                        <div class="col-md-6">
+                            <p><strong>Requiere Seguimiento:</strong> 
+                                {% if tonometry.requires_follow_up %}
+                                <span class="badge bg-warning">Sí</span>
+                                {% if tonometry.follow_up_period %}
+                                - {{ tonometry.follow_up_period }}
+                                {% endif %}
+                                {% else %}
+                                <span class="badge bg-secondary">No</span>
+                                {% endif %}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Hallazgos e Interpretación -->
+    {% if tonometry.findings or tonometry.interpretation or tonometry.recommendations %}
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header bg-light">
+                    <h6 class="mb-0"><i class="fas fa-clipboard-check"></i> Interpretación Clínica</h6>
+                </div>
+                <div class="card-body">
+                    {% if tonometry.findings %}
+                    <div class="mb-3">
+                        <h6>Hallazgos:</h6>
+                        <p>{{ tonometry.findings }}</p>
+                    </div>
+                    {% endif %}
+                    
+                    {% if tonometry.interpretation %}
+                    <div class="mb-3">
+                        <h6>Interpretación:</h6>
+                        <p>{{ tonometry.interpretation }}</p>
+                    </div>
+                    {% endif %}
+                    
+                    {% if tonometry.recommendations %}
+                    <div class="mb-3">
+                        <h6>Recomendaciones:</h6>
+                        <p>{{ tonometry.recommendations }}</p>
+                    </div>
+                    {% endif %}
+                    
+                    {% if tonometry.notes %}
+                    <div>
+                        <h6>Notas Adicionales:</h6>
+                        <p>{{ tonometry.notes }}</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Valores de Referencia -->
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="alert alert-info">
+                <h6><i class="fas fa-info-circle"></i> Valores de Referencia</h6>
+                <div class="row">
+                    <div class="col-md-4">
+                        <strong class="text-success">Normal:</strong> 10-21 mmHg
+                    </div>
+                    <div class="col-md-4">
+                        <strong class="text-danger">Hipertensión Ocular:</strong> &gt;21 mmHg
+                    </div>
+                    <div class="col-md-4">
+                        <strong class="text-warning">Hipotensión:</strong> &lt;10 mmHg
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Botones de acción -->
+    <div class="row">
+        <div class="col-md-12 text-center">
+            <a href="{% url 'dashboard:tonometry_pdf' patient.id history.id tonometry.id %}" 
+               class="btn btn-primary btn-lg" target="_blank">
+                <i class="fas fa-print"></i> Imprimir Resultado
+            </a>
+            <a href="{% url 'dashboard:clinical_history_detail' patient.id history.id %}" 
+               class="btn btn-secondary btn-lg">
+                <i class="fas fa-arrow-left"></i> Volver a Historia Clínica
+            </a>
+        </div>
+    </div>
+</div>
+
+<style>
+    .display-3 {
+        font-weight: bold;
+    }
+    .card {
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+</style>
+{% endblock %}

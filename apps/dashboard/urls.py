@@ -1,5 +1,7 @@
 from django.urls import path
 from . import views
+from . import views_exam_orders
+from . import views_clinical_exams
 from .views_analytics import (
     analytics_dashboard,
     api_realtime_metrics,
@@ -125,6 +127,20 @@ urlpatterns = [
     path('patients/<int:patient_id>/visual-exam/<int:history_id>/', views.visual_exam_detail, name='visual_exam_detail'),
     path('patients/<int:patient_id>/visual-exam/<int:history_id>/pdf/', views.visual_exam_pdf, name='visual_exam_pdf'),
     path('patients/<int:patient_id>/visual-exam/<int:history_id>/delete/', views.visual_exam_delete, name='visual_exam_delete'),
+    
+    # Órdenes de Exámenes Especiales
+    path('patients/<int:patient_id>/history/<int:history_id>/exam-order/create/', views_exam_orders.exam_order_create, name='exam_order_create'),
+    path('exam-orders/', views_exam_orders.exam_order_list, name='exam_order_list'),
+    path('exam-orders/<int:order_id>/', views_exam_orders.exam_order_detail, name='exam_order_detail'),
+    path('exam-orders/<int:order_id>/update-status/', views_exam_orders.exam_order_update_status, name='exam_order_update_status'),
+    path('exam-orders/<int:order_id>/cancel/', views_exam_orders.exam_order_cancel, name='exam_order_cancel'),
+    path('patients/<int:patient_id>/history/<int:history_id>/exam-order/<int:order_id>/pdf/', views_exam_orders.exam_order_pdf, name='exam_order_pdf'),
+    
+    # Resultados de Exámenes - Tonometría
+    path('patients/<int:patient_id>/history/<int:history_id>/tonometry/create/', views_clinical_exams.tonometry_create, name='tonometry_create'),
+    path('patients/<int:patient_id>/history/<int:history_id>/tonometry/create/<int:order_id>/', views_clinical_exams.tonometry_create, name='tonometry_create_from_order'),
+    path('patients/<int:patient_id>/history/<int:history_id>/tonometry/<int:tonometry_id>/', views_clinical_exams.tonometry_detail, name='tonometry_detail'),
+    path('patients/<int:patient_id>/history/<int:history_id>/tonometry/<int:tonometry_id>/pdf/', views_clinical_exams.tonometry_pdf, name='tonometry_pdf'),
     
     # Calendario
     path('calendar/', views.calendar_view, name='calendar'),

@@ -797,6 +797,10 @@ def clinical_history_pdf(request, patient_id, history_id):
         ['Fecha del Examen:', str(history.date), 'Médico/Optómetra:', history.doctor.full_name if history.doctor else 'N/A'],
     ]
     
+    # Agregar fila del último control si existe
+    if history.last_eye_checkup:
+        patient_data.append(['Último Control de Ojos:', history.last_eye_checkup, '', ''])
+    
     patient_table = Table(patient_data, colWidths=[1.5*inch, 2*inch, 1.5*inch, 2*inch])
     patient_table.setStyle(TableStyle([
         ('BACKGROUND', (0, 0), (0, -1), colors.Color(0.9, 0.9, 0.9)),
@@ -843,6 +847,50 @@ def clinical_history_pdf(request, patient_id, history_id):
     
     if history.symptoms_notes:
         story.append(Paragraph(f"<b>Notas de Síntomas:</b> {history.symptoms_notes}", normal_style))
+    
+    # ANTECEDENTES OCULARES
+    has_ocular_history = any([
+        history.ocular_pathological_history,
+        history.ocular_pharmacological_history,
+        history.ocular_surgical_history,
+        history.ocular_trauma_history,
+        history.lensometry_notes,
+        history.lensometry_lens_type,
+        history.previous_glasses,
+        history.previous_contact_lenses
+    ])
+    
+    if has_ocular_history:
+        story.append(Spacer(1, 0.1*inch))
+        story.append(Paragraph("ANTECEDENTES OCULARES", heading_style))
+        
+        if history.ocular_pathological_history:
+            story.append(Paragraph(f"<b>Patológicos:</b> {history.ocular_pathological_history}", normal_style))
+        
+        if history.ocular_pharmacological_history:
+            story.append(Paragraph(f"<b>Farmacológicos:</b> {history.ocular_pharmacological_history}", normal_style))
+        
+        if history.ocular_surgical_history:
+            story.append(Paragraph(f"<b>Quirúrgicos:</b> {history.ocular_surgical_history}", normal_style))
+        
+        if history.ocular_trauma_history:
+            story.append(Paragraph(f"<b>Traumatológicos:</b> {history.ocular_trauma_history}", normal_style))
+        
+        # Lensometría
+        if history.lensometry_lens_type or history.lensometry_notes or history.previous_glasses or history.previous_contact_lenses:
+            lensometry_parts = []
+            if history.lensometry_lens_type:
+                lensometry_parts.append(f"Tipo: {history.lensometry_lens_type.name}")
+            if history.previous_glasses:
+                lensometry_parts.append("Usa lentes")
+            if history.previous_contact_lenses:
+                lensometry_parts.append("Lentes de contacto")
+            
+            lensometry_text = "<b>Lensometría:</b> " + ", ".join(lensometry_parts)
+            if history.lensometry_notes:
+                lensometry_text += f" - {history.lensometry_notes}"
+            
+            story.append(Paragraph(lensometry_text, normal_style))
     
     story.append(Spacer(1, 0.2*inch))
     
@@ -1355,6 +1403,7 @@ def visual_exam_create(request, patient_id):
                 patient=patient,
                 organization=request.organization,
                 date=request.POST.get('date'),
+                last_eye_checkup=request.POST.get('last_eye_checkup', ''),
                 doctor_id=request.POST.get('doctor') if request.POST.get('doctor') else None,
                 
                 # Cartillas utilizadas
@@ -1424,6 +1473,24 @@ def visual_exam_create(request, patient_id):
                 ocular_trauma_history=request.POST.get('ocular_trauma_history', ''),
                 previous_glasses=request.POST.get('previous_glasses') == 'on',
                 previous_contact_lenses=request.POST.get('previous_contact_lenses') == 'on',
+                
+                # Lensometría
+                lensometry_lens_type_id=request.POST.get('lensometry_lens_type') if request.POST.get('lensometry_lens_type') else None,
+                lensometry_notes=request.POST.get('lensometry_notes', ''),
+                
+                # Fórmula de Lentes Actuales - OD
+                current_rx_od_sphere=safe_float(request.POST.get('current_rx_od_sphere')),
+                current_rx_od_cylinder=safe_float(request.POST.get('current_rx_od_cylinder')),
+                current_rx_od_axis=safe_int(request.POST.get('current_rx_od_axis')),
+                current_rx_od_add=safe_float(request.POST.get('current_rx_od_add')),
+                
+                # Fórmula de Lentes Actuales - OS
+                current_rx_os_sphere=safe_float(request.POST.get('current_rx_os_sphere')),
+                current_rx_os_cylinder=safe_float(request.POST.get('current_rx_os_cylinder')),
+                current_rx_os_axis=safe_int(request.POST.get('current_rx_os_axis')),
+                current_rx_os_add=safe_float(request.POST.get('current_rx_os_add')),
+                
+                # Backward compatibility
                 ocular_therapeutic_history=request.POST.get('ocular_therapeutic_history', ''),
                 
                 # ANTECEDENTES FAMILIARES - Generales
@@ -1616,6 +1683,7 @@ def visual_exam_edit(request, patient_id, history_id):
         try:
             # Actualizar historia clínica
             history.date = request.POST.get('date')
+            history.last_eye_checkup = request.POST.get('last_eye_checkup', '')
             history.doctor_id = request.POST.get('doctor') if request.POST.get('doctor') else None
             
             # Cartillas utilizadas
@@ -1731,6 +1799,39 @@ def visual_exam_edit(request, patient_id, history_id):
             history.ocular_trauma_history = request.POST.get('ocular_trauma_history', '')
             history.previous_glasses = request.POST.get('previous_glasses') == 'on'
             history.previous_contact_lenses = request.POST.get('previous_contact_lenses') == 'on'
+            
+            # Lensometría
+            lensometry_lens_type_id = request.POST.get('lensometry_lens_type')
+            history.lensometry_lens_type_id = lensometry_lens_type_id if lensometry_lens_type_id else None
+            history.lensometry_notes = request.POST.get('lensometry_notes', '')
+            
+            # Fórmula de Lentes Actuales - OD
+            rx_od_sph = normalize_number(request.POST.get('current_rx_od_sphere', ''))
+            history.current_rx_od_sphere = float(rx_od_sph) if rx_od_sph else None
+            
+            rx_od_cyl = normalize_number(request.POST.get('current_rx_od_cylinder', ''))
+            history.current_rx_od_cylinder = float(rx_od_cyl) if rx_od_cyl else None
+            
+            rx_od_axis = request.POST.get('current_rx_od_axis', '').strip()
+            history.current_rx_od_axis = int(rx_od_axis) if rx_od_axis else None
+            
+            rx_od_add = normalize_number(request.POST.get('current_rx_od_add', ''))
+            history.current_rx_od_add = float(rx_od_add) if rx_od_add else None
+            
+            # Fórmula de Lentes Actuales - OS
+            rx_os_sph = normalize_number(request.POST.get('current_rx_os_sphere', ''))
+            history.current_rx_os_sphere = float(rx_os_sph) if rx_os_sph else None
+            
+            rx_os_cyl = normalize_number(request.POST.get('current_rx_os_cylinder', ''))
+            history.current_rx_os_cylinder = float(rx_os_cyl) if rx_os_cyl else None
+            
+            rx_os_axis = request.POST.get('current_rx_os_axis', '').strip()
+            history.current_rx_os_axis = int(rx_os_axis) if rx_os_axis else None
+            
+            rx_os_add = normalize_number(request.POST.get('current_rx_os_add', ''))
+            history.current_rx_os_add = float(rx_os_add) if rx_os_add else None
+            
+            # Backward compatibility
             history.ocular_therapeutic_history = request.POST.get('ocular_therapeutic_history', '')
             
             # ANTECEDENTES FAMILIARES - Generales
@@ -2107,6 +2208,10 @@ def visual_exam_pdf(request, patient_id, history_id):
         ['Dirección:', patient.address[:40] if patient.address else 'N/A', '', '', '', '', '', ''],
     ]
     
+    # Agregar fila del último control si existe
+    if history.last_eye_checkup:
+        patient_data.append(['Último Control:', history.last_eye_checkup, '', '', '', '', '', ''])
+    
     patient_table = Table(patient_data, colWidths=[0.9*inch, 1.8*inch, 0.2*inch, 0.8*inch, 1.3*inch, 0.2*inch, 1.0*inch, 0.8*inch])
     patient_table.setStyle(TableStyle([
         ('FONTSIZE', (0, 0), (-1, -1), 7),
@@ -2170,86 +2275,248 @@ def visual_exam_pdf(request, patient_id, history_id):
     
     # FÓRMULA OFTÁLMICA (REFRACCIÓN)
     if (include_all or 'refraccion' in selected_sections) and (history.refraction_od_sphere or history.refraction_os_sphere):
-        story.append(Paragraph("<b>FÓRMULA OFTÁLMICA</b>", heading_style))
+        story.append(Paragraph("<b>FÓRMULA OFTÁLMICA - PRESCRIPCIÓN DE LENTES</b>", heading_style))
+        story.append(Spacer(1, 0.05*inch))
         
-        # Tabla de fórmula principal
-    formula_data = [
-        ['', 'ESFERA', 'CILINDRO', 'EJE', 'ADICIÓN', 'PRISMA BASE', 'GRADUADOS', 'AV LEJOS', 'AV CERCA'],
-        [
-            'OD',
-            str(history.refraction_od_sphere) if history.refraction_od_sphere else 'N/A',
-            str(history.refraction_od_cylinder) if history.refraction_od_cylinder else '',
-            str(history.refraction_od_axis) + '°' if history.refraction_od_axis else '',
-            '+' + str(history.refraction_od_add) if history.refraction_od_add else '',
-            str(history.refraction_od_prism) if history.refraction_od_prism else '',
-            str(history.refraction_od_dnp) if history.refraction_od_dnp else '20/20',
-            str(history.va_od_cc_distance) if history.va_od_cc_distance else '20/20',
-            str(history.va_od_cc_near) if history.va_od_cc_near else '0.75M',
-        ],
-        [
-            'OI',
-            str(history.refraction_os_sphere) if history.refraction_os_sphere else 'N/A',
-            str(history.refraction_os_cylinder) if history.refraction_os_cylinder else '',
-            str(history.refraction_os_axis) + '°' if history.refraction_os_axis else '',
-            '+' + str(history.refraction_os_add) if history.refraction_os_add else '',
-            str(history.refraction_os_prism) if history.refraction_os_prism else '',
-            str(history.refraction_os_dnp) if history.refraction_os_dnp else '20/20',
-            str(history.va_os_cc_distance) if history.va_os_cc_distance else '20/20',
-            str(history.va_os_cc_near) if history.va_os_cc_near else '0.75M',
-        ]
-    ]
-    
-    formula_table = Table(formula_data, colWidths=[0.5*inch, 0.75*inch, 0.75*inch, 0.6*inch, 0.75*inch, 0.9*inch, 0.9*inch, 0.75*inch, 0.75*inch])
-    formula_table.setStyle(TableStyle([
-        # Encabezado
-        ('BACKGROUND', (0, 0), (-1, 0), colors.Color(0.2, 0.4, 0.6)),
-        ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
-        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-        ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-        ('FONTSIZE', (0, 0), (-1, 0), 7),
-        # Filas de datos
-        ('FONTSIZE', (0, 1), (-1, -1), 8),
-        ('FONTNAME', (0, 1), (0, -1), 'Helvetica-Bold'),
-        # Bordes
-        ('GRID', (0, 0), (-1, -1), 1, colors.black),
-        ('LINEABOVE', (0, 0), (-1, 0), 2, colors.Color(0.2, 0.4, 0.6)),
-        ('LINEBELOW', (0, -1), (-1, -1), 2, colors.Color(0.2, 0.4, 0.6)),
-        # Padding
-        ('TOPPADDING', (0, 0), (-1, -1), 4),
-        ('BOTTOMPADDING', (0, 0), (-1, -1), 4),
-    ]))
-    
-    story.append(formula_table)
-    story.append(Spacer(1, 0.15*inch))
-    
-    # Detalles adicionales de lentes
-    if (include_all or 'refraccion' in selected_sections):
-        details_data = [
-            ['Tipo Lentes:', history.lens_type or '-', 'Detalle:', 'AR'],
-            ['Color y Tins:', history.lens_material or '-', 'Dip:', f"{history.pd_distance or 'N/A'} / {history.pd_near or 'N/A'}"],
+        # Formatear valores con signos apropiados
+        def format_sphere(value):
+            if value is None or value == '':
+                return ''
+            val = float(value)
+            return f"{val:+.2f}" if val != 0 else '0.00'
+        
+        def format_cylinder(value):
+            if value is None or value == '':
+                return ''
+            val = float(value)
+            return f"{val:+.2f}" if val != 0 else ''
+        
+        def format_axis(value):
+            if value is None or value == '':
+                return ''
+            return f"{int(value)}°"
+        
+        def format_av(value):
+            if value is None or value == '':
+                return '20/20'
+            return str(value)
+        
+        # Tabla de fórmula principal - Estilo similar a la imagen
+        formula_data = [
+            # Encabezado principal
+            ['', 'OJO', 'ESFÉRICO', 'CILÍNDRICO', 'EJE', 'A.V.'],
+            # LEJOS - Título de sección
+            [Paragraph('<b>LEJOS</b>', normal_style), '', '', '', '', ''],
+            # LEJOS - OD
+            ['', 'DERECHO', 
+             format_sphere(history.refraction_od_sphere),
+             format_cylinder(history.refraction_od_cylinder),
+             format_axis(history.refraction_od_axis),
+             format_av(history.va_od_cc_distance)],
+            # LEJOS - OI
+            ['', 'IZQUIERDO',
+             format_sphere(history.refraction_os_sphere),
+             format_cylinder(history.refraction_os_cylinder),
+             format_axis(history.refraction_os_axis),
+             format_av(history.va_os_cc_distance)],
         ]
         
-        # Agregar distancia pupilar si existe
-        if history.pd_distance or history.pd_near:
-            details_data.append(['Distancia Pupilar (mm):', f"Lejos: {history.pd_distance or 'N/A'} mm  |  Cerca: {history.pd_near or 'N/A'} mm", 'Altura:', f"OD: {history.pd_od or 'N/A'} / OI: {history.pd_os or 'N/A'}"])
+        # Agregar sección CERCA si hay adición
+        if history.refraction_od_add or history.refraction_os_add:
+            od_sphere_near = float(history.refraction_od_sphere or 0) + float(history.refraction_od_add or 0)
+            os_sphere_near = float(history.refraction_os_sphere or 0) + float(history.refraction_os_add or 0)
+            
+            formula_data.extend([
+                # CERCA - Título de sección
+                [Paragraph('<b>CERCA</b>', normal_style), '', '', '', '', ''],
+                # CERCA - OD
+                ['', 'DERECHO',
+                 format_sphere(od_sphere_near),
+                 format_cylinder(history.refraction_od_cylinder),
+                 format_axis(history.refraction_od_axis),
+                 format_av(history.va_od_cc_near)],
+                # CERCA - OI
+                ['', 'IZQUIERDO',
+                 format_sphere(os_sphere_near),
+                 format_cylinder(history.refraction_os_cylinder),
+                 format_axis(history.refraction_os_axis),
+                 format_av(history.va_os_cc_near)],
+            ])
         
-        details_data.append(['Uso Dispositivo:', 'Permanente', 'Control:', '1 año'])
+        formula_table = Table(formula_data, colWidths=[0.6*inch, 1.2*inch, 1.2*inch, 1.2*inch, 1.0*inch, 1.0*inch])
         
-        details_table = Table(details_data, colWidths=[1.5*inch, 2.5*inch, 1.2*inch, 1.8*inch])
-        details_table.setStyle(TableStyle([
-            ('FONTSIZE', (0, 0), (-1, -1), 7),
-            ('FONTNAME', (0, 0), (0, -1), 'Helvetica-Bold'),
-            ('FONTNAME', (2, 0), (2, -1), 'Helvetica-Bold'),
-            ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),
+        table_style = [
+            # Encabezado principal - fondo gris oscuro
+            ('BACKGROUND', (0, 0), (-1, 0), colors.Color(0.5, 0.5, 0.5)),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+            ('FONTSIZE', (0, 0), (-1, 0), 9),
+            ('ALIGN', (0, 0), (-1, 0), 'CENTER'),
+            
+            # Títulos de sección LEJOS/CERCA - fondo gris claro
+            ('BACKGROUND', (0, 1), (0, 1), colors.Color(0.85, 0.85, 0.85)),
+            ('FONTNAME', (0, 1), (0, 1), 'Helvetica-Bold'),
+            ('FONTSIZE', (0, 1), (0, 1), 8),
+            ('SPAN', (0, 1), (-1, 1)),  # LEJOS ocupa toda la fila
+            
+            # Datos de LEJOS
+            ('FONTSIZE', (0, 2), (-1, 3), 9),
+            ('ALIGN', (1, 2), (1, -1), 'LEFT'),  # Columna OJO alineada a la izquierda
+            ('ALIGN', (2, 2), (-1, -1), 'CENTER'),  # Datos numéricos centrados
+            
+            # Bordes
+            ('GRID', (0, 0), (-1, -1), 1, colors.black),
+            ('LINEABOVE', (0, 0), (-1, 0), 2, colors.black),
+            ('LINEBELOW', (0, 0), (-1, 0), 2, colors.black),
+            
+            # Padding
+            ('TOPPADDING', (0, 0), (-1, -1), 5),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 5),
+            ('LEFTPADDING', (0, 0), (-1, -1), 5),
+            ('RIGHTPADDING', (0, 0), (-1, -1), 5),
+            
+            # Valign
             ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-            ('TOPPADDING', (0, 0), (-1, -1), 3),
-            ('BOTTOMPADDING', (0, 0), (-1, -1), 3),
-            ('LEFTPADDING', (0, 0), (-1, -1), 4),
+        ]
+        
+        # Si hay sección CERCA, aplicar estilos adicionales
+        if history.refraction_od_add or history.refraction_os_add:
+            table_style.extend([
+                ('BACKGROUND', (0, 4), (0, 4), colors.Color(0.85, 0.85, 0.85)),
+                ('FONTNAME', (0, 4), (0, 4), 'Helvetica-Bold'),
+                ('FONTSIZE', (0, 4), (0, 4), 8),
+                ('SPAN', (0, 4), (-1, 4)),  # CERCA ocupa toda la fila
+                ('FONTSIZE', (0, 5), (-1, 6), 9),
+            ])
+        
+        formula_table.setStyle(TableStyle(table_style))
+        
+        story.append(formula_table)
+        story.append(Spacer(1, 0.15*inch))
+    
+    # Detalles adicionales de lentes - Formato similar a la imagen
+    if (include_all or 'refraccion' in selected_sections):
+        # Calcular fecha de próximo control (1 año desde la fecha del examen)
+        from datetime import timedelta
+        control_date = (history.date + timedelta(days=365)).strftime('%d de %B de %Y') if history.date else ''
+        vigencia_date = (history.date + timedelta(days=365)).strftime('%d de %B de %Y') if history.date else ''
+        
+        # Primera fila: Próx. Control y Vigencia
+        info_row1 = [
+            ['PRÓX. CONTROL:', f"1 año - Martes {control_date}", '', 'VIGENCIA:', f"1 mes - Miércoles {vigencia_date}"]
+        ]
+        
+        info_table1 = Table(info_row1, colWidths=[1.2*inch, 2.3*inch, 0.3*inch, 1.0*inch, 2.2*inch])
+        info_table1.setStyle(TableStyle([
+            ('FONTSIZE', (0, 0), (-1, -1), 8),
+            ('FONTNAME', (0, 0), (0, 0), 'Helvetica-Bold'),
+            ('FONTNAME', (3, 0), (3, 0), 'Helvetica-Bold'),
+            ('GRID', (0, 0), (1, 0), 1, colors.black),
+            ('GRID', (3, 0), (4, 0), 1, colors.black),
+            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+            ('TOPPADDING', (0, 0), (-1, -1), 5),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 5),
+            ('LEFTPADDING', (0, 0), (-1, -1), 5),
         ]))
         
-        story.append(details_table)
+        story.append(info_table1)
         story.append(Spacer(1, 0.1*inch))
+        
+        # Segunda fila: Distancia Pupilar
+        dp_value = f"{history.pd_distance or 64} mm" if history.pd_distance else "64 mm"
+        info_row2 = [
+            ['DISTANCIA PUPILAR:', dp_value]
+        ]
+        
+        info_table2 = Table(info_row2, colWidths=[1.5*inch, 5.5*inch])
+        info_table2.setStyle(TableStyle([
+            ('FONTSIZE', (0, 0), (-1, -1), 8),
+            ('FONTNAME', (0, 0), (0, 0), 'Helvetica-Bold'),
+            ('GRID', (0, 0), (-1, -1), 1, colors.black),
+            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+            ('TOPPADDING', (0, 0), (-1, -1), 5),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 5),
+            ('LEFTPADDING', (0, 0), (-1, -1), 5),
+        ]))
+        
+        story.append(info_table2)
+        story.append(Spacer(1, 0.1*inch))
+        
+        # Tercera fila: Tipo de Lente
+        lens_type_value = history.lens_type or "MONOFOCALES"
+        info_row3 = [
+            ['TIPO DE LENTE:', lens_type_value]
+        ]
+        
+        info_table3 = Table(info_row3, colWidths=[1.5*inch, 5.5*inch])
+        info_table3.setStyle(TableStyle([
+            ('FONTSIZE', (0, 0), (-1, -1), 8),
+            ('FONTNAME', (0, 0), (0, 0), 'Helvetica-Bold'),
+            ('GRID', (0, 0), (-1, -1), 1, colors.black),
+            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+            ('TOPPADDING', (0, 0), (-1, -1), 5),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 5),
+            ('LEFTPADDING', (0, 0), (-1, -1), 5),
+        ]))
+        
+        story.append(info_table3)
+        story.append(Spacer(1, 0.1*inch))
+        
+        # Cuarta fila: Clase de Filtro
+        filter_value = history.lens_coating or "TRANSITIONS IG + ANTIRREFLEJO CRIZAL SAPPHIRE"
+        info_row4 = [
+            ['CLASE DE FILTRO:', filter_value]
+        ]
+        
+        info_table4 = Table(info_row4, colWidths=[1.5*inch, 5.5*inch])
+        info_table4.setStyle(TableStyle([
+            ('FONTSIZE', (0, 0), (-1, -1), 8),
+            ('FONTNAME', (0, 0), (0, 0), 'Helvetica-Bold'),
+            ('GRID', (0, 0), (-1, -1), 1, colors.black),
+            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+            ('TOPPADDING', (0, 0), (-1, -1), 5),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 5),
+            ('LEFTPADDING', (0, 0), (-1, -1), 5),
+        ]))
+        
+        story.append(info_table4)
+        story.append(Spacer(1, 0.1*inch))
+        
+        # Quinta fila: Observaciones (más alta para múltiples líneas)
+        observations = history.optical_prescription_notes or "USAR CORRECCIÓN ÓPTICA CON TRANSITIONS IG + ANTIRREFLEJO CRIZAL SAPPHIRE"
+        info_row5 = [
+            ['OBSERVACIONES:', observations]
+        ]
+        
+        info_table5 = Table(info_row5, colWidths=[1.5*inch, 5.5*inch])
+        info_table5.setStyle(TableStyle([
+            ('FONTSIZE', (0, 0), (-1, -1), 8),
+            ('FONTNAME', (0, 0), (0, 0), 'Helvetica-Bold'),
+            ('GRID', (0, 0), (-1, -1), 1, colors.black),
+            ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+            ('TOPPADDING', (0, 0), (-1, -1), 5),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 20),
+            ('LEFTPADDING', (0, 0), (-1, -1), 5),
+        ]))
+        
+        story.append(info_table5)
+        story.append(Spacer(1, 0.2*inch))
+        
+        # Nota adicional sobre espejados
+        note_style = ParagraphStyle(
+            'Note',
+            parent=normal_style,
+            fontSize=7,
+            alignment=TA_LEFT,
+            textColor=colors.black,
+            leftIndent=10
+        )
+        story.append(Paragraph(
+            "Nota: Los espejados de esta FÓRMULA son sugeridos en manera VOLUNTARIA, ya que NO ES UN ARTÍCULO DE CONTROL, son RECOMENDACIONES de<br/>"
+            "nuestros especialistas para mejorar el CONFORT VISUAL y la ESTÉTICA DEL USUARIO.",
+            note_style
+        ))
+        story.append(Spacer(1, 0.15*inch))
     
     # LENTES DE CONTACTO
     if (include_all or 'contacto' in selected_sections) and (history.contact_lens_type or history.contact_lens_brand):

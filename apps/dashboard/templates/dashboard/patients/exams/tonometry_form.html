@@ -1,0 +1,325 @@
+{% extends 'dashboard/base.html' %}
+{% load static %}
+
+{% block title %}{{ title }} - {{ patient.full_name }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'dashboard:patient_list' %}">Pacientes</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'dashboard:patient_detail' patient.id %}">{{ patient.full_name }}</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'dashboard:clinical_history_detail' patient.id history.id %}">Historia Clínica</a></li>
+            <li class="breadcrumb-item active">Tonometría</li>
+        </ol>
+    </nav>
+
+    <!-- Header con info del paciente -->
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card border-primary">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-eye"></i> Tonometría - Medición de Presión Intraocular
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <p class="mb-1"><strong>Paciente:</strong> {{ patient.full_name }}</p>
+                            <p class="mb-1"><strong>Identificación:</strong> {{ patient.identification|default:"N/A" }}</p>
+                        </div>
+                        <div class="col-md-4">
+                            <p class="mb-1"><strong>Edad:</strong> {{ history.age_at_exam|default:"N/A" }} años</p>
+                            <p class="mb-1"><strong>Historia Clínica:</strong> #{{ history.id }}</p>
+                        </div>
+                        {% if order %}
+                        <div class="col-md-4">
+                            <p class="mb-1"><strong>Orden Médica:</strong> #{{ order.id }}</p>
+                            <p class="mb-1"><strong>Ordenado por:</strong> {{ order.ordered_by.full_name|default:"N/A" }}</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Formulario -->
+    <form method="post" id="tonometryForm">
+        {% csrf_token %}
+        
+        {% if form.non_field_errors %}
+        <div class="alert alert-danger">
+            {{ form.non_field_errors }}
+        </div>
+        {% endif %}
+
+        <div class="row">
+            <!-- Columna izquierda -->
+            <div class="col-md-6">
+                <!-- Datos del Examen -->
+                <div class="card mb-3">
+                    <div class="card-header bg-light">
+                        <h6 class="mb-0"><i class="fas fa-calendar-check"></i> Datos del Examen</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">{{ form.exam_date.label }} <span class="text-danger">*</span></label>
+                                {{ form.exam_date }}
+                                {% if form.exam_date.errors %}
+                                <div class="invalid-feedback d-block">{{ form.exam_date.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">{{ form.time_measured.label }} <span class="text-danger">*</span></label>
+                                {{ form.time_measured }}
+                                {% if form.time_measured.errors %}
+                                <div class="invalid-feedback d-block">{{ form.time_measured.errors.0 }}</div>
+                                {% endif %}
+                                <small class="form-text text-muted">La PIO varía durante el día</small>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">{{ form.performed_by.label }} <span class="text-danger">*</span></label>
+                            {{ form.performed_by }}
+                            {% if form.performed_by.errors %}
+                            <div class="invalid-feedback d-block">{{ form.performed_by.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">{{ form.method.label }} <span class="text-danger">*</span></label>
+                            {{ form.method }}
+                            {% if form.method.errors %}
+                            <div class="invalid-feedback d-block">{{ form.method.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">{{ form.equipment_used.label }}</label>
+                            {{ form.equipment_used }}
+                            {% if form.equipment_used.errors %}
+                            <div class="invalid-feedback d-block">{{ form.equipment_used.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Datos Adicionales -->
+                <div class="card mb-3">
+                    <div class="card-header bg-light">
+                        <h6 class="mb-0"><i class="fas fa-info-circle"></i> Información Adicional</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="form-check mb-3">
+                            {{ form.pachymetry_corrected }}
+                            <label class="form-check-label" for="{{ form.pachymetry_corrected.id_for_label }}">
+                                {{ form.pachymetry_corrected.label }}
+                            </label>
+                            <small class="d-block text-muted">Si se aplicó corrección por grosor corneal</small>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">{{ form.findings.label }}</label>
+                            {{ form.findings }}
+                            {% if form.findings.errors %}
+                            <div class="invalid-feedback d-block">{{ form.findings.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">{{ form.interpretation.label }}</label>
+                            {{ form.interpretation }}
+                            {% if form.interpretation.errors %}
+                            <div class="invalid-feedback d-block">{{ form.interpretation.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">{{ form.recommendations.label }}</label>
+                            {{ form.recommendations }}
+                            {% if form.recommendations.errors %}
+                            <div class="invalid-feedback d-block">{{ form.recommendations.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">{{ form.notes.label }}</label>
+                            {{ form.notes }}
+                            {% if form.notes.errors %}
+                            <div class="invalid-feedback d-block">{{ form.notes.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Columna derecha - Resultados -->
+            <div class="col-md-6">
+                <!-- Ojo Derecho -->
+                <div class="card mb-3 border-info">
+                    <div class="card-header bg-info text-white">
+                        <h6 class="mb-0"><i class="fas fa-eye"></i> OJO DERECHO (OD)</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label class="form-label">{{ form.od_pressure.label }} <span class="text-danger">*</span></label>
+                            <div class="input-group">
+                                {{ form.od_pressure }}
+                                <span class="input-group-text">mmHg</span>
+                            </div>
+                            {% if form.od_pressure.errors %}
+                            <div class="invalid-feedback d-block">{{ form.od_pressure.errors.0 }}</div>
+                            {% endif %}
+                            <small class="form-text text-muted">Normal: 10-21 mmHg</small>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">{{ form.od_notes.label }}</label>
+                            {{ form.od_notes }}
+                            {% if form.od_notes.errors %}
+                            <div class="invalid-feedback d-block">{{ form.od_notes.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Ojo Izquierdo -->
+                <div class="card mb-3 border-success">
+                    <div class="card-header bg-success text-white">
+                        <h6 class="mb-0"><i class="fas fa-eye"></i> OJO IZQUIERDO (OS)</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label class="form-label">{{ form.os_pressure.label }} <span class="text-danger">*</span></label>
+                            <div class="input-group">
+                                {{ form.os_pressure }}
+                                <span class="input-group-text">mmHg</span>
+                            </div>
+                            {% if form.os_pressure.errors %}
+                            <div class="invalid-feedback d-block">{{ form.os_pressure.errors.0 }}</div>
+                            {% endif %}
+                            <small class="form-text text-muted">Normal: 10-21 mmHg</small>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">{{ form.os_notes.label }}</label>
+                            {{ form.os_notes }}
+                            {% if form.os_notes.errors %}
+                            <div class="invalid-feedback d-block">{{ form.os_notes.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Seguimiento -->
+                <div class="card mb-3 border-warning">
+                    <div class="card-header bg-warning bg-opacity-25">
+                        <h6 class="mb-0"><i class="fas fa-calendar-plus"></i> Seguimiento</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="form-check mb-3">
+                            {{ form.requires_follow_up }}
+                            <label class="form-check-label" for="{{ form.requires_follow_up.id_for_label }}">
+                                {{ form.requires_follow_up.label }}
+                            </label>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">{{ form.follow_up_period.label }}</label>
+                            {{ form.follow_up_period }}
+                            {% if form.follow_up_period.errors %}
+                            <div class="invalid-feedback d-block">{{ form.follow_up_period.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Info Box -->
+                <div class="alert alert-info">
+                    <h6><i class="fas fa-info-circle"></i> Valores de Referencia</h6>
+                    <ul class="mb-0 small">
+                        <li><strong>Normal:</strong> 10-21 mmHg</li>
+                        <li><strong>Sospecha Hipertensión:</strong> &gt;21 mmHg</li>
+                        <li><strong>Hipotensión:</strong> &lt;10 mmHg</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Botones -->
+        <div class="row mt-4">
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-body text-center">
+                        <button type="submit" name="save_and_print" class="btn btn-primary btn-lg me-2">
+                            <i class="fas fa-print"></i> Guardar e Imprimir Resultado
+                        </button>
+                        <button type="submit" class="btn btn-success btn-lg me-2">
+                            <i class="fas fa-save"></i> Guardar
+                        </button>
+                        <a href="{% url 'dashboard:clinical_history_detail' patient.id history.id %}" class="btn btn-secondary btn-lg">
+                            <i class="fas fa-times"></i> Cancelar
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+
+<style>
+    .card-header h6 {
+        font-weight: 600;
+    }
+    .form-label {
+        font-weight: 500;
+        margin-bottom: 0.5rem;
+    }
+    .text-danger {
+        font-weight: bold;
+    }
+    .input-group-text {
+        background-color: #f8f9fa;
+        font-weight: 600;
+    }
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Validación en tiempo real de presiones
+    const odPressure = document.getElementById('{{ form.od_pressure.id_for_label }}');
+    const osPressure = document.getElementById('{{ form.os_pressure.id_for_label }}');
+    
+    function validatePressure(input) {
+        const value = parseFloat(input.value);
+        if (value > 21) {
+            input.classList.add('border-danger');
+            input.classList.remove('border-success');
+        } else if (value >= 10 && value <= 21) {
+            input.classList.add('border-success');
+            input.classList.remove('border-danger');
+        } else {
+            input.classList.add('border-warning');
+            input.classList.remove('border-success');
+        }
+    }
+    
+    if (odPressure) {
+        odPressure.addEventListener('input', function() {
+            validatePressure(this);
+        });
+    }
+    
+    if (osPressure) {
+        osPressure.addEventListener('input', function() {
+            validatePressure(this);
+        });
+    }
+});
+</script>
+{% endblock %}

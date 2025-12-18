@@ -1,0 +1,203 @@
+{% extends 'dashboard/base.html' %}
+{% load static %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Header con estadísticas -->
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <h2 class="mb-3">
+                <i class="fas fa-clipboard-list"></i> Órdenes de Exámenes Especiales
+            </h2>
+        </div>
+    </div>
+
+    <!-- Estadísticas -->
+    <div class="row mb-4">
+        <div class="col-md-2">
+            <div class="card bg-light">
+                <div class="card-body text-center">
+                    <h3 class="mb-0">{{ stats.total }}</h3>
+                    <small class="text-muted">Total</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card bg-warning bg-opacity-10">
+                <div class="card-body text-center">
+                    <h3 class="mb-0 text-warning">{{ stats.pending }}</h3>
+                    <small class="text-muted">Pendientes</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card bg-info bg-opacity-10">
+                <div class="card-body text-center">
+                    <h3 class="mb-0 text-info">{{ stats.scheduled }}</h3>
+                    <small class="text-muted">Agendadas</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card bg-primary bg-opacity-10">
+                <div class="card-body text-center">
+                    <h3 class="mb-0 text-primary">{{ stats.in_progress }}</h3>
+                    <small class="text-muted">En Proceso</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card bg-success bg-opacity-10">
+                <div class="card-body text-center">
+                    <h3 class="mb-0 text-success">{{ stats.completed }}</h3>
+                    <small class="text-muted">Completadas</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filtros -->
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="fas fa-filter"></i> Filtros
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <form method="get" class="row g-3">
+                        <div class="col-md-2">
+                            <label class="form-label">Estado</label>
+                            {{ filter_form.status }}
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Tipo de Examen</label>
+                            {{ filter_form.exam_type }}
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label">Desde</label>
+                            {{ filter_form.date_from }}
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label">Hasta</label>
+                            {{ filter_form.date_to }}
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label">Buscar Paciente</label>
+                            {{ filter_form.search }}
+                        </div>
+                        <div class="col-md-1 d-flex align-items-end">
+                            <button type="submit" class="btn btn-primary w-100">
+                                <i class="fas fa-search"></i>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tabla de órdenes -->
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-body">
+                    {% if orders %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Fecha</th>
+                                    <th>Paciente</th>
+                                    <th>Examen</th>
+                                    <th>Prioridad</th>
+                                    <th>Estado</th>
+                                    <th>Ordenado por</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for order in orders %}
+                                <tr>
+                                    <td>{{ order.order_date|date:"d/m/Y" }}</td>
+                                    <td>
+                                        <a href="{% url 'dashboard:patient_detail' order.clinical_history.patient.id %}">
+                                            {{ order.clinical_history.patient.full_name }}
+                                        </a>
+                                        <br>
+                                        <small class="text-muted">{{ order.clinical_history.patient.identification }}</small>
+                                    </td>
+                                    <td>
+                                        <strong>{{ order.get_exam_type_display }}</strong>
+                                    </td>
+                                    <td>
+                                        {% if order.priority == 'urgent' %}
+                                            <span class="badge bg-danger">{{ order.get_priority_display }}</span>
+                                        {% elif order.priority == 'stat' %}
+                                            <span class="badge bg-danger text-white">{{ order.get_priority_display }}</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">{{ order.get_priority_display }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if order.status == 'pending' %}
+                                            <span class="badge bg-warning">{{ order.get_status_display }}</span>
+                                        {% elif order.status == 'scheduled' %}
+                                            <span class="badge bg-info">{{ order.get_status_display }}</span>
+                                        {% elif order.status == 'in_progress' %}
+                                            <span class="badge bg-primary">{{ order.get_status_display }}</span>
+                                        {% elif order.status == 'completed' %}
+                                            <span class="badge bg-success">{{ order.get_status_display }}</span>
+                                        {% elif order.status == 'cancelled' %}
+                                            <span class="badge bg-dark">{{ order.get_status_display }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ order.ordered_by.full_name|default:"N/A" }}</td>
+                                    <td>
+                                        <div class="btn-group btn-group-sm" role="group">
+                                            <a href="{% url 'dashboard:exam_order_detail' order.id %}" 
+                                               class="btn btn-outline-primary" 
+                                               title="Ver detalle">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                            <a href="{% url 'dashboard:exam_order_pdf' order.clinical_history.patient.id order.clinical_history.id order.id %}" 
+                                               class="btn btn-outline-success" 
+                                               title="Imprimir"
+                                               target="_blank">
+                                                <i class="fas fa-print"></i>
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="alert alert-info text-center">
+                        <i class="fas fa-info-circle"></i> No se encontraron órdenes de exámenes.
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .card {
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .table th {
+        font-weight: 600;
+        font-size: 0.9rem;
+    }
+    .btn-group-sm .btn {
+        padding: 0.25rem 0.5rem;
+    }
+</style>
+{% endblock %}
