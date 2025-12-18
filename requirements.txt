@@ -1,4 +1,4 @@
-Django==3.2.25
+Django==4.2.16
 djangorestframework==3.15.1
 channels==4.0.0
 channels-redis==4.1.0
