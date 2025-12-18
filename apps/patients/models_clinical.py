@@ -74,13 +74,13 @@ class ClinicalHistory(TenantModel):
     current_rx_od_sphere = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True, verbose_name='Fórmula Actual OD Esfera')
     current_rx_od_cylinder = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True, verbose_name='Fórmula Actual OD Cilindro')
     current_rx_od_axis = models.IntegerField(null=True, blank=True, verbose_name='Fórmula Actual OD Eje')
-    current_rx_od_add = models.DecimalField(max_digits=4, decimal_places=2, null=True, blank=True, verbose_name='Fórmula Actual OD ADD')
+    current_rx_od_add = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True, verbose_name='Fórmula Actual OD ADD')
     
     # Fórmula de Lentes Actuales - OS
     current_rx_os_sphere = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True, verbose_name='Fórmula Actual OS Esfera')
     current_rx_os_cylinder = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True, verbose_name='Fórmula Actual OS Cilindro')
     current_rx_os_axis = models.IntegerField(null=True, blank=True, verbose_name='Fórmula Actual OS Eje')
-    current_rx_os_add = models.DecimalField(max_digits=4, decimal_places=2, null=True, blank=True, verbose_name='Fórmula Actual OS ADD')
+    current_rx_os_add = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True, verbose_name='Fórmula Actual OS ADD')
     
     # Backward compatibility
     ocular_therapeutic_history = models.TextField(verbose_name='Terapéuticos Oculares (Legacy)', blank=True, help_text='Campo antiguo - usar lensometría')
@@ -182,14 +182,14 @@ class ClinicalHistory(TenantModel):
     refraction_od_sphere = models.CharField(max_length=10, verbose_name='OD Esfera', blank=True, help_text='Ej: +2.50, -1.25, N/A')
     refraction_od_cylinder = models.DecimalField(max_digits=5, decimal_places=2, verbose_name='OD Cilindro', null=True, blank=True)
     refraction_od_axis = models.IntegerField(verbose_name='OD Eje', null=True, blank=True, help_text='0-180°')
-    refraction_od_add = models.DecimalField(max_digits=4, decimal_places=2, verbose_name='OD Adición', null=True, blank=True)
+    refraction_od_add = models.DecimalField(max_digits=5, decimal_places=2, verbose_name='OD Adición', null=True, blank=True)
     refraction_od_prism = models.CharField(max_length=20, verbose_name='OD Prisma', blank=True)
     
     # Ojo Izquierdo (OS)
     refraction_os_sphere = models.CharField(max_length=10, verbose_name='OS Esfera', blank=True, help_text='Ej: +2.50, -1.25, N/A')
     refraction_os_cylinder = models.DecimalField(max_digits=5, decimal_places=2, verbose_name='OS Cilindro', null=True, blank=True)
     refraction_os_axis = models.IntegerField(verbose_name='OS Eje', null=True, blank=True, help_text='0-180°')
-    refraction_os_add = models.DecimalField(max_digits=4, decimal_places=2, verbose_name='OS Adición', null=True, blank=True)
+    refraction_os_add = models.DecimalField(max_digits=5, decimal_places=2, verbose_name='OS Adición', null=True, blank=True)
     refraction_os_prism = models.CharField(max_length=20, verbose_name='OS Prisma', blank=True)
     
     # DNP en refracción (Distance Nasale-Pupilar)
