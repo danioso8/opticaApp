@@ -619,7 +619,11 @@
     {% include 'dashboard/components/toast.html' %}
     
     <!-- Sistema de Notificaciones Push en Tiempo Real -->
-    <script src="{% static 'js/dashboard-notifications.js' %}"></script>
+    {% load static %}
+    <script>
+        // Dashboard notifications functionality
+        // TODO: Implement push notifications
+    </script>
     
     {% block extra_js %}{% endblock %}
 </body>
