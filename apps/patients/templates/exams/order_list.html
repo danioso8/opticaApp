@@ -1,0 +1,145 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Órdenes de Exámenes Especiales{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <h4 class="mb-0">📋 Órdenes de Exámenes Especiales</h4>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filtros -->
+    <div class="row mb-3">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <form method="get" class="row g-3">
+                        <div class="col-md-4">
+                            <label class="form-label">Estado</label>
+                            <select name="status" class="form-select">
+                                <option value="">Todos</option>
+                                {% for value, label in statuses %}
+                                    <option value="{{ value }}" {% if status_filter == value %}selected{% endif %}>{{ label }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Tipo de Examen</label>
+                            <select name="exam_type" class="form-select">
+                                <option value="">Todos</option>
+                                {% for value, label in exam_types %}
+                                    <option value="{{ value }}" {% if exam_type_filter == value %}selected{% endif %}>{{ label }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-4 d-flex align-items-end">
+                            <button type="submit" class="btn btn-primary me-2">
+                                <i class="fas fa-search"></i> Filtrar
+                            </button>
+                            <a href="{% url 'patients:exam_order_list' %}" class="btn btn-outline-secondary">
+                                <i class="fas fa-times"></i> Limpiar
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Lista de Órdenes -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    {% if orders %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Fecha</th>
+                                        <th>Paciente</th>
+                                        <th>Examen</th>
+                                        <th>Prioridad</th>
+                                        <th>Estado</th>
+                                        <th>Ordenado por</th>
+                                        <th>Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for order in orders %}
+                                        <tr>
+                                            <td>{{ order.order_date|date:"d/m/Y" }}</td>
+                                            <td>
+                                                <strong>{{ order.clinical_history.patient.full_name }}</strong><br>
+                                                <small class="text-muted">{{ order.clinical_history.patient.identification }}</small>
+                                            </td>
+                                            <td>{{ order.get_exam_type_display }}</td>
+                                            <td>
+                                                {% if order.priority == 'urgent' %}
+                                                    <span class="badge bg-warning">Urgente</span>
+                                                {% elif order.priority == 'stat' %}
+                                                    <span class="badge bg-danger">STAT</span>
+                                                {% else %}
+                                                    <span class="badge bg-secondary">Rutina</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {% if order.status == 'pending' %}
+                                                    <span class="badge bg-warning">Pendiente</span>
+                                                {% elif order.status == 'scheduled' %}
+                                                    <span class="badge bg-info">Agendado</span>
+                                                {% elif order.status == 'in_progress' %}
+                                                    <span class="badge bg-primary">En Proceso</span>
+                                                {% elif order.status == 'completed' %}
+                                                    <span class="badge bg-success">Completado</span>
+                                                {% elif order.status == 'cancelled' %}
+                                                    <span class="badge bg-danger">Cancelado</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>{{ order.ordered_by.get_full_name|default:order.ordered_by.username }}</td>
+                                            <td>
+                                                <div class="btn-group btn-group-sm">
+                                                    <a href="{% url 'patients:exam_order_detail' order.id %}" class="btn btn-sm btn-outline-primary" title="Ver detalle">
+                                                        <i class="fas fa-eye"></i>
+                                                    </a>
+                                                    <a href="{% url 'patients:exam_order_pdf' order.id %}" class="btn btn-sm btn-outline-secondary" target="_blank" title="Imprimir PDF">
+                                                        <i class="fas fa-print"></i>
+                                                    </a>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-5">
+                            <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+                            <p class="text-muted">No hay órdenes de exámenes registradas</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.table-hover tbody tr:hover {
+    background-color: #f8f9fa;
+}
+
+.badge {
+    font-size: 0.85rem;
+    padding: 0.35em 0.65em;
+}
+</style>
+{% endblock %}

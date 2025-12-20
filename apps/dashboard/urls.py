@@ -134,6 +134,7 @@ urlpatterns = [
     path('exam-orders/<int:order_id>/', views_exam_orders.exam_order_detail, name='exam_order_detail'),
     path('exam-orders/<int:order_id>/update-status/', views_exam_orders.exam_order_update_status, name='exam_order_update_status'),
     path('exam-orders/<int:order_id>/cancel/', views_exam_orders.exam_order_cancel, name='exam_order_cancel'),
+    path('exam-orders/<int:order_id>/delete/', views_exam_orders.exam_order_delete, name='exam_order_delete'),
     path('patients/<int:patient_id>/history/<int:history_id>/exam-order/<int:order_id>/pdf/', views_exam_orders.exam_order_pdf, name='exam_order_pdf'),
     
     # Resultados de Exámenes - Tonometría

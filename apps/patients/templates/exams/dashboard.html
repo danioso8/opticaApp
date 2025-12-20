@@ -1,0 +1,141 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Dashboard Exámenes Pendientes{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <h4 class="mb-0">📊 Dashboard de Exámenes Pendientes</h4>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Estadísticas -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card text-white bg-warning">
+                <div class="card-body">
+                    <h3 class="mb-0">{{ stats.total_pending }}</h3>
+                    <p class="mb-0">Pendientes</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-white bg-info">
+                <div class="card-body">
+                    <h3 class="mb-0">{{ stats.total_scheduled }}</h3>
+                    <p class="mb-0">Agendados</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-white bg-danger">
+                <div class="card-body">
+                    <h3 class="mb-0">{{ stats.urgent }}</h3>
+                    <p class="mb-0">Urgentes</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-white bg-dark">
+                <div class="card-body">
+                    <h3 class="mb-0">{{ stats.stat }}</h3>
+                    <p class="mb-0">STAT (Inmediato)</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Lista de Órdenes Pendientes -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Exámenes por Realizar</h5>
+                </div>
+                <div class="card-body">
+                    {% if pending_orders %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Prioridad</th>
+                                        <th>Fecha Orden</th>
+                                        <th>Paciente</th>
+                                        <th>Examen</th>
+                                        <th>Indicación</th>
+                                        <th>Estado</th>
+                                        <th>Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for order in pending_orders %}
+                                        <tr class="{% if order.priority == 'stat' %}table-danger{% elif order.priority == 'urgent' %}table-warning{% endif %}">
+                                            <td>
+                                                {% if order.priority == 'urgent' %}
+                                                    <span class="badge bg-warning">⚠️ Urgente</span>
+                                                {% elif order.priority == 'stat' %}
+                                                    <span class="badge bg-danger">🚨 STAT</span>
+                                                {% else %}
+                                                    <span class="badge bg-secondary">Rutina</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>{{ order.order_date|date:"d/m/Y" }}</td>
+                                            <td>
+                                                <strong>{{ order.clinical_history.patient.full_name }}</strong><br>
+                                                <small class="text-muted">{{ order.clinical_history.patient.identification }}</small>
+                                            </td>
+                                            <td>{{ order.get_exam_type_display }}</td>
+                                            <td>
+                                                <small>{{ order.clinical_indication|truncatewords:10 }}</small>
+                                            </td>
+                                            <td>
+                                                {% if order.status == 'pending' %}
+                                                    <span class="badge bg-warning">Pendiente</span>
+                                                {% elif order.status == 'scheduled' %}
+                                                    <span class="badge bg-info">Agendado {{ order.scheduled_date|date:"d/m" }}</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                <div class="btn-group btn-group-sm">
+                                                    <a href="{% url 'patients:exam_order_pdf' order.id %}" class="btn btn-sm btn-outline-primary" target="_blank" title="Imprimir">
+                                                        <i class="fas fa-print"></i>
+                                                    </a>
+                                                    <a href="{% url 'patients:clinical_history_detail' order.clinical_history.id %}" class="btn btn-sm btn-outline-secondary" title="Ver HC">
+                                                        <i class="fas fa-file-medical"></i>
+                                                    </a>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-5">
+                            <i class="fas fa-check-circle fa-3x text-success mb-3"></i>
+                            <p class="text-muted">No hay exámenes pendientes</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.table-danger {
+    background-color: #f8d7da !important;
+}
+
+.table-warning {
+    background-color: #fff3cd !important;
+}
+</style>
+{% endblock %}

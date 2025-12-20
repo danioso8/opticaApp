@@ -7,72 +7,159 @@ from django.contrib import messages
 from django.http import HttpResponse
 from django.db.models import Q
 from io import BytesIO
+import logging
 
 from apps.patients.models import Patient, ClinicalHistory, ExamOrder, Doctor
 from apps.patients.forms_exam_orders import ExamOrderForm, ExamOrderFilterForm, ExamOrderStatusForm
+
+logger = logging.getLogger(__name__)
 
 
 @login_required
 def exam_order_create(request, patient_id, history_id):
     """Crear una nueva orden de examen"""
-    org_filter = {'organization': request.organization} if hasattr(request, 'organization') and request.organization else {}
-    
-    patient = get_object_or_404(Patient, id=patient_id, **org_filter)
-    history = get_object_or_404(ClinicalHistory, id=history_id, patient=patient, **org_filter)
-    
-    if request.method == 'POST':
-        form = ExamOrderForm(request.POST, organization=request.organization)
-        if form.is_valid():
-            order = form.save(commit=False)
-            order.clinical_history = history
-            order.organization = request.organization
-            order.save()
-            
-            messages.success(request, f'Orden de {order.get_exam_type_display()} creada exitosamente.')
-            
-            # Redirigir según la acción del usuario
-            if 'save_and_print' in request.POST:
-                return redirect('dashboard:exam_order_pdf', patient_id=patient_id, history_id=history_id, order_id=order.id)
-            else:
-                return redirect('dashboard:clinical_history_detail', patient_id=patient_id, history_id=history_id)
+    try:
+        # Log para debugging
+        logger.info(f"Intentando crear orden para paciente {patient_id}, historia {history_id}")
+        
+        # Obtener organización de manera segura
+        organization = getattr(request, 'organization', None)
+        logger.info(f"Organización: {organization}")
+        
+        # Buscar el paciente
+        if organization:
+            patient = get_object_or_404(Patient, id=patient_id, organization=organization)
+            history = get_object_or_404(ClinicalHistory, id=history_id, patient=patient, organization=organization)
         else:
-            messages.error(request, 'Por favor corrige los errores en el formulario.')
-    else:
-        form = ExamOrderForm(organization=request.organization)
-    
-    context = {
-        'patient': patient,
-        'history': history,
-        'form': form,
-        'title': 'Nueva Orden de Examen'
-    }
-    
-    return render(request, 'dashboard/patients/exams/order_form.html', context)
+            patient = get_object_or_404(Patient, id=patient_id)
+            history = get_object_or_404(ClinicalHistory, id=history_id, patient=patient)
+        
+        logger.info(f"Paciente encontrado: {patient.full_name}")
+        
+        if request.method == 'POST':
+            logger.info("Procesando POST request")
+            logger.info(f"POST data: {request.POST}")
+            
+            form = ExamOrderForm(request.POST, organization=organization)
+            
+            if form.is_valid():
+                logger.info("Formulario válido, guardando orden")
+                order = form.save(commit=False)
+                order.clinical_history = history
+                
+                # Asignar organización si existe
+                if organization:
+                    order.organization = organization
+                
+                # Si no se especificó un médico, intentar usar el usuario actual si es doctor
+                if not order.ordered_by and organization:
+                    try:
+                        doctor = Doctor.objects.filter(user=request.user, organization=organization).first()
+                        if doctor:
+                            order.ordered_by = doctor
+                            logger.info(f"Doctor asignado: {doctor.full_name}")
+                    except Exception as e:
+                        logger.error(f"Error al asignar doctor: {e}")
+                
+                order.save()
+                logger.info(f"Orden guardada exitosamente: {order.id}")
+                
+                messages.success(request, f'✅ Orden de {order.get_exam_type_display()} creada exitosamente.')
+                
+                # Redirigir según la acción del usuario
+                if 'save_and_print' in request.POST:
+                    return redirect('dashboard:exam_order_pdf', patient_id=patient_id, history_id=history_id, order_id=order.id)
+                else:
+                    return redirect('dashboard:clinical_history_detail', patient_id=patient_id, history_id=history_id)
+            else:
+                logger.error(f"Formulario inválido. Errores: {form.errors}")
+                messages.error(request, f'Por favor corrige los errores: {form.errors}')
+        else:
+            logger.info("Mostrando formulario GET")
+            form = ExamOrderForm(organization=organization)
+        
+        context = {
+            'patient': patient,
+            'history': history,
+            'form': form,
+            'title': 'Nueva Orden de Examen'
+        }
+        
+        return render(request, 'dashboard/patients/exams/order_form.html', context)
+        
+    except Exception as e:
+        logger.error(f'Error en exam_order_create: {str(e)}', exc_info=True)
+        messages.error(request, f'❌ Error al crear la orden: {str(e)}')
+        return redirect('dashboard:patients_list')
 
 
 @login_required
 def exam_order_list(request):
     """Listar todas las órdenes de exámenes"""
-    org_filter = {'organization': request.organization} if hasattr(request, 'organization') and request.organization else {}
-    
-    # Obtener órdenes
-    orders = ExamOrder.objects.filter(**org_filter).select_related(
-        'clinical_history__patient',
-        'ordered_by',
-        'performed_by'
-    ).order_by('-order_date', '-created_at')
-    
-    # Aplicar filtros
-    filter_form = ExamOrderFilterForm(request.GET)
-    if filter_form.is_valid():
-        status = filter_form.cleaned_data.get('status')
-        exam_type = filter_form.cleaned_data.get('exam_type')
-        date_from = filter_form.cleaned_data.get('date_from')
-        date_to = filter_form.cleaned_data.get('date_to')
-        search = filter_form.cleaned_data.get('search')
+    try:
+        logger.info("Cargando listado de órdenes de examen")
+        organization = getattr(request, 'organization', None)
+        org_filter = {'organization': organization} if organization else {}
         
-        if status:
-            orders = orders.filter(status=status)
+        # Obtener órdenes (sin select_related de performed_by por ahora)
+        orders = ExamOrder.objects.filter(**org_filter).select_related(
+            'clinical_history__patient',
+            'ordered_by'
+        ).order_by('-order_date', '-created_at')
+        
+        logger.info(f"Se encontraron {orders.count()} órdenes")
+        
+        # Aplicar filtros
+        filter_form = ExamOrderFilterForm(request.GET)
+        if filter_form.is_valid():
+            status = filter_form.cleaned_data.get('status')
+            exam_type = filter_form.cleaned_data.get('exam_type')
+            date_from = filter_form.cleaned_data.get('date_from')
+            date_to = filter_form.cleaned_data.get('date_to')
+            search = filter_form.cleaned_data.get('search')
+            
+            if status:
+                orders = orders.filter(status=status)
+            
+            if exam_type:
+                orders = orders.filter(exam_type=exam_type)
+            
+            if date_from:
+                orders = orders.filter(order_date__gte=date_from)
+            
+            if date_to:
+                orders = orders.filter(order_date__lte=date_to)
+            
+            if search:
+                orders = orders.filter(
+                    Q(clinical_history__patient__full_name__icontains=search) |
+                    Q(clinical_history__patient__identification__icontains=search)
+                )
+        
+        # Estadísticas
+        stats = {
+            'total': orders.count(),
+            'pending': orders.filter(status='pending').count(),
+            'scheduled': orders.filter(status='scheduled').count(),
+            'in_progress': orders.filter(status='in_progress').count(),
+            'completed': orders.filter(status='completed').count(),
+        }
+        
+        logger.info(f"Estadísticas calculadas: {stats}")
+        
+        context = {
+            'orders': orders,
+            'filter_form': filter_form,
+            'stats': stats,
+            'title': 'Órdenes de Exámenes'
+        }
+        
+        return render(request, 'dashboard/patients/exams/order_list.html', context)
+    
+    except Exception as e:
+        logger.error(f'Error en exam_order_list: {str(e)}', exc_info=True)
+        messages.error(request, f'❌ Error al cargar las órdenes: {str(e)}')
+        return redirect('dashboard:home')
         
         if exam_type:
             orders = orders.filter(exam_type=exam_type)
@@ -109,55 +196,77 @@ def exam_order_list(request):
 
 
 @login_required
+@login_required
 def exam_order_detail(request, order_id):
     """Ver detalle de una orden"""
-    org_filter = {'organization': request.organization} if hasattr(request, 'organization') and request.organization else {}
+    try:
+        logger.info(f"Cargando detalle de orden {order_id}")
+        organization = getattr(request, 'organization', None)
+        org_filter = {'organization': organization} if organization else {}
+        
+        order = get_object_or_404(
+            ExamOrder.objects.select_related('clinical_history__patient', 'ordered_by'),
+            id=order_id,
+            **org_filter
+        )
+        
+        context = {
+            'order': order,
+            'patient': order.clinical_history.patient if order.clinical_history else None,
+            'history': order.clinical_history,
+            'title': f'Orden de {order.get_exam_type_display()}'
+        }
+        
+        logger.info(f"Detalle de orden {order_id} cargado correctamente")
+        return render(request, 'dashboard/patients/exams/order_detail.html', context)
     
-    order = get_object_or_404(
-        ExamOrder.objects.select_related('clinical_history__patient', 'ordered_by', 'performed_by'),
-        id=order_id,
-        **org_filter
-    )
-    
-    context = {
-        'order': order,
-        'patient': order.clinical_history.patient,
-        'history': order.clinical_history,
-        'title': f'Orden de {order.get_exam_type_display()}'
-    }
-    
-    return render(request, 'dashboard/patients/exams/order_detail.html', context)
+    except Exception as e:
+        logger.error(f'Error en exam_order_detail: {str(e)}', exc_info=True)
+        messages.error(request, f'❌ Error al cargar el detalle: {str(e)}')
+        return redirect('dashboard:exam_order_list')
 
 
 @login_required
 def exam_order_update_status(request, order_id):
     """Actualizar estado de una orden"""
-    org_filter = {'organization': request.organization} if hasattr(request, 'organization') and request.organization else {}
+    try:
+        logger.info(f"Actualizando estado de orden {order_id}")
+        organization = getattr(request, 'organization', None)
+        org_filter = {'organization': organization} if organization else {}
+        
+        order = get_object_or_404(ExamOrder, id=order_id, **org_filter)
+        
+        if request.method == 'POST':
+            form = ExamOrderStatusForm(request.POST, instance=order)
+            if form.is_valid():
+                form.save()
+                messages.success(request, f'✅ Estado actualizado a: {order.get_status_display()}')
+                logger.info(f"Estado de orden {order_id} actualizado a {order.status}")
+                return redirect('dashboard:exam_order_detail', order_id=order.id)
+        else:
+            form = ExamOrderStatusForm(instance=order)
+        
+        context = {
+            'order': order,
+            'form': form,
+            'patient': order.clinical_history.patient if order.clinical_history else None,
+            'history': order.clinical_history,
+            'title': 'Actualizar Estado'
+        }
+        
+        return render(request, 'dashboard/patients/exams/order_status_form.html', context)
     
-    order = get_object_or_404(ExamOrder, id=order_id, **org_filter)
-    
-    if request.method == 'POST':
-        form = ExamOrderStatusForm(request.POST, instance=order)
-        if form.is_valid():
-            form.save()
-            messages.success(request, f'Estado actualizado a: {order.get_status_display()}')
-            return redirect('dashboard:exam_order_detail', order_id=order.id)
-    else:
-        form = ExamOrderStatusForm(instance=order)
-    
-    context = {
-        'order': order,
-        'form': form,
-        'title': 'Actualizar Estado'
-    }
-    
-    return render(request, 'dashboard/patients/exams/order_status_form.html', context)
+    except Exception as e:
+        logger.error(f'Error en exam_order_update_status: {str(e)}', exc_info=True)
+        messages.error(request, f'❌ Error al actualizar estado: {str(e)}')
+        return redirect('dashboard:exam_order_list')
 
 
 @login_required
 def exam_order_cancel(request, order_id):
     """Cancelar una orden"""
-    org_filter = {'organization': request.organization} if hasattr(request, 'organization') and request.organization else {}
+    organization = getattr(request, 'organization', None)
+    org_filter = {'organization': organization} if organization else {}
     
     order = get_object_or_404(ExamOrder, id=order_id, **org_filter)
     
@@ -189,7 +298,8 @@ def exam_order_pdf(request, patient_id, history_id, order_id):
     from reportlab.lib import colors
     from datetime import datetime
     
-    org_filter = {'organization': request.organization} if hasattr(request, 'organization') and request.organization else {}
+    organization = getattr(request, 'organization', None)
+    org_filter = {'organization': organization} if organization else {}
     
     patient = get_object_or_404(Patient, id=patient_id, **org_filter)
     history = get_object_or_404(ClinicalHistory, id=history_id, patient=patient, **org_filter)
@@ -416,3 +526,32 @@ def exam_order_pdf(request, patient_id, history_id, order_id):
     response['Content-Disposition'] = f'inline; filename="orden_examen_{patient.full_name.replace(" ", "_")}_{order.order_date}.pdf"'
     
     return response
+
+
+@login_required
+def exam_order_delete(request, order_id):
+    """Eliminar una orden de examen"""
+    organization = getattr(request, 'organization', None)
+    org_filter = {'organization': organization} if organization else {}
+    
+    order = get_object_or_404(ExamOrder, id=order_id, **org_filter)
+    
+    if request.method == 'POST':
+        # Guardar información antes de eliminar
+        exam_type = order.get_exam_type_display()
+        patient_name = order.clinical_history.patient.full_name
+        
+        # Eliminar la orden (esto también eliminará los resultados relacionados por CASCADE)
+        order.delete()
+        
+        messages.success(request, f'Orden de {exam_type} para {patient_name} eliminada exitosamente.')
+        return redirect('dashboard:exam_order_list')
+    
+    context = {
+        'order': order,
+        'patient': order.clinical_history.patient,
+        'history': order.clinical_history,
+        'title': 'Eliminar Orden de Examen'
+    }
+    
+    return render(request, 'dashboard/patients/exams/order_delete_confirm.html', context)

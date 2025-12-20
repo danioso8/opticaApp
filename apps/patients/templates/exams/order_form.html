@@ -1,0 +1,173 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Ordenar Examen Especial - {{ patient.full_name }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h4 class="mb-1">📋 Ordenar Examen Especial</h4>
+                            <p class="text-muted mb-0">
+                                <strong>Paciente:</strong> {{ patient.full_name }} | 
+                                <strong>CC:</strong> {{ patient.identification }}
+                            </p>
+                        </div>
+                        <a href="{% url 'patients:clinical_history_detail' history.id %}" class="btn btn-outline-secondary">
+                            <i class="fas fa-arrow-left"></i> Volver a Historia Clínica
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Formulario -->
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Nueva Orden de Examen</h5>
+                </div>
+                <div class="card-body">
+                    <form method="post" action="">
+                        {% csrf_token %}
+                        
+                        <div class="row">
+                            <!-- Tipo de Examen -->
+                            <div class="col-md-8 mb-3">
+                                <label for="{{ form.exam_type.id_for_label }}" class="form-label">
+                                    <strong>Tipo de Examen *</strong>
+                                </label>
+                                {{ form.exam_type }}
+                                {% if form.exam_type.errors %}
+                                    <div class="invalid-feedback d-block">{{ form.exam_type.errors }}</div>
+                                {% endif %}
+                            </div>
+
+                            <!-- Prioridad -->
+                            <div class="col-md-4 mb-3">
+                                <label for="{{ form.priority.id_for_label }}" class="form-label">
+                                    <strong>Prioridad</strong>
+                                </label>
+                                {{ form.priority }}
+                                {% if form.priority.errors %}
+                                    <div class="invalid-feedback d-block">{{ form.priority.errors }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Indicación Clínica -->
+                        <div class="mb-3">
+                            <label for="{{ form.clinical_indication.id_for_label }}" class="form-label">
+                                <strong>Indicación Clínica *</strong>
+                            </label>
+                            <small class="text-muted d-block mb-2">
+                                Motivo por el cual se solicita este examen
+                            </small>
+                            {{ form.clinical_indication }}
+                            {% if form.clinical_indication.errors %}
+                                <div class="invalid-feedback d-block">{{ form.clinical_indication.errors }}</div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Instrucciones Especiales -->
+                        <div class="mb-3">
+                            <label for="{{ form.special_instructions.id_for_label }}" class="form-label">
+                                <strong>Instrucciones Especiales</strong>
+                            </label>
+                            <small class="text-muted d-block mb-2">
+                                Indicaciones especiales para el técnico o paciente (opcional)
+                            </small>
+                            {{ form.special_instructions }}
+                            {% if form.special_instructions.errors %}
+                                <div class="invalid-feedback d-block">{{ form.special_instructions.errors }}</div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Fecha Agendada -->
+                        <div class="mb-4">
+                            <label for="{{ form.scheduled_date.id_for_label }}" class="form-label">
+                                <strong>Fecha Agendada (opcional)</strong>
+                            </label>
+                            {{ form.scheduled_date }}
+                            {% if form.scheduled_date.errors %}
+                                <div class="invalid-feedback d-block">{{ form.scheduled_date.errors }}</div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Botones -->
+                        <div class="d-flex justify-content-end gap-2">
+                            <a href="{% url 'patients:clinical_history_detail' history.id %}" class="btn btn-secondary">
+                                <i class="fas fa-times"></i> Cancelar
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-check"></i> Crear Orden
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Info Lateral -->
+        <div class="col-lg-4">
+            <div class="card bg-light">
+                <div class="card-header">
+                    <h6 class="mb-0">ℹ️ Información</h6>
+                </div>
+                <div class="card-body">
+                    <h6>Tipos de Exámenes Disponibles:</h6>
+                    <ul class="small">
+                        <li><strong>Tonometría:</strong> Medición de presión intraocular</li>
+                        <li><strong>Campo Visual:</strong> Campimetría computarizada</li>
+                        <li><strong>Retinografía:</strong> Fotografía de fondo de ojo</li>
+                        <li><strong>OCT:</strong> Tomografía de coherencia óptica</li>
+                        <li><strong>Topografía Corneal:</strong> Mapeo corneal</li>
+                        <li><strong>Paquimetría:</strong> Grosor corneal</li>
+                        <li><strong>Queratometría:</strong> Curvatura corneal</li>
+                        <li><strong>Visión de Colores:</strong> Test Ishihara</li>
+                        <li><strong>Motilidad Ocular:</strong> Cover test</li>
+                    </ul>
+
+                    <hr>
+
+                    <h6>Prioridades:</h6>
+                    <ul class="small">
+                        <li><strong>Rutina:</strong> Examen de control habitual</li>
+                        <li><strong>Urgente:</strong> Realizar dentro de 48-72h</li>
+                        <li><strong>STAT:</strong> Realizar inmediatamente</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.card {
+    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    border: none;
+    border-radius: 8px;
+}
+
+.form-label strong {
+    color: #333;
+}
+
+.btn-primary {
+    background-color: #007bff;
+    border-color: #007bff;
+}
+
+.btn-primary:hover {
+    background-color: #0056b3;
+    border-color: #0056b3;
+}
+</style>
+{% endblock %}

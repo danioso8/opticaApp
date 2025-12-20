@@ -44,7 +44,7 @@ class ExamOrderForm(forms.ModelForm):
             }),
             'ordered_by': forms.Select(attrs={
                 'class': 'form-select',
-                'required': True
+                'required': False
             }),
         }
         labels = {
@@ -63,10 +63,24 @@ class ExamOrderForm(forms.ModelForm):
         # Filtrar doctores por organización
         if organization:
             from .models import Doctor
-            self.fields['ordered_by'].queryset = Doctor.objects.filter(
-                organization=organization,
-                is_active=True
-            )
+            try:
+                doctors = Doctor.objects.filter(
+                    organization=organization,
+                    is_active=True
+                )
+                self.fields['ordered_by'].queryset = doctors
+            except:
+                # Si hay un error, usar todos los doctores
+                from .models import Doctor
+                self.fields['ordered_by'].queryset = Doctor.objects.filter(is_active=True)
+        else:
+            # Sin organización, mostrar todos los doctores activos
+            from .models import Doctor
+            self.fields['ordered_by'].queryset = Doctor.objects.filter(is_active=True)
+        
+        # Hacer el campo opcional
+        self.fields['ordered_by'].required = False
+        self.fields['ordered_by'].empty_label = "-- Sin médico asignado --"
         
         # Configurar fecha por defecto
         if not self.instance.pk:
@@ -122,15 +136,22 @@ class ExamOrderFilterForm(forms.Form):
 class ExamOrderStatusForm(forms.ModelForm):
     """Formulario para actualizar el estado de una orden"""
     
+    scheduled_date = forms.DateField(
+        required=False,
+        localize=False,
+        widget=forms.DateInput(attrs={
+            'class': 'form-control',
+            'type': 'date',
+            'placeholder': 'YYYY-MM-DD'
+        }),
+        input_formats=['%Y-%m-%d', '%d/%m/%Y', '%d-%m-%Y']
+    )
+    
     class Meta:
         model = ExamOrder
         fields = ['status', 'scheduled_date', 'observations']
         widgets = {
             'status': forms.Select(attrs={'class': 'form-select'}),
-            'scheduled_date': forms.DateInput(attrs={
-                'class': 'form-control',
-                'type': 'date'
-            }),
             'observations': forms.Textarea(attrs={
                 'class': 'form-control',
                 'rows': 2

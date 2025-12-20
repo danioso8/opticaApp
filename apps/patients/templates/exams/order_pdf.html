@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Orden de Examen - {{ patient.full_name }}</title>
+    <style>
+        @page {
+            size: Letter;
+            margin: 2cm;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            font-size: 11pt;
+            line-height: 1.4;
+            color: #333;
+        }
+
+        .header {
+            text-align: center;
+            border-bottom: 3px solid #007bff;
+            padding-bottom: 15px;
+            margin-bottom: 25px;
+        }
+
+        .header h1 {
+            color: #007bff;
+            margin: 0 0 5px 0;
+            font-size: 24pt;
+        }
+
+        .header .org-name {
+            font-size: 14pt;
+            color: #666;
+            margin: 5px 0;
+        }
+
+        .document-title {
+            background-color: #007bff;
+            color: white;
+            padding: 10px;
+            text-align: center;
+            font-size: 16pt;
+            font-weight: bold;
+            margin: 20px 0;
+        }
+
+        .info-section {
+            margin-bottom: 20px;
+        }
+
+        .info-section h3 {
+            background-color: #f0f0f0;
+            padding: 8px;
+            margin: 15px 0 10px 0;
+            font-size: 12pt;
+            border-left: 4px solid #007bff;
+        }
+
+        .info-row {
+            display: flex;
+            margin-bottom: 10px;
+        }
+
+        .info-label {
+            font-weight: bold;
+            width: 200px;
+            flex-shrink: 0;
+        }
+
+        .info-value {
+            flex-grow: 1;
+        }
+
+        .exam-box {
+            border: 2px solid #007bff;
+            padding: 15px;
+            margin: 20px 0;
+            background-color: #f8f9fa;
+        }
+
+        .exam-type {
+            font-size: 16pt;
+            font-weight: bold;
+            color: #007bff;
+            margin-bottom: 10px;
+        }
+
+        .priority-badge {
+            display: inline-block;
+            padding: 5px 15px;
+            border-radius: 5px;
+            font-weight: bold;
+            font-size: 10pt;
+        }
+
+        .priority-routine {
+            background-color: #6c757d;
+            color: white;
+        }
+
+        .priority-urgent {
+            background-color: #ffc107;
+            color: #000;
+        }
+
+        .priority-stat {
+            background-color: #dc3545;
+            color: white;
+        }
+
+        .indication-box {
+            border: 1px solid #ddd;
+            padding: 15px;
+            margin: 15px 0;
+            background-color: white;
+            min-height: 80px;
+        }
+
+        .footer {
+            margin-top: 50px;
+            border-top: 1px solid #ddd;
+            padding-top: 20px;
+        }
+
+        .signature-section {
+            margin-top: 60px;
+            text-align: center;
+        }
+
+        .signature-line {
+            border-top: 1px solid #000;
+            width: 300px;
+            margin: 80px auto 5px auto;
+        }
+
+        .barcode {
+            text-align: center;
+            font-family: 'Courier New', monospace;
+            font-size: 10pt;
+            margin-top: 20px;
+        }
+
+        .important-note {
+            background-color: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 10px;
+            margin: 15px 0;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <div class="header">
+        {% if organization.logo %}
+            <img src="{{ organization.logo.url }}" alt="Logo" style="max-height: 60px; margin-bottom: 10px;">
+        {% endif %}
+        <div class="org-name">{{ organization.name }}</div>
+        {% if organization.address %}
+            <div style="font-size: 9pt; color: #888;">{{ organization.address }}</div>
+        {% endif %}
+        {% if organization.phone %}
+            <div style="font-size: 9pt; color: #888;">Tel: {{ organization.phone }}</div>
+        {% endif %}
+    </div>
+
+    <!-- Document Title -->
+    <div class="document-title">
+        📋 ORDEN DE EXAMEN ESPECIAL
+    </div>
+
+    <!-- Patient Information -->
+    <div class="info-section">
+        <h3>Información del Paciente</h3>
+        <div class="info-row">
+            <div class="info-label">Nombre Completo:</div>
+            <div class="info-value">{{ patient.full_name }}</div>
+        </div>
+        <div class="info-row">
+            <div class="info-label">Identificación:</div>
+            <div class="info-value">{{ patient.identification }}</div>
+        </div>
+        <div class="info-row">
+            <div class="info-label">Fecha de Nacimiento:</div>
+            <div class="info-value">{{ patient.date_of_birth|date:"d/m/Y" }} ({{ patient.age }} años)</div>
+        </div>
+        {% if patient.phone %}
+        <div class="info-row">
+            <div class="info-label">Teléfono:</div>
+            <div class="info-value">{{ patient.phone }}</div>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Exam Information -->
+    <div class="exam-box">
+        <div class="exam-type">
+            🔬 {{ order.get_exam_type_display }}
+        </div>
+        <div style="margin-top: 10px;">
+            <strong>Prioridad:</strong>
+            {% if order.priority == 'urgent' %}
+                <span class="priority-badge priority-urgent">⚠️ URGENTE</span>
+            {% elif order.priority == 'stat' %}
+                <span class="priority-badge priority-stat">🚨 STAT (Inmediato)</span>
+            {% else %}
+                <span class="priority-badge priority-routine">Rutina</span>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Clinical Indication -->
+    <div class="info-section">
+        <h3>Indicación Clínica</h3>
+        <div class="indication-box">
+            {{ order.clinical_indication }}
+        </div>
+    </div>
+
+    <!-- Special Instructions -->
+    {% if order.special_instructions %}
+    <div class="info-section">
+        <h3>Instrucciones Especiales</h3>
+        <div class="indication-box">
+            {{ order.special_instructions }}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Order Details -->
+    <div class="info-section">
+        <h3>Detalles de la Orden</h3>
+        <div class="info-row">
+            <div class="info-label">Fecha de Orden:</div>
+            <div class="info-value">{{ order.order_date|date:"d/m/Y" }}</div>
+        </div>
+        {% if order.scheduled_date %}
+        <div class="info-row">
+            <div class="info-label">Fecha Agendada:</div>
+            <div class="info-value">{{ order.scheduled_date|date:"d/m/Y" }}</div>
+        </div>
+        {% endif %}
+        <div class="info-row">
+            <div class="info-label">Ordenado por:</div>
+            <div class="info-value">{{ order.ordered_by.get_full_name|default:order.ordered_by.username }}</div>
+        </div>
+        <div class="info-row">
+            <div class="info-label">Orden N°:</div>
+            <div class="info-value">#{{ order.id|stringformat:"05d" }}</div>
+        </div>
+    </div>
+
+    <!-- Important Note -->
+    {% if order.priority in 'urgent,stat' %}
+    <div class="important-note">
+        <strong>⚠️ IMPORTANTE:</strong> Esta orden tiene prioridad {{ order.get_priority_display|upper }}.
+        Por favor procesar con la urgencia correspondiente.
+    </div>
+    {% endif %}
+
+    <!-- Signature -->
+    <div class="signature-section">
+        <div class="signature-line"></div>
+        <div><strong>{{ order.ordered_by.get_full_name|default:order.ordered_by.username }}</strong></div>
+        <div style="font-size: 9pt; color: #666;">Firma del Médico</div>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+        <div style="text-align: center; font-size: 9pt; color: #888;">
+            <div>Documento generado el {{ generated_date|date:"d/m/Y H:i" }}</div>
+            <div class="barcode" style="margin-top: 10px;">
+                *{{ order.id|stringformat:"05d" }}*
+            </div>
+        </div>
+    </div>
+</body>
+</html>

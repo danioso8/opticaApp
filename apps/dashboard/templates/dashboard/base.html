@@ -231,6 +231,12 @@
                     <span class="sidebar-tooltip">Doctores / Optómetras</span>
                 </a>
                 
+                <a href="{% url 'dashboard:exam_order_list' %}" class="flex items-center px-4 py-3 hover:bg-indigo-800 {% if 'exam' in request.path %}bg-indigo-800{% endif %} relative">
+                    <i class="fas fa-microscope mr-3"></i>
+                    <span class="sidebar-text">Exámenes Especiales</span>
+                    <span class="sidebar-tooltip">Exámenes Especiales</span>
+                </a>
+                
                 <a href="{% url 'billing:product_list' %}" class="flex items-center px-4 py-3 hover:bg-indigo-800 {% if 'product' in request.path %}bg-indigo-800{% endif %} relative">
                     <i class="fas fa-box mr-3"></i>
                     <span class="sidebar-text">Productos</span>

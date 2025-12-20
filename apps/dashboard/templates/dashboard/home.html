@@ -6,174 +6,252 @@
 {% block page_subtitle %}Resumen general del sistema{% endblock %}
 
 {% block content %}
-<!-- Tarjetas de Estadísticas -->
-<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-6 md:mb-8">
-    <!-- Ventas Diarias -->
-    <div class="bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-lg shadow-lg p-4 md:p-6 text-white">
-        <div class="flex items-center justify-between">
-            <div>
-                <p class="text-emerald-100 text-xs md:text-sm font-medium">Ventas Hoy</p>
-                <h3 class="text-2xl md:text-3xl font-bold mt-1 md:mt-2">${{ stats.sales.today_revenue|floatformat:0 }}</h3>
+<!-- Sección de Métricas Principales -->
+<div class="mb-6">
+    <h2 class="text-lg font-semibold text-gray-700 mb-4 flex items-center">
+        <i class="fas fa-chart-line mr-2 text-indigo-600"></i>
+        Resumen del Día
+    </h2>
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+        <!-- Ventas Diarias -->
+        <div class="bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-lg shadow-lg p-4 md:p-6 text-white hover:shadow-xl transition-shadow">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-emerald-100 text-xs md:text-sm font-medium">Ventas Hoy</p>
+                    <h3 class="text-2xl md:text-3xl font-bold mt-1 md:mt-2">${{ stats.sales.today_revenue|floatformat:0 }}</h3>
+                </div>
+                <div class="bg-white bg-opacity-20 rounded-full p-3 md:p-4">
+                    <i class="fas fa-dollar-sign text-xl md:text-2xl"></i>
+                </div>
             </div>
-            <div class="bg-white bg-opacity-20 rounded-full p-3 md:p-4">
-                <i class="fas fa-dollar-sign text-xl md:text-2xl"></i>
+            <div class="mt-3 md:mt-4 flex items-center text-xs md:text-sm text-emerald-100">
+                <i class="fas fa-shopping-bag mr-1"></i>
+                <span class="font-medium">{{ stats.sales.today_count }} ventas</span>
             </div>
-        </div>
-        <div class="mt-3 md:mt-4 flex items-center text-xs md:text-sm text-emerald-100">
-            <i class="fas fa-shopping-bag mr-1"></i>
-            <span class="font-medium">{{ stats.sales.today_count }} ventas</span>
-        </div>
-    </div>
-    
-    <!-- Citas Hoy -->
-    <div class="bg-white rounded-lg shadow-md p-4 md:p-6">
-        <div class="flex items-center justify-between">
-            <div>
-                <p class="text-gray-500 text-xs md:text-sm font-medium">Citas Hoy</p>
-                <h3 class="text-2xl md:text-3xl font-bold text-gray-800 mt-1 md:mt-2">{{ stats.today.total }}</h3>
-            </div>
-            <div class="bg-blue-100 rounded-full p-3 md:p-4">
-                <i class="fas fa-calendar-day text-blue-600 text-xl md:text-2xl"></i>
-            </div>
-        </div>
-        <div class="mt-3 md:mt-4 flex flex-col sm:flex-row items-start sm:items-center text-xs md:text-sm gap-1 sm:gap-0">
-            <span class="text-green-600 font-medium">{{ stats.today.confirmed }} confirmadas</span>
-            <span class="text-gray-400 mx-2 hidden sm:inline">|</span>
-            <span class="text-yellow-600 font-medium">{{ stats.today.pending }} pendientes</span>
-        </div>
-    </div>
-    
-    <!-- Completadas -->
-    <div class="bg-white rounded-lg shadow-md p-4 md:p-6">
-        <div class="flex items-center justify-between">
-            <div>
-                <p class="text-gray-500 text-xs md:text-sm font-medium">Completadas</p>
-                <h3 class="text-2xl md:text-3xl font-bold text-green-600 mt-1 md:mt-2">{{ stats.today.completed }}</h3>
-            </div>
-            <div class="bg-green-100 rounded-full p-3 md:p-4">
-                <i class="fas fa-check-circle text-green-600 text-xl md:text-2xl"></i>
-            </div>
-        </div>
-        <p class="mt-3 md:mt-4 text-xs md:text-sm text-gray-600">
-            Citas atendidas hoy
-        </p>
-    </div>
-    
-    <!-- Total Pacientes -->
-    <div class="bg-white rounded-lg shadow-md p-4 md:p-6">
-        <div class="flex items-center justify-between">
-            <div>
-                <p class="text-gray-500 text-xs md:text-sm font-medium">Total Pacientes</p>
-                <h3 class="text-2xl md:text-3xl font-bold text-purple-600 mt-1 md:mt-2">{{ stats.total_patients }}</h3>
-            </div>
-            <div class="bg-purple-100 rounded-full p-3 md:p-4">
-                <i class="fas fa-users text-purple-600 text-xl md:text-2xl"></i>
-            </div>
-        </div>
-        <p class="mt-3 md:mt-4 text-xs md:text-sm text-gray-600">
-            Pacientes activos
-        </p>
-    </div>
-</div>
-
-<!-- Tarjetas de Facturación -->
-<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-6 md:mb-8">
-    <!-- Facturado este mes -->
-    <div class="bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg shadow-lg p-4 md:p-6 text-white">
-        <div class="flex items-center justify-between">
-            <div>
-                <p class="text-blue-100 text-xs md:text-sm font-medium">Facturado este mes</p>
-                <h3 class="text-2xl md:text-3xl font-bold mt-1 md:mt-2">${{ billing_stats.month.total_facturado|floatformat:0 }}</h3>
-            </div>
-            <div class="bg-white bg-opacity-20 rounded-full p-3 md:p-4">
-                <i class="fas fa-file-invoice-dollar text-xl md:text-2xl"></i>
-            </div>
-        </div>
-        <div class="mt-3 md:mt-4 flex items-center text-xs md:text-sm text-blue-100">
-            <i class="fas fa-receipt mr-1"></i>
-            <span class="font-medium">{{ billing_stats.month.total_invoices }} facturas</span>
-        </div>
-    </div>
-    
-    <!-- Cobrado este mes -->
-    <div class="bg-gradient-to-br from-green-500 to-green-600 rounded-lg shadow-lg p-4 md:p-6 text-white">
-        <div class="flex items-center justify-between">
-            <div>
-                <p class="text-green-100 text-xs md:text-sm font-medium">Cobrado este mes</p>
-                <h3 class="text-2xl md:text-3xl font-bold mt-1 md:mt-2">${{ billing_stats.month.total_cobrado|floatformat:0 }}</h3>
-            </div>
-            <div class="bg-white bg-opacity-20 rounded-full p-3 md:p-4">
-                <i class="fas fa-hand-holding-usd text-xl md:text-2xl"></i>
-            </div>
-        </div>
-        <div class="mt-3 md:mt-4 flex items-center text-xs md:text-sm text-green-100">
-            <i class="fas fa-check-circle mr-1"></i>
-            <span class="font-medium">Pagos recibidos</span>
-        </div>
-    </div>
-    
-    <!-- Por cobrar -->
-    <div class="bg-gradient-to-br from-orange-500 to-orange-600 rounded-lg shadow-lg p-4 md:p-6 text-white">
-        <div class="flex items-center justify-between">
-            <div>
-                <p class="text-orange-100 text-xs md:text-sm font-medium">Total por cobrar</p>
-                <h3 class="text-2xl md:text-3xl font-bold mt-1 md:mt-2">${{ billing_stats.total_por_cobrar|floatformat:0 }}</h3>
-            </div>
-            <div class="bg-white bg-opacity-20 rounded-full p-3 md:p-4">
-                <i class="fas fa-clock text-xl md:text-2xl"></i>
-            </div>
-        </div>
-        <div class="mt-3 md:mt-4 flex items-center text-xs md:text-sm text-orange-100">
-            <i class="fas fa-exclamation-circle mr-1"></i>
-            <span class="font-medium">{{ billing_stats.unpaid_count }} facturas pendientes</span>
-        </div>
-    </div>
-    
-    <!-- Acceso rápido a facturación -->
-    <div class="bg-white rounded-lg shadow-md p-4 md:p-6 hover:shadow-lg transition cursor-pointer" onclick="window.location.href='{% url 'billing:invoice_list' %}'">
-        <div class="flex items-center justify-between">
-            <div>
-                <p class="text-gray-500 text-xs md:text-sm font-medium">Facturación</p>
-                <h3 class="text-lg md:text-xl font-bold text-gray-800 mt-1 md:mt-2">Ver facturas</h3>
-            </div>
-            <div class="bg-indigo-100 rounded-full p-3 md:p-4">
-                <i class="fas fa-file-invoice text-indigo-600 text-xl md:text-2xl"></i>
-            </div>
-        </div>
-        <p class="mt-3 md:mt-4 text-xs md:text-sm text-indigo-600 font-medium">
-            <i class="fas fa-arrow-right mr-1"></i>Ir al módulo
-        </p>
-    </div>
-</div>
-
-<div class="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
-    <!-- Próximas Citas -->
-    <div class="bg-white rounded-lg shadow-md p-4 md:p-6">
-        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4 gap-2">
-            <h3 class="text-base md:text-lg font-semibold text-gray-800">
-                <i class="fas fa-clock mr-2 text-indigo-600"></i>
-                Próximas Citas
-            </h3>
-            <a href="{% url 'dashboard:appointments_list' %}" class="text-indigo-600 hover:text-indigo-800 text-xs md:text-sm font-medium">
-                Ver todas <i class="fas fa-arrow-right ml-1"></i>
-            </a>
         </div>
         
+        <!-- Citas Hoy -->
+        <div class="bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg shadow-lg p-4 md:p-6 text-white hover:shadow-xl transition-shadow">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-blue-100 text-xs md:text-sm font-medium">Citas Hoy</p>
+                    <h3 class="text-2xl md:text-3xl font-bold mt-1 md:mt-2">{{ stats.today.total }}</h3>
+                </div>
+                <div class="bg-white bg-opacity-20 rounded-full p-3 md:p-4">
+                    <i class="fas fa-calendar-day text-xl md:text-2xl"></i>
+                </div>
+            </div>
+            <div class="mt-3 md:mt-4 text-xs md:text-sm text-blue-100">
+                <span class="font-medium">{{ stats.today.confirmed }} confirmadas</span>
+                <span class="mx-2">|</span>
+                <span class="font-medium">{{ stats.today.pending }} pendientes</span>
+            </div>
+        </div>
+        
+        <!-- Completadas -->
+        <div class="bg-gradient-to-br from-green-500 to-green-600 rounded-lg shadow-lg p-4 md:p-6 text-white hover:shadow-xl transition-shadow">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-green-100 text-xs md:text-sm font-medium">Completadas</p>
+                    <h3 class="text-2xl md:text-3xl font-bold mt-1 md:mt-2">{{ stats.today.completed }}</h3>
+                </div>
+                <div class="bg-white bg-opacity-20 rounded-full p-3 md:p-4">
+                    <i class="fas fa-check-circle text-xl md:text-2xl"></i>
+                </div>
+            </div>
+            <p class="mt-3 md:mt-4 text-xs md:text-sm text-green-100">
+                Citas atendidas hoy
+            </p>
+        </div>
+        
+        <!-- Total Pacientes -->
+        <div class="bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg shadow-lg p-4 md:p-6 text-white hover:shadow-xl transition-shadow">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-purple-100 text-xs md:text-sm font-medium">Total Pacientes</p>
+                    <h3 class="text-2xl md:text-3xl font-bold mt-1 md:mt-2">{{ stats.total_patients }}</h3>
+                </div>
+                <div class="bg-white bg-opacity-20 rounded-full p-3 md:p-4">
+                    <i class="fas fa-users text-xl md:text-2xl"></i>
+                </div>
+            </div>
+            <p class="mt-3 md:mt-4 text-xs md:text-sm text-purple-100">
+                Pacientes activos
+            </p>
+        </div>
+    </div>
+</div>
+
+
+<!-- Sección de Exámenes Especiales -->
+<div class="mb-6">
+    <h2 class="text-lg font-semibold text-gray-700 mb-4 flex items-center">
+        <i class="fas fa-microscope mr-2 text-purple-600"></i>
+        Estado de Exámenes Especiales
+    </h2>
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+        <!-- Exámenes Pendientes -->
+        <div class="bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg shadow-lg p-4 md:p-6 text-white cursor-pointer hover:shadow-xl transition-shadow" onclick="window.location.href='{% url 'dashboard:exam_order_list' %}?status=pending'">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-purple-100 text-xs md:text-sm font-medium">Exámenes Pendientes</p>
+                    <h3 class="text-2xl md:text-3xl font-bold mt-1 md:mt-2">{{ stats.exams.pending }}</h3>
+                </div>
+                <div class="bg-white bg-opacity-20 rounded-full p-3 md:p-4">
+                    <i class="fas fa-flask text-xl md:text-2xl"></i>
+                </div>
+            </div>
+            <div class="mt-3 md:mt-4 flex items-center text-xs md:text-sm text-purple-100">
+                <i class="fas fa-clock mr-1"></i>
+                <span class="font-medium">Esperando realización</span>
+            </div>
+        </div>
+        
+        <!-- Exámenes Urgentes -->
+        <div class="bg-gradient-to-br from-orange-500 to-orange-600 rounded-lg shadow-lg p-4 md:p-6 text-white cursor-pointer hover:shadow-xl transition-shadow" onclick="window.location.href='{% url 'dashboard:exam_order_list' %}?priority=urgent'">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-orange-100 text-xs md:text-sm font-medium">Exámenes Urgentes</p>
+                    <h3 class="text-2xl md:text-3xl font-bold mt-1 md:mt-2">{{ stats.exams.urgent }}</h3>
+                </div>
+                <div class="bg-white bg-opacity-20 rounded-full p-3 md:p-4">
+                    <i class="fas fa-exclamation-triangle text-xl md:text-2xl"></i>
+                </div>
+            </div>
+            <div class="mt-3 md:mt-4 flex items-center text-xs md:text-sm text-orange-100">
+                <i class="fas fa-bolt mr-1"></i>
+                <span class="font-medium">Requieren atención prioritaria</span>
+            </div>
+        </div>
+        
+        <!-- Exámenes Completados Hoy -->
+        <div class="bg-gradient-to-br from-green-500 to-green-600 rounded-lg shadow-lg p-4 md:p-6 text-white cursor-pointer hover:shadow-xl transition-shadow" onclick="window.location.href='{% url 'dashboard:exam_order_list' %}?status=completed'">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-green-100 text-xs md:text-sm font-medium">Completados Hoy</p>
+                    <h3 class="text-2xl md:text-3xl font-bold mt-1 md:mt-2">{{ stats.exams.completed_today }}</h3>
+                </div>
+                <div class="bg-white bg-opacity-20 rounded-full p-3 md:p-4">
+                    <i class="fas fa-check-circle text-xl md:text-2xl"></i>
+                </div>
+            </div>
+            <div class="mt-3 md:mt-4 flex items-center text-xs md:text-sm text-green-100">
+                <i class="fas fa-chart-line mr-1"></i>
+                <span class="font-medium">Resultados disponibles</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<!-- Sección de Facturación y Finanzas -->
+<div class="mb-6">
+    <h2 class="text-lg font-semibold text-gray-700 mb-4 flex items-center">
+        <i class="fas fa-dollar-sign mr-2 text-green-600"></i>
+        Resumen Financiero
+    </h2>
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+        <!-- Facturado este mes -->
+        <div class="bg-white rounded-lg shadow-md p-4 md:p-6 border-t-4 border-blue-500 hover:shadow-lg transition-shadow">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-gray-600 text-xs md:text-sm font-medium">Facturado este mes</p>
+                    <h3 class="text-xl md:text-2xl font-bold text-blue-600 mt-1 md:mt-2">${{ billing_stats.month.total_facturado|floatformat:0 }}</h3>
+                </div>
+                <div class="bg-blue-100 rounded-full p-3">
+                    <i class="fas fa-file-invoice-dollar text-blue-600 text-lg md:text-xl"></i>
+                </div>
+            </div>
+            <div class="mt-3 text-xs md:text-sm text-gray-500">
+                <i class="fas fa-receipt mr-1"></i>
+                <span>{{ billing_stats.month.total_invoices }} facturas</span>
+            </div>
+        </div>
+        
+        <!-- Cobrado este mes -->
+        <div class="bg-white rounded-lg shadow-md p-4 md:p-6 border-t-4 border-green-500 hover:shadow-lg transition-shadow">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-gray-600 text-xs md:text-sm font-medium">Cobrado este mes</p>
+                    <h3 class="text-xl md:text-2xl font-bold text-green-600 mt-1 md:mt-2">${{ billing_stats.month.total_cobrado|floatformat:0 }}</h3>
+                </div>
+                <div class="bg-green-100 rounded-full p-3">
+                    <i class="fas fa-hand-holding-usd text-green-600 text-lg md:text-xl"></i>
+                </div>
+            </div>
+            <div class="mt-3 text-xs md:text-sm text-gray-500">
+                <i class="fas fa-check-circle mr-1"></i>
+                <span>Pagos recibidos</span>
+            </div>
+        </div>
+        
+        <!-- Por cobrar -->
+        <div class="bg-white rounded-lg shadow-md p-4 md:p-6 border-t-4 border-orange-500 hover:shadow-lg transition-shadow">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-gray-600 text-xs md:text-sm font-medium">Total por cobrar</p>
+                    <h3 class="text-xl md:text-2xl font-bold text-orange-600 mt-1 md:mt-2">${{ billing_stats.total_por_cobrar|floatformat:0 }}</h3>
+                </div>
+                <div class="bg-orange-100 rounded-full p-3">
+                    <i class="fas fa-clock text-orange-600 text-lg md:text-xl"></i>
+                </div>
+            </div>
+            <div class="mt-3 text-xs md:text-sm text-gray-500">
+                <i class="fas fa-exclamation-circle mr-1"></i>
+                <span>{{ billing_stats.unpaid_count }} facturas pendientes</span>
+            </div>
+        </div>
+        
+        <!-- Acceso rápido a facturación -->
+        <div class="bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-lg shadow-md p-4 md:p-6 text-white hover:shadow-lg transition-shadow cursor-pointer" onclick="window.location.href='{% url 'billing:invoice_list' %}'">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-indigo-100 text-xs md:text-sm font-medium">Módulo de</p>
+                    <h3 class="text-lg md:text-xl font-bold mt-1 md:mt-2">Facturación</h3>
+                </div>
+                <div class="bg-white bg-opacity-20 rounded-full p-3">
+                    <i class="fas fa-file-invoice text-lg md:text-xl"></i>
+                </div>
+            </div>
+            <p class="mt-3 text-xs md:text-sm font-medium">
+                <i class="fas fa-arrow-right mr-1"></i>Ver todas las facturas
+            </p>
+        </div>
+    </div>
+</div>
+
+
+<!-- Sección de Actividad Reciente -->
+<div class="mb-6">
+    <h2 class="text-lg font-semibold text-gray-700 mb-4 flex items-center">
+        <i class="fas fa-history mr-2 text-gray-600"></i>
+        Actividad Reciente
+    </h2>
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6">
+        <!-- Próximas Citas -->
+        <div class="bg-white rounded-lg shadow-md p-4 md:p-6">
+            <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4 gap-2">
+                <h3 class="text-base md:text-lg font-semibold text-gray-800">
+                    <i class="fas fa-clock mr-2 text-indigo-600"></i>
+                    Próximas Citas
+                </h3>
+                <a href="{% url 'dashboard:appointments_list' %}" class="text-indigo-600 hover:text-indigo-800 text-xs md:text-sm font-medium">
+                    Ver todas <i class="fas fa-arrow-right ml-1"></i>
+                </a>
+            </div>
         {% if upcoming_appointments %}
-        <div class="space-y-2 md:space-y-3">
+        <div class="space-y-2">
             {% for appointment in upcoming_appointments %}
-            <div class="border-l-4 {% if appointment.status == 'confirmed' %}border-green-500{% elif appointment.status == 'pending' %}border-yellow-500{% else %}border-gray-300{% endif %} pl-3 md:pl-4 py-2">
+            <div class="border-l-4 {% if appointment.status == 'confirmed' %}border-green-500{% elif appointment.status == 'pending' %}border-yellow-500{% else %}border-gray-300{% endif %} pl-3 py-2 hover:bg-gray-50 transition-colors rounded">
                 <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
                     <div class="flex-1">
-                        <p class="font-semibold text-sm md:text-base text-gray-800">{{ appointment.full_name }}</p>
-                        <p class="text-xs md:text-sm text-gray-600 mt-1">
-                            <i class="fas fa-calendar mr-1"></i>
-                            {{ appointment.appointment_date|date:"d/m/Y" }}
-                            <i class="fas fa-clock ml-2 mr-1"></i>
-                            {{ appointment.appointment_time|time:"H:i" }}
+                        <p class="font-semibold text-sm text-gray-800">{{ appointment.full_name }}</p>
+                        <p class="text-xs text-gray-600 mt-1">
+                            <i class="fas fa-calendar mr-1"></i>{{ appointment.appointment_date|date:"d/m/Y" }}
+                            <i class="fas fa-clock ml-2 mr-1"></i>{{ appointment.appointment_time|time:"H:i" }}
                         </p>
                     </div>
-                    <span class="px-2 md:px-3 py-1 text-xs font-semibold rounded-full whitespace-nowrap
+                    <span class="px-2 py-1 text-xs font-semibold rounded-full whitespace-nowrap
                         {% if appointment.status == 'confirmed' %}bg-green-100 text-green-800
                         {% elif appointment.status == 'pending' %}bg-yellow-100 text-yellow-800
                         {% else %}bg-gray-100 text-gray-800{% endif %}">
@@ -184,9 +262,53 @@
             {% endfor %}
         </div>
         {% else %}
-        <div class="text-center py-8 text-gray-500">
-            <i class="fas fa-calendar-times text-4xl mb-3"></i>
-            <p>No hay citas próximas</p>
+        <div class="text-center py-6 text-gray-500">
+            <i class="fas fa-calendar-times text-3xl mb-2 opacity-50"></i>
+            <p class="text-sm">No hay citas próximas</p>
+        </div>
+        {% endif %}
+    </div>
+    
+    <!-- Exámenes Especiales Pendientes -->
+    <div class="bg-white rounded-lg shadow-md p-4 md:p-6">
+        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4 gap-2">
+            <h3 class="text-base md:text-lg font-semibold text-gray-800">
+                <i class="fas fa-microscope mr-2 text-purple-600"></i>
+                Exámenes Pendientes
+            </h3>
+            <a href="{% url 'dashboard:exam_order_list' %}" class="text-purple-600 hover:text-purple-800 text-xs md:text-sm font-medium">
+                Ver todos <i class="fas fa-arrow-right ml-1"></i>
+            </a>
+        </div>
+        
+        {% if pending_exams %}
+        <div class="space-y-2">
+            {% for exam in pending_exams %}
+            <div class="border-l-4 {% if exam.priority == 'STAT' %}border-red-500{% elif exam.priority == 'urgent' %}border-orange-500{% else %}border-purple-500{% endif %} pl-3 py-2 cursor-pointer hover:bg-gray-50 transition-colors rounded" onclick="window.location.href='{% url 'dashboard:exam_order_detail' exam.id %}'">
+                <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
+                    <div class="flex-1">
+                        <p class="font-semibold text-sm text-gray-800">{{ exam.clinical_history.patient.full_name }}</p>
+                        <p class="text-xs text-gray-600 mt-1">
+                            <i class="fas fa-flask mr-1"></i>{{ exam.get_exam_type_display }}
+                        </p>
+                        <p class="text-xs text-gray-500 mt-1">
+                            <i class="fas fa-calendar mr-1"></i>{{ exam.order_date|date:"d/m/Y" }}
+                        </p>
+                    </div>
+                    <span class="px-2 py-1 text-xs font-semibold rounded-full whitespace-nowrap
+                        {% if exam.priority == 'STAT' %}bg-red-100 text-red-800
+                        {% elif exam.priority == 'urgent' %}bg-orange-100 text-orange-800
+                        {% else %}bg-purple-100 text-purple-800{% endif %}">
+                        {{ exam.get_priority_display }}
+                    </span>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="text-center py-6 text-gray-500">
+            <i class="fas fa-check-circle text-3xl mb-2 text-green-500 opacity-50"></i>
+            <p class="text-sm">No hay exámenes pendientes</p>
         </div>
         {% endif %}
     </div>
@@ -204,42 +326,39 @@
         </div>
         
         {% if invoices_unpaid %}
-        <div class="space-y-2 md:space-y-3">
+        <div class="space-y-2">
             {% for invoice in invoices_unpaid %}
-            <div class="border-l-4 {% if invoice.estado_pago == 'unpaid' %}border-red-500{% else %}border-orange-500{% endif %} pl-3 md:pl-4 py-2 cursor-pointer hover:bg-gray-50 transition" onclick="window.location.href='{% url 'billing:invoice_detail' invoice.id %}'">
+            <div class="border-l-4 {% if invoice.estado_pago == 'unpaid' %}border-red-500{% else %}border-orange-500{% endif %} pl-3 py-2 cursor-pointer hover:bg-gray-50 transition-colors rounded" onclick="window.location.href='{% url 'billing:invoice_detail' invoice.id %}'">
                 <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
                     <div class="flex-1">
-                        <p class="font-semibold text-sm md:text-base text-gray-800">{{ invoice.numero_completo }}</p>
-                        <p class="text-xs md:text-sm text-gray-600 mt-1">
-                            {{ invoice.cliente_nombre }}
-                        </p>
+                        <p class="font-semibold text-sm text-gray-800">{{ invoice.numero_completo }}</p>
+                        <p class="text-xs text-gray-600 mt-1">{{ invoice.cliente_nombre }}</p>
                         <p class="text-xs text-gray-500 mt-1">
                             <i class="fas fa-calendar mr-1"></i>{{ invoice.fecha_emision|date:"d/m/Y" }}
                         </p>
                     </div>
                     <div class="text-right">
-                        <p class="font-bold text-sm md:text-base {% if invoice.estado_pago == 'unpaid' %}text-red-600{% else %}text-orange-600{% endif %}">
+                        <p class="font-bold text-sm {% if invoice.estado_pago == 'unpaid' %}text-red-600{% else %}text-orange-600{% endif %}">
                             ${{ invoice.saldo_pendiente|floatformat:0 }}
                         </p>
-                        <p class="text-xs text-gray-500">
-                            Total: ${{ invoice.total|floatformat:0 }}
-                        </p>
+                        <p class="text-xs text-gray-500">de ${{ invoice.total|floatformat:0 }}</p>
                     </div>
                 </div>
             </div>
             {% endfor %}
         </div>
         {% else %}
-        <div class="text-center py-8 text-gray-500">
-            <i class="fas fa-check-circle text-4xl mb-3 text-green-500"></i>
-            <p>¡Todas las facturas están al día!</p>
+        <div class="text-center py-6 text-gray-500">
+            <i class="fas fa-check-circle text-3xl mb-2 text-green-500 opacity-50"></i>
+            <p class="text-sm">¡Todas las facturas están al día!</p>
         </div>
         {% endif %}
     </div>
 </div>
+</div>
 
-<!-- Segunda fila: Pagos recientes y Estado del sistema -->
-<div class="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6 mb-6 md:mb-8">
+<!-- Sección de Información Adicional -->
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6 mb-6">
     <!-- Pagos Recientes -->
     <div class="bg-white rounded-lg shadow-md p-4 md:p-6">
         <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4 gap-2">
@@ -253,15 +372,13 @@
         </div>
         
         {% if recent_payments %}
-        <div class="space-y-2 md:space-y-3">
+        <div class="space-y-2">
             {% for payment in recent_payments %}
-            <div class="border-l-4 border-green-500 pl-3 md:pl-4 py-2 cursor-pointer hover:bg-gray-50 transition" onclick="window.location.href='{% url 'billing:invoice_detail' payment.invoice.id %}'">
+            <div class="border-l-4 border-green-500 pl-3 py-2 cursor-pointer hover:bg-gray-50 transition-colors rounded" onclick="window.location.href='{% url 'billing:invoice_detail' payment.invoice.id %}'">
                 <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
                     <div class="flex-1">
-                        <p class="font-semibold text-sm md:text-base text-gray-800">{{ payment.invoice.numero_completo }}</p>
-                        <p class="text-xs md:text-sm text-gray-600 mt-1">
-                            {{ payment.invoice.cliente_nombre }}
-                        </p>
+                        <p class="font-semibold text-sm text-gray-800">{{ payment.invoice.numero_completo }}</p>
+                        <p class="text-xs text-gray-600 mt-1">{{ payment.invoice.cliente_nombre }}</p>
                         <p class="text-xs text-gray-500 mt-1">
                             <i class="fas fa-calendar mr-1"></i>{{ payment.payment_date|date:"d/m/Y H:i" }}
                             <span class="ml-2">
@@ -270,7 +387,7 @@
                         </p>
                     </div>
                     <div class="text-right">
-                        <p class="font-bold text-sm md:text-base text-green-600">
+                        <p class="font-bold text-sm text-green-600">
                             ${{ payment.amount|floatformat:0 }}
                         </p>
                         <span class="text-xs px-2 py-1 bg-green-100 text-green-800 rounded-full">
@@ -282,68 +399,59 @@
             {% endfor %}
         </div>
         {% else %}
-        <div class="text-center py-8 text-gray-500">
-            <i class="fas fa-receipt text-4xl mb-3"></i>
-            <p>No hay pagos registrados</p>
+        <div class="text-center py-6 text-gray-500">
+            <i class="fas fa-receipt text-3xl mb-2 opacity-50"></i>
+            <p class="text-sm">No hay pagos registrados</p>
         </div>
         {% endif %}
     </div>
     
-    <!-- Estado del Sistema -->
+    <!-- Accesos Rápidos y Estado del Sistema -->
     <div class="bg-white rounded-lg shadow-md p-4 md:p-6">
         <h3 class="text-base md:text-lg font-semibold text-gray-800 mb-4">
-            <i class="fas fa-info-circle mr-2 text-indigo-600"></i>
-            Estado del Sistema
+            <i class="fas fa-rocket mr-2 text-indigo-600"></i>
+            Accesos Rápidos
         </h3>
         
-        <div class="space-y-3 md:space-y-4">
-            <!-- Sistema Abierto/Cerrado -->
-            <div class="flex items-center justify-between p-3 md:p-4 bg-gray-50 rounded-lg">
+        <!-- Estado del Sistema -->
+        <div class="mb-4 p-3 bg-gray-50 rounded-lg">
+            <div class="flex items-center justify-between">
                 <div class="flex items-center">
-                    <div class="w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center flex-shrink-0
+                    <div class="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0
                         {% if stats.system_open %}bg-green-100{% else %}bg-red-100{% endif %}">
-                        <i class="fas {% if stats.system_open %}fa-check text-green-600{% else %}fa-times text-red-600{% endif %} text-sm md:text-base"></i>
+                        <i class="fas {% if stats.system_open %}fa-check text-green-600{% else %}fa-times text-red-600{% endif %} text-sm"></i>
                     </div>
-                    <div class="ml-3 md:ml-4">
-                        <p class="font-semibold text-sm md:text-base text-gray-800">Sistema de Agendamiento</p>
-                        <p class="text-xs md:text-sm text-gray-600">
-                            {% if stats.system_open %}
-                            Abierto - Recibiendo citas
-                            {% else %}
-                            Cerrado - No se pueden agendar citas
-                            {% endif %}
+                    <div class="ml-3">
+                        <p class="font-semibold text-sm text-gray-800">Sistema de Agendamiento</p>
+                        <p class="text-xs text-gray-600">
+                            {% if stats.system_open %}Abierto - Recibiendo citas{% else %}Cerrado - No se pueden agendar citas{% endif %}
                         </p>
                     </div>
                 </div>
             </div>
+        </div>
+        
+        <!-- Botones de Acceso Rápido -->
+        <div class="grid grid-cols-2 gap-3">
+            <a href="{% url 'dashboard:appointments_today' %}" class="p-3 bg-indigo-50 rounded-lg hover:bg-indigo-100 transition-colors group">
+                <i class="fas fa-calendar-day text-indigo-600 text-lg group-hover:scale-110 transition-transform inline-block"></i>
+                <p class="mt-2 font-medium text-sm text-gray-800">Citas de Hoy</p>
+            </a>
             
-            <!-- Accesos Rápidos -->
-            <div class="grid grid-cols-2 gap-2 md:gap-3 mt-3 md:mt-4">
-                <a href="{% url 'dashboard:appointments_today' %}" class="p-3 md:p-4 bg-indigo-50 rounded-lg hover:bg-indigo-100 transition">
-                    <i class="fas fa-calendar-day text-indigo-600 text-lg md:text-xl"></i>
-                    <p class="mt-2 font-medium text-xs md:text-sm text-gray-800">Citas de Hoy</p>
-                </a>
-                
-                <a href="{% url 'billing:invoice_create' %}" class="p-3 md:p-4 bg-emerald-50 rounded-lg hover:bg-emerald-100 transition">
-                    <i class="fas fa-plus-circle text-emerald-600 text-lg md:text-xl"></i>
-                    <p class="mt-2 font-medium text-xs md:text-sm text-gray-800">Nueva Factura</p>
-                </a>
-                
-                <a href="{% url 'dashboard:configuration' %}" class="p-3 md:p-4 bg-purple-50 rounded-lg hover:bg-purple-100 transition">
-                    <i class="fas fa-cog text-purple-600 text-lg md:text-xl"></i>
-                    <p class="mt-2 font-medium text-xs md:text-sm text-gray-800">Configuración</p>
-                </a>
-                
-                <a href="{% url 'dashboard:patients_list' %}" class="p-3 md:p-4 bg-blue-50 rounded-lg hover:bg-blue-100 transition">
-                    <i class="fas fa-users text-blue-600 text-lg md:text-xl"></i>
-                    <p class="mt-2 font-medium text-xs md:text-sm text-gray-800">Pacientes</p>
-                </a>
-                
-                <a href="{% url 'dashboard:calendar' %}" class="p-3 md:p-4 bg-green-50 rounded-lg hover:bg-green-100 transition">
-                    <i class="fas fa-calendar text-green-600 text-lg md:text-xl"></i>
-                    <p class="mt-2 font-medium text-xs md:text-sm text-gray-800">Calendario</p>
-                </a>
-            </div>
+            <a href="{% url 'billing:invoice_create' %}" class="p-3 bg-emerald-50 rounded-lg hover:bg-emerald-100 transition-colors group">
+                <i class="fas fa-plus-circle text-emerald-600 text-lg group-hover:scale-110 transition-transform inline-block"></i>
+                <p class="mt-2 font-medium text-sm text-gray-800">Nueva Factura</p>
+            </a>
+            
+            <a href="{% url 'dashboard:patients_list' %}" class="p-3 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors group">
+                <i class="fas fa-users text-blue-600 text-lg group-hover:scale-110 transition-transform inline-block"></i>
+                <p class="mt-2 font-medium text-sm text-gray-800">Pacientes</p>
+            </a>
+            
+            <a href="{% url 'dashboard:calendar' %}" class="p-3 bg-green-50 rounded-lg hover:bg-green-100 transition-colors group">
+                <i class="fas fa-calendar text-green-600 text-lg group-hover:scale-110 transition-transform inline-block"></i>
+                <p class="mt-2 font-medium text-sm text-gray-800">Calendario</p>
+            </a>
         </div>
     </div>
 </div>

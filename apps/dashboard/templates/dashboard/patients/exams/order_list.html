@@ -4,200 +4,346 @@
 {% block title %}{{ title }}{% endblock %}
 
 {% block content %}
-<div class="container-fluid py-4">
-    <!-- Header con estadísticas -->
-    <div class="row mb-4">
-        <div class="col-md-12">
-            <h2 class="mb-3">
-                <i class="fas fa-clipboard-list"></i> Órdenes de Exámenes Especiales
-            </h2>
-        </div>
-    </div>
-
-    <!-- Estadísticas -->
-    <div class="row mb-4">
-        <div class="col-md-2">
-            <div class="card bg-light">
-                <div class="card-body text-center">
-                    <h3 class="mb-0">{{ stats.total }}</h3>
-                    <small class="text-muted">Total</small>
+<!-- Header Principal -->
+<div class="bg-gradient-to-r from-purple-600 to-blue-600 rounded-lg shadow-lg p-6 mb-6 text-white">
+    <div class="flex justify-between items-center">
+        <div>
+            <div class="flex items-center gap-3 mb-2">
+                <div class="w-12 h-12 bg-white bg-opacity-20 rounded-xl flex items-center justify-center backdrop-blur-sm">
+                    <i class="fas fa-microscope text-white text-xl"></i>
                 </div>
+                <h1 class="text-3xl font-bold">Exámenes Especiales</h1>
             </div>
+            <p class="text-purple-100 ml-15">Gestión de órdenes y resultados de laboratorio</p>
         </div>
-        <div class="col-md-2">
-            <div class="card bg-warning bg-opacity-10">
-                <div class="card-body text-center">
-                    <h3 class="mb-0 text-warning">{{ stats.pending }}</h3>
-                    <small class="text-muted">Pendientes</small>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-2">
-            <div class="card bg-info bg-opacity-10">
-                <div class="card-body text-center">
-                    <h3 class="mb-0 text-info">{{ stats.scheduled }}</h3>
-                    <small class="text-muted">Agendadas</small>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-2">
-            <div class="card bg-primary bg-opacity-10">
-                <div class="card-body text-center">
-                    <h3 class="mb-0 text-primary">{{ stats.in_progress }}</h3>
-                    <small class="text-muted">En Proceso</small>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-2">
-            <div class="card bg-success bg-opacity-10">
-                <div class="card-body text-center">
-                    <h3 class="mb-0 text-success">{{ stats.completed }}</h3>
-                    <small class="text-muted">Completadas</small>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Filtros -->
-    <div class="row mb-4">
-        <div class="col-md-12">
-            <div class="card">
-                <div class="card-header">
-                    <h6 class="mb-0">
-                        <i class="fas fa-filter"></i> Filtros
-                    </h6>
-                </div>
-                <div class="card-body">
-                    <form method="get" class="row g-3">
-                        <div class="col-md-2">
-                            <label class="form-label">Estado</label>
-                            {{ filter_form.status }}
-                        </div>
-                        <div class="col-md-3">
-                            <label class="form-label">Tipo de Examen</label>
-                            {{ filter_form.exam_type }}
-                        </div>
-                        <div class="col-md-2">
-                            <label class="form-label">Desde</label>
-                            {{ filter_form.date_from }}
-                        </div>
-                        <div class="col-md-2">
-                            <label class="form-label">Hasta</label>
-                            {{ filter_form.date_to }}
-                        </div>
-                        <div class="col-md-2">
-                            <label class="form-label">Buscar Paciente</label>
-                            {{ filter_form.search }}
-                        </div>
-                        <div class="col-md-1 d-flex align-items-end">
-                            <button type="submit" class="btn btn-primary w-100">
-                                <i class="fas fa-search"></i>
-                            </button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Tabla de órdenes -->
-    <div class="row">
-        <div class="col-md-12">
-            <div class="card">
-                <div class="card-body">
-                    {% if orders %}
-                    <div class="table-responsive">
-                        <table class="table table-hover">
-                            <thead class="table-light">
-                                <tr>
-                                    <th>Fecha</th>
-                                    <th>Paciente</th>
-                                    <th>Examen</th>
-                                    <th>Prioridad</th>
-                                    <th>Estado</th>
-                                    <th>Ordenado por</th>
-                                    <th>Acciones</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for order in orders %}
-                                <tr>
-                                    <td>{{ order.order_date|date:"d/m/Y" }}</td>
-                                    <td>
-                                        <a href="{% url 'dashboard:patient_detail' order.clinical_history.patient.id %}">
-                                            {{ order.clinical_history.patient.full_name }}
-                                        </a>
-                                        <br>
-                                        <small class="text-muted">{{ order.clinical_history.patient.identification }}</small>
-                                    </td>
-                                    <td>
-                                        <strong>{{ order.get_exam_type_display }}</strong>
-                                    </td>
-                                    <td>
-                                        {% if order.priority == 'urgent' %}
-                                            <span class="badge bg-danger">{{ order.get_priority_display }}</span>
-                                        {% elif order.priority == 'stat' %}
-                                            <span class="badge bg-danger text-white">{{ order.get_priority_display }}</span>
-                                        {% else %}
-                                            <span class="badge bg-secondary">{{ order.get_priority_display }}</span>
-                                        {% endif %}
-                                    </td>
-                                    <td>
-                                        {% if order.status == 'pending' %}
-                                            <span class="badge bg-warning">{{ order.get_status_display }}</span>
-                                        {% elif order.status == 'scheduled' %}
-                                            <span class="badge bg-info">{{ order.get_status_display }}</span>
-                                        {% elif order.status == 'in_progress' %}
-                                            <span class="badge bg-primary">{{ order.get_status_display }}</span>
-                                        {% elif order.status == 'completed' %}
-                                            <span class="badge bg-success">{{ order.get_status_display }}</span>
-                                        {% elif order.status == 'cancelled' %}
-                                            <span class="badge bg-dark">{{ order.get_status_display }}</span>
-                                        {% endif %}
-                                    </td>
-                                    <td>{{ order.ordered_by.full_name|default:"N/A" }}</td>
-                                    <td>
-                                        <div class="btn-group btn-group-sm" role="group">
-                                            <a href="{% url 'dashboard:exam_order_detail' order.id %}" 
-                                               class="btn btn-outline-primary" 
-                                               title="Ver detalle">
-                                                <i class="fas fa-eye"></i>
-                                            </a>
-                                            <a href="{% url 'dashboard:exam_order_pdf' order.clinical_history.patient.id order.clinical_history.id order.id %}" 
-                                               class="btn btn-outline-success" 
-                                               title="Imprimir"
-                                               target="_blank">
-                                                <i class="fas fa-print"></i>
-                                            </a>
-                                        </div>
-                                    </td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
-                    {% else %}
-                    <div class="alert alert-info text-center">
-                        <i class="fas fa-info-circle"></i> No se encontraron órdenes de exámenes.
-                    </div>
-                    {% endif %}
-                </div>
-            </div>
-        </div>
+        <a href="{% url 'dashboard:home' %}" class="px-4 py-2 bg-white bg-opacity-20 hover:bg-opacity-30 backdrop-blur-sm text-white rounded-lg transition-all flex items-center gap-2">
+            <i class="fas fa-arrow-left"></i>
+            <span class="hidden md:inline">Volver</span>
+        </a>
     </div>
 </div>
 
+<div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
+
+
+    <!-- Sección de Estadísticas -->
+    <div class="mb-6">
+        <h2 class="text-lg font-semibold text-gray-700 mb-4 flex items-center">
+            <i class="fas fa-chart-bar mr-2 text-purple-600"></i>
+            Resumen de Órdenes
+        </h2>
+        <div class="flex gap-3 overflow-x-auto pb-2">
+            <!-- Total -->
+            <div class="flex-1 min-w-[140px] bg-white rounded-lg p-4 border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
+                <div class="flex items-center justify-between mb-2">
+                    <div class="w-9 h-9 bg-slate-100 rounded-lg flex items-center justify-center">
+                        <i class="fas fa-clipboard-list text-slate-600 text-base"></i>
+                    </div>
+                    <div class="text-2xl font-bold text-slate-700">{{ stats.total }}</div>
+                </div>
+                <p class="text-xs font-medium text-slate-600">Total</p>
+            </div>
+
+            <!-- Pendientes -->
+            <div class="flex-1 min-w-[140px] bg-white rounded-lg p-4 border border-amber-200 shadow-sm hover:shadow-md transition-shadow cursor-pointer" onclick="document.querySelector('select[name=status]').value='pending'; document.querySelector('form').submit();">
+                <div class="flex items-center justify-between mb-2">
+                    <div class="w-9 h-9 bg-amber-50 rounded-lg flex items-center justify-center">
+                        <i class="fas fa-clock text-amber-600 text-base"></i>
+                    </div>
+                    <div class="text-2xl font-bold text-amber-700">{{ stats.pending }}</div>
+                </div>
+                <p class="text-xs font-medium text-amber-700">Pendientes</p>
+            </div>
+
+            <!-- Agendadas -->
+            <div class="flex-1 min-w-[140px] bg-white rounded-lg p-4 border border-sky-200 shadow-sm hover:shadow-md transition-shadow cursor-pointer" onclick="document.querySelector('select[name=status]').value='scheduled'; document.querySelector('form').submit();">
+                <div class="flex items-center justify-between mb-2">
+                    <div class="w-9 h-9 bg-sky-50 rounded-lg flex items-center justify-center">
+                        <i class="fas fa-calendar-check text-sky-600 text-base"></i>
+                    </div>
+                    <div class="text-2xl font-bold text-sky-700">{{ stats.scheduled }}</div>
+                </div>
+                <p class="text-xs font-medium text-sky-700">Agendadas</p>
+            </div>
+
+            <!-- En Proceso -->
+            <div class="flex-1 min-w-[140px] bg-white rounded-lg p-4 border border-orange-200 shadow-sm hover:shadow-md transition-shadow cursor-pointer" onclick="document.querySelector('select[name=status]').value='in_progress'; document.querySelector('form').submit();">
+                <div class="flex items-center justify-between mb-2">
+                    <div class="w-9 h-9 bg-orange-50 rounded-lg flex items-center justify-center">
+                        <i class="fas fa-flask text-orange-600 text-base"></i>
+                    </div>
+                    <div class="text-2xl font-bold text-orange-700">{{ stats.in_progress }}</div>
+                </div>
+                <p class="text-xs font-medium text-orange-700">En Proceso</p>
+            </div>
+
+            <!-- Completadas -->
+            <div class="flex-1 min-w-[140px] bg-white rounded-lg p-4 border border-emerald-200 shadow-sm hover:shadow-md transition-shadow cursor-pointer" onclick="document.querySelector('select[name=status]').value='completed'; document.querySelector('form').submit();">
+                <div class="flex items-center justify-between mb-2">
+                    <div class="w-9 h-9 bg-emerald-50 rounded-lg flex items-center justify-center">
+                        <i class="fas fa-check-circle text-emerald-600 text-base"></i>
+                    </div>
+                    <div class="text-2xl font-bold text-emerald-700">{{ stats.completed }}</div>
+                </div>
+                <p class="text-xs font-medium text-emerald-700">Completadas</p>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- Sección de Filtros -->
+    <div class="mb-6">
+        <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+            <form method="get">
+                <div class="flex flex-wrap items-end gap-3">
+                    <div class="flex-shrink-0">
+                        <label class="block text-xs font-medium text-gray-700 mb-1">
+                            <i class="fas fa-tasks mr-1 text-purple-600"></i>Estado
+                        </label>
+                        {{ filter_form.status }}
+                    </div>
+                    <div class="flex-shrink-0">
+                        <label class="block text-xs font-medium text-gray-700 mb-1">
+                            <i class="fas fa-flask mr-1 text-purple-600"></i>Tipo de Examen
+                        </label>
+                        {{ filter_form.exam_type }}
+                    </div>
+                    <div class="flex-shrink-0">
+                        <label class="block text-xs font-medium text-gray-700 mb-1">
+                            <i class="fas fa-calendar mr-1 text-purple-600"></i>Desde
+                        </label>
+                        {{ filter_form.date_from }}
+                    </div>
+                    <div class="flex-shrink-0">
+                        <label class="block text-xs font-medium text-gray-700 mb-1">
+                            <i class="fas fa-calendar mr-1 text-purple-600"></i>Hasta
+                        </label>
+                        {{ filter_form.date_to }}
+                    </div>
+                    <div class="flex-1 min-w-[200px]">
+                        <label class="block text-xs font-medium text-gray-700 mb-1">
+                            <i class="fas fa-search mr-1 text-purple-600"></i>Buscar Paciente
+                        </label>
+                        {{ filter_form.search }}
+                    </div>
+                    <div class="flex gap-2">
+                        <button type="submit" class="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors flex items-center gap-2 font-medium text-sm whitespace-nowrap">
+                            <i class="fas fa-filter"></i>
+                            Filtrar
+                        </button>
+                        <a href="{% url 'dashboard:exam_order_list' %}" class="px-3 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg transition-colors flex items-center" title="Limpiar filtros">
+                            <i class="fas fa-times"></i>
+                        </a>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+
+    <!-- Tabla de Órdenes -->
+    <div>
+        <h2 class="text-lg font-semibold text-gray-700 mb-4 flex items-center">
+            <i class="fas fa-list mr-2 text-purple-600"></i>
+            Listado de Órdenes
+        </h2>
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+            {% if orders %}
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase">
+                                <i class="fas fa-calendar mr-1"></i>Fecha
+                            </th>
+                            <th class="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase">
+                                <i class="fas fa-user mr-1"></i>Paciente
+                            </th>
+                            <th class="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase">
+                                <i class="fas fa-flask mr-1"></i>Examen
+                            </th>
+                            <th class="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase">
+                                <i class="fas fa-exclamation-circle mr-1"></i>Prioridad
+                            </th>
+                            <th class="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase">
+                                <i class="fas fa-tasks mr-1"></i>Estado
+                            </th>
+                            <th class="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase">
+                                <i class="fas fa-user-md mr-1"></i>Ordenado por
+                            </th>
+                            <th class="px-4 py-3 text-center text-xs font-semibold text-gray-700 uppercase">
+                                <i class="fas fa-cog mr-1"></i>Acciones
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                    {% for order in orders %}
+                    <tr class="hover:bg-purple-50 transition-colors cursor-pointer" onclick="window.location.href='{% url 'dashboard:exam_order_detail' order.id %}'">
+                        <td class="px-4 py-3 whitespace-nowrap">
+                            <div class="flex items-center">
+                                <div class="w-9 h-9 bg-purple-100 rounded-lg flex items-center justify-center mr-2">
+                                    <i class="fas fa-calendar-day text-purple-600 text-sm"></i>
+                                </div>
+                                <div>
+                                    <div class="text-sm font-medium text-gray-900">{{ order.order_date|date:"d/m/Y" }}</div>
+                                    <div class="text-xs text-gray-500">{{ order.order_date|date:"D" }}</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="px-4 py-3">
+                            <div class="flex items-center">
+                                {% if order.clinical_history and order.clinical_history.patient %}
+                                <div class="w-9 h-9 bg-gradient-to-br from-blue-400 to-blue-600 rounded-full flex items-center justify-center mr-2 text-white font-bold text-sm">
+                                    {{ order.clinical_history.patient.full_name|slice:":1" }}
+                                </div>
+                                <div>
+                                    <a href="{% url 'dashboard:patient_detail' order.clinical_history.patient.id %}" class="text-sm font-semibold text-gray-900 hover:text-purple-600 transition-colors" onclick="event.stopPropagation()">
+                                        {{ order.clinical_history.patient.full_name }}
+                                    </a>
+                                    <div class="text-xs text-gray-500">
+                                        <i class="fas fa-id-card mr-1"></i>{{ order.clinical_history.patient.identification }}
+                                    </div>
+                                </div>
+                                {% else %}
+                                <div class="w-9 h-9 bg-gray-300 rounded-full flex items-center justify-center mr-2 text-gray-600 font-bold text-sm">
+                                    ?
+                                </div>
+                                <div class="text-sm text-gray-500 italic">Sin paciente</div>
+                                {% endif %}
+                            </div>
+                        </td>
+                        <td class="px-4 py-3">
+                            <div class="flex items-center">
+                                <div class="w-9 h-9 bg-green-100 rounded-lg flex items-center justify-center mr-2">
+                                    <i class="fas fa-microscope text-green-600 text-sm"></i>
+                                </div>
+                                <div>
+                                    <div class="text-sm font-medium text-gray-900">{{ order.get_exam_type_display }}</div>
+                                    {% if order.clinical_indication %}
+                                    <div class="text-xs text-gray-500">{{ order.clinical_indication|truncatewords:6 }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </td>
+                        <td class="px-4 py-3 whitespace-nowrap">
+                            {% if order.priority == 'STAT' %}
+                                <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-red-600 text-white">
+                                    <i class="fas fa-bolt mr-1"></i>{{ order.get_priority_display }}
+                                </span>
+                            {% elif order.priority == 'urgent' %}
+                                <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-orange-500 text-white">
+                                    <i class="fas fa-exclamation-triangle mr-1"></i>{{ order.get_priority_display }}
+                                </span>
+                            {% else %}
+                                <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                    <i class="fas fa-clipboard mr-1"></i>{{ order.get_priority_display }}
+                                </span>
+                            {% endif %}
+                        </td>
+                        <td class="px-4 py-3 whitespace-nowrap">
+                            {% if order.status == 'pending' %}
+                                <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-yellow-100 text-yellow-800">
+                                    <span class="w-1.5 h-1.5 bg-yellow-500 rounded-full mr-1.5 animate-pulse"></span>
+                                    {{ order.get_status_display }}
+                                </span>
+                            {% elif order.status == 'scheduled' %}
+                                <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-blue-100 text-blue-800">
+                                    <span class="w-1.5 h-1.5 bg-blue-500 rounded-full mr-1.5"></span>
+                                    {{ order.get_status_display }}
+                                </span>
+                            {% elif order.status == 'in_progress' %}
+                                <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-orange-100 text-orange-800">
+                                    <span class="w-1.5 h-1.5 bg-orange-500 rounded-full mr-1.5 animate-pulse"></span>
+                                    {{ order.get_status_display }}
+                                </span>
+                            {% elif order.status == 'completed' %}
+                                <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-800">
+                                    <i class="fas fa-check-circle mr-1"></i>
+                                    {{ order.get_status_display }}
+                                </span>
+                            {% elif order.status == 'cancelled' %}
+                                <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-gray-100 text-gray-800">
+                                    <i class="fas fa-times-circle mr-1"></i>
+                                    {{ order.get_status_display }}
+                                </span>
+                            {% endif %}
+                        </td>
+                        <td class="px-4 py-3">
+                            <div class="flex items-center">
+                                {% if order.ordered_by %}
+                                <div class="w-7 h-7 bg-gradient-to-br from-indigo-400 to-indigo-600 rounded-full flex items-center justify-center mr-2 text-white text-xs font-bold">
+                                    {{ order.ordered_by.full_name|slice:":1" }}
+                                </div>
+                                <div class="text-sm text-gray-900">{{ order.ordered_by.full_name }}</div>
+                                {% else %}
+                                <div class="w-7 h-7 bg-gray-300 rounded-full flex items-center justify-center mr-2 text-gray-600 text-xs font-bold">
+                                    ?
+                                </div>
+                                <div class="text-sm text-gray-500 italic">Sin asignar</div>
+                                {% endif %}
+                            </div>
+                        </td>
+                        <td class="px-4 py-3 whitespace-nowrap text-center" onclick="event.stopPropagation()">
+                            <div class="flex items-center justify-center gap-1">
+                                <a href="{% url 'dashboard:exam_order_detail' order.id %}" 
+                                   class="px-2.5 py-1.5 bg-purple-100 hover:bg-purple-200 text-purple-700 rounded-lg transition-colors flex items-center gap-1 text-xs font-medium"
+                                   title="Ver detalle">
+                                    <i class="fas fa-eye"></i>
+                                    <span class="hidden lg:inline">Ver</span>
+                                </a>
+                                {% if order.clinical_history and order.clinical_history.patient %}
+                                <a href="{% url 'dashboard:exam_order_pdf' order.clinical_history.patient.id order.clinical_history.id order.id %}" 
+                                   class="px-2.5 py-1.5 bg-green-100 hover:bg-green-200 text-green-700 rounded-lg transition-colors flex items-center gap-1 text-xs font-medium"
+                                   title="Imprimir"
+                                   target="_blank">
+                                    <i class="fas fa-print"></i>
+                                </a>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="text-center py-12">
+            <div class="inline-flex items-center justify-center w-16 h-16 bg-gray-100 rounded-full mb-3">
+                <i class="fas fa-inbox text-gray-400 text-2xl"></i>
+            </div>
+            <h3 class="text-base font-semibold text-gray-700 mb-2">No hay órdenes de exámenes</h3>
+            <p class="text-sm text-gray-500 mb-4">No se encontraron órdenes con los filtros seleccionados</p>
+            <a href="{% url 'dashboard:patients_list' %}" class="inline-flex items-center px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors gap-2 font-medium text-sm">
+                <i class="fas fa-plus-circle"></i>
+                Ir a Pacientes
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+</div>
+
 <style>
-    .card {
-        border-radius: 8px;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    select, input[type="date"], input[type="text"] {
+        width: 100%;
+        min-width: 150px;
+        padding: 0.5rem;
+        border: 1px solid #d1d5db;
+        border-radius: 0.5rem;
+        font-size: 0.875rem;
+        transition: all 0.2s;
     }
-    .table th {
-        font-weight: 600;
-        font-size: 0.9rem;
+    select:focus, input[type="date"]:focus, input[type="text"]:focus {
+        outline: none;
+        border-color: #9333ea;
+        box-shadow: 0 0 0 3px rgba(147, 51, 234, 0.1);
     }
-    .btn-group-sm .btn {
-        padding: 0.25rem 0.5rem;
+    @keyframes pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.5; }
+    }
+    .animate-pulse {
+        animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
     }
 </style>
 {% endblock %}

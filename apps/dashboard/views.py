@@ -220,6 +220,11 @@ def dashboard_home(request):
             'month_count': month_sales.count(),
             'month_revenue': month_revenue,
         },
+        'exams': {
+            'pending': 0,
+            'urgent': 0,
+            'completed_today': 0,
+        },
         'total_patients': Patient.objects.filter(is_active=True, **org_filter).count(),
         'system_open': AppointmentConfiguration.get_config(request.organization).is_open if request.organization else True,
         'whatsapp': check_whatsapp_status(),
@@ -230,6 +235,23 @@ def dashboard_home(request):
         appointment_date__gte=today,
         **org_filter
     ).exclude(status__in=['cancelled', 'completed']).order_by('appointment_date', 'appointment_time')[:5]
+    
+    # Exámenes pendientes (siguientes 5)
+    from apps.patients.models import ExamOrder
+    pending_exams = ExamOrder.objects.filter(
+        status='pending',
+        **org_filter
+    ).select_related('clinical_history__patient').order_by('-priority', 'order_date')[:5]
+    
+    # Estadísticas de exámenes
+    exam_stats = {
+        'pending': ExamOrder.objects.filter(status='pending', **org_filter).count(),
+        'urgent': ExamOrder.objects.filter(status='pending', priority__in=['urgent', 'STAT'], **org_filter).count(),
+        'completed_today': ExamOrder.objects.filter(status='completed', performed_date=today, **org_filter).count(),
+    }
+    
+    # Actualizar stats con exam_stats
+    stats['exams'] = exam_stats
     
     # ===== ESTADÍSTICAS DE FACTURACIÓN =====
     # Facturas del mes actual
@@ -270,6 +292,7 @@ def dashboard_home(request):
     context = {
         'stats': stats,
         'upcoming_appointments': upcoming_appointments,
+        'pending_exams': pending_exams,
         'today': today,
         'billing_stats': billing_stats,
         'invoices_unpaid': invoices_unpaid,
