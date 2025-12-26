@@ -71,13 +71,13 @@ class ClinicalHistory(TenantModel):
     lensometry_notes = models.TextField(verbose_name='Notas de Lensometría', blank=True, help_text='Mediciones de lentes actuales del paciente')
     
     # Fórmula de Lentes Actuales - OD
-    current_rx_od_sphere = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True, verbose_name='Fórmula Actual OD Esfera')
+    current_rx_od_sphere = models.CharField(max_length=20, blank=True, null=True, verbose_name='Fórmula Actual OD Esfera', help_text='Ej: +2.00, -1.50, N, NLP')
     current_rx_od_cylinder = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True, verbose_name='Fórmula Actual OD Cilindro')
     current_rx_od_axis = models.IntegerField(null=True, blank=True, verbose_name='Fórmula Actual OD Eje')
     current_rx_od_add = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True, verbose_name='Fórmula Actual OD ADD')
     
     # Fórmula de Lentes Actuales - OS
-    current_rx_os_sphere = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True, verbose_name='Fórmula Actual OS Esfera')
+    current_rx_os_sphere = models.CharField(max_length=20, blank=True, null=True, verbose_name='Fórmula Actual OS Esfera', help_text='Ej: +2.00, -1.50, N, NLP')
     current_rx_os_cylinder = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True, verbose_name='Fórmula Actual OS Cilindro')
     current_rx_os_axis = models.IntegerField(null=True, blank=True, verbose_name='Fórmula Actual OS Eje')
     current_rx_os_add = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True, verbose_name='Fórmula Actual OS ADD')
@@ -201,6 +201,65 @@ class ClinicalHistory(TenantModel):
     pd_near = models.DecimalField(max_digits=4, decimal_places=1, verbose_name='DP Cerca (mm)', null=True, blank=True)
     pd_od = models.DecimalField(max_digits=4, decimal_places=1, verbose_name='DP OD', null=True, blank=True)
     pd_os = models.DecimalField(max_digits=4, decimal_places=1, verbose_name='DP OS', null=True, blank=True)
+    
+    # ==================== EXÁMENES REFRACTIVOS ADICIONALES ====================
+    
+    # Checkboxes para indicar qué exámenes se realizaron
+    exam_retinoscopy_done = models.BooleanField(default=False, verbose_name='Retinoscopia Realizada')
+    exam_subjective_done = models.BooleanField(default=False, verbose_name='Subjetivo Realizado')
+    exam_refinement_done = models.BooleanField(default=False, verbose_name='Afinación Realizada')
+    exam_cycloplegic_done = models.BooleanField(default=False, verbose_name='Subjetivo bajo Cicloplejia Realizado')
+    exam_final_rx_done = models.BooleanField(default=False, verbose_name='RX Final Realizado')
+    
+    # RETINOSCOPIA
+    retinoscopy_od_sphere = models.CharField(max_length=20, blank=True, null=True, verbose_name='Retinoscopia OD Esfera')
+    retinoscopy_od_cylinder = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True, verbose_name='Retinoscopia OD Cilindro')
+    retinoscopy_od_axis = models.IntegerField(null=True, blank=True, verbose_name='Retinoscopia OD Eje')
+    retinoscopy_od_add = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True, verbose_name='Retinoscopia OD ADD')
+    retinoscopy_os_sphere = models.CharField(max_length=20, blank=True, null=True, verbose_name='Retinoscopia OS Esfera')
+    retinoscopy_os_cylinder = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True, verbose_name='Retinoscopia OS Cilindro')
+    retinoscopy_os_axis = models.IntegerField(null=True, blank=True, verbose_name='Retinoscopia OS Eje')
+    retinoscopy_os_add = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True, verbose_name='Retinoscopia OS ADD')
+    
+    # SUBJETIVO
+    subjective_od_sphere = models.CharField(max_length=20, blank=True, null=True, verbose_name='Subjetivo OD Esfera')
+    subjective_od_cylinder = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True, verbose_name='Subjetivo OD Cilindro')
+    subjective_od_axis = models.IntegerField(null=True, blank=True, verbose_name='Subjetivo OD Eje')
+    subjective_od_add = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True, verbose_name='Subjetivo OD ADD')
+    subjective_os_sphere = models.CharField(max_length=20, blank=True, null=True, verbose_name='Subjetivo OS Esfera')
+    subjective_os_cylinder = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True, verbose_name='Subjetivo OS Cilindro')
+    subjective_os_axis = models.IntegerField(null=True, blank=True, verbose_name='Subjetivo OS Eje')
+    subjective_os_add = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True, verbose_name='Subjetivo OS ADD')
+    
+    # AFINACIÓN
+    refinement_od_sphere = models.CharField(max_length=20, blank=True, null=True, verbose_name='Afinación OD Esfera')
+    refinement_od_cylinder = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True, verbose_name='Afinación OD Cilindro')
+    refinement_od_axis = models.IntegerField(null=True, blank=True, verbose_name='Afinación OD Eje')
+    refinement_od_add = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True, verbose_name='Afinación OD ADD')
+    refinement_os_sphere = models.CharField(max_length=20, blank=True, null=True, verbose_name='Afinación OS Esfera')
+    refinement_os_cylinder = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True, verbose_name='Afinación OS Cilindro')
+    refinement_os_axis = models.IntegerField(null=True, blank=True, verbose_name='Afinación OS Eje')
+    refinement_os_add = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True, verbose_name='Afinación OS ADD')
+    
+    # SUBJETIVO BAJO CICLOPLEJIA
+    cycloplegic_od_sphere = models.CharField(max_length=20, blank=True, null=True, verbose_name='Ciclopléjico OD Esfera')
+    cycloplegic_od_cylinder = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True, verbose_name='Ciclopléjico OD Cilindro')
+    cycloplegic_od_axis = models.IntegerField(null=True, blank=True, verbose_name='Ciclopléjico OD Eje')
+    cycloplegic_od_add = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True, verbose_name='Ciclopléjico OD ADD')
+    cycloplegic_os_sphere = models.CharField(max_length=20, blank=True, null=True, verbose_name='Ciclopléjico OS Esfera')
+    cycloplegic_os_cylinder = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True, verbose_name='Ciclopléjico OS Cilindro')
+    cycloplegic_os_axis = models.IntegerField(null=True, blank=True, verbose_name='Ciclopléjico OS Eje')
+    cycloplegic_os_add = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True, verbose_name='Ciclopléjico OS ADD')
+    
+    # RX FINAL
+    final_rx_od_sphere = models.CharField(max_length=20, blank=True, null=True, verbose_name='RX Final OD Esfera')
+    final_rx_od_cylinder = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True, verbose_name='RX Final OD Cilindro')
+    final_rx_od_axis = models.IntegerField(null=True, blank=True, verbose_name='RX Final OD Eje')
+    final_rx_od_add = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True, verbose_name='RX Final OD ADD')
+    final_rx_os_sphere = models.CharField(max_length=20, blank=True, null=True, verbose_name='RX Final OS Esfera')
+    final_rx_os_cylinder = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True, verbose_name='RX Final OS Cilindro')
+    final_rx_os_axis = models.IntegerField(null=True, blank=True, verbose_name='RX Final OS Eje')
+    final_rx_os_add = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True, verbose_name='RX Final OS ADD')
     
     # ==================== QUERATOMETRÍA ====================
     

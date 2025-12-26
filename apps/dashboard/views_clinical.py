@@ -1479,16 +1479,83 @@ def visual_exam_create(request, patient_id):
                 lensometry_notes=request.POST.get('lensometry_notes', ''),
                 
                 # Fórmula de Lentes Actuales - OD
-                current_rx_od_sphere=safe_float(request.POST.get('current_rx_od_sphere')),
+                current_rx_od_sphere=request.POST.get('current_rx_od_sphere', ''),
                 current_rx_od_cylinder=safe_float(request.POST.get('current_rx_od_cylinder')),
                 current_rx_od_axis=safe_int(request.POST.get('current_rx_od_axis')),
                 current_rx_od_add=safe_float(request.POST.get('current_rx_od_add')),
                 
                 # Fórmula de Lentes Actuales - OS
-                current_rx_os_sphere=safe_float(request.POST.get('current_rx_os_sphere')),
+                current_rx_os_sphere=request.POST.get('current_rx_os_sphere', ''),
                 current_rx_os_cylinder=safe_float(request.POST.get('current_rx_os_cylinder')),
                 current_rx_os_axis=safe_int(request.POST.get('current_rx_os_axis')),
                 current_rx_os_add=safe_float(request.POST.get('current_rx_os_add')),
+                
+                # EXÁMENES REFRACTIVOS ADICIONALES - Checkboxes
+                exam_retinoscopy_done=request.POST.get('exam_retinoscopy_done') == 'on',
+                exam_subjective_done=request.POST.get('exam_subjective_done') == 'on',
+                exam_refinement_done=request.POST.get('exam_refinement_done') == 'on',
+                exam_cycloplegic_done=request.POST.get('exam_cycloplegic_done') == 'on',
+                exam_final_rx_done=request.POST.get('exam_final_rx_done') == 'on',
+                
+                # Retinoscopia - OD
+                retinoscopy_od_sphere=request.POST.get('retinoscopy_od_sphere', ''),
+                retinoscopy_od_cylinder=safe_float(request.POST.get('retinoscopy_od_cylinder')),
+                retinoscopy_od_axis=safe_int(request.POST.get('retinoscopy_od_axis')),
+                retinoscopy_od_add=safe_float(request.POST.get('retinoscopy_od_add')),
+                
+                # Retinoscopia - OS
+                retinoscopy_os_sphere=request.POST.get('retinoscopy_os_sphere', ''),
+                retinoscopy_os_cylinder=safe_float(request.POST.get('retinoscopy_os_cylinder')),
+                retinoscopy_os_axis=safe_int(request.POST.get('retinoscopy_os_axis')),
+                retinoscopy_os_add=safe_float(request.POST.get('retinoscopy_os_add')),
+                
+                # Subjetivo - OD
+                subjective_od_sphere=request.POST.get('subjective_od_sphere', ''),
+                subjective_od_cylinder=safe_float(request.POST.get('subjective_od_cylinder')),
+                subjective_od_axis=safe_int(request.POST.get('subjective_od_axis')),
+                subjective_od_add=safe_float(request.POST.get('subjective_od_add')),
+                
+                # Subjetivo - OS
+                subjective_os_sphere=request.POST.get('subjective_os_sphere', ''),
+                subjective_os_cylinder=safe_float(request.POST.get('subjective_os_cylinder')),
+                subjective_os_axis=safe_int(request.POST.get('subjective_os_axis')),
+                subjective_os_add=safe_float(request.POST.get('subjective_os_add')),
+                
+                # Afinación - OD
+                refinement_od_sphere=request.POST.get('refinement_od_sphere', ''),
+                refinement_od_cylinder=safe_float(request.POST.get('refinement_od_cylinder')),
+                refinement_od_axis=safe_int(request.POST.get('refinement_od_axis')),
+                refinement_od_add=safe_float(request.POST.get('refinement_od_add')),
+                
+                # Afinación - OS
+                refinement_os_sphere=request.POST.get('refinement_os_sphere', ''),
+                refinement_os_cylinder=safe_float(request.POST.get('refinement_os_cylinder')),
+                refinement_os_axis=safe_int(request.POST.get('refinement_os_axis')),
+                refinement_os_add=safe_float(request.POST.get('refinement_os_add')),
+                
+                # Subjetivo Ciclopléjico - OD
+                cycloplegic_od_sphere=request.POST.get('cycloplegic_od_sphere', ''),
+                cycloplegic_od_cylinder=safe_float(request.POST.get('cycloplegic_od_cylinder')),
+                cycloplegic_od_axis=safe_int(request.POST.get('cycloplegic_od_axis')),
+                cycloplegic_od_add=safe_float(request.POST.get('cycloplegic_od_add')),
+                
+                # Subjetivo Ciclopléjico - OS
+                cycloplegic_os_sphere=request.POST.get('cycloplegic_os_sphere', ''),
+                cycloplegic_os_cylinder=safe_float(request.POST.get('cycloplegic_os_cylinder')),
+                cycloplegic_os_axis=safe_int(request.POST.get('cycloplegic_os_axis')),
+                cycloplegic_os_add=safe_float(request.POST.get('cycloplegic_os_add')),
+                
+                # RX Final - OD
+                final_rx_od_sphere=request.POST.get('final_rx_od_sphere', ''),
+                final_rx_od_cylinder=safe_float(request.POST.get('final_rx_od_cylinder')),
+                final_rx_od_axis=safe_int(request.POST.get('final_rx_od_axis')),
+                final_rx_od_add=safe_float(request.POST.get('final_rx_od_add')),
+                
+                # RX Final - OS
+                final_rx_os_sphere=request.POST.get('final_rx_os_sphere', ''),
+                final_rx_os_cylinder=safe_float(request.POST.get('final_rx_os_cylinder')),
+                final_rx_os_axis=safe_int(request.POST.get('final_rx_os_axis')),
+                final_rx_os_add=safe_float(request.POST.get('final_rx_os_add')),
                 
                 # Backward compatibility
                 ocular_therapeutic_history=request.POST.get('ocular_therapeutic_history', ''),
@@ -1806,8 +1873,7 @@ def visual_exam_edit(request, patient_id, history_id):
             history.lensometry_notes = request.POST.get('lensometry_notes', '')
             
             # Fórmula de Lentes Actuales - OD
-            rx_od_sph = normalize_number(request.POST.get('current_rx_od_sphere', ''))
-            history.current_rx_od_sphere = float(rx_od_sph) if rx_od_sph else None
+            history.current_rx_od_sphere = request.POST.get('current_rx_od_sphere', '')
             
             rx_od_cyl = normalize_number(request.POST.get('current_rx_od_cylinder', ''))
             history.current_rx_od_cylinder = float(rx_od_cyl) if rx_od_cyl else None
@@ -1819,8 +1885,7 @@ def visual_exam_edit(request, patient_id, history_id):
             history.current_rx_od_add = float(rx_od_add) if rx_od_add else None
             
             # Fórmula de Lentes Actuales - OS
-            rx_os_sph = normalize_number(request.POST.get('current_rx_os_sphere', ''))
-            history.current_rx_os_sphere = float(rx_os_sph) if rx_os_sph else None
+            history.current_rx_os_sphere = request.POST.get('current_rx_os_sphere', '')
             
             rx_os_cyl = normalize_number(request.POST.get('current_rx_os_cylinder', ''))
             history.current_rx_os_cylinder = float(rx_os_cyl) if rx_os_cyl else None
@@ -1830,6 +1895,98 @@ def visual_exam_edit(request, patient_id, history_id):
             
             rx_os_add = normalize_number(request.POST.get('current_rx_os_add', ''))
             history.current_rx_os_add = float(rx_os_add) if rx_os_add else None
+            
+            # EXÁMENES REFRACTIVOS ADICIONALES - Checkboxes
+            history.exam_retinoscopy_done = request.POST.get('exam_retinoscopy_done') == 'on'
+            history.exam_subjective_done = request.POST.get('exam_subjective_done') == 'on'
+            history.exam_refinement_done = request.POST.get('exam_refinement_done') == 'on'
+            history.exam_cycloplegic_done = request.POST.get('exam_cycloplegic_done') == 'on'
+            history.exam_final_rx_done = request.POST.get('exam_final_rx_done') == 'on'
+            
+            # Retinoscopia
+            history.retinoscopy_od_sphere = request.POST.get('retinoscopy_od_sphere', '')
+            retino_od_cyl = normalize_number(request.POST.get('retinoscopy_od_cylinder', ''))
+            history.retinoscopy_od_cylinder = float(retino_od_cyl) if retino_od_cyl else None
+            retino_od_axis = request.POST.get('retinoscopy_od_axis', '').strip()
+            history.retinoscopy_od_axis = int(retino_od_axis) if retino_od_axis else None
+            retino_od_add = normalize_number(request.POST.get('retinoscopy_od_add', ''))
+            history.retinoscopy_od_add = float(retino_od_add) if retino_od_add else None
+            
+            history.retinoscopy_os_sphere = request.POST.get('retinoscopy_os_sphere', '')
+            retino_os_cyl = normalize_number(request.POST.get('retinoscopy_os_cylinder', ''))
+            history.retinoscopy_os_cylinder = float(retino_os_cyl) if retino_os_cyl else None
+            retino_os_axis = request.POST.get('retinoscopy_os_axis', '').strip()
+            history.retinoscopy_os_axis = int(retino_os_axis) if retino_os_axis else None
+            retino_os_add = normalize_number(request.POST.get('retinoscopy_os_add', ''))
+            history.retinoscopy_os_add = float(retino_os_add) if retino_os_add else None
+            
+            # Subjetivo
+            history.subjective_od_sphere = request.POST.get('subjective_od_sphere', '')
+            subj_od_cyl = normalize_number(request.POST.get('subjective_od_cylinder', ''))
+            history.subjective_od_cylinder = float(subj_od_cyl) if subj_od_cyl else None
+            subj_od_axis = request.POST.get('subjective_od_axis', '').strip()
+            history.subjective_od_axis = int(subj_od_axis) if subj_od_axis else None
+            subj_od_add = normalize_number(request.POST.get('subjective_od_add', ''))
+            history.subjective_od_add = float(subj_od_add) if subj_od_add else None
+            
+            history.subjective_os_sphere = request.POST.get('subjective_os_sphere', '')
+            subj_os_cyl = normalize_number(request.POST.get('subjective_os_cylinder', ''))
+            history.subjective_os_cylinder = float(subj_os_cyl) if subj_os_cyl else None
+            subj_os_axis = request.POST.get('subjective_os_axis', '').strip()
+            history.subjective_os_axis = int(subj_os_axis) if subj_os_axis else None
+            subj_os_add = normalize_number(request.POST.get('subjective_os_add', ''))
+            history.subjective_os_add = float(subj_os_add) if subj_os_add else None
+            
+            # Afinación
+            history.refinement_od_sphere = request.POST.get('refinement_od_sphere', '')
+            ref_od_cyl = normalize_number(request.POST.get('refinement_od_cylinder', ''))
+            history.refinement_od_cylinder = float(ref_od_cyl) if ref_od_cyl else None
+            ref_od_axis = request.POST.get('refinement_od_axis', '').strip()
+            history.refinement_od_axis = int(ref_od_axis) if ref_od_axis else None
+            ref_od_add = normalize_number(request.POST.get('refinement_od_add', ''))
+            history.refinement_od_add = float(ref_od_add) if ref_od_add else None
+            
+            history.refinement_os_sphere = request.POST.get('refinement_os_sphere', '')
+            ref_os_cyl = normalize_number(request.POST.get('refinement_os_cylinder', ''))
+            history.refinement_os_cylinder = float(ref_os_cyl) if ref_os_cyl else None
+            ref_os_axis = request.POST.get('refinement_os_axis', '').strip()
+            history.refinement_os_axis = int(ref_os_axis) if ref_os_axis else None
+            ref_os_add = normalize_number(request.POST.get('refinement_os_add', ''))
+            history.refinement_os_add = float(ref_os_add) if ref_os_add else None
+            
+            # Subjetivo Ciclopléjico
+            history.cycloplegic_od_sphere = request.POST.get('cycloplegic_od_sphere', '')
+            cyclo_od_cyl = normalize_number(request.POST.get('cycloplegic_od_cylinder', ''))
+            history.cycloplegic_od_cylinder = float(cyclo_od_cyl) if cyclo_od_cyl else None
+            cyclo_od_axis = request.POST.get('cycloplegic_od_axis', '').strip()
+            history.cycloplegic_od_axis = int(cyclo_od_axis) if cyclo_od_axis else None
+            cyclo_od_add = normalize_number(request.POST.get('cycloplegic_od_add', ''))
+            history.cycloplegic_od_add = float(cyclo_od_add) if cyclo_od_add else None
+            
+            history.cycloplegic_os_sphere = request.POST.get('cycloplegic_os_sphere', '')
+            cyclo_os_cyl = normalize_number(request.POST.get('cycloplegic_os_cylinder', ''))
+            history.cycloplegic_os_cylinder = float(cyclo_os_cyl) if cyclo_os_cyl else None
+            cyclo_os_axis = request.POST.get('cycloplegic_os_axis', '').strip()
+            history.cycloplegic_os_axis = int(cyclo_os_axis) if cyclo_os_axis else None
+            cyclo_os_add = normalize_number(request.POST.get('cycloplegic_os_add', ''))
+            history.cycloplegic_os_add = float(cyclo_os_add) if cyclo_os_add else None
+            
+            # RX Final
+            history.final_rx_od_sphere = request.POST.get('final_rx_od_sphere', '')
+            final_od_cyl = normalize_number(request.POST.get('final_rx_od_cylinder', ''))
+            history.final_rx_od_cylinder = float(final_od_cyl) if final_od_cyl else None
+            final_od_axis = request.POST.get('final_rx_od_axis', '').strip()
+            history.final_rx_od_axis = int(final_od_axis) if final_od_axis else None
+            final_od_add = normalize_number(request.POST.get('final_rx_od_add', ''))
+            history.final_rx_od_add = float(final_od_add) if final_od_add else None
+            
+            history.final_rx_os_sphere = request.POST.get('final_rx_os_sphere', '')
+            final_os_cyl = normalize_number(request.POST.get('final_rx_os_cylinder', ''))
+            history.final_rx_os_cylinder = float(final_os_cyl) if final_os_cyl else None
+            final_os_axis = request.POST.get('final_rx_os_axis', '').strip()
+            history.final_rx_os_axis = int(final_os_axis) if final_os_axis else None
+            final_os_add = normalize_number(request.POST.get('final_rx_os_add', ''))
+            history.final_rx_os_add = float(final_os_add) if final_os_add else None
             
             # Backward compatibility
             history.ocular_therapeutic_history = request.POST.get('ocular_therapeutic_history', '')
