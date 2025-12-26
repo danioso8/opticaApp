@@ -1777,8 +1777,7 @@ def visual_exam_edit(request, patient_id, history_id):
                 return value if value else None
             
             # Refracción OD
-            sphere_od = normalize_number(request.POST.get('refraction_od_sphere', ''))
-            history.refraction_od_sphere = float(sphere_od) if sphere_od else None
+            history.refraction_od_sphere = request.POST.get('refraction_od_sphere', '')
             
             cyl_od = normalize_number(request.POST.get('refraction_od_cylinder', ''))
             history.refraction_od_cylinder = float(cyl_od) if cyl_od else None
@@ -1796,8 +1795,7 @@ def visual_exam_edit(request, patient_id, history_id):
             history.refraction_od_dnp = float(dnp_od) if dnp_od else None
             
             # Refracción OS
-            sphere_os = normalize_number(request.POST.get('refraction_os_sphere', ''))
-            history.refraction_os_sphere = float(sphere_os) if sphere_os else None
+            history.refraction_os_sphere = request.POST.get('refraction_os_sphere', '')
             
             cyl_os = normalize_number(request.POST.get('refraction_os_cylinder', ''))
             history.refraction_os_cylinder = float(cyl_os) if cyl_os else None

@@ -365,6 +365,211 @@
         </div>
         {% endif %}
 
+        <!-- SECCIÓN: EXÁMENES REFRACTIVOS ADICIONALES -->
+        {% if history.exam_retinoscopy_done or history.exam_subjective_done or history.exam_refinement_done or history.exam_cycloplegic_done or history.exam_final_rx_done %}
+        <div id="section-refraction-exams" class="mb-6 border-l-4 border-purple-500 bg-purple-50 rounded-r-lg p-5">
+            <div class="flex justify-between items-start mb-4">
+                <h3 class="text-xl font-bold text-gray-800 flex items-center">
+                    <i class="fas fa-eye text-purple-600 mr-3"></i>
+                    EXÁMENES REFRACTIVOS ADICIONALES
+                </h3>
+                <button onclick="printSection('section-refraction-exams')" class="px-3 py-1 bg-purple-600 hover:bg-purple-700 text-white text-xs rounded transition-colors">
+                    <i class="fas fa-print mr-1"></i> 
+                </button>
+            </div>
+
+            <!-- RETINOSCOPIA -->
+            {% if history.exam_retinoscopy_done %}
+            <div class="bg-white rounded-lg p-4 shadow-sm mb-4 border-l-2 border-purple-400">
+                <h4 class="text-lg font-semibold text-purple-700 mb-3 flex items-center">
+                    <i class="fas fa-eye-dropper mr-2"></i> RETINOSCOPIA
+                </h4>
+                <div class="overflow-hidden">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-purple-100">
+                            <tr>
+                                <th class="px-4 py-2 text-left text-xs font-bold uppercase tracking-wider text-purple-800">Ojo</th>
+                                <th class="px-4 py-2 text-center text-xs font-bold uppercase tracking-wider text-purple-800">Esfera</th>
+                                <th class="px-4 py-2 text-center text-xs font-bold uppercase tracking-wider text-purple-800">Cilindro</th>
+                                <th class="px-4 py-2 text-center text-xs font-bold uppercase tracking-wider text-purple-800">Eje</th>
+                                <th class="px-4 py-2 text-center text-xs font-bold uppercase tracking-wider text-purple-800">ADD</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            <tr>
+                                <td class="px-4 py-2"><span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-bold bg-blue-100 text-blue-800"><i class="fas fa-eye mr-1"></i> OD</span></td>
+                                <td class="px-4 py-2 text-center font-semibold">{{ history.retinoscopy_od_sphere|default:"-" }}</td>
+                                <td class="px-4 py-2 text-center font-semibold">{{ history.retinoscopy_od_cylinder|default:"-" }}</td>
+                                <td class="px-4 py-2 text-center font-semibold">{% if history.retinoscopy_od_axis %}{{ history.retinoscopy_od_axis }}°{% else %}-{% endif %}</td>
+                                <td class="px-4 py-2 text-center font-semibold">{% if history.retinoscopy_od_add %}+{{ history.retinoscopy_od_add }}{% else %}-{% endif %}</td>
+                            </tr>
+                            <tr>
+                                <td class="px-4 py-2"><span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-bold bg-green-100 text-green-800"><i class="fas fa-eye mr-1"></i> OS</span></td>
+                                <td class="px-4 py-2 text-center font-semibold">{{ history.retinoscopy_os_sphere|default:"-" }}</td>
+                                <td class="px-4 py-2 text-center font-semibold">{{ history.retinoscopy_os_cylinder|default:"-" }}</td>
+                                <td class="px-4 py-2 text-center font-semibold">{% if history.retinoscopy_os_axis %}{{ history.retinoscopy_os_axis }}°{% else %}-{% endif %}</td>
+                                <td class="px-4 py-2 text-center font-semibold">{% if history.retinoscopy_os_add %}+{{ history.retinoscopy_os_add }}{% else %}-{% endif %}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- SUBJETIVO -->
+            {% if history.exam_subjective_done %}
+            <div class="bg-white rounded-lg p-4 shadow-sm mb-4 border-l-2 border-purple-400">
+                <h4 class="text-lg font-semibold text-purple-700 mb-3 flex items-center">
+                    <i class="fas fa-user-check mr-2"></i> SUBJETIVO
+                </h4>
+                <div class="overflow-hidden">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-purple-100">
+                            <tr>
+                                <th class="px-4 py-2 text-left text-xs font-bold uppercase tracking-wider text-purple-800">Ojo</th>
+                                <th class="px-4 py-2 text-center text-xs font-bold uppercase tracking-wider text-purple-800">Esfera</th>
+                                <th class="px-4 py-2 text-center text-xs font-bold uppercase tracking-wider text-purple-800">Cilindro</th>
+                                <th class="px-4 py-2 text-center text-xs font-bold uppercase tracking-wider text-purple-800">Eje</th>
+                                <th class="px-4 py-2 text-center text-xs font-bold uppercase tracking-wider text-purple-800">ADD</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            <tr>
+                                <td class="px-4 py-2"><span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-bold bg-blue-100 text-blue-800"><i class="fas fa-eye mr-1"></i> OD</span></td>
+                                <td class="px-4 py-2 text-center font-semibold">{{ history.subjective_od_sphere|default:"-" }}</td>
+                                <td class="px-4 py-2 text-center font-semibold">{{ history.subjective_od_cylinder|default:"-" }}</td>
+                                <td class="px-4 py-2 text-center font-semibold">{% if history.subjective_od_axis %}{{ history.subjective_od_axis }}°{% else %}-{% endif %}</td>
+                                <td class="px-4 py-2 text-center font-semibold">{% if history.subjective_od_add %}+{{ history.subjective_od_add }}{% else %}-{% endif %}</td>
+                            </tr>
+                            <tr>
+                                <td class="px-4 py-2"><span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-bold bg-green-100 text-green-800"><i class="fas fa-eye mr-1"></i> OS</span></td>
+                                <td class="px-4 py-2 text-center font-semibold">{{ history.subjective_os_sphere|default:"-" }}</td>
+                                <td class="px-4 py-2 text-center font-semibold">{{ history.subjective_os_cylinder|default:"-" }}</td>
+                                <td class="px-4 py-2 text-center font-semibold">{% if history.subjective_os_axis %}{{ history.subjective_os_axis }}°{% else %}-{% endif %}</td>
+                                <td class="px-4 py-2 text-center font-semibold">{% if history.subjective_os_add %}+{{ history.subjective_os_add }}{% else %}-{% endif %}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- AFINACIÓN -->
+            {% if history.exam_refinement_done %}
+            <div class="bg-white rounded-lg p-4 shadow-sm mb-4 border-l-2 border-purple-400">
+                <h4 class="text-lg font-semibold text-purple-700 mb-3 flex items-center">
+                    <i class="fas fa-adjust mr-2"></i> AFINACIÓN
+                </h4>
+                <div class="overflow-hidden">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-purple-100">
+                            <tr>
+                                <th class="px-4 py-2 text-left text-xs font-bold uppercase tracking-wider text-purple-800">Ojo</th>
+                                <th class="px-4 py-2 text-center text-xs font-bold uppercase tracking-wider text-purple-800">Esfera</th>
+                                <th class="px-4 py-2 text-center text-xs font-bold uppercase tracking-wider text-purple-800">Cilindro</th>
+                                <th class="px-4 py-2 text-center text-xs font-bold uppercase tracking-wider text-purple-800">Eje</th>
+                                <th class="px-4 py-2 text-center text-xs font-bold uppercase tracking-wider text-purple-800">ADD</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            <tr>
+                                <td class="px-4 py-2"><span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-bold bg-blue-100 text-blue-800"><i class="fas fa-eye mr-1"></i> OD</span></td>
+                                <td class="px-4 py-2 text-center font-semibold">{{ history.refinement_od_sphere|default:"-" }}</td>
+                                <td class="px-4 py-2 text-center font-semibold">{{ history.refinement_od_cylinder|default:"-" }}</td>
+                                <td class="px-4 py-2 text-center font-semibold">{% if history.refinement_od_axis %}{{ history.refinement_od_axis }}°{% else %}-{% endif %}</td>
+                                <td class="px-4 py-2 text-center font-semibold">{% if history.refinement_od_add %}+{{ history.refinement_od_add }}{% else %}-{% endif %}</td>
+                            </tr>
+                            <tr>
+                                <td class="px-4 py-2"><span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-bold bg-green-100 text-green-800"><i class="fas fa-eye mr-1"></i> OS</span></td>
+                                <td class="px-4 py-2 text-center font-semibold">{{ history.refinement_os_sphere|default:"-" }}</td>
+                                <td class="px-4 py-2 text-center font-semibold">{{ history.refinement_os_cylinder|default:"-" }}</td>
+                                <td class="px-4 py-2 text-center font-semibold">{% if history.refinement_os_axis %}{{ history.refinement_os_axis }}°{% else %}-{% endif %}</td>
+                                <td class="px-4 py-2 text-center font-semibold">{% if history.refinement_os_add %}+{{ history.refinement_os_add }}{% else %}-{% endif %}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- SUBJETIVO BAJO CICLOPLEJIA -->
+            {% if history.exam_cycloplegic_done %}
+            <div class="bg-white rounded-lg p-4 shadow-sm mb-4 border-l-2 border-purple-400">
+                <h4 class="text-lg font-semibold text-purple-700 mb-3 flex items-center">
+                    <i class="fas fa-flask mr-2"></i> SUBJETIVO BAJO CICLOPLEJIA
+                </h4>
+                <div class="overflow-hidden">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-purple-100">
+                            <tr>
+                                <th class="px-4 py-2 text-left text-xs font-bold uppercase tracking-wider text-purple-800">Ojo</th>
+                                <th class="px-4 py-2 text-center text-xs font-bold uppercase tracking-wider text-purple-800">Esfera</th>
+                                <th class="px-4 py-2 text-center text-xs font-bold uppercase tracking-wider text-purple-800">Cilindro</th>
+                                <th class="px-4 py-2 text-center text-xs font-bold uppercase tracking-wider text-purple-800">Eje</th>
+                                <th class="px-4 py-2 text-center text-xs font-bold uppercase tracking-wider text-purple-800">ADD</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            <tr>
+                                <td class="px-4 py-2"><span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-bold bg-blue-100 text-blue-800"><i class="fas fa-eye mr-1"></i> OD</span></td>
+                                <td class="px-4 py-2 text-center font-semibold">{{ history.cycloplegic_od_sphere|default:"-" }}</td>
+                                <td class="px-4 py-2 text-center font-semibold">{{ history.cycloplegic_od_cylinder|default:"-" }}</td>
+                                <td class="px-4 py-2 text-center font-semibold">{% if history.cycloplegic_od_axis %}{{ history.cycloplegic_od_axis }}°{% else %}-{% endif %}</td>
+                                <td class="px-4 py-2 text-center font-semibold">{% if history.cycloplegic_od_add %}+{{ history.cycloplegic_od_add }}{% else %}-{% endif %}</td>
+                            </tr>
+                            <tr>
+                                <td class="px-4 py-2"><span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-bold bg-green-100 text-green-800"><i class="fas fa-eye mr-1"></i> OS</span></td>
+                                <td class="px-4 py-2 text-center font-semibold">{{ history.cycloplegic_os_sphere|default:"-" }}</td>
+                                <td class="px-4 py-2 text-center font-semibold">{{ history.cycloplegic_os_cylinder|default:"-" }}</td>
+                                <td class="px-4 py-2 text-center font-semibold">{% if history.cycloplegic_os_axis %}{{ history.cycloplegic_os_axis }}°{% else %}-{% endif %}</td>
+                                <td class="px-4 py-2 text-center font-semibold">{% if history.cycloplegic_os_add %}+{{ history.cycloplegic_os_add }}{% else %}-{% endif %}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- RX FINAL -->
+            {% if history.exam_final_rx_done %}
+            <div class="bg-white rounded-lg p-4 shadow-sm border-l-2 border-purple-400">
+                <h4 class="text-lg font-semibold text-purple-700 mb-3 flex items-center">
+                    <i class="fas fa-check-circle mr-2"></i> RX FINAL
+                </h4>
+                <div class="overflow-hidden">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-purple-100">
+                            <tr>
+                                <th class="px-4 py-2 text-left text-xs font-bold uppercase tracking-wider text-purple-800">Ojo</th>
+                                <th class="px-4 py-2 text-center text-xs font-bold uppercase tracking-wider text-purple-800">Esfera</th>
+                                <th class="px-4 py-2 text-center text-xs font-bold uppercase tracking-wider text-purple-800">Cilindro</th>
+                                <th class="px-4 py-2 text-center text-xs font-bold uppercase tracking-wider text-purple-800">Eje</th>
+                                <th class="px-4 py-2 text-center text-xs font-bold uppercase tracking-wider text-purple-800">ADD</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            <tr>
+                                <td class="px-4 py-2"><span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-bold bg-blue-100 text-blue-800"><i class="fas fa-eye mr-1"></i> OD</span></td>
+                                <td class="px-4 py-2 text-center font-semibold">{{ history.final_rx_od_sphere|default:"-" }}</td>
+                                <td class="px-4 py-2 text-center font-semibold">{{ history.final_rx_od_cylinder|default:"-" }}</td>
+                                <td class="px-4 py-2 text-center font-semibold">{% if history.final_rx_od_axis %}{{ history.final_rx_od_axis }}°{% else %}-{% endif %}</td>
+                                <td class="px-4 py-2 text-center font-semibold">{% if history.final_rx_od_add %}+{{ history.final_rx_od_add }}{% else %}-{% endif %}</td>
+                            </tr>
+                            <tr>
+                                <td class="px-4 py-2"><span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-bold bg-green-100 text-green-800"><i class="fas fa-eye mr-1"></i> OS</span></td>
+                                <td class="px-4 py-2 text-center font-semibold">{{ history.final_rx_os_sphere|default:"-" }}</td>
+                                <td class="px-4 py-2 text-center font-semibold">{{ history.final_rx_os_cylinder|default:"-" }}</td>
+                                <td class="px-4 py-2 text-center font-semibold">{% if history.final_rx_os_axis %}{{ history.final_rx_os_axis }}°{% else %}-{% endif %}</td>
+                                <td class="px-4 py-2 text-center font-semibold">{% if history.final_rx_os_add %}+{{ history.final_rx_os_add }}{% else %}-{% endif %}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+        {% endif %}
+
         <!-- SECCIÓN: LENTES DE CONTACTO -->
         {% if history.contact_lens_type or history.contact_lens_brand or history.contact_lens_material %}
         <div id="section-contacto" class="mb-6 border-l-4 border-teal-500 bg-teal-50 rounded-r-lg p-5">
