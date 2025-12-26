@@ -8,7 +8,7 @@ from apps.appointments.utils import get_available_slots_for_date
 
 def home(request):
     """Página principal pública"""
-    from apps.organizations.models import LandingPageConfig
+    from apps.organizations.models import LandingPageConfig, Organization
     
     # Para vistas públicas, usar la organización del request si existe, sino la primera disponible
     organization = getattr(request, 'organization', None)
@@ -24,6 +24,10 @@ def home(request):
         
         if first_membership:
             first_organization = first_membership.organization
+    
+    # Si no hay organización del usuario autenticado, obtener la primera organización activa
+    if not first_organization:
+        first_organization = Organization.objects.filter(is_active=True).first()
     
     config = AppointmentConfiguration.get_config(organization or first_organization)
     
@@ -99,6 +103,10 @@ def booking(request):
             is_active=True
         ).order_by('name')
     
+    # Si no hay organización del usuario autenticado, obtener la primera organización activa
+    if not first_organization:
+        first_organization = Organization.objects.filter(is_active=True).first()
+    
     # Obtener configuración de la landing page
     landing_config = None
     if first_organization:
@@ -141,7 +149,7 @@ def booking(request):
 
 def shop(request):
     """Tienda de monturas (placeholder)"""
-    from apps.organizations.models import LandingPageConfig
+    from apps.organizations.models import LandingPageConfig, Organization
     
     # Si el usuario está autenticado, obtener su primera organización
     first_organization = None
@@ -154,6 +162,10 @@ def shop(request):
         
         if first_membership:
             first_organization = first_membership.organization
+    
+    # Si no hay organización del usuario autenticado, obtener la primera organización activa
+    if not first_organization:
+        first_organization = Organization.objects.filter(is_active=True).first()
     
     # Obtener configuración de la landing page
     landing_config = None

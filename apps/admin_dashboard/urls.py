@@ -36,10 +36,24 @@ urlpatterns = [
     path('plans/create/', views.plan_create, name='plan_create'),
     path('plans/<int:plan_id>/edit/', views.plan_edit, name='plan_edit'),
     path('plans/<int:plan_id>/toggle-active/', views.plan_toggle_active, name='plan_toggle_active'),
+    path('plans/<int:plan_id>/delete/', views.plan_delete, name='plan_delete'),
     
     # Gestión de módulos/características
     path('features/', views.features_list, name='features_list'),
     path('features/create/', views.feature_create, name='feature_create'),
     path('features/<int:feature_id>/edit/', views.feature_edit, name='feature_edit'),
     path('features/<int:feature_id>/delete/', views.feature_delete, name='feature_delete'),
+    
+    # Gestión de módulos por organización
+    path('organizations/<int:org_id>/features/', views.organization_features, name='organization_features'),
+    path('organizations/<int:org_id>/features/toggle/', views.organization_feature_toggle, name='organization_feature_toggle'),
+    path('organizations/<int:org_id>/features/sync/', views.organization_sync_plan_features, name='organization_sync_plan_features'),
+    
+    # Gestión de paquetes de facturas
+    path('invoice-packages/', views.invoice_packages_list, name='invoice_packages_list'),
+    path('organizations/<int:org_id>/invoice-packages/create/', views.invoice_package_create, name='invoice_package_create'),
+    
+    # Gestión de compras de módulos adicionales
+    path('addon-purchases/', views.addon_purchases_list, name='addon_purchases_list'),
+    path('organizations/<int:org_id>/addon-purchases/create/', views.addon_purchase_create, name='addon_purchase_create'),
 ]

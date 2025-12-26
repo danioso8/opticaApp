@@ -21,7 +21,22 @@ class PlanFeature(models.Model):
     description = models.TextField(blank=True, verbose_name='Descripción')
     category = models.CharField(max_length=20, choices=FEATURE_CATEGORIES, default='other', verbose_name='Categoría')
     icon = models.CharField(max_length=50, blank=True, verbose_name='Ícono FontAwesome', help_text='ej: fa-whatsapp')
+    
+    # Precio para compra individual del módulo
+    price_monthly = models.DecimalField(
+        max_digits=10, 
+        decimal_places=2, 
+        default=0, 
+        verbose_name='Precio Mensual',
+        help_text='Precio si se compra individualmente (0 = no disponible para compra individual)'
+    )
+    
     is_active = models.BooleanField(default=True, verbose_name='Activo')
+    can_purchase_separately = models.BooleanField(
+        default=False, 
+        verbose_name='Compra Individual',
+        help_text='¿Se puede comprar este módulo sin cambiar de plan?'
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     
     class Meta:
@@ -39,6 +54,7 @@ class SubscriptionPlan(models.Model):
         ('free', 'Gratuito'),
         ('basic', 'Básico'),
         ('professional', 'Profesional'),
+        ('premium', 'Premium'),
         ('enterprise', 'Empresarial'),
     ]
     
@@ -140,7 +156,7 @@ class Organization(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
     
     # Owner de la organización
-    owner = models.ForeignKey(User, on_delete=models.PROTECT, related_name='owned_organizations')
+    owner = models.ForeignKey(User, on_delete=models.CASCADE, related_name='owned_organizations')
     
     class Meta:
         verbose_name = 'Organización'
@@ -183,6 +199,80 @@ class Organization(models.Model):
                 }
             }
         return None
+    
+    def has_feature(self, feature_code):
+        """
+        Verifica si la organización tiene acceso a un módulo específico.
+        Considera tanto el plan como módulos comprados individualmente.
+        """
+        # Verificar si viene del plan actual
+        subscription = self.current_subscription
+        if subscription and subscription.plan.has_feature(feature_code):
+            return True
+        
+        # Verificar si fue habilitado manualmente o comprado por separado
+        org_feature = self.enabled_features.filter(
+            feature__code=feature_code,
+            is_enabled=True
+        ).first()
+        
+        if org_feature:
+            return org_feature.is_active
+        
+        return False
+    
+    def get_available_invoices(self):
+        """
+        Calcula el total de facturas electrónicas disponibles.
+        Incluye las del plan + paquetes comprados.
+        """
+        total_available = 0
+        
+        # Facturas del plan
+        subscription = self.current_subscription
+        if subscription and subscription.plan.allow_electronic_invoicing:
+            plan_invoices = subscription.plan.max_invoices_month
+            if plan_invoices == 0:  # Ilimitado
+                return 999999
+            total_available += plan_invoices
+        
+        # Facturas de paquetes comprados
+        invoice_purchases = self.invoice_purchases.filter(
+            payment_status='paid'
+        )
+        
+        for purchase in invoice_purchases:
+            if purchase.is_valid:
+                total_available += purchase.remaining_invoices
+        
+        return total_available
+    
+    def use_invoice(self):
+        """
+        Registra el uso de una factura electrónica.
+        Descuenta primero de los paquetes comprados, luego del plan.
+        """
+        # Intentar usar de paquetes comprados primero
+        invoice_purchases = self.invoice_purchases.filter(
+            payment_status='paid'
+        ).order_by('purchased_at')
+        
+        for purchase in invoice_purchases:
+            if purchase.is_valid and purchase.remaining_invoices > 0:
+                purchase.used_invoices += 1
+                purchase.save()
+                return True
+        
+        # Si no hay paquetes, verificar si el plan permite
+        subscription = self.current_subscription
+        if subscription and subscription.plan.allow_electronic_invoicing:
+            if subscription.plan.max_invoices_month == 0:  # Ilimitado
+                return True
+            # Si tiene límite, deberíamos llevar un contador mensual
+            # Por ahora retornamos True si el plan lo permite
+            return True
+        
+        return False
 
 
 class Subscription(models.Model):
@@ -200,7 +290,7 @@ class Subscription(models.Model):
     ]
     
     organization = models.ForeignKey(Organization, on_delete=models.CASCADE, related_name='subscriptions')
-    plan = models.ForeignKey(SubscriptionPlan, on_delete=models.PROTECT)
+    plan = models.ForeignKey(SubscriptionPlan, on_delete=models.CASCADE)
     billing_cycle = models.CharField(max_length=10, choices=BILLING_CYCLES, default='monthly')
     
     start_date = models.DateTimeField(default=timezone.now)
@@ -293,6 +383,10 @@ class LandingPageConfig(models.Model):
         ('modern', 'Moderno - Navbar con gradiente y transparencia'),
         ('minimal', 'Minimalista - Navbar transparente con línea inferior'),
         ('bold', 'Bold - Navbar oscuro con contraste alto'),
+        ('glass', 'Glass - Efecto cristal difuminado (moderno)'),
+        ('floating', 'Flotante - Navbar elevado con sombras suaves'),
+        ('gradient_modern', 'Gradiente Moderno - Colores vibrantes'),
+        ('sidebar', 'Sidebar - Navegación lateral (responsive)'),
     ]
     
     HERO_STYLES = [
@@ -699,3 +793,245 @@ class LandingPageConfig(models.Model):
     
     def __str__(self):
         return f"Landing Page Config - {self.organization.name}"
+
+
+class OrganizationFeature(models.Model):
+    """Módulos/características habilitados para una organización específica"""
+    organization = models.ForeignKey(
+        Organization,
+        on_delete=models.CASCADE,
+        related_name='enabled_features',
+        verbose_name='Organización'
+    )
+    feature = models.ForeignKey(
+        PlanFeature,
+        on_delete=models.CASCADE,
+        related_name='organization_assignments',
+        verbose_name='Módulo'
+    )
+    
+    # Control de acceso
+    is_enabled = models.BooleanField(default=True, verbose_name='Habilitado')
+    granted_by_plan = models.BooleanField(
+        default=True,
+        verbose_name='Incluido en Plan',
+        help_text='True si viene del plan, False si fue comprado por separado'
+    )
+    
+    # Información de compra adicional
+    purchased_at = models.DateTimeField(null=True, blank=True, verbose_name='Fecha de Compra')
+    expires_at = models.DateTimeField(null=True, blank=True, verbose_name='Fecha de Expiración')
+    amount_paid = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        default=0,
+        verbose_name='Monto Pagado'
+    )
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        verbose_name = 'Módulo de Organización'
+        verbose_name_plural = 'Módulos de Organizaciones'
+        unique_together = ['organization', 'feature']
+        ordering = ['organization', 'feature__category', 'feature__name']
+    
+    def __str__(self):
+        return f"{self.organization.name} - {self.feature.name}"
+    
+    @property
+    def is_active(self):
+        """Verifica si el módulo está activo y no ha expirado"""
+        if not self.is_enabled:
+            return False
+        if self.expires_at and timezone.now() > self.expires_at:
+            return False
+        return True
+
+
+class InvoicePackagePurchase(models.Model):
+    """Compra de paquetes adicionales de facturas electrónicas DIAN"""
+    PACKAGE_SIZES = [
+        (50, '50 facturas'),
+        (100, '100 facturas'),
+        (200, '200 facturas'),
+        (500, '500 facturas'),
+        (1000, '1000 facturas'),
+    ]
+    
+    PACKAGE_PRICES = {
+        50: 19900.00,
+        100: 35900.00,
+        200: 65900.00,
+        500: 149900.00,
+        1000: 279900.00,
+    }
+    
+    PAYMENT_STATUS = [
+        ('pending', 'Pendiente'),
+        ('paid', 'Pagado'),
+        ('failed', 'Fallido'),
+        ('cancelled', 'Cancelado'),
+    ]
+    
+    organization = models.ForeignKey(
+        Organization,
+        on_delete=models.CASCADE,
+        related_name='invoice_purchases',
+        verbose_name='Organización'
+    )
+    
+    quantity = models.IntegerField(
+        choices=PACKAGE_SIZES,
+        verbose_name='Cantidad de Facturas'
+    )
+    price = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        verbose_name='Precio'
+    )
+    
+    payment_status = models.CharField(
+        max_length=20,
+        choices=PAYMENT_STATUS,
+        default='pending',
+        verbose_name='Estado de Pago'
+    )
+    
+    used_invoices = models.IntegerField(
+        default=0,
+        verbose_name='Facturas Usadas'
+    )
+    
+    purchased_at = models.DateTimeField(auto_now_add=True, verbose_name='Fecha de Compra')
+    expires_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        verbose_name='Fecha de Expiración',
+        help_text='Opcional: fecha de vencimiento del paquete'
+    )
+    
+    # Información de pago
+    payment_reference = models.CharField(max_length=100, blank=True, verbose_name='Referencia de Pago')
+    payment_date = models.DateTimeField(null=True, blank=True, verbose_name='Fecha de Pago')
+    
+    class Meta:
+        verbose_name = 'Compra de Paquete de Facturas'
+        verbose_name_plural = 'Compras de Paquetes de Facturas'
+        ordering = ['-purchased_at']
+    
+    def __str__(self):
+        return f"{self.organization.name} - {self.quantity} facturas ({self.get_payment_status_display()})"
+    
+    @property
+    def remaining_invoices(self):
+        """Facturas restantes del paquete"""
+        return max(0, self.quantity - self.used_invoices)
+    
+    @property
+    def is_valid(self):
+        """Verifica si el paquete es válido (pagado y no expirado)"""
+        if self.payment_status != 'paid':
+            return False
+        if self.expires_at and timezone.now() > self.expires_at:
+            return False
+        if self.remaining_invoices <= 0:
+            return False
+        return True
+
+
+class AddonPurchase(models.Model):
+    """Compra de add-ons/módulos individuales"""
+    BILLING_CYCLES = [
+        ('monthly', 'Mensual'),
+        ('quarterly', 'Trimestral'),
+        ('yearly', 'Anual'),
+        ('lifetime', 'Vitalicio'),
+    ]
+    
+    PAYMENT_STATUS = [
+        ('pending', 'Pendiente'),
+        ('paid', 'Pagado'),
+        ('failed', 'Fallido'),
+        ('cancelled', 'Cancelado'),
+    ]
+    
+    organization = models.ForeignKey(
+        Organization,
+        on_delete=models.CASCADE,
+        related_name='addon_purchases',
+        verbose_name='Organización'
+    )
+    feature = models.ForeignKey(
+        PlanFeature,
+        on_delete=models.PROTECT,
+        verbose_name='Módulo'
+    )
+    
+    billing_cycle = models.CharField(
+        max_length=20,
+        choices=BILLING_CYCLES,
+        default='monthly',
+        verbose_name='Ciclo de Facturación'
+    )
+    
+    price = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        verbose_name='Precio'
+    )
+    
+    payment_status = models.CharField(
+        max_length=20,
+        choices=PAYMENT_STATUS,
+        default='pending',
+        verbose_name='Estado de Pago'
+    )
+    
+    is_active = models.BooleanField(default=True, verbose_name='Activo')
+    auto_renew = models.BooleanField(default=True, verbose_name='Renovación Automática')
+    
+    start_date = models.DateTimeField(default=timezone.now, verbose_name='Fecha de Inicio')
+    end_date = models.DateTimeField(verbose_name='Fecha de Fin')
+    
+    purchased_at = models.DateTimeField(auto_now_add=True, verbose_name='Fecha de Compra')
+    
+    # Información de pago
+    payment_reference = models.CharField(max_length=100, blank=True, verbose_name='Referencia de Pago')
+    payment_date = models.DateTimeField(null=True, blank=True, verbose_name='Fecha de Pago')
+    
+    class Meta:
+        verbose_name = 'Compra de Módulo Adicional'
+        verbose_name_plural = 'Compras de Módulos Adicionales'
+        ordering = ['-purchased_at']
+    
+    def __str__(self):
+        return f"{self.organization.name} - {self.feature.name} ({self.get_billing_cycle_display()})"
+    
+    def save(self, *args, **kwargs):
+        # Calcular end_date según el ciclo de facturación
+        if not self.end_date:
+            if self.billing_cycle == 'monthly':
+                self.end_date = self.start_date + timedelta(days=30)
+            elif self.billing_cycle == 'quarterly':
+                self.end_date = self.start_date + timedelta(days=90)
+            elif self.billing_cycle == 'yearly':
+                self.end_date = self.start_date + timedelta(days=365)
+            else:  # lifetime
+                self.end_date = self.start_date + timedelta(days=36500)  # 100 años
+        
+        super().save(*args, **kwargs)
+    
+    @property
+    def is_expired(self):
+        """Verifica si la compra ha expirado"""
+        return timezone.now() > self.end_date
+    
+    @property
+    def days_remaining(self):
+        """Días restantes de la compra"""
+        if self.is_expired:
+            return 0
+        delta = self.end_date - timezone.now()
+        return delta.days

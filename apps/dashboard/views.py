@@ -1,6 +1,13 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth.tokens import default_token_generator
+from django.contrib.auth.models import User
+from django.contrib.sites.shortcuts import get_current_site
+from django.core.mail import send_mail
+from django.template.loader import render_to_string
+from django.utils.encoding import force_bytes, force_str
+from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.contrib import messages
 from django.http import JsonResponse
 from django.utils import timezone
@@ -120,6 +127,90 @@ def logout_view(request):
     logout(request)
     messages.info(request, 'Sesión cerrada')
     return redirect('dashboard:login')
+
+
+def password_reset_request(request):
+    """Vista para solicitar recuperación de contraseña"""
+    if request.method == 'POST':
+        email = request.POST.get('email')
+        
+        # Buscar usuario por email
+        try:
+            user = User.objects.get(email=email, is_active=True)
+        except User.DoesNotExist:
+            # Por seguridad, mostramos el mismo mensaje aunque el email no exista
+            messages.success(request, 'Si el correo existe en nuestro sistema, recibirás un enlace de recuperación.')
+            return redirect('dashboard:login')
+        
+        # Generar token y uid
+        token = default_token_generator.make_token(user)
+        uid = urlsafe_base64_encode(force_bytes(user.pk))
+        
+        # Construir URL de reset
+        current_site = get_current_site(request)
+        protocol = 'https' if request.is_secure() else 'http'
+        reset_url = f"{protocol}://{current_site.domain}/dashboard/password-reset/{uid}/{token}/"
+        
+        # Preparar y enviar email
+        subject = 'Recuperación de Contraseña - OpticaApp'
+        message = render_to_string('dashboard/password_reset_email.html', {
+            'user': user,
+            'reset_url': reset_url,
+            'site_name': 'OpticaApp',
+        })
+        
+        try:
+            send_mail(
+                subject,
+                message,
+                None,  # Usará DEFAULT_FROM_EMAIL
+                [user.email],
+                fail_silently=False,
+                html_message=message
+            )
+            messages.success(request, 'Te hemos enviado un correo con instrucciones para restablecer tu contraseña.')
+        except Exception as e:
+            messages.error(request, f'Error al enviar el correo: {str(e)}')
+        
+        return redirect('dashboard:login')
+    
+    return render(request, 'dashboard/password_reset_request.html')
+
+
+def password_reset_confirm(request, uidb64, token):
+    """Vista para confirmar y establecer nueva contraseña"""
+    try:
+        uid = force_str(urlsafe_base64_decode(uidb64))
+        user = User.objects.get(pk=uid)
+    except (TypeError, ValueError, OverflowError, User.DoesNotExist):
+        user = None
+    
+    # Verificar token
+    if user is not None and default_token_generator.check_token(user, token):
+        if request.method == 'POST':
+            password1 = request.POST.get('password1')
+            password2 = request.POST.get('password2')
+            
+            if password1 and password1 == password2:
+                if len(password1) < 8:
+                    messages.error(request, 'La contraseña debe tener al menos 8 caracteres.')
+                else:
+                    user.set_password(password1)
+                    user.save()
+                    messages.success(request, '¡Contraseña restablecida exitosamente! Ya puedes iniciar sesión.')
+                    return redirect('dashboard:login')
+            else:
+                messages.error(request, 'Las contraseñas no coinciden.')
+        
+        return render(request, 'dashboard/password_reset_confirm.html', {
+            'validlink': True,
+            'user': user
+        })
+    else:
+        messages.error(request, 'El enlace de recuperación es inválido o ha expirado.')
+        return render(request, 'dashboard/password_reset_confirm.html', {
+            'validlink': False
+        })
 
 
 @login_required

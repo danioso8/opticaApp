@@ -38,6 +38,13 @@
     <nav class="fixed w-full top-0 z-50 bg-white/95 backdrop-blur-sm border-b-2" style="border-color: {% if landing_config %}{{ landing_config.navbar_hover_color }}{% else %}#e5e7eb{% endif %};">
     {% elif landing_config and landing_config.navbar_style == 'bold' %}
     <nav class="fixed w-full top-0 z-50 shadow-2xl" style="background-color: {% if landing_config %}{{ landing_config.navbar_bg_color }}{% else %}#111827{% endif %};">
+    {% elif landing_config and landing_config.navbar_style == 'glass' %}
+    <nav class="fixed w-full top-0 z-50 shadow-xl backdrop-blur-md border-b border-white/20" style="background: linear-gradient(135deg, rgba(255,255,255,0.1), rgba(255,255,255,0.05)); backdrop-filter: blur(10px);">
+    {% elif landing_config and landing_config.navbar_style == 'floating' %}
+    <div class="fixed w-full top-0 z-50 pt-4 px-4">
+        <nav class="max-w-7xl mx-auto rounded-full shadow-2xl" style="background-color: {% if landing_config %}{{ landing_config.navbar_bg_color }}{% else %}#ffffff{% endif %};">
+    {% elif landing_config and landing_config.navbar_style == 'gradient_modern' %}
+    <nav class="fixed w-full top-0 z-50 shadow-lg" style="background: linear-gradient(90deg, {{ landing_config.navbar_hover_color|default:'#2563eb' }}, #8b5cf6, #ec4899);">
     {% else %}
     <nav class="shadow-md fixed w-full top-0 z-50" style="background-color: {% if landing_config %}{{ landing_config.navbar_bg_color }}{% else %}#ffffff{% endif %};">
     {% endif %}
@@ -47,7 +54,7 @@
                     <a href="{% url 'public:home' %}" class="flex items-center">
                         {% if landing_config and landing_config.logo %}
                             <!-- Logo personalizado -->
-                            <img src="{{ landing_config.logo.url }}" alt="Logo" class="h-12 object-contain mr-3">
+                            <img src="{{ landing_config.logo.url }}" alt="Logo {{ organization_data.name|default:'Óptica' }}" class="h-10 sm:h-12 w-auto object-contain mr-3">
                         {% else %}
                             <!-- Logo por defecto (ícono) -->
                             {% if landing_config and landing_config.navbar_style == 'modern' or landing_config and landing_config.navbar_style == 'bold' %}
@@ -58,9 +65,9 @@
                         {% endif %}
                         
                         {% if landing_config and landing_config.navbar_style == 'modern' or landing_config and landing_config.navbar_style == 'bold' %}
-                        <span class="text-2xl font-bold text-white">
+                        <span class="text-xl sm:text-2xl font-bold text-white">
                         {% else %}
-                        <span class="text-2xl font-bold" style="color: {% if landing_config %}{{ landing_config.navbar_text_color }}{% else %}#1f2937{% endif %};">
+                        <span class="text-xl sm:text-2xl font-bold" style="color: {% if landing_config %}{{ landing_config.navbar_text_color }}{% else %}#1f2937{% endif %};">
                         {% endif %}
                             {% if organization_data %}{{ organization_data.name|upper }}{% else %}OCEANO OPTICO{% endif %}
                         </span>
@@ -153,9 +160,12 @@
             </div>
         </div>
     </nav>
+    {% if landing_config and landing_config.navbar_style == 'floating' %}
+    </div>
+    {% endif %}
     
     <!-- Content -->
-    <main class="pt-16">
+    <main class="{% if landing_config and landing_config.navbar_style == 'floating' %}pt-24{% else %}pt-16{% endif %}">
         {% block content %}{% endblock %}
     </main>
     

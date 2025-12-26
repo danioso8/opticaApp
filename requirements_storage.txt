@@ -1,0 +1,3 @@
+# Almacenamiento de archivos (para imágenes de landing page, logos, etc.)
+boto3>=1.26.0
+django-storages>=1.13.0

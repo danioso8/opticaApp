@@ -645,6 +645,37 @@ def plan_toggle_active(request, plan_id):
 
 @login_required
 @user_passes_test(is_superuser)
+def plan_delete(request, plan_id):
+    """Eliminar plan de suscripción"""
+    plan = get_object_or_404(SubscriptionPlan, id=plan_id)
+    
+    if request.method == 'POST':
+        # Verificar si hay suscripciones activas
+        active_subscriptions = Subscription.objects.filter(plan=plan, is_active=True).count()
+        
+        if active_subscriptions > 0:
+            messages.error(request, f'No se puede eliminar el plan "{plan.name}". Tiene {active_subscriptions} suscripción(es) activa(s).')
+            return redirect('admin_dashboard:plans_list')
+        
+        plan_name = plan.name
+        plan.delete()
+        messages.success(request, f'Plan "{plan_name}" eliminado exitosamente.')
+        return redirect('admin_dashboard:plans_list')
+    
+    # GET request - mostrar página de confirmación
+    active_subscriptions = Subscription.objects.filter(plan=plan, is_active=True).count()
+    total_subscriptions = Subscription.objects.filter(plan=plan).count()
+    
+    context = {
+        'plan': plan,
+        'active_subscriptions': active_subscriptions,
+        'total_subscriptions': total_subscriptions,
+    }
+    return render(request, 'admin_dashboard/plan_delete.html', context)
+
+
+@login_required
+@user_passes_test(is_superuser)
 def verify_user_email(request, user_id):
     """Verificar manualmente el email de un usuario"""
     if request.method == 'POST':
@@ -795,3 +826,280 @@ def feature_delete(request, feature_id):
         messages.success(request, f'Módulo "{feature_name}" eliminado exitosamente')
     
     return redirect('admin_dashboard:features_list')
+
+
+# ==================== GESTIÓN DE MÓDULOS POR ORGANIZACIÓN ====================
+
+@login_required
+@user_passes_test(is_superuser)
+def organization_features(request, org_id):
+    """Gestionar módulos de una organización específica"""
+    from apps.organizations.models import PlanFeature, OrganizationFeature
+    
+    organization = get_object_or_404(Organization, id=org_id)
+    
+    # Obtener todos los módulos disponibles
+    all_features = PlanFeature.objects.filter(is_active=True).order_by('category', 'name')
+    
+    # Obtener módulos habilitados para esta organización
+    enabled_features = OrganizationFeature.objects.filter(
+        organization=organization
+    ).select_related('feature')
+    
+    # Crear diccionario para fácil acceso
+    enabled_dict = {ef.feature.id: ef for ef in enabled_features}
+    
+    # Obtener módulos del plan actual
+    plan_features = set()
+    if organization.current_subscription:
+        plan_features = set(organization.current_subscription.plan.features.values_list('id', flat=True))
+    
+    context = {
+        'organization': organization,
+        'all_features': all_features,
+        'enabled_dict': enabled_dict,
+        'plan_features': plan_features,
+    }
+    return render(request, 'admin_dashboard/organization_features.html', context)
+
+
+@login_required
+@user_passes_test(is_superuser)
+def organization_feature_toggle(request, org_id):
+    """Habilitar/deshabilitar módulo para una organización"""
+    from apps.organizations.models import PlanFeature, OrganizationFeature
+    
+    if request.method == 'POST':
+        organization = get_object_or_404(Organization, id=org_id)
+        feature_id = request.POST.get('feature_id')
+        is_enabled = request.POST.get('is_enabled') == 'true'
+        
+        try:
+            feature = PlanFeature.objects.get(id=feature_id)
+            org_feature, created = OrganizationFeature.objects.get_or_create(
+                organization=organization,
+                feature=feature,
+                defaults={
+                    'is_enabled': is_enabled,
+                    'granted_by_plan': False,  # Habilitado manualmente por admin
+                }
+            )
+            
+            if not created:
+                org_feature.is_enabled = is_enabled
+                org_feature.save()
+            
+            status = 'habilitado' if is_enabled else 'deshabilitado'
+            messages.success(request, f'Módulo "{feature.name}" {status} para {organization.name}')
+            
+        except PlanFeature.DoesNotExist:
+            messages.error(request, 'Módulo no encontrado')
+        except Exception as e:
+            messages.error(request, f'Error: {str(e)}')
+    
+    return redirect('admin_dashboard:organization_features', org_id=org_id)
+
+
+@login_required
+@user_passes_test(is_superuser)
+def organization_sync_plan_features(request, org_id):
+    """Sincronizar módulos del plan con la organización"""
+    from apps.organizations.models import OrganizationFeature
+    
+    if request.method == 'POST':
+        organization = get_object_or_404(Organization, id=org_id)
+        
+        if not organization.current_subscription:
+            messages.error(request, 'La organización no tiene suscripción activa')
+            return redirect('admin_dashboard:organization_features', org_id=org_id)
+        
+        plan = organization.current_subscription.plan
+        plan_features = plan.features.all()
+        
+        # Marcar módulos del plan como habilitados
+        for feature in plan_features:
+            org_feature, created = OrganizationFeature.objects.get_or_create(
+                organization=organization,
+                feature=feature,
+                defaults={
+                    'is_enabled': True,
+                    'granted_by_plan': True,
+                }
+            )
+            
+            if not created:
+                org_feature.is_enabled = True
+                org_feature.granted_by_plan = True
+                org_feature.save()
+        
+        messages.success(request, f'{plan_features.count()} módulos sincronizados desde el plan {plan.name}')
+    
+    return redirect('admin_dashboard:organization_features', org_id=org_id)
+
+
+# ==================== GESTIÓN DE PAQUETES DE FACTURAS ====================
+
+@login_required
+@user_passes_test(is_superuser)
+def invoice_packages_list(request):
+    """Listar todas las compras de paquetes de facturas"""
+    from apps.organizations.models import InvoicePackagePurchase
+    
+    org_filter = request.GET.get('organization')
+    status_filter = request.GET.get('status')
+    
+    packages = InvoicePackagePurchase.objects.all().select_related('organization')
+    
+    if org_filter:
+        packages = packages.filter(organization_id=org_filter)
+    
+    if status_filter:
+        packages = packages.filter(payment_status=status_filter)
+    
+    packages = packages.order_by('-purchased_at')
+    
+    # Organizaciones para el filtro
+    organizations = Organization.objects.all().order_by('name')
+    
+    context = {
+        'packages': packages,
+        'organizations': organizations,
+        'org_filter': org_filter,
+        'status_filter': status_filter,
+    }
+    return render(request, 'admin_dashboard/invoice_packages_list.html', context)
+
+
+@login_required
+@user_passes_test(is_superuser)
+def invoice_package_create(request, org_id):
+    """Crear paquete de facturas para una organización"""
+    from apps.organizations.models import InvoicePackagePurchase
+    from decimal import Decimal
+    
+    organization = get_object_or_404(Organization, id=org_id)
+    
+    if request.method == 'POST':
+        quantity = int(request.POST.get('quantity'))
+        payment_status = request.POST.get('payment_status', 'paid')
+        
+        # Obtener precio del paquete
+        price = Decimal(InvoicePackagePurchase.PACKAGE_PRICES.get(quantity, 0))
+        
+        package = InvoicePackagePurchase.objects.create(
+            organization=organization,
+            quantity=quantity,
+            price=price,
+            payment_status=payment_status,
+            payment_date=timezone.now() if payment_status == 'paid' else None
+        )
+        
+        messages.success(request, f'Paquete de {quantity} facturas creado para {organization.name}')
+        return redirect('admin_dashboard:organization_detail', org_id=org_id)
+    
+    # GET - Mostrar formulario
+    context = {
+        'organization': organization,
+        'package_sizes': InvoicePackagePurchase.PACKAGE_SIZES,
+        'package_prices': InvoicePackagePurchase.PACKAGE_PRICES,
+    }
+    return render(request, 'admin_dashboard/invoice_package_create.html', context)
+
+
+# ==================== GESTIÓN DE COMPRAS DE MÓDULOS ADICIONALES ====================
+
+@login_required
+@user_passes_test(is_superuser)
+def addon_purchases_list(request):
+    """Listar todas las compras de módulos adicionales"""
+    from apps.organizations.models import AddonPurchase
+    
+    org_filter = request.GET.get('organization')
+    status_filter = request.GET.get('status')
+    
+    addons = AddonPurchase.objects.all().select_related('organization', 'feature')
+    
+    if org_filter:
+        addons = addons.filter(organization_id=org_filter)
+    
+    if status_filter:
+        addons = addons.filter(payment_status=status_filter)
+    
+    addons = addons.order_by('-purchased_at')
+    
+    # Organizaciones para el filtro
+    organizations = Organization.objects.all().order_by('name')
+    
+    context = {
+        'addons': addons,
+        'organizations': organizations,
+        'org_filter': org_filter,
+        'status_filter': status_filter,
+    }
+    return render(request, 'admin_dashboard/addon_purchases_list.html', context)
+
+
+@login_required
+@user_passes_test(is_superuser)
+def addon_purchase_create(request, org_id):
+    """Crear compra de módulo adicional para una organización"""
+    from apps.organizations.models import AddonPurchase, PlanFeature, OrganizationFeature
+    from decimal import Decimal
+    
+    organization = get_object_or_404(Organization, id=org_id)
+    
+    if request.method == 'POST':
+        feature_id = request.POST.get('feature_id')
+        billing_cycle = request.POST.get('billing_cycle', 'monthly')
+        payment_status = request.POST.get('payment_status', 'paid')
+        price = Decimal(request.POST.get('price', 0))
+        
+        feature = get_object_or_404(PlanFeature, id=feature_id)
+        
+        # Crear la compra
+        addon = AddonPurchase.objects.create(
+            organization=organization,
+            feature=feature,
+            billing_cycle=billing_cycle,
+            price=price,
+            payment_status=payment_status,
+            is_active=True,
+            payment_date=timezone.now() if payment_status == 'paid' else None
+        )
+        
+        # Habilitar el módulo para la organización
+        org_feature, created = OrganizationFeature.objects.get_or_create(
+            organization=organization,
+            feature=feature,
+            defaults={
+                'is_enabled': True,
+                'granted_by_plan': False,
+                'purchased_at': timezone.now(),
+                'expires_at': addon.end_date,
+                'amount_paid': price
+            }
+        )
+        
+        if not created:
+            org_feature.is_enabled = True
+            org_feature.granted_by_plan = False
+            org_feature.purchased_at = timezone.now()
+            org_feature.expires_at = addon.end_date
+            org_feature.amount_paid = price
+            org_feature.save()
+        
+        messages.success(request, f'Módulo "{feature.name}" agregado a {organization.name}')
+        return redirect('admin_dashboard:organization_detail', org_id=org_id)
+    
+    # GET - Mostrar formulario
+    # Solo módulos que se pueden comprar por separado
+    available_features = PlanFeature.objects.filter(
+        is_active=True,
+        can_purchase_separately=True
+    ).order_by('category', 'name')
+    
+    context = {
+        'organization': organization,
+        'available_features': available_features,
+    }
+    return render(request, 'admin_dashboard/addon_purchase_create.html', context)

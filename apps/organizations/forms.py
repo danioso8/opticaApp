@@ -5,6 +5,14 @@ from .models import LandingPageConfig
 class LandingPageConfigForm(forms.ModelForm):
     """Formulario para configurar la landing page"""
     
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Hacer que todos los campos no sean requeridos ya que tienen valores por defecto en el modelo
+        for field_name, field in self.fields.items():
+            # Solo el logo puede ser opcional sin valor por defecto
+            if field_name != 'logo':
+                field.required = False
+    
     class Meta:
         model = LandingPageConfig
         fields = [

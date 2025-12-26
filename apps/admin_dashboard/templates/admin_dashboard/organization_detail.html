@@ -112,6 +112,29 @@
         <div class="bg-white rounded-lg shadow-md p-6">
             <h3 class="text-lg font-bold text-gray-800 mb-4">Acciones</h3>
             
+            <!-- Gestión de Módulos -->
+            <a href="{% url 'admin_dashboard:organization_features' organization.id %}" 
+               class="w-full mb-3 block text-center px-4 py-2 rounded-lg bg-purple-600 hover:bg-purple-700 text-white">
+                <i class="fas fa-puzzle-piece mr-2"></i>
+                Gestionar Módulos
+            </a>
+
+            <!-- Agregar Facturas DIAN -->
+            <a href="{% url 'admin_dashboard:invoice_package_create' organization.id %}" 
+               class="w-full mb-3 block text-center px-4 py-2 rounded-lg bg-green-600 hover:bg-green-700 text-white">
+                <i class="fas fa-file-invoice mr-2"></i>
+                Agregar Facturas DIAN
+            </a>
+
+            <!-- Agregar Módulo Individual -->
+            <a href="{% url 'admin_dashboard:addon_purchase_create' organization.id %}" 
+               class="w-full mb-3 block text-center px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white">
+                <i class="fas fa-plus-circle mr-2"></i>
+                Agregar Módulo Individual
+            </a>
+            
+            <hr class="my-4">
+            
             <!-- Toggle Estado -->
             <form method="post" action="{% url 'admin_dashboard:organization_toggle_active' organization.id %}">
                 {% csrf_token %}

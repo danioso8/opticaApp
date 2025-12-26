@@ -46,7 +46,20 @@ urlpatterns = [
     path('', include('apps.public.urls')),
 ]
 
-# Servir archivos media en desarrollo
+# Servir archivos media y static en desarrollo
 if settings.DEBUG:
+    from django.views.static import serve
+    from django.urls import re_path
+    
+    urlpatterns += [
+        re_path(r'^media/(?P<path>.*)$', serve, {
+            'document_root': settings.MEDIA_ROOT,
+        }),
+        re_path(r'^static/(?P<path>.*)$', serve, {
+            'document_root': settings.STATIC_ROOT,
+        }),
+    ]
+    
+    # Método alternativo con static()
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
     urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)

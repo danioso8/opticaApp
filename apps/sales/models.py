@@ -76,7 +76,7 @@ class Sale(TenantModel):
     sale_number = models.CharField('Número de Venta', max_length=20)
     patient = models.ForeignKey('patients.Patient', on_delete=models.PROTECT, verbose_name='Paciente', null=True, blank=True)
     customer_name = models.CharField('Nombre del Cliente', max_length=200, blank=True, help_text='Usar si no es un paciente registrado')
-    sold_by = models.ForeignKey(User, on_delete=models.PROTECT, verbose_name='Vendido por')
+    sold_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, verbose_name='Vendido por')
     payment_method = models.CharField('Método de Pago', max_length=20, choices=PAYMENT_METHODS)
     status = models.CharField('Estado', max_length=20, choices=STATUS_CHOICES, default='completed')
     subtotal = models.DecimalField('Subtotal', max_digits=10, decimal_places=2, default=0)

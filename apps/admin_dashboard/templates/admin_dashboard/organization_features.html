@@ -1,0 +1,148 @@
+{% extends 'admin_dashboard/base.html' %}
+
+{% block title %}Módulos - {{ organization.name }} - Admin{% endblock %}
+
+{% block content %}
+<div class="mb-6">
+    <a href="{% url 'admin_dashboard:organization_detail' organization.id %}" class="text-indigo-600 hover:text-indigo-800 inline-flex items-center">
+        <i class="fas fa-arrow-left mr-2"></i> Volver a {{ organization.name }}
+    </a>
+</div>
+
+<div class="bg-white rounded-lg shadow-md p-6 mb-6">
+    <div class="flex items-center justify-between mb-6">
+        <div>
+            <h2 class="text-2xl font-bold text-gray-800">
+                <i class="fas fa-puzzle-piece text-indigo-600 mr-2"></i>
+                Gestión de Módulos
+            </h2>
+            <p class="text-gray-600 mt-1">{{ organization.name }}</p>
+        </div>
+        <form method="POST" action="{% url 'admin_dashboard:organization_sync_plan_features' organization.id %}" class="inline">
+            {% csrf_token %}
+            <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg">
+                <i class="fas fa-sync mr-2"></i>
+                Sincronizar desde Plan
+            </button>
+        </form>
+    </div>
+
+    {% if organization.current_subscription %}
+    <div class="bg-blue-50 border-l-4 border-blue-500 p-4 mb-6">
+        <div class="flex">
+            <div class="flex-shrink-0">
+                <i class="fas fa-info-circle text-blue-500"></i>
+            </div>
+            <div class="ml-3">
+                <p class="text-sm text-blue-700">
+                    Plan actual: <strong>{{ organization.current_subscription.plan.name }}</strong>
+                    ({{ organization.current_subscription.plan.features.count }} módulos incluidos)
+                </p>
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <div class="bg-yellow-50 border-l-4 border-yellow-500 p-4 mb-6">
+        <div class="flex">
+            <div class="flex-shrink-0">
+                <i class="fas fa-exclamation-triangle text-yellow-500"></i>
+            </div>
+            <div class="ml-3">
+                <p class="text-sm text-yellow-700">
+                    Esta organización no tiene suscripción activa
+                </p>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Lista de módulos por categoría -->
+    {% regroup all_features by category as features_by_category %}
+    
+    <div class="space-y-6">
+        {% for category in features_by_category %}
+        <div class="border border-gray-200 rounded-lg p-4">
+            <h3 class="text-lg font-bold text-gray-800 mb-4">
+                <i class="fas fa-folder mr-2"></i>
+                {{ category.grouper|title }}
+            </h3>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {% for feature in category.list %}
+                <div class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
+                    <div class="flex items-center justify-between">
+                        <div class="flex-1">
+                            <div class="flex items-center gap-2 mb-2">
+                                {% if feature.icon %}
+                                <i class="{{ feature.icon }} text-indigo-600"></i>
+                                {% endif %}
+                                <h4 class="font-semibold text-gray-800">{{ feature.name }}</h4>
+                            </div>
+                            {% if feature.description %}
+                            <p class="text-sm text-gray-600 mb-2">{{ feature.description }}</p>
+                            {% endif %}
+                            
+                            <div class="flex items-center gap-2 text-xs">
+                                {% if feature.id in plan_features %}
+                                <span class="px-2 py-1 bg-blue-100 text-blue-800 rounded-full">
+                                    <i class="fas fa-check-circle"></i> Incluido en plan
+                                </span>
+                                {% endif %}
+                                
+                                {% if feature.id in enabled_dict %}
+                                    {% if enabled_dict|get_item:feature.id|attr:'granted_by_plan' == False %}
+                                    <span class="px-2 py-1 bg-purple-100 text-purple-800 rounded-full">
+                                        <i class="fas fa-shopping-cart"></i> Comprado
+                                    </span>
+                                    {% endif %}
+                                {% endif %}
+                                
+                                {% if feature.can_purchase_separately %}
+                                <span class="px-2 py-1 bg-green-100 text-green-800 rounded-full">
+                                    <i class="fas fa-dollar-sign"></i> ${{ feature.price_monthly|floatformat:0 }}
+                                </span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="ml-4">
+                            <form method="POST" action="{% url 'admin_dashboard:organization_feature_toggle' organization.id %}" class="inline">
+                                {% csrf_token %}
+                                <input type="hidden" name="feature_id" value="{{ feature.id }}">
+                                {% if feature.id in enabled_dict and enabled_dict|get_item:feature.id|attr:'is_enabled' %}
+                                    <input type="hidden" name="is_enabled" value="false">
+                                    <button type="submit" class="w-16 h-8 bg-green-600 rounded-full relative transition-colors">
+                                        <span class="absolute right-1 top-1 w-6 h-6 bg-white rounded-full shadow"></span>
+                                    </button>
+                                {% else %}
+                                    <input type="hidden" name="is_enabled" value="true">
+                                    <button type="submit" class="w-16 h-8 bg-gray-300 rounded-full relative transition-colors">
+                                        <span class="absolute left-1 top-1 w-6 h-6 bg-white rounded-full shadow"></span>
+                                    </button>
+                                {% endif %}
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<script>
+// Helper para acceder a diccionarios en templates
+document.addEventListener('DOMContentLoaded', function() {
+    const forms = document.querySelectorAll('form[action*="feature/toggle"]');
+    forms.forEach(form => {
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            if (confirm('¿Confirmar cambio de estado del módulo?')) {
+                form.submit();
+            }
+        });
+    });
+});
+</script>
+{% endblock %}

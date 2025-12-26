@@ -82,6 +82,7 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',  # Whitenoise para archivos estáticos
+    'apps.organizations.media_middleware.MediaFileMiddleware',  # Servir archivos de media en desarrollo con ASGI
     'django.contrib.sessions.middleware.SessionMiddleware',
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -93,6 +94,10 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
+
+# Configurar Whitenoise para NO servir archivos de MEDIA en desarrollo
+WHITENOISE_AUTOREFRESH = DEBUG
+WHITENOISE_USE_FINDERS = DEBUG
 
 ROOT_URLCONF = 'config.urls'
 
@@ -198,11 +203,31 @@ STATICFILES_DIRS = [
     BASE_DIR / 'apps' / 'public' / 'static',
 ]
 
-# Whitenoise para servir archivos estáticos en producción
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+# Whitenoise para servir archivos estáticos en producción (solo si no es DEBUG)
+if not DEBUG:
+    STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+
+# ==================== CONFIGURACIÓN DE ARCHIVOS MEDIA ====================
+# En desarrollo: archivos locales
+# En producción (Render): disco persistente montado
 
 MEDIA_URL = '/media/'
-MEDIA_ROOT = BASE_DIR / 'media'
+
+# Configuración de almacenamiento de medios
+if DEBUG:
+    # Desarrollo: usar carpeta local
+    MEDIA_ROOT = BASE_DIR / 'media'
+else:
+    # Producción en Render: usar disco persistente
+    # El disco persistente se monta en /opt/render/project/src/media_storage
+    # Debes crear un Render Disk y montarlo en esta ruta
+    RENDER_MEDIA_PATH = config('RENDER_MEDIA_PATH', default='/opt/render/project/src/media_storage')
+    MEDIA_ROOT = RENDER_MEDIA_PATH
+
+# URL de medios de producción (Render) para desarrollo local
+# Si usas base de datos de producción pero archivos locales, los archivos que no existan
+# localmente se cargarán desde esta URL
+PRODUCTION_MEDIA_URL = config('PRODUCTION_MEDIA_URL', default='https://opticaapp.onrender.com/media/')
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/3.2/ref/settings/#default-auto-field
