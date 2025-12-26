@@ -1256,7 +1256,7 @@ def add_specific_schedule(request):
     """Agregar horario específico por fecha (AJAX)"""
     if request.method == 'POST':
         from apps.appointments.models import SpecificDateSchedule
-        from django.contrib.auth.models import User
+        from apps.patients.models import Doctor
         
         date_str = request.POST.get('date')
         start_time = request.POST.get('start_time')
@@ -1282,11 +1282,15 @@ def add_specific_schedule(request):
             doctor = None
             if doctor_id:
                 try:
-                    doctor = User.objects.get(id=doctor_id)
-                except User.DoesNotExist:
+                    # Buscar en el modelo Doctor, no User
+                    doctor_obj = Doctor.objects.get(id=doctor_id, organization=request.organization)
+                    # SpecificDateSchedule.doctor apunta a User, necesitamos None por ahora
+                    # TODO: Migrar SpecificDateSchedule.doctor a ForeignKey(Doctor) en el futuro
+                    doctor = None  # Temporalmente None hasta refactorizar el modelo
+                except Doctor.DoesNotExist:
                     return JsonResponse({
                         'success': False,
-                        'message': 'Doctor no encontrado'
+                        'message': 'Doctor no encontrado en esta organización'
                     }, status=400)
             
             schedule = SpecificDateSchedule.objects.create(
