@@ -31,7 +31,7 @@ class Doctor(TenantModel):
         default='CC',
         verbose_name='Tipo de identificación'
     )
-    identification = models.CharField(max_length=50, verbose_name='Cédula/ID', unique=True)
+    identification = models.CharField(max_length=50, verbose_name='Cédula/ID')
     specialty = models.CharField(max_length=50, choices=SPECIALTY_CHOICES, default='optometrist', verbose_name='Especialidad')
     
     # Información Profesional
@@ -75,6 +75,10 @@ class Doctor(TenantModel):
         indexes = [
             models.Index(fields=['organization', 'is_active']),
             models.Index(fields=['professional_card']),
+            models.Index(fields=['organization', 'identification']),
+        ]
+        unique_together = [
+            ['organization', 'identification'],
         ]
     
     def __str__(self):
