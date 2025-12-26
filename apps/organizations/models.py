@@ -502,6 +502,23 @@ class LandingPageConfig(models.Model):
         help_text='Cómo se ajusta la imagen de fondo en la sección principal'
     )
     
+    # Posición y zoom de la imagen hero
+    hero_image_position_x = models.IntegerField(
+        default=50,
+        verbose_name='Posición Horizontal',
+        help_text='0-100, posición horizontal de la imagen (%)'
+    )
+    hero_image_position_y = models.IntegerField(
+        default=50,
+        verbose_name='Posición Vertical',
+        help_text='0-100, posición vertical de la imagen (%)'
+    )
+    hero_image_scale = models.IntegerField(
+        default=100,
+        verbose_name='Escala de Imagen',
+        help_text='50-200, tamaño de la imagen (%)'
+    )
+    
     # Layout de servicios
     services_layout = models.CharField(
         max_length=20,

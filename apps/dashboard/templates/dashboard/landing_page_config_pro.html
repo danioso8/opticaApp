@@ -476,6 +476,131 @@
                                 Controla cómo se ajusta la imagen de fondo en la sección principal
                             </p>
                         </div>
+                        
+                        <!-- Editor de Posición y Zoom -->
+                        {% if config.hero_image %}
+                        <div class="bg-gradient-to-br from-purple-50 to-blue-50 rounded-lg p-6 border-2 border-purple-200">
+                            <label class="block text-sm font-medium text-gray-700 mb-4">
+                                <i class="fas fa-sliders-h mr-2 text-purple-600"></i>Posicionar y Ajustar Imagen
+                            </label>
+                            
+                            <!-- Vista previa interactiva -->
+                            <div class="bg-gray-800 rounded-lg overflow-hidden mb-4 relative" style="height: 300px;">
+                                <img id="hero_preview_image" 
+                                     src="{{ config.hero_image.url }}" 
+                                     alt="Preview" 
+                                     class="w-full h-full transition-all duration-300"
+                                     style="object-fit: {{ config.hero_image_fit|default:'contain' }}; 
+                                            object-position: {{ config.hero_image_position_x|default:50 }}% {{ config.hero_image_position_y|default:50 }}%; 
+                                            transform: scale({{ config.hero_image_scale|default:100|floatformat:0|add:'0' }}%);">
+                                <div class="absolute inset-0 bg-gradient-to-r from-blue-900/70 via-blue-800/50 to-transparent pointer-events-none"></div>
+                            </div>
+                            
+                            <!-- Controles -->
+                            <div class="space-y-4">
+                                <!-- Posición Horizontal -->
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2 flex items-center justify-between">
+                                        <span><i class="fas fa-arrows-alt-h mr-2 text-blue-600"></i>Posición Horizontal</span>
+                                        <span id="pos_x_value" class="text-blue-600 font-semibold">{{ config.hero_image_position_x|default:50 }}%</span>
+                                    </label>
+                                    <input type="range" 
+                                           id="hero_image_position_x" 
+                                           name="hero_image_position_x" 
+                                           min="0" 
+                                           max="100" 
+                                           value="{{ config.hero_image_position_x|default:50 }}"
+                                           class="w-full h-2 bg-blue-200 rounded-lg appearance-none cursor-pointer">
+                                </div>
+                                
+                                <!-- Posición Vertical -->
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2 flex items-center justify-between">
+                                        <span><i class="fas fa-arrows-alt-v mr-2 text-green-600"></i>Posición Vertical</span>
+                                        <span id="pos_y_value" class="text-green-600 font-semibold">{{ config.hero_image_position_y|default:50 }}%</span>
+                                    </label>
+                                    <input type="range" 
+                                           id="hero_image_position_y" 
+                                           name="hero_image_position_y" 
+                                           min="0" 
+                                           max="100" 
+                                           value="{{ config.hero_image_position_y|default:50 }}"
+                                           class="w-full h-2 bg-green-200 rounded-lg appearance-none cursor-pointer">
+                                </div>
+                                
+                                <!-- Escala/Zoom -->
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2 flex items-center justify-between">
+                                        <span><i class="fas fa-search-plus mr-2 text-purple-600"></i>Zoom / Escala</span>
+                                        <span id="scale_value" class="text-purple-600 font-semibold">{{ config.hero_image_scale|default:100 }}%</span>
+                                    </label>
+                                    <input type="range" 
+                                           id="hero_image_scale" 
+                                           name="hero_image_scale" 
+                                           min="50" 
+                                           max="200" 
+                                           value="{{ config.hero_image_scale|default:100 }}"
+                                           class="w-full h-2 bg-purple-200 rounded-lg appearance-none cursor-pointer">
+                                </div>
+                                
+                                <!-- Botón Reset -->
+                                <button type="button" 
+                                        id="reset_hero_position" 
+                                        class="w-full bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg transition">
+                                    <i class="fas fa-undo mr-2"></i>Restablecer Posición Original
+                                </button>
+                            </div>
+                            
+                            <p class="text-xs text-gray-500 mt-4">
+                                <i class="fas fa-info-circle mr-1"></i>
+                                Ajusta la posición y el zoom de la imagen en tiempo real. Los cambios se guardan al hacer clic en "Guardar Configuración".
+                            </p>
+                        </div>
+                        
+                        <script>
+                        document.addEventListener('DOMContentLoaded', function() {
+                            const previewImage = document.getElementById('hero_preview_image');
+                            const posXSlider = document.getElementById('hero_image_position_x');
+                            const posYSlider = document.getElementById('hero_image_position_y');
+                            const scaleSlider = document.getElementById('hero_image_scale');
+                            const posXValue = document.getElementById('pos_x_value');
+                            const posYValue = document.getElementById('pos_y_value');
+                            const scaleValue = document.getElementById('scale_value');
+                            const resetBtn = document.getElementById('reset_hero_position');
+                            
+                            function updatePreview() {
+                                const posX = posXSlider.value;
+                                const posY = posYSlider.value;
+                                const scale = scaleSlider.value;
+                                
+                                previewImage.style.objectPosition = `${posX}% ${posY}%`;
+                                previewImage.style.transform = `scale(${scale / 100})`;
+                                
+                                posXValue.textContent = `${posX}%`;
+                                posYValue.textContent = `${posY}%`;
+                                scaleValue.textContent = `${scale}%`;
+                            }
+                            
+                            posXSlider.addEventListener('input', updatePreview);
+                            posYSlider.addEventListener('input', updatePreview);
+                            scaleSlider.addEventListener('input', updatePreview);
+                            
+                            resetBtn.addEventListener('click', function() {
+                                posXSlider.value = 50;
+                                posYSlider.value = 50;
+                                scaleSlider.value = 100;
+                                updatePreview();
+                            });
+                        });
+                        </script>
+                        {% else %}
+                        <div class="bg-yellow-50 border-2 border-yellow-200 rounded-lg p-4">
+                            <p class="text-sm text-yellow-800">
+                                <i class="fas fa-info-circle mr-2"></i>
+                                Sube una imagen primero para acceder al editor de posición y zoom
+                            </p>
+                        </div>
+                        {% endif %}
 
                         <!-- Textos -->
                         <div>

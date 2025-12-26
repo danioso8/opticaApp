@@ -11,7 +11,8 @@
         {% if landing_config and landing_config.hero_image %}
             <img src="{{ landing_config.hero_image.url }}" 
                  alt="Hero Image" 
-                 class="w-full h-full object-{% if landing_config.hero_image_fit %}{{ landing_config.hero_image_fit }}{% else %}contain{% endif %}">
+                 class="w-full h-full object-{% if landing_config.hero_image_fit %}{{ landing_config.hero_image_fit }}{% else %}contain{% endif %}"
+                 style="object-position: {{ landing_config.hero_image_position_x|default:50 }}% {{ landing_config.hero_image_position_y|default:50 }}%; transform: scale({{ landing_config.hero_image_scale|default:100 }}%);">
         {% else %}
             <img src="{% static 'img/beautiful-smiling-brunette-woman-trying-260nw-2627315263.webp' %}" 
                  alt="Mujer eligiendo monturas" 
