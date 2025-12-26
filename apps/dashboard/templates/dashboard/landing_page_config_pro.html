@@ -7,17 +7,42 @@
 <div class="max-w-7xl mx-auto">
     <!-- Header -->
     <div class="bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg shadow-lg p-6 mb-6 text-white">
-        <div class="flex justify-between items-center">
-            <div>
+        <div class="flex justify-between items-center flex-wrap gap-4">
+            <div class="flex-1">
                 <h1 class="text-3xl font-bold mb-2">
                     <i class="fas fa-paint-brush mr-3"></i>Configuración de Landing Page
                 </h1>
-                <p class="text-blue-100">Personaliza tu página web con logo, colores y contenido</p>
+                <p class="text-blue-100 mb-4">Personaliza tu página web con logo, colores y contenido</p>
+                
+                <!-- URL Pública Compartible -->
+                {% if organization %}
+                <div class="mt-4 p-4 bg-white/10 rounded-lg backdrop-blur-sm">
+                    <p class="text-sm text-blue-100 mb-2">
+                        <i class="fas fa-link mr-2"></i>Tu Landing Page Pública (compartible):
+                    </p>
+                    <div class="flex items-center gap-2">
+                        <input type="text" 
+                               id="public-url" 
+                               readonly 
+                               value="{{ request.scheme }}://{{ request.get_host }}/{{ organization.slug }}/"
+                               class="bg-white/20 text-white px-4 py-2 rounded-lg flex-1 font-mono text-sm">
+                        <button type="button" 
+                                onclick="copyPublicUrl()" 
+                                class="bg-white text-blue-600 px-4 py-2 rounded-lg font-semibold hover:bg-blue-50 transition shadow-lg">
+                            <i class="fas fa-copy mr-1"></i>Copiar
+                        </button>
+                        <a href="/{{ organization.slug }}/" 
+                           target="_blank" 
+                           class="bg-green-500 text-white px-4 py-2 rounded-lg font-semibold hover:bg-green-600 transition shadow-lg">
+                            <i class="fas fa-external-link-alt mr-1"></i>Abrir
+                        </a>
+                    </div>
+                    <p class="text-xs text-blue-200 mt-2">
+                        💡 Comparte este enlace con tus clientes
+                    </p>
+                </div>
+                {% endif %}
             </div>
-            <a href="{% url 'public:home' %}" target="_blank" 
-               class="bg-white text-blue-600 px-6 py-3 rounded-lg font-semibold hover:bg-blue-50 transition shadow-lg">
-                <i class="fas fa-external-link-alt mr-2"></i>Vista Previa
-            </a>
         </div>
     </div>
 
@@ -929,6 +954,20 @@ function applyPalette(palette) {
     document.querySelector('[name="hero_bg_gradient_end"]').value = colors.hero_end;
     
     Toast.success('Paleta aplicada correctamente');
+}
+
+// Copiar URL pública
+function copyPublicUrl() {
+    const urlInput = document.getElementById('public-url');
+    urlInput.select();
+    urlInput.setSelectionRange(0, 99999);
+    
+    navigator.clipboard.writeText(urlInput.value).then(function() {
+        Toast.success('¡URL copiada al portapapeles!');
+    }, function() {
+        document.execCommand('copy');
+        Toast.success('¡URL copiada!');
+    });
 }
 
 // Mensaje de guardado

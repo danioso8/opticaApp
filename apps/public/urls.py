@@ -7,4 +7,6 @@ urlpatterns = [
     path('', views.home, name='home'),
     path('agendar/', views.booking, name='booking'),
     path('tienda/', views.shop, name='shop'),
+    # Landing page pública por slug de organización
+    path('<slug:org_slug>/', views.organization_landing, name='organization_landing'),
 ]

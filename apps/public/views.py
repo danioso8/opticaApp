@@ -7,45 +7,50 @@ from apps.appointments.utils import get_available_slots_for_date
 
 
 def home(request):
-    """Página principal pública"""
-    from apps.organizations.models import LandingPageConfig, Organization
+    """Página principal pública - Redirige a landing de organización si está autenticado, sino muestra landing genérica"""
+    from django.shortcuts import redirect
+    from apps.organizations.models import OrganizationMember
     
-    # Para vistas públicas, usar la organización del request si existe, sino la primera disponible
-    organization = getattr(request, 'organization', None)
-    
-    # Si el usuario está autenticado, obtener su primera organización
-    first_organization = None
+    # Si el usuario está autenticado, redirigir a su landing page específica
     if request.user.is_authenticated:
-        from apps.organizations.models import OrganizationMember
         first_membership = OrganizationMember.objects.filter(
             user=request.user,
             is_active=True
         ).select_related('organization').first()
         
-        if first_membership:
-            first_organization = first_membership.organization
+        if first_membership and first_membership.organization.slug:
+            # Redirigir a la landing page específica de su organización
+            return redirect('public:organization_landing', org_slug=first_membership.organization.slug)
     
-    # Si no hay organización del usuario autenticado, obtener la primera organización activa
-    if not first_organization:
-        first_organization = Organization.objects.filter(is_active=True).first()
+    # Si no está autenticado, mostrar landing page genérica del sistema
+    return render(request, 'public/home_generic.html')
+
+
+def organization_landing(request, org_slug):
+    """Landing page específica de una organización por su slug"""
+    from apps.organizations.models import LandingPageConfig, Organization
+    from django.shortcuts import get_object_or_404
     
-    config = AppointmentConfiguration.get_config(organization or first_organization)
+    # Obtener la organización por su slug
+    organization = get_object_or_404(Organization, slug=org_slug, is_active=True)
+    
+    config = AppointmentConfiguration.get_config(organization)
     
     # Obtener configuración de la landing page
     landing_config = None
-    if first_organization:
-        try:
-            landing_config = LandingPageConfig.objects.get(organization=first_organization)
-        except LandingPageConfig.DoesNotExist:
-            pass
+    try:
+        landing_config = LandingPageConfig.objects.get(organization=organization)
+    except LandingPageConfig.DoesNotExist:
+        pass
     
     context = {
         'system_open': config.is_open if config else True,
-        'organization_data': first_organization,
+        'organization_data': organization,
         'landing_config': landing_config,
+        'org_slug': org_slug,
     }
     
-    return render(request, 'public/home.html', context)
+    return render(request, 'public/organization_landing.html', context)
 
 
 def booking(request):

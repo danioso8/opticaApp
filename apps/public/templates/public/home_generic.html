@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Gestión para Ópticas</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        body { font-family: 'Poppins', sans-serif; }
+    </style>
+</head>
+<body class="bg-gray-50">
+
+<!-- Hero Section Genérica -->
+<section class="relative min-h-screen flex items-center overflow-hidden bg-gradient-to-br from-blue-600 via-purple-600 to-pink-500">
+    <div class="absolute inset-0 opacity-20">
+        <div class="absolute inset-0" style="background-image: url('data:image/svg+xml,%3Csvg width=&quot;60&quot; height=&quot;60&quot; viewBox=&quot;0 0 60 60&quot; xmlns=&quot;http://www.w3.org/2000/svg&quot;%3E%3Cg fill=&quot;none&quot; fill-rule=&quot;evenodd&quot;%3E%3Cg fill=&quot;%23ffffff&quot; fill-opacity=&quot;0.4&quot;%3E%3Cpath d=&quot;M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z&quot;/%3E%3C/g%3E%3C/g%3E%3C/svg%3E');"></div>
+    </div>
+    
+    <div class="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 w-full">
+        <div class="text-center text-white">
+            <div class="mb-8">
+                <i class="fas fa-glasses text-8xl mb-4 animate-pulse"></i>
+            </div>
+            
+            <h1 class="text-6xl md:text-7xl font-bold mb-6 leading-tight">
+                Sistema de Gestión para Ópticas
+            </h1>
+            
+            <p class="text-2xl mb-12 text-blue-100 max-w-3xl mx-auto">
+                Plataforma completa para la gestión de tu óptica:<br>
+                Agendamiento, Historia Clínica, Ventas y más
+            </p>
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12 max-w-5xl mx-auto">
+                <div class="bg-white/10 backdrop-blur-md rounded-2xl p-6 border border-white/20">
+                    <i class="fas fa-calendar-check text-5xl mb-4"></i>
+                    <h3 class="text-xl font-bold mb-2">Agendamiento Online</h3>
+                    <p class="text-blue-100">Gestiona citas desde tu landing page pública</p>
+                </div>
+                
+                <div class="bg-white/10 backdrop-blur-md rounded-2xl p-6 border border-white/20">
+                    <i class="fas fa-notes-medical text-5xl mb-4"></i>
+                    <h3 class="text-xl font-bold mb-2">Historia Clínica</h3>
+                    <p class="text-blue-100">Completo sistema de expedientes médicos</p>
+                </div>
+                
+                <div class="bg-white/10 backdrop-blur-md rounded-2xl p-6 border border-white/20">
+                    <i class="fas fa-store text-5xl mb-4"></i>
+                    <h3 class="text-xl font-bold mb-2">Punto de Venta</h3>
+                    <p class="text-blue-100">Ventas, inventario y facturación DIAN</p>
+                </div>
+            </div>
+            
+            <div class="flex flex-col sm:flex-row gap-4 justify-center items-center">
+                <a href="/dashboard/login/" 
+                   class="inline-flex items-center gap-3 bg-white text-blue-600 px-8 py-4 rounded-full font-bold text-lg shadow-2xl hover:shadow-white/50 hover:scale-105 transition-all">
+                    <i class="fas fa-sign-in-alt"></i>
+                    Iniciar Sesión
+                </a>
+                
+                <a href="/dashboard/register/" 
+                   class="inline-flex items-center gap-3 bg-transparent border-2 border-white text-white px-8 py-4 rounded-full font-bold text-lg hover:bg-white hover:text-blue-600 transition-all">
+                    <i class="fas fa-user-plus"></i>
+                    Crear Cuenta
+                </a>
+            </div>
+            
+            <div class="mt-16 p-6 bg-white/10 backdrop-blur-md rounded-2xl border border-white/20 max-w-2xl mx-auto">
+                <i class="fas fa-info-circle text-3xl mb-3"></i>
+                <p class="text-lg text-blue-100">
+                    ¿Buscas una óptica específica?<br>
+                    <span class="font-bold text-white">Solicita el link directo</span> para ver sus servicios y agendar citas.
+                </p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="py-20 bg-white">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-16">
+            <h2 class="text-4xl font-bold text-gray-900 mb-4">
+                Todo lo que necesitas para tu óptica
+            </h2>
+            <p class="text-xl text-gray-600">
+                Sistema integral diseñado específicamente para ópticas modernas
+            </p>
+        </div>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+            <div class="text-center p-6">
+                <div class="bg-blue-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i class="fas fa-globe text-blue-600 text-2xl"></i>
+                </div>
+                <h3 class="text-lg font-bold mb-2">Landing Page Personalizada</h3>
+                <p class="text-gray-600">Tu propia página web con tu marca y colores</p>
+            </div>
+            
+            <div class="text-center p-6">
+                <div class="bg-purple-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i class="fas fa-eye text-purple-600 text-2xl"></i>
+                </div>
+                <h3 class="text-lg font-bold mb-2">Exámenes Visuales</h3>
+                <p class="text-gray-600">Registro completo de pruebas oftalmológicas</p>
+            </div>
+            
+            <div class="text-center p-6">
+                <div class="bg-green-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i class="fas fa-receipt text-green-600 text-2xl"></i>
+                </div>
+                <h3 class="text-lg font-bold mb-2">Facturación DIAN</h3>
+                <p class="text-gray-600">Integración directa con facturación electrónica</p>
+            </div>
+            
+            <div class="text-center p-6">
+                <div class="bg-pink-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i class="fas fa-chart-line text-pink-600 text-2xl"></i>
+                </div>
+                <h3 class="text-lg font-bold mb-2">Reportes y Analytics</h3>
+                <p class="text-gray-600">Métricas y estadísticas de tu negocio</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+</body>
+</html>
