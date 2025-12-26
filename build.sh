@@ -8,6 +8,10 @@ pip install -r requirements.txt
 echo "==> Recolectando archivos estáticos..."
 python manage.py collectstatic --no-input
 
+echo "==> Inicializando disco persistente..."
+chmod +x init_render_disk.sh
+./init_render_disk.sh || true
+
 echo "==> Verificando estado de migraciones..."
 # Ejecutar script de verificación automática antes de las migraciones
 python pre_migrate_check.py || true
