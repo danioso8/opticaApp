@@ -418,6 +418,16 @@ async function newAppointment() {
     document.getElementById('appointment_phone').value = '{{ patient.phone_number }}';
     document.getElementById('appointment_email').value = '{{ patient.email|default:"" }}';
     
+    // Listener para cambio de doctor
+    document.getElementById('appointment_doctor').addEventListener('change', function() {
+        // Limpiar selección actual
+        document.getElementById('selected_appointment_date').value = '';
+        document.getElementById('selected_appointment_time').value = '';
+        document.getElementById('selectionSummary').classList.add('hidden');
+        // Recargar fechas según el doctor seleccionado
+        loadAvailableDates();
+    });
+    
     // Cargar fechas disponibles
     await loadAvailableDates();
 }
@@ -427,7 +437,12 @@ async function loadAvailableDates() {
     container.innerHTML = '<div class="text-center py-8 text-gray-500"><i class="fas fa-spinner fa-spin text-2xl mb-2"></i><p>Cargando fechas...</p></div>';
     
     try {
-        const url = '/api/available-dates/?organization_id={{ request.organization.id }}';
+        const doctorId = document.getElementById('appointment_doctor').value;
+        let url = '/api/available-dates/?organization_id={{ request.organization.id }}';
+        if (doctorId) {
+            url += `&doctor_id=${doctorId}`;
+        }
+        
         console.log('Fetching dates from:', url);
         
         const response = await fetch(url);
@@ -459,7 +474,11 @@ async function loadAvailableDates() {
                 container.appendChild(button);
             });
         } else {
-            container.innerHTML = '<div class="text-center py-8 text-gray-500"><i class="fas fa-calendar-times text-2xl mb-2"></i><p>No hay fechas disponibles</p></div>';
+            const doctorSelected = document.getElementById('appointment_doctor').value;
+            const message = doctorSelected 
+                ? 'No hay fechas disponibles para este doctor' 
+                : 'No hay fechas disponibles. Selecciona un doctor para ver su agenda.';
+            container.innerHTML = `<div class="text-center py-8 text-gray-500"><i class="fas fa-calendar-times text-2xl mb-2"></i><p>${message}</p></div>`;
         }
     } catch (error) {
         console.error('Error loading dates:', error);
@@ -486,7 +505,13 @@ async function loadAvailableSlots(date) {
     container.innerHTML = '<div class="text-center py-8 text-gray-500"><i class="fas fa-spinner fa-spin text-2xl mb-2"></i><p>Cargando horarios...</p></div>';
     
     try {
-        const response = await fetch(`/api/available-slots/?date=${date}&organization_id={{ request.organization.id }}`);
+        const doctorId = document.getElementById('appointment_doctor').value;
+        let url = `/api/available-slots/?date=${date}&organization_id={{ request.organization.id }}`;
+        if (doctorId) {
+            url += `&doctor_id=${doctorId}`;
+        }
+        
+        const response = await fetch(url);
         const data = await response.json();
         
         if (data.slots && data.slots.length > 0) {
@@ -672,16 +697,16 @@ document.addEventListener('keydown', function(e) {
             <!-- Doctor -->
             <div class="mb-6">
                 <h3 class="text-lg font-semibold text-gray-800 mb-3 border-b pb-2">
-                    <i class="fas fa-user-md mr-2 text-purple-600"></i>Información de la Cita
+                    <i class="fas fa-user-md mr-2 text-purple-600"></i>Seleccionar Doctor/Optómetra
                 </h3>
                 
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">
-                        Doctor/Optómetra
+                        Doctor/Optómetra <span class="text-purple-500 text-xs">(Opcional - selecciona para ver su agenda específica)</span>
                     </label>
                     <select name="doctor_id" id="appointment_doctor"
-                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                        <option value="">Sin asignar</option>
+                            class="w-full px-4 py-2 border-2 border-purple-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white">
+                        <option value="">Todos los doctores disponibles</option>
                         {% if doctors %}
                             {% for doctor in doctors %}
                             <option value="{{ doctor.id }}">
@@ -690,6 +715,10 @@ document.addEventListener('keydown', function(e) {
                             {% endfor %}
                         {% endif %}
                     </select>
+                    <p class="text-xs text-gray-500 mt-2">
+                        <i class="fas fa-info-circle mr-1"></i>
+                        Selecciona un doctor para filtrar solo sus horarios disponibles, o deja en "Todos" para ver todos los horarios.
+                    </p>
                 </div>
             </div>
 
