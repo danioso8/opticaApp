@@ -72,9 +72,14 @@ def get_available_slots_for_date(date, organization=None, doctor_id=None):
     
     # Filtrar por doctor si se especifica
     if doctor_id:
-        specific_filters['doctor_id'] = doctor_id
-    
-    specific_schedules = SpecificDateSchedule.objects.filter(**specific_filters)
+        # Buscar por doctor_profile (nuevo) o doctor (deprecated)
+        from django.db.models import Q
+        specific_schedules = SpecificDateSchedule.objects.filter(
+            Q(doctor_profile_id=doctor_id) | Q(doctor_id=doctor_id),
+            **specific_filters
+        )
+    else:
+        specific_schedules = SpecificDateSchedule.objects.filter(**specific_filters)
     
     # Si hay horarios específicos, usar esos (ignora WorkingHours)
     if specific_schedules.exists():

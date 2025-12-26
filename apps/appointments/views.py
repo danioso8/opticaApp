@@ -136,12 +136,15 @@ def available_dates(request):
         'is_active': True
     }
     
-    # Filtrar por doctor si se especifica
+    # Filtrar por doctor si se especifica (buscar en ambos campos: nuevo y legacy)
     if doctor_id:
-        filters['doctor_id'] = doctor_id
-    
-    # Obtener fechas con horarios específicos para esta organización
-    specific_dates = SpecificDateSchedule.objects.filter(**filters).values_list('date', flat=True).distinct().order_by('date')
+        from django.db.models import Q
+        specific_dates = SpecificDateSchedule.objects.filter(
+            Q(doctor_profile_id=doctor_id) | Q(doctor_id=doctor_id),
+            **filters
+        ).values_list('date', flat=True).distinct().order_by('date')
+    else:
+        specific_dates = SpecificDateSchedule.objects.filter(**filters).values_list('date', flat=True).distinct().order_by('date')
     
     # Filtrar fechas bloqueadas
     available_dates = []

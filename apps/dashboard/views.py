@@ -503,8 +503,16 @@ def appointment_detail(request, pk):
                 'message': 'Estado inválido'
             }, status=400)
     
+    # Obtener doctores disponibles para el modal de reagendar
+    from apps.patients.models import Doctor
+    available_doctors = Doctor.objects.filter(
+        organization=appointment.organization,
+        is_active=True
+    ).order_by('full_name')
+    
     context = {
         'appointment': appointment,
+        'available_doctors': available_doctors,
     }
     
     return render(request, 'dashboard/appointments/detail.html', context)
@@ -515,6 +523,7 @@ def appointment_edit(request, pk):
     """Editar fecha/hora de una cita"""
     from datetime import datetime
     from apps.appointments.utils import check_slot_availability
+    from apps.patients.models import Doctor
     
     appointment = get_object_or_404(Appointment, pk=pk)
     
@@ -698,7 +707,10 @@ def configuration(request):
     # Enriquecer specific_schedules con objetos Doctor
     doctors_dict = {doc.id: doc for doc in doctors_queryset}
     for schedule in specific_schedules:
-        if schedule.doctor_id:
+        # Usar doctor_profile (nuevo) si existe, sino doctor (deprecated)
+        if schedule.doctor_profile_id:
+            schedule.doctor_obj = doctors_dict.get(schedule.doctor_profile_id)
+        elif schedule.doctor_id:
             schedule.doctor_obj = doctors_dict.get(schedule.doctor_id)
     
     context = {
@@ -1279,14 +1291,11 @@ def add_specific_schedule(request):
                 return JsonResponse({'success': False, 'message': 'No hay organización activa'}, status=400)
             
             # Obtener doctor si se especificó
-            doctor = None
+            doctor_profile = None
             if doctor_id:
                 try:
-                    # Buscar en el modelo Doctor, no User
-                    doctor_obj = Doctor.objects.get(id=doctor_id, organization=request.organization)
-                    # SpecificDateSchedule.doctor apunta a User, necesitamos None por ahora
-                    # TODO: Migrar SpecificDateSchedule.doctor a ForeignKey(Doctor) en el futuro
-                    doctor = None  # Temporalmente None hasta refactorizar el modelo
+                    # Buscar en el modelo Doctor
+                    doctor_profile = Doctor.objects.get(id=doctor_id, organization=request.organization)
                 except Doctor.DoesNotExist:
                     return JsonResponse({
                         'success': False,
@@ -1295,7 +1304,8 @@ def add_specific_schedule(request):
             
             schedule = SpecificDateSchedule.objects.create(
                 organization=request.organization,
-                doctor=doctor,
+                doctor_profile=doctor_profile,
+                doctor=None,  # Deprecated field
                 date=date,
                 start_time=start_time,
                 end_time=end_time,
@@ -1352,10 +1362,39 @@ def toggle_specific_schedule(request, pk):
 def delete_specific_schedule(request, pk):
     """Eliminar horario específico (AJAX)"""
     if request.method == 'POST':
-        from apps.appointments.models import SpecificDateSchedule
+        from apps.appointments.models import SpecificDateSchedule, Appointment
         
         try:
-            schedule = get_object_or_404(SpecificDateSchedule, pk=pk)
+            schedule = get_object_or_404(SpecificDateSchedule, pk=pk, organization=request.organization)
+            
+            # Verificar si hay citas agendadas para este horario
+            pending_appointments = Appointment.objects.filter(
+                organization=request.organization,
+                appointment_date=schedule.date,
+                appointment_time__gte=schedule.start_time,
+                appointment_time__lt=schedule.end_time,
+                status__in=['pending', 'confirmed']
+            )
+            
+            if pending_appointments.exists():
+                count = pending_appointments.count()
+                appointments_list = []
+                for apt in pending_appointments[:5]:  # Mostrar máximo 5
+                    appointments_list.append(f"• {apt.full_name} a las {apt.appointment_time.strftime('%H:%M')}")
+                
+                message = f"No se puede eliminar este horario. Hay {count} cita(s) pendiente(s) o confirmada(s):\n\n"
+                message += "\n".join(appointments_list)
+                if count > 5:
+                    message += f"\n...y {count - 5} más"
+                message += "\n\nDebes reagendar o cancelar estas citas antes de eliminar el horario."
+                
+                return JsonResponse({
+                    'success': False,
+                    'message': message,
+                    'pending_count': count
+                }, status=400)
+            
+            # Si no hay citas pendientes, permitir eliminación
             schedule.delete()
             
             return JsonResponse({
@@ -1375,23 +1414,26 @@ def delete_specific_schedule(request, pk):
 def edit_specific_schedule(request, pk):
     """Editar horario específico (AJAX)"""
     from apps.appointments.models import SpecificDateSchedule
-    from django.contrib.auth.models import User
+    from apps.patients.models import Doctor
     
     schedule = get_object_or_404(SpecificDateSchedule, pk=pk, organization=request.organization)
     
     if request.method == 'GET':
         # Devolver datos del horario para edición
+        doctor_id = None
+        if schedule.doctor_profile_id:
+            doctor_id = schedule.doctor_profile_id
+        elif schedule.doctor_id:
+            doctor_id = schedule.doctor_id
+        
         return JsonResponse({
             'success': True,
-            'schedule': {
-                'id': schedule.id,
-                'date': schedule.date.strftime('%Y-%m-%d'),
-                'start_time': schedule.start_time.strftime('%H:%M'),
-                'end_time': schedule.end_time.strftime('%H:%M'),
-                'slot_duration': schedule.slot_duration,
-                'notes': schedule.notes or '',
-                'doctor': schedule.doctor.id if schedule.doctor else None,
-            }
+            'doctor_id': doctor_id,
+            'date': schedule.date.strftime('%Y-%m-%d'),
+            'start_time': schedule.start_time.strftime('%H:%M'),
+            'end_time': schedule.end_time.strftime('%H:%M'),
+            'slot_duration': schedule.slot_duration,
+            'notes': schedule.notes or '',
         })
     
     elif request.method == 'POST':
@@ -1413,14 +1455,14 @@ def edit_specific_schedule(request, pk):
                 }, status=400)
             
             # Obtener doctor si se especificó
-            doctor = None
+            doctor_profile = None
             if doctor_id:
                 try:
-                    doctor = User.objects.get(id=doctor_id)
-                except User.DoesNotExist:
+                    doctor_profile = Doctor.objects.get(id=doctor_id, organization=request.organization)
+                except Doctor.DoesNotExist:
                     return JsonResponse({
                         'success': False,
-                        'message': 'Doctor no encontrado'
+                        'message': 'Doctor no encontrado en esta organización'
                     }, status=400)
             
             # Actualizar campos
@@ -1429,7 +1471,8 @@ def edit_specific_schedule(request, pk):
             schedule.end_time = end_time
             schedule.slot_duration = int(slot_duration)
             schedule.notes = notes
-            schedule.doctor = doctor
+            schedule.doctor_profile = doctor_profile
+            schedule.doctor = None  # Deprecated field
             schedule.save()
             
             return JsonResponse({

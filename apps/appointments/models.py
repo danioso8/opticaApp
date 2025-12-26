@@ -89,6 +89,15 @@ class SpecificDateSchedule(TenantModel):
         related_name='doctor_schedules',
         null=True,
         blank=True,
+        verbose_name="Doctor (User - DEPRECATED)"
+    )
+    # Nuevo campo que referencia al modelo Doctor
+    doctor_profile = models.ForeignKey(
+        'patients.Doctor',
+        on_delete=models.CASCADE,
+        related_name='specific_schedules',
+        null=True,
+        blank=True,
         verbose_name="Doctor"
     )
     date = models.DateField(
@@ -125,7 +134,12 @@ class SpecificDateSchedule(TenantModel):
         unique_together = [['organization', 'date', 'start_time']]
 
     def __str__(self):
-        doctor_name = self.doctor.get_full_name() if self.doctor else "Sin doctor"
+        if self.doctor_profile:
+            doctor_name = self.doctor_profile.full_name
+        elif self.doctor:
+            doctor_name = self.doctor.get_full_name()
+        else:
+            doctor_name = "Sin doctor"
         return f"{doctor_name} - {self.date} - {self.start_time} a {self.end_time}"
 
 
