@@ -497,7 +497,7 @@ class LandingPageConfig(models.Model):
     hero_image_fit = models.CharField(
         max_length=10,
         choices=HERO_IMAGE_FIT,
-        default='contain',
+        default='cover',
         verbose_name='Ajuste de Imagen Hero',
         help_text='Cómo se ajusta la imagen de fondo en la sección principal'
     )

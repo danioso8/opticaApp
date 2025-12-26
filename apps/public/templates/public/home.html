@@ -13,14 +13,14 @@
             <div style="width: {{ scale }}%; height: {{ scale }}%; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);">
                 <img src="{{ landing_config.hero_image.url }}" 
                      alt="Hero Image" 
-                     class="w-full h-full object-{% if landing_config.hero_image_fit %}{{ landing_config.hero_image_fit }}{% else %}contain{% endif %}"
+                     class="w-full h-full object-cover"
                      style="object-position: {{ landing_config.hero_image_position_x|default:50 }}% {{ landing_config.hero_image_position_y|default:50 }}%;">
             </div>
             {% endwith %}
         {% else %}
             <img src="{% static 'img/beautiful-smiling-brunette-woman-trying-260nw-2627315263.webp' %}" 
                  alt="Mujer eligiendo monturas" 
-                 class="w-full h-full object-contain">
+                 class="w-full h-full object-cover">
         {% endif %}
         <div class="absolute inset-0 bg-gradient-to-r from-blue-900 via-blue-800 to-transparent" 
              style="opacity: {{ landing_config.hero_overlay_opacity|default:70 }}%;"></div>

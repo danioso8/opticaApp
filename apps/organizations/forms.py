@@ -22,7 +22,7 @@ class LandingPageConfigForm(forms.ModelForm):
             'navbar_style', 'navbar_bg_color', 'navbar_text_color', 'navbar_hover_color',
             # Hero
             'hero_style', 'hero_bg_gradient_start', 'hero_bg_gradient_end', 'hero_overlay_opacity',
-            'hero_image', 'hero_image_fit', 'hero_image_position_x', 'hero_image_position_y', 'hero_image_scale',
+            'hero_image', 'hero_image_position_x', 'hero_image_position_y', 'hero_image_scale',
             'hero_title', 'hero_subtitle', 'hero_title_color', 'hero_subtitle_color',
             'cta_badge_text', 'cta_badge_color',
             # Servicios
@@ -51,7 +51,6 @@ class LandingPageConfigForm(forms.ModelForm):
             'logo_size': forms.RadioSelect(attrs={'class': 'style-selector'}),
             'navbar_style': forms.RadioSelect(attrs={'class': 'style-selector'}),
             'hero_style': forms.RadioSelect(attrs={'class': 'style-selector'}),
-            'hero_image_fit': forms.RadioSelect(attrs={'class': 'style-selector'}),
             'services_layout': forms.RadioSelect(attrs={'class': 'style-selector'}),
             'font_family': forms.RadioSelect(attrs={'class': 'style-selector'}),
             'animation_speed': forms.RadioSelect(attrs={'class': 'style-selector'}),
