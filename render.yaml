@@ -16,6 +16,13 @@ services:
     buildCommand: "./build.sh"
     startCommand: "daphne -b 0.0.0.0 -p $PORT config.asgi:application"
     healthCheckPath: /
+    
+    # 📂 DISCO PERSISTENTE PARA ARCHIVOS DE MEDIA
+    disks:
+      - name: media-storage
+        mountPath: /opt/render/project/src/media_storage
+        sizeGB: 1
+    
     envVars:
       - key: PYTHON_VERSION
         value: 3.7.9
@@ -28,6 +35,11 @@ services:
         # Agregar manualmente el DATABASE_URL de tu PostgreSQL existente
       - key: ALLOWED_HOSTS
         value: .onrender.com
+      # Ruta del disco persistente (solo si tienes plan de pago)
+      - key: RENDER_MEDIA_PATH
+        value: /opt/render/project/src/media_storage
+      - key: PRODUCTION_MEDIA_URL
+        value: https://oceano-optico-v2.onrender.com/media/
       - key: BUSINESS_PHONE
         value: "300 123 4567"
       - key: WEBSITE_URL
