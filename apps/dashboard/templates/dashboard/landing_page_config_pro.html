@@ -493,7 +493,7 @@
                                      style="object-fit: {{ config.hero_image_fit|default:'contain' }}; 
                                             object-position: {{ config.hero_image_position_x|default:50 }}% {{ config.hero_image_position_y|default:50 }}%; 
                                             transform: scale({{ config.hero_image_scale|default:100|floatformat:0|add:'0' }}%);">
-                                <div class="absolute inset-0 bg-gradient-to-r from-blue-900/70 via-blue-800/50 to-transparent pointer-events-none"></div>
+                                <div id="hero_preview_overlay" class="absolute inset-0 bg-gradient-to-r from-blue-900 via-blue-800 to-transparent pointer-events-none" style="opacity: {{ config.hero_overlay_opacity|default:70 }}%;"></div>
                             </div>
                             
                             <!-- Controles -->
@@ -543,6 +543,25 @@
                                            class="w-full h-2 bg-purple-200 rounded-lg appearance-none cursor-pointer">
                                 </div>
                                 
+                                <!-- Opacidad del Overlay -->
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2 flex items-center justify-between">
+                                        <span><i class="fas fa-adjust mr-2 text-gray-600"></i>Opacidad del Overlay</span>
+                                        <span id="overlay_opacity_value" class="text-gray-600 font-semibold">{{ config.hero_overlay_opacity|default:70 }}%</span>
+                                    </label>
+                                    <input type="range" 
+                                           id="hero_overlay_opacity" 
+                                           name="hero_overlay_opacity" 
+                                           min="0" 
+                                           max="100" 
+                                           value="{{ config.hero_overlay_opacity|default:70 }}"
+                                           class="w-full h-2 bg-gray-300 rounded-lg appearance-none cursor-pointer">
+                                    <p class="text-xs text-gray-500 mt-1">
+                                        <i class="fas fa-info-circle mr-1"></i>
+                                        0% = Sin overlay (imagen clara), 100% = Overlay completo (imagen oscura)
+                                    </p>
+                                </div>
+                                
                                 <!-- Botón Reset -->
                                 <button type="button" 
                                         id="reset_hero_position" 
@@ -563,32 +582,40 @@
                             const posXSlider = document.getElementById('hero_image_position_x');
                             const posYSlider = document.getElementById('hero_image_position_y');
                             const scaleSlider = document.getElementById('hero_image_scale');
+                            const opacitySlider = document.getElementById('hero_overlay_opacity');
                             const posXValue = document.getElementById('pos_x_value');
                             const posYValue = document.getElementById('pos_y_value');
                             const scaleValue = document.getElementById('scale_value');
+                            const opacityValue = document.getElementById('overlay_opacity_value');
+                            const previewOverlay = document.getElementById('hero_preview_overlay');
                             const resetBtn = document.getElementById('reset_hero_position');
                             
                             function updatePreview() {
                                 const posX = posXSlider.value;
                                 const posY = posYSlider.value;
                                 const scale = scaleSlider.value;
+                                const opacity = opacitySlider.value;
                                 
                                 previewImage.style.objectPosition = `${posX}% ${posY}%`;
                                 previewImage.style.transform = `scale(${scale / 100})`;
+                                previewOverlay.style.opacity = `${opacity}%`;
                                 
                                 posXValue.textContent = `${posX}%`;
                                 posYValue.textContent = `${posY}%`;
                                 scaleValue.textContent = `${scale}%`;
+                                opacityValue.textContent = `${opacity}%`;
                             }
                             
                             posXSlider.addEventListener('input', updatePreview);
                             posYSlider.addEventListener('input', updatePreview);
                             scaleSlider.addEventListener('input', updatePreview);
+                            opacitySlider.addEventListener('input', updatePreview);
                             
                             resetBtn.addEventListener('click', function() {
                                 posXSlider.value = 50;
                                 posYSlider.value = 50;
                                 scaleSlider.value = 100;
+                                opacitySlider.value = 70;
                                 updatePreview();
                             });
                         });

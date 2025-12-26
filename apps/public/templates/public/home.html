@@ -18,7 +18,8 @@
                  alt="Mujer eligiendo monturas" 
                  class="w-full h-full object-contain">
         {% endif %}
-        <div class="absolute inset-0 bg-gradient-to-r from-blue-900/90 via-blue-800/80 to-transparent"></div>
+        <div class="absolute inset-0 bg-gradient-to-r from-blue-900 via-blue-800 to-transparent" 
+             style="opacity: {{ landing_config.hero_overlay_opacity|default:70 }}%;"></div>
     </div>
     
     <div class="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
