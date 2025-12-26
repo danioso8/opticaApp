@@ -486,13 +486,19 @@
                             
                             <!-- Vista previa interactiva -->
                             <div class="bg-gray-800 rounded-lg overflow-hidden mb-4 relative" style="height: 300px;">
-                                <img id="hero_preview_image" 
-                                     src="{{ config.hero_image.url }}" 
-                                     alt="Preview" 
-                                     class="w-full h-full transition-all duration-300"
-                                     style="object-fit: {{ config.hero_image_fit|default:'contain' }}; 
-                                            object-position: {{ config.hero_image_position_x|default:50 }}% {{ config.hero_image_position_y|default:50 }}%; 
-                                            transform: scale({{ config.hero_image_scale|default:100|floatformat:0|add:'0' }}%);">
+                                <div id="hero_preview_container" class="absolute transition-all duration-300" 
+                                     style="width: {{ config.hero_image_scale|default:100 }}%; 
+                                            height: {{ config.hero_image_scale|default:100 }}%; 
+                                            top: 50%; 
+                                            left: 50%; 
+                                            transform: translate(-50%, -50%);">
+                                    <img id="hero_preview_image" 
+                                         src="{{ config.hero_image.url }}" 
+                                         alt="Preview" 
+                                         class="w-full h-full transition-all duration-300"
+                                         style="object-fit: {{ config.hero_image_fit|default:'contain' }}; 
+                                                object-position: {{ config.hero_image_position_x|default:50 }}% {{ config.hero_image_position_y|default:50 }}%;">
+                                </div>
                                 <div id="hero_preview_overlay" class="absolute inset-0 bg-gradient-to-r from-blue-900 via-blue-800 to-transparent pointer-events-none" style="opacity: {{ config.hero_overlay_opacity|default:70 }}%;"></div>
                             </div>
                             
@@ -579,6 +585,7 @@
                         <script>
                         document.addEventListener('DOMContentLoaded', function() {
                             const previewImage = document.getElementById('hero_preview_image');
+                            const previewContainer = document.getElementById('hero_preview_container');
                             const posXSlider = document.getElementById('hero_image_position_x');
                             const posYSlider = document.getElementById('hero_image_position_y');
                             const scaleSlider = document.getElementById('hero_image_scale');
@@ -596,10 +603,17 @@
                                 const scale = scaleSlider.value;
                                 const opacity = opacitySlider.value;
                                 
+                                // Actualizar posición de la imagen dentro del contenedor
                                 previewImage.style.objectPosition = `${posX}% ${posY}%`;
-                                previewImage.style.transform = `scale(${scale / 100})`;
+                                
+                                // Actualizar tamaño del contenedor (zoom)
+                                previewContainer.style.width = `${scale}%`;
+                                previewContainer.style.height = `${scale}%`;
+                                
+                                // Actualizar opacidad del overlay
                                 previewOverlay.style.opacity = `${opacity}%`;
                                 
+                                // Actualizar valores mostrados
                                 posXValue.textContent = `${posX}%`;
                                 posYValue.textContent = `${posY}%`;
                                 scaleValue.textContent = `${scale}%`;
