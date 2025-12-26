@@ -54,7 +54,19 @@
                     <a href="{% url 'public:home' %}" class="flex items-center">
                         {% if landing_config and landing_config.logo %}
                             <!-- Logo personalizado -->
+                            {% if landing_config.logo_size == 'small' %}
+                            <img src="{{ landing_config.logo.url }}" alt="Logo {{ organization_data.name|default:'Óptica' }}" class="h-8 sm:h-8 w-auto object-contain mr-3">
+                            {% elif landing_config.logo_size == 'medium' %}
                             <img src="{{ landing_config.logo.url }}" alt="Logo {{ organization_data.name|default:'Óptica' }}" class="h-10 sm:h-12 w-auto object-contain mr-3">
+                            {% elif landing_config.logo_size == 'large' %}
+                            <img src="{{ landing_config.logo.url }}" alt="Logo {{ organization_data.name|default:'Óptica' }}" class="h-12 sm:h-16 w-auto object-contain mr-3">
+                            {% elif landing_config.logo_size == 'xlarge' %}
+                            <img src="{{ landing_config.logo.url }}" alt="Logo {{ organization_data.name|default:'Óptica' }}" class="h-16 sm:h-20 w-auto object-contain mr-3">
+                            {% elif landing_config.logo_size == 'xxlarge' %}
+                            <img src="{{ landing_config.logo.url }}" alt="Logo {{ organization_data.name|default:'Óptica' }}" class="h-20 sm:h-24 w-auto object-contain mr-3">
+                            {% else %}
+                            <img src="{{ landing_config.logo.url }}" alt="Logo {{ organization_data.name|default:'Óptica' }}" class="h-10 sm:h-12 w-auto object-contain mr-3">
+                            {% endif %}
                         {% else %}
                             <!-- Logo por defecto (ícono) -->
                             {% if landing_config and landing_config.navbar_style == 'modern' or landing_config and landing_config.navbar_style == 'bold' %}

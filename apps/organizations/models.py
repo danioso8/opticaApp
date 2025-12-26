@@ -436,6 +436,22 @@ class LandingPageConfig(models.Model):
         help_text='Logo de la empresa. Recomendado: 200x60px, fondo transparente PNG'
     )
     
+    LOGO_SIZES = [
+        ('small', 'Pequeño - 8 (32px)'),
+        ('medium', 'Mediano - 10 (40px)'),
+        ('large', 'Grande - 12 (48px)'),
+        ('xlarge', 'Extra Grande - 16 (64px)'),
+        ('xxlarge', 'Muy Grande - 20 (80px)'),
+    ]
+    
+    logo_size = models.CharField(
+        max_length=10,
+        choices=LOGO_SIZES,
+        default='medium',
+        verbose_name='Tamaño del Logo',
+        help_text='Selecciona el tamaño del logo en el navbar'
+    )
+    
     # Estilo del navbar
     navbar_style = models.CharField(
         max_length=20,
@@ -469,6 +485,21 @@ class LandingPageConfig(models.Model):
         default=50,
         verbose_name='Opacidad del overlay',
         help_text='0-100, aplica a imagen de fondo'
+    )
+    
+    HERO_IMAGE_FIT = [
+        ('cover', 'Cubrir - Llena todo el espacio (puede recortar)'),
+        ('contain', 'Contener - Muestra la imagen completa (sin recortar)'),
+        ('fill', 'Rellenar - Estira la imagen para llenar el espacio'),
+        ('none', 'Original - Tamaño original de la imagen'),
+    ]
+    
+    hero_image_fit = models.CharField(
+        max_length=10,
+        choices=HERO_IMAGE_FIT,
+        default='contain',
+        verbose_name='Ajuste de Imagen Hero',
+        help_text='Cómo se ajusta la imagen de fondo en la sección principal'
     )
     
     # Layout de servicios

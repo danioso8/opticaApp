@@ -11,11 +11,11 @@
         {% if landing_config and landing_config.hero_image %}
             <img src="{{ landing_config.hero_image.url }}" 
                  alt="Hero Image" 
-                 class="w-full h-full object-cover">
+                 class="w-full h-full object-{% if landing_config.hero_image_fit %}{{ landing_config.hero_image_fit }}{% else %}contain{% endif %}">
         {% else %}
             <img src="{% static 'img/beautiful-smiling-brunette-woman-trying-260nw-2627315263.webp' %}" 
                  alt="Mujer eligiendo monturas" 
-                 class="w-full h-full object-cover">
+                 class="w-full h-full object-contain">
         {% endif %}
         <div class="absolute inset-0 bg-gradient-to-r from-blue-900/90 via-blue-800/80 to-transparent"></div>
     </div>
@@ -26,7 +26,7 @@
                 {% if organization_data %}
                 <div class="mb-4">
                     <p class="text-2xl font-semibold text-blue-200 mb-2">
-                        <i class="fas fa-glasses mr-2"></i>{{ organization_data.name }}
+                        {{ organization_data.name }}
                     </p>
                 </div>
                 {% endif %}

@@ -17,12 +17,12 @@ class LandingPageConfigForm(forms.ModelForm):
         model = LandingPageConfig
         fields = [
             # Logo
-            'logo',
+            'logo', 'logo_size',
             # Navbar
             'navbar_style', 'navbar_bg_color', 'navbar_text_color', 'navbar_hover_color',
             # Hero
             'hero_style', 'hero_bg_gradient_start', 'hero_bg_gradient_end', 'hero_overlay_opacity',
-            'hero_image', 'hero_title', 'hero_subtitle', 'hero_title_color', 'hero_subtitle_color',
+            'hero_image', 'hero_image_fit', 'hero_title', 'hero_subtitle', 'hero_title_color', 'hero_subtitle_color',
             'cta_badge_text', 'cta_badge_color',
             # Servicios
             'services_layout', 'services_bg_color',
@@ -47,8 +47,10 @@ class LandingPageConfigForm(forms.ModelForm):
         ]
         widgets = {
             # Estilos
+            'logo_size': forms.RadioSelect(attrs={'class': 'style-selector'}),
             'navbar_style': forms.RadioSelect(attrs={'class': 'style-selector'}),
             'hero_style': forms.RadioSelect(attrs={'class': 'style-selector'}),
+            'hero_image_fit': forms.RadioSelect(attrs={'class': 'style-selector'}),
             'services_layout': forms.RadioSelect(attrs={'class': 'style-selector'}),
             'font_family': forms.RadioSelect(attrs={'class': 'style-selector'}),
             'animation_speed': forms.RadioSelect(attrs={'class': 'style-selector'}),

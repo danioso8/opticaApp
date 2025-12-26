@@ -1,0 +1,460 @@
+<!-- NUEVOS EXÁMENES REFRACTIVOS - Agregar después de "Fórmula Lentes Actuales" -->
+<div class="bg-gradient-to-r from-purple-50 to-purple-100 border-l-4 border-purple-600 rounded-lg p-6 mb-6 shadow-sm">
+    <h3 class="text-xl font-bold text-gray-800 mb-5 flex items-center uppercase tracking-wide">
+        <i class="fas fa-eye text-purple-600 mr-2"></i>
+        EX ÁMENES REFRACTIVOS ADICIONALES
+    </h3>
+    
+    <!-- Checkboxes de selección -->
+    <div class="bg-white rounded-lg p-4 shadow-sm mb-4">
+        <label class="block text-sm font-bold text-gray-800 mb-3">
+            <i class="fas fa-tasks text-purple-600 mr-1"></i> Selecciona los exámenes realizados:
+        </label>
+        <div class="grid grid-cols-2 md:grid-cols-5 gap-3">
+            <label class="flex items-center space-x-2 cursor-pointer bg-purple-50 hover:bg-purple-100 p-2 rounded transition">
+                <input type="checkbox" name="exam_retinoscopy_done" id="check_retinoscopy" 
+                       {% if history.exam_retinoscopy_done %}checked{% endif %}
+                       onchange="toggleExamSection('retinoscopy', this.checked)"
+                       class="w-4 h-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500">
+                <span class="text-sm font-medium text-gray-700">Retinoscopia</span>
+            </label>
+            
+            <label class="flex items-center space-x-2 cursor-pointer bg-purple-50 hover:bg-purple-100 p-2 rounded transition">
+                <input type="checkbox" name="exam_subjective_done" id="check_subjective"
+                       {% if history.exam_subjective_done %}checked{% endif %}
+                       onchange="toggleExamSection('subjective', this.checked)"
+                       class="w-4 h-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500">
+                <span class="text-sm font-medium text-gray-700">Subjetivo</span>
+            </label>
+            
+            <label class="flex items-center space-x-2 cursor-pointer bg-purple-50 hover:bg-purple-100 p-2 rounded transition">
+                <input type="checkbox" name="exam_refinement_done" id="check_refinement"
+                       {% if history.exam_refinement_done %}checked{% endif %}
+                       onchange="toggleExamSection('refinement', this.checked)"
+                       class="w-4 h-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500">
+                <span class="text-sm font-medium text-gray-700">Afinación</span>
+            </label>
+            
+            <label class="flex items-center space-x-2 cursor-pointer bg-purple-50 hover:bg-purple-100 p-2 rounded transition">
+                <input type="checkbox" name="exam_cycloplegic_done" id="check_cycloplegic"
+                       {% if history.exam_cycloplegic_done %}checked{% endif %}
+                       onchange="toggleExamSection('cycloplegic', this.checked)"
+                       class="w-4 h-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500">
+                <span class="text-sm font-medium text-gray-700">Subj. Ciclopléjico</span>
+            </label>
+            
+            <label class="flex items-center space-x-2 cursor-pointer bg-purple-50 hover:bg-purple-100 p-2 rounded transition">
+                <input type="checkbox" name="exam_final_rx_done" id="check_final_rx"
+                       {% if history.exam_final_rx_done %}checked{% endif %}
+                       onchange="toggleExamSection('final_rx', this.checked)"
+                       class="w-4 h-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500">
+                <span class="text-sm font-medium text-gray-700">RX Final</span>
+            </label>
+        </div>
+    </div>
+    
+    <!-- RETINOSCOPIA -->
+    <div id="section_retinoscopy" class="bg-white rounded-lg p-4 shadow-sm border-2 border-purple-200 mb-4" style="display: {% if history.exam_retinoscopy_done %}block{% else %}none{% endif %};">
+        <label class="block text-sm font-bold text-gray-800 mb-3 flex items-center">
+            <i class="fas fa-eye-dropper text-purple-600 mr-1"></i> RETINOSCOPIA
+        </label>
+        
+        <!-- OD -->
+        <div class="mb-3">
+            <div class="text-xs font-bold text-white bg-blue-500 px-2 py-1 rounded mb-2">OD (Ojo Derecho)</div>
+            <div class="grid grid-cols-4 gap-2">
+                <div>
+                    <label class="text-xs text-gray-600">Esfera</label>
+                    <input type="text" name="retinoscopy_od_sphere" 
+                           value="{% if history.retinoscopy_od_sphere %}{{ history.retinoscopy_od_sphere }}{% endif %}"
+                           class="w-full px-2 py-1 border border-gray-300 rounded text-xs focus:ring-2 focus:ring-purple-500"
+                           placeholder="±0.00">
+                </div>
+                <div>
+                    <label class="text-xs text-gray-600">Cilindro</label>
+                    <input type="text" name="retinoscopy_od_cylinder" 
+                           value="{% if history.retinoscopy_od_cylinder %}{{ history.retinoscopy_od_cylinder }}{% endif %}"
+                           class="w-full px-2 py-1 border border-gray-300 rounded text-xs focus:ring-2 focus:ring-purple-500"
+                           placeholder="±0.00">
+                </div>
+                <div>
+                    <label class="text-xs text-gray-600">Eje</label>
+                    <input type="text" name="retinoscopy_od_axis" 
+                           value="{% if history.retinoscopy_od_axis %}{{ history.retinoscopy_od_axis }}{% endif %}"
+                           class="w-full px-2 py-1 border border-gray-300 rounded text-xs focus:ring-2 focus:ring-purple-500"
+                           placeholder="0-180">
+                </div>
+                <div>
+                    <label class="text-xs text-gray-600">ADD</label>
+                    <input type="text" name="retinoscopy_od_add" 
+                           value="{% if history.retinoscopy_od_add %}{{ history.retinoscopy_od_add }}{% endif %}"
+                           class="w-full px-2 py-1 border border-gray-300 rounded text-xs focus:ring-2 focus:ring-purple-500"
+                           placeholder="+0.00">
+                </div>
+            </div>
+        </div>
+
+        <!-- OS -->
+        <div>
+            <div class="text-xs font-bold text-white bg-green-500 px-2 py-1 rounded mb-2">OS (Ojo Izquierdo)</div>
+            <div class="grid grid-cols-4 gap-2">
+                <div>
+                    <label class="text-xs text-gray-600">Esfera</label>
+                    <input type="text" name="retinoscopy_os_sphere" 
+                           value="{% if history.retinoscopy_os_sphere %}{{ history.retinoscopy_os_sphere }}{% endif %}"
+                           class="w-full px-2 py-1 border border-gray-300 rounded text-xs focus:ring-2 focus:ring-purple-500"
+                           placeholder="±0.00">
+                </div>
+                <div>
+                    <label class="text-xs text-gray-600">Cilindro</label>
+                    <input type="text" name="retinoscopy_os_cylinder" 
+                           value="{% if history.retinoscopy_os_cylinder %}{{ history.retinoscopy_os_cylinder }}{% endif %}"
+                           class="w-full px-2 py-1 border border-gray-300 rounded text-xs focus:ring-2 focus:ring-purple-500"
+                           placeholder="±0.00">
+                </div>
+                <div>
+                    <label class="text-xs text-gray-600">Eje</label>
+                    <input type="text" name="retinoscopy_os_axis" 
+                           value="{% if history.retinoscopy_os_axis %}{{ history.retinoscopy_os_axis }}{% endif %}"
+                           class="w-full px-2 py-1 border border-gray-300 rounded text-xs focus:ring-2 focus:ring-purple-500"
+                           placeholder="0-180">
+                </div>
+                <div>
+                    <label class="text-xs text-gray-600">ADD</label>
+                    <input type="text" name="retinoscopy_os_add" 
+                           value="{% if history.retinoscopy_os_add %}{{ history.retinoscopy_os_add }}{% endif %}"
+                           class="w-full px-2 py-1 border border-gray-300 rounded text-xs focus:ring-2 focus:ring-purple-500"
+                           placeholder="+0.00">
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- SUBJETIVO -->
+    <div id="section_subjective" class="bg-white rounded-lg p-4 shadow-sm border-2 border-purple-200 mb-4" style="display: {% if history.exam_subjective_done %}block{% else %}none{% endif %};">
+        <label class="block text-sm font-bold text-gray-800 mb-3 flex items-center">
+            <i class="fas fa-user-check text-purple-600 mr-1"></i> SUBJETIVO
+        </label>
+        
+        <!-- OD -->
+        <div class="mb-3">
+            <div class="text-xs font-bold text-white bg-blue-500 px-2 py-1 rounded mb-2">OD (Ojo Derecho)</div>
+            <div class="grid grid-cols-4 gap-2">
+                <div>
+                    <label class="text-xs text-gray-600">Esfera</label>
+                    <input type="text" name="subjective_od_sphere" 
+                           value="{% if history.subjective_od_sphere %}{{ history.subjective_od_sphere }}{% endif %}"
+                           class="w-full px-2 py-1 border border-gray-300 rounded text-xs focus:ring-2 focus:ring-purple-500"
+                           placeholder="±0.00">
+                </div>
+                <div>
+                    <label class="text-xs text-gray-600">Cilindro</label>
+                    <input type="text" name="subjective_od_cylinder" 
+                           value="{% if history.subjective_od_cylinder %}{{ history.subjective_od_cylinder }}{% endif %}"
+                           class="w-full px-2 py-1 border border-gray-300 rounded text-xs focus:ring-2 focus:ring-purple-500"
+                           placeholder="±0.00">
+                </div>
+                <div>
+                    <label class="text-xs text-gray-600">Eje</label>
+                    <input type="text" name="subjective_od_axis" 
+                           value="{% if history.subjective_od_axis %}{{ history.subjective_od_axis }}{% endif %}"
+                           class="w-full px-2 py-1 border border-gray-300 rounded text-xs focus:ring-2 focus:ring-purple-500"
+                           placeholder="0-180">
+                </div>
+                <div>
+                    <label class="text-xs text-gray-600">ADD</label>
+                    <input type="text" name="subjective_od_add" 
+                           value="{% if history.subjective_od_add %}{{ history.subjective_od_add }}{% endif %}"
+                           class="w-full px-2 py-1 border border-gray-300 rounded text-xs focus:ring-2 focus:ring-purple-500"
+                           placeholder="+0.00">
+                </div>
+            </div>
+        </div>
+
+        <!-- OS -->
+        <div>
+            <div class="text-xs font-bold text-white bg-green-500 px-2 py-1 rounded mb-2">OS (Ojo Izquierdo)</div>
+            <div class="grid grid-cols-4 gap-2">
+                <div>
+                    <label class="text-xs text-gray-600">Esfera</label>
+                    <input type="text" name="subjective_os_sphere" 
+                           value="{% if history.subjective_os_sphere %}{{ history.subjective_os_sphere }}{% endif %}"
+                           class="w-full px-2 py-1 border border-gray-300 rounded text-xs focus:ring-2 focus:ring-purple-500"
+                           placeholder="±0.00">
+                </div>
+                <div>
+                    <label class="text-xs text-gray-600">Cilindro</label>
+                    <input type="text" name="subjective_os_cylinder" 
+                           value="{% if history.subjective_os_cylinder %}{{ history.subjective_os_cylinder }}{% endif %}"
+                           class="w-full px-2 py-1 border border-gray-300 rounded text-xs focus:ring-2 focus:ring-purple-500"
+                           placeholder="±0.00">
+                </div>
+                <div>
+                    <label class="text-xs text-gray-600">Eje</label>
+                    <input type="text" name="subjective_os_axis" 
+                           value="{% if history.subjective_os_axis %}{{ history.subjective_os_axis }}{% endif %}"
+                           class="w-full px-2 py-1 border border-gray-300 rounded text-xs focus:ring-2 focus:ring-purple-500"
+                           placeholder="0-180">
+                </div>
+                <div>
+                    <label class="text-xs text-gray-600">ADD</label>
+                    <input type="text" name="subjective_os_add" 
+                           value="{% if history.subjective_os_add %}{{ history.subjective_os_add }}{% endif %}"
+                           class="w-full px-2 py-1 border border-gray-300 rounded text-xs focus:ring-2 focus:ring-purple-500"
+                           placeholder="+0.00">
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- AFINACIÓN -->
+    <div id="section_refinement" class="bg-white rounded-lg p-4 shadow-sm border-2 border-purple-200 mb-4" style="display: {% if history.exam_refinement_done %}block{% else %}none{% endif %};">
+        <label class="block text-sm font-bold text-gray-800 mb-3 flex items-center">
+            <i class="fas fa-adjust text-purple-600 mr-1"></i> AFINACIÓN
+        </label>
+        
+        <!-- OD -->
+        <div class="mb-3">
+            <div class="text-xs font-bold text-white bg-blue-500 px-2 py-1 rounded mb-2">OD (Ojo Derecho)</div>
+            <div class="grid grid-cols-4 gap-2">
+                <div>
+                    <label class="text-xs text-gray-600">Esfera</label>
+                    <input type="text" name="refinement_od_sphere" 
+                           value="{% if history.refinement_od_sphere %}{{ history.refinement_od_sphere %}{% endif %}"
+                           class="w-full px-2 py-1 border border-gray-300 rounded text-xs focus:ring-2 focus:ring-purple-500"
+                           placeholder="±0.00">
+                </div>
+                <div>
+                    <label class="text-xs text-gray-600">Cilindro</label>
+                    <input type="text" name="refinement_od_cylinder" 
+                           value="{% if history.refinement_od_cylinder %}{{ history.refinement_od_cylinder }}{% endif %}"
+                           class="w-full px-2 py-1 border border-gray-300 rounded text-xs focus:ring-2 focus:ring-purple-500"
+                           placeholder="±0.00">
+                </div>
+                <div>
+                    <label class="text-xs text-gray-600">Eje</label>
+                    <input type="text" name="refinement_od_axis" 
+                           value="{% if history.refinement_od_axis %}{{ history.refinement_od_axis }}{% endif %}"
+                           class="w-full px-2 py-1 border border-gray-300 rounded text-xs focus:ring-2 focus:ring-purple-500"
+                           placeholder="0-180">
+                </div>
+                <div>
+                    <label class="text-xs text-gray-600">ADD</label>
+                    <input type="text" name="refinement_od_add" 
+                           value="{% if history.refinement_od_add %}{{ history.refinement_od_add }}{% endif %}"
+                           class="w-full px-2 py-1 border border-gray-300 rounded text-xs focus:ring-2 focus:ring-purple-500"
+                           placeholder="+0.00">
+                </div>
+            </div>
+        </div>
+
+        <!-- OS -->
+        <div>
+            <div class="text-xs font-bold text-white bg-green-500 px-2 py-1 rounded mb-2">OS (Ojo Izquierdo)</div>
+            <div class="grid grid-cols-4 gap-2">
+                <div>
+                    <label class="text-xs text-gray-600">Esfera</label>
+                    <input type="text" name="refinement_os_sphere" 
+                           value="{% if history.refinement_os_sphere %}{{ history.refinement_os_sphere }}{% endif %}"
+                           class="w-full px-2 py-1 border border-gray-300 rounded text-xs focus:ring-2 focus:ring-purple-500"
+                           placeholder="±0.00">
+                </div>
+                <div>
+                    <label class="text-xs text-gray-600">Cilindro</label>
+                    <input type="text" name="refinement_os_cylinder" 
+                           value="{% if history.refinement_os_cylinder %}{{ history.refinement_os_cylinder }}{% endif %}"
+                           class="w-full px-2 py-1 border border-gray-300 rounded text-xs focus:ring-2 focus:ring-purple-500"
+                           placeholder="±0.00">
+                </div>
+                <div>
+                    <label class="text-xs text-gray-600">Eje</label>
+                    <input type="text" name="refinement_os_axis" 
+                           value="{% if history.refinement_os_axis %}{{ history.refinement_os_axis }}{% endif %}"
+                           class="w-full px-2 py-1 border border-gray-300 rounded text-xs focus:ring-2 focus:ring-purple-500"
+                           placeholder="0-180">
+                </div>
+                <div>
+                    <label class="text-xs text-gray-600">ADD</label>
+                    <input type="text" name="refinement_os_add" 
+                           value="{% if history.refinement_os_add %}{{ history.refinement_os_add }}{% endif %}"
+                           class="w-full px-2 py-1 border border-gray-300 rounded text-xs focus:ring-2 focus:ring-purple-500"
+                           placeholder="+0.00">
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- SUBJETIVO BAJO CICLOPLEJIA -->
+    <div id="section_cycloplegic" class="bg-white rounded-lg p-4 shadow-sm border-2 border-purple-200 mb-4" style="display: {% if history.exam_cycloplegic_done %}block{% else %}none{% endif %};">
+        <label class="block text-sm font-bold text-gray-800 mb-3 flex items-center">
+            <i class="fas fa-flask text-purple-600 mr-1"></i> SUBJETIVO BAJO CICLOPLEJIA
+        </label>
+        
+        <!-- OD -->
+        <div class="mb-3">
+            <div class="text-xs font-bold text-white bg-blue-500 px-2 py-1 rounded mb-2">OD (Ojo Derecho)</div>
+            <div class="grid grid-cols-4 gap-2">
+                <div>
+                    <label class="text-xs text-gray-600">Esfera</label>
+                    <input type="text" name="cycloplegic_od_sphere" 
+                           value="{% if history.cycloplegic_od_sphere %}{{ history.cycloplegic_od_sphere }}{% endif %}"
+                           class="w-full px-2 py-1 border border-gray-300 rounded text-xs focus:ring-2 focus:ring-purple-500"
+                           placeholder="±0.00">
+                </div>
+                <div>
+                    <label class="text-xs text-gray-600">Cilindro</label>
+                    <input type="text" name="cycloplegic_od_cylinder" 
+                           value="{% if history.cycloplegic_od_cylinder %}{{ history.cycloplegic_od_cylinder }}{% endif %}"
+                           class="w-full px-2 py-1 border border-gray-300 rounded text-xs focus:ring-2 focus:ring-purple-500"
+                           placeholder="±0.00">
+                </div>
+                <div>
+                    <label class="text-xs text-gray-600">Eje</label>
+                    <input type="text" name="cycloplegic_od_axis" 
+                           value="{% if history.cycloplegic_od_axis %}{{ history.cycloplegic_od_axis }}{% endif %}"
+                           class="w-full px-2 py-1 border border-gray-300 rounded text-xs focus:ring-2 focus:ring-purple-500"
+                           placeholder="0-180">
+                </div>
+                <div>
+                    <label class="text-xs text-gray-600">ADD</label>
+                    <input type="text" name="cycloplegic_od_add" 
+                           value="{% if history.cycloplegic_od_add %}{{ history.cycloplegic_od_add }}{% endif %}"
+                           class="w-full px-2 py-1 border border-gray-300 rounded text-xs focus:ring-2 focus:ring-purple-500"
+                           placeholder="+0.00">
+                </div>
+            </div>
+        </div>
+
+        <!-- OS -->
+        <div>
+            <div class="text-xs font-bold text-white bg-green-500 px-2 py-1 rounded mb-2">OS (Ojo Izquierdo)</div>
+            <div class="grid grid-cols-4 gap-2">
+                <div>
+                    <label class="text-xs text-gray-600">Esfera</label>
+                    <input type="text" name="cycloplegic_os_sphere" 
+                           value="{% if history.cycloplegic_os_sphere %}{{ history.cycloplegic_os_sphere }}{% endif %}"
+                           class="w-full px-2 py-1 border border-gray-300 rounded text-xs focus:ring-2 focus:ring-purple-500"
+                           placeholder="±0.00">
+                </div>
+                <div>
+                    <label class="text-xs text-gray-600">Cilindro</label>
+                    <input type="text" name="cycloplegic_os_cylinder" 
+                           value="{% if history.cycloplegic_os_cylinder %}{{ history.cycloplegic_os_cylinder }}{% endif %}"
+                           class="w-full px-2 py-1 border border-gray-300 rounded text-xs focus:ring-2 focus:ring-purple-500"
+                           placeholder="±0.00">
+                </div>
+                <div>
+                    <label class="text-xs text-gray-600">Eje</label>
+                    <input type="text" name="cycloplegic_os_axis" 
+                           value="{% if history.cycloplegic_os_axis %}{{ history.cycloplegic_os_axis }}{% endif %}"
+                           class="w-full px-2 py-1 border border-gray-300 rounded text-xs focus:ring-2 focus:ring-purple-500"
+                           placeholder="0-180">
+                </div>
+                <div>
+                    <label class="text-xs text-gray-600">ADD</label>
+                    <input type="text" name="cycloplegic_os_add" 
+                           value="{% if history.cycloplegic_os_add %}{{ history.cycloplegic_os_add }}{% endif %}"
+                           class="w-full px-2 py-1 border border-gray-300 rounded text-xs focus:ring-2 focus:ring-purple-500"
+                           placeholder="+0.00">
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- RX FINAL -->
+    <div id="section_final_rx" class="bg-white rounded-lg p-4 shadow-sm border-2 border-purple-200 mb-4" style="display: {% if history.exam_final_rx_done %}block{% else %}none{% endif %};">
+        <label class="block text-sm font-bold text-gray-800 mb-3 flex items-center">
+            <i class="fas fa-check-circle text-purple-600 mr-1"></i> RX FINAL
+        </label>
+        
+        <!-- OD -->
+        <div class="mb-3">
+            <div class="text-xs font-bold text-white bg-blue-500 px-2 py-1 rounded mb-2">OD (Ojo Derecho)</div>
+            <div class="grid grid-cols-4 gap-2">
+                <div>
+                    <label class="text-xs text-gray-600">Esfera</label>
+                    <input type="text" name="final_rx_od_sphere" 
+                           value="{% if history.final_rx_od_sphere %}{{ history.final_rx_od_sphere }}{% endif %}"
+                           class="w-full px-2 py-1 border border-gray-300 rounded text-xs focus:ring-2 focus:ring-purple-500"
+                           placeholder="±0.00">
+                </div>
+                <div>
+                    <label class="text-xs text-gray-600">Cilindro</label>
+                    <input type="text" name="final_rx_od_cylinder" 
+                           value="{% if history.final_rx_od_cylinder %}{{ history.final_rx_od_cylinder }}{% endif %}"
+                           class="w-full px-2 py-1 border border-gray-300 rounded text-xs focus:ring-2 focus:ring-purple-500"
+                           placeholder="±0.00">
+                </div>
+                <div>
+                    <label class="text-xs text-gray-600">Eje</label>
+                    <input type="text" name="final_rx_od_axis" 
+                           value="{% if history.final_rx_od_axis %}{{ history.final_rx_od_axis }}{% endif %}"
+                           class="w-full px-2 py-1 border border-gray-300 rounded text-xs focus:ring-2 focus:ring-purple-500"
+                           placeholder="0-180">
+                </div>
+                <div>
+                    <label class="text-xs text-gray-600">ADD</label>
+                    <input type="text" name="final_rx_od_add" 
+                           value="{% if history.final_rx_od_add %}{{ history.final_rx_od_add }}{% endif %}"
+                           class="w-full px-2 py-1 border border-gray-300 rounded text-xs focus:ring-2 focus:ring-purple-500"
+                           placeholder="+0.00">
+                </div>
+            </div>
+        </div>
+
+        <!-- OS -->
+        <div>
+            <div class="text-xs font-bold text-white bg-green-500 px-2 py-1 rounded mb-2">OS (Ojo Izquierdo)</div>
+            <div class="grid grid-cols-4 gap-2">
+                <div>
+                    <label class="text-xs text-gray-600">Esfera</label>
+                    <input type="text" name="final_rx_os_sphere" 
+                           value="{% if history.final_rx_os_sphere %}{{ history.final_rx_os_sphere }}{% endif %}"
+                           class="w-full px-2 py-1 border border-gray-300 rounded text-xs focus:ring-2 focus:ring-purple-500"
+                           placeholder="±0.00">
+                </div>
+                <div>
+                    <label class="text-xs text-gray-600">Cilindro</label>
+                    <input type="text" name="final_rx_os_cylinder" 
+                           value="{% if history.final_rx_os_cylinder %}{{ history.final_rx_os_cylinder }}{% endif %}"
+                           class="w-full px-2 py-1 border border-gray-300 rounded text-xs focus:ring-2 focus:ring-purple-500"
+                           placeholder="±0.00">
+                </div>
+                <div>
+                    <label class="text-xs text-gray-600">Eje</label>
+                    <input type="text" name="final_rx_os_axis" 
+                           value="{% if history.final_rx_os_axis %}{{ history.final_rx_os_axis }}{% endif %}"
+                           class="w-full px-2 py-1 border border-gray-300 rounded text-xs focus:ring-2 focus:ring-purple-500"
+                           placeholder="0-180">
+                </div>
+                <div>
+                    <label class="text-xs text-gray-600">ADD</label>
+                    <input type="text" name="final_rx_os_add" 
+                           value="{% if history.final_rx_os_add %}{{ history.final_rx_os_add }}{% endif %}"
+                           class="w-full px-2 py-1 border border-gray-300 rounded text-xs focus:ring-2 focus:ring-purple-500"
+                           placeholder="+0.00">
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function toggleExamSection(examType, isChecked) {
+    const section = document.getElementById('section_' + examType);
+    if (section) {
+        section.style.display = isChecked ? 'block' : 'none';
+    }
+}
+
+// Inicializar el estado de las secciones al cargar la página
+document.addEventListener('DOMContentLoaded', function() {
+    const exams = ['retinoscopy', 'subjective', 'refinement', 'cycloplegic', 'final_rx'];
+    exams.forEach(exam => {
+        const checkbox = document.getElementById('check_' + exam);
+        if (checkbox) {
+            toggleExamSection(exam, checkbox.checked);
+        }
+    });
+});
+</script>
