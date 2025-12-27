@@ -157,27 +157,58 @@
                 {% endif %}
 
                 <!-- Botones de acción -->
-                <div class="flex gap-2" onclick="event.stopPropagation()">
+                <div class="space-y-2" onclick="event.stopPropagation()">
+                    <!-- Botón principal de historia -->
                     <a href="{% url 'dashboard:clinical_history_list' patient.id %}" 
-                       class="flex-1 bg-purple-600 hover:bg-purple-700 text-white py-2 px-4 rounded-lg transition duration-200 text-sm font-medium"
-                       title="Historia Clínica">
-                        <i class="fas fa-file-medical mr-1"></i>Historia
+                       class="block w-full bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white py-2.5 px-4 rounded-lg transition duration-200 text-sm font-medium text-center shadow-md"
+                       title="Ver Historia Clínica Completa">
+                        <i class="fas fa-file-medical mr-2"></i>Historia Clínica
                     </a>
-                    <button onclick="openEditPatientModal({{ patient.id }})" 
-                            class="bg-yellow-500 hover:bg-yellow-600 text-white py-2 px-3 rounded-lg transition duration-200 text-sm" 
-                            title="Editar">
-                        <i class="fas fa-edit"></i>
-                    </button>
-                    <button onclick="confirmDeletePatient({{ patient.id }}, '{{ patient.full_name|escapejs }}')" 
-                            class="bg-red-600 hover:bg-red-700 text-white py-2 px-3 rounded-lg transition duration-200 text-sm"
-                            title="Eliminar">
-                        <i class="fas fa-trash"></i>
-                    </button>
-                    <a href="https://wa.me/{{ patient.phone_number|cut:'+' }}" target="_blank"
-                       class="bg-emerald-600 hover:bg-emerald-700 text-white py-2 px-3 rounded-lg transition duration-200 text-sm"
-                       title="WhatsApp">
-                        <i class="fab fa-whatsapp"></i>
-                    </a>
+                    
+                    <!-- Botones de acciones rápidas -->
+                    <div class="grid grid-cols-2 gap-2">
+                        {% if patient.latest_history %}
+                        <!-- PDF Fórmula -->
+                        <a href="{% url 'dashboard:visual_exam_pdf' patient.id patient.latest_history.id %}" 
+                           target="_blank"
+                           class="bg-blue-600 hover:bg-blue-700 text-white py-2 px-3 rounded-lg transition duration-200 text-xs font-medium text-center"
+                           title="Imprimir Fórmula de Lentes">
+                            <i class="fas fa-file-pdf mr-1"></i>Fórmula PDF
+                        </a>
+                        
+                        <!-- Examen Especial -->
+                        <a href="{% url 'dashboard:exam_order_create' patient.id patient.latest_history.id %}" 
+                           class="bg-teal-600 hover:bg-teal-700 text-white py-2 px-3 rounded-lg transition duration-200 text-xs font-medium text-center"
+                           title="Ordenar Examen Especial">
+                            <i class="fas fa-microscope mr-1"></i>Ex. Especial
+                        </a>
+                        {% else %}
+                        <!-- Si no tiene historia, mostrar mensaje -->
+                        <span class="col-span-2 bg-gray-100 text-gray-500 py-2 px-3 rounded-lg text-xs text-center">
+                            <i class="fas fa-info-circle mr-1"></i>Sin historia clínica
+                        </span>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Botones secundarios -->
+                    <div class="flex gap-2 pt-1 border-t border-gray-200">
+                        <button onclick="openEditPatientModal({{ patient.id }})" 
+                                class="flex-1 bg-yellow-500 hover:bg-yellow-600 text-white py-2 px-3 rounded-lg transition duration-200 text-xs font-medium" 
+                                title="Editar Paciente">
+                            <i class="fas fa-edit mr-1"></i>Editar
+                        </button>
+                        <a href="https://wa.me/{{ patient.phone_number|cut:'+' }}" 
+                           target="_blank"
+                           class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white py-2 px-3 rounded-lg transition duration-200 text-xs font-medium text-center"
+                           title="Contactar por WhatsApp">
+                            <i class="fab fa-whatsapp mr-1"></i>WhatsApp
+                        </a>
+                        <button onclick="confirmDeletePatient({{ patient.id }}, '{{ patient.full_name|escapejs }}')" 
+                                class="bg-red-600 hover:bg-red-700 text-white py-2 px-3 rounded-lg transition duration-200 text-xs"
+                                title="Eliminar Paciente">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -239,27 +270,51 @@
                             <div class="text-sm text-gray-900">{{ patient.age|default:"-" }}</div>
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm" onclick="event.stopPropagation()">
-                            <div class="flex gap-2">
+                            <div class="flex gap-1.5">
+                                <!-- Historia Clínica -->
                                 <a href="{% url 'dashboard:clinical_history_list' patient.id %}" 
-                                   class="text-purple-600 hover:text-purple-900"
+                                   class="inline-flex items-center px-2.5 py-1.5 bg-purple-600 hover:bg-purple-700 text-white rounded transition text-xs"
                                    title="Historia Clínica">
                                     <i class="fas fa-file-medical"></i>
                                 </a>
+                                
+                                {% if patient.latest_history %}
+                                <!-- PDF Fórmula -->
+                                <a href="{% url 'dashboard:visual_exam_pdf' patient.id patient.latest_history.id %}" 
+                                   target="_blank"
+                                   class="inline-flex items-center px-2.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded transition text-xs"
+                                   title="Imprimir Fórmula">
+                                    <i class="fas fa-file-pdf"></i>
+                                </a>
+                                
+                                <!-- Examen Especial -->
+                                <a href="{% url 'dashboard:exam_order_create' patient.id patient.latest_history.id %}" 
+                                   class="inline-flex items-center px-2.5 py-1.5 bg-teal-600 hover:bg-teal-700 text-white rounded transition text-xs"
+                                   title="Ordenar Examen Especial">
+                                    <i class="fas fa-microscope"></i>
+                                </a>
+                                {% endif %}
+                                
+                                <!-- Editar -->
                                 <button onclick="openEditPatientModal({{ patient.id }})" 
-                                        class="text-yellow-600 hover:text-yellow-900" 
+                                        class="inline-flex items-center px-2.5 py-1.5 bg-yellow-500 hover:bg-yellow-600 text-white rounded transition text-xs" 
                                         title="Editar">
                                     <i class="fas fa-edit"></i>
                                 </button>
-                                <button onclick="confirmDeletePatient({{ patient.id }}, '{{ patient.full_name|escapejs }}')" 
-                                        class="text-red-600 hover:text-red-900"
-                                        title="Eliminar">
-                                    <i class="fas fa-trash"></i>
-                                </button>
+                                
+                                <!-- WhatsApp -->
                                 <a href="https://wa.me/{{ patient.phone_number|cut:'+' }}" target="_blank"
-                                   class="text-emerald-600 hover:text-emerald-900"
+                                   class="inline-flex items-center px-2.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded transition text-xs"
                                    title="WhatsApp">
                                     <i class="fab fa-whatsapp"></i>
                                 </a>
+                                
+                                <!-- Eliminar -->
+                                <button onclick="confirmDeletePatient({{ patient.id }}, '{{ patient.full_name|escapejs }}')" 
+                                        class="inline-flex items-center px-2.5 py-1.5 bg-red-600 hover:bg-red-700 text-white rounded transition text-xs"
+                                        title="Eliminar">
+                                    <i class="fas fa-trash"></i>
+                                </button>
                             </div>
                         </td>
                     </tr>

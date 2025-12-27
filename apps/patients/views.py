@@ -42,6 +42,13 @@ def patient_list(request):
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
     
+    # Agregar última historia clínica a cada paciente
+    from apps.clinical_history.models import ClinicalHistory
+    for patient in page_obj:
+        patient.latest_history = ClinicalHistory.objects.filter(
+            patient=patient
+        ).order_by('-created_at').first()
+    
     context = {
         'patients': page_obj,
         'total_patients': total_patients,
