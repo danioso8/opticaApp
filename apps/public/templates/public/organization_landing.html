@@ -45,7 +45,7 @@
                     {% endif %}
                 </p>
                 <div class="flex flex-col sm:flex-row gap-4">
-                    <a href="{% url 'public:booking' %}" class="inline-block text-white px-8 py-4 rounded-full font-semibold text-lg transition shadow-lg hover:opacity-90" style="background-color: {% if landing_config %}{{ landing_config.primary_button_color }}{% else %}#2563eb{% endif %};">
+                    <a href="{% url 'public:booking_org' org_slug=org_slug %}" class="inline-block text-white px-8 py-4 rounded-full font-semibold text-lg transition shadow-lg hover:opacity-90" style="background-color: {% if landing_config %}{{ landing_config.primary_button_color }}{% else %}#2563eb{% endif %};">
                         <i class="fas fa-calendar-plus mr-2"></i>Agendar Cita
                     </a>
                     <a href="{% url 'public:shop' %}" class="inline-block bg-transparent border-2 text-white px-8 py-4 rounded-full font-semibold text-lg transition hover:bg-white" style="border-color: {% if landing_config %}{{ landing_config.secondary_button_color }}{% else %}#ffffff{% endif %}; color: {% if landing_config %}{{ landing_config.secondary_button_color }}{% else %}#ffffff{% endif %};" onmouseover="this.style.color='{% if landing_config %}{{ landing_config.primary_button_color }}{% else %}#2563eb{% endif %}'" onmouseout="this.style.color='{% if landing_config %}{{ landing_config.secondary_button_color }}{% else %}#ffffff{% endif %}'">
