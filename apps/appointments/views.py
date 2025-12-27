@@ -137,10 +137,11 @@ def available_dates(request):
     }
     
     # Filtrar por doctor si se especifica (buscar en ambos campos: nuevo y legacy)
+    # TAMBIÉN incluir horarios sin doctor asignado para compartir disponibilidad
     if doctor_id:
         from django.db.models import Q
         specific_dates = SpecificDateSchedule.objects.filter(
-            Q(doctor_profile_id=doctor_id) | Q(doctor_id=doctor_id),
+            Q(doctor_profile_id=doctor_id) | Q(doctor_id=doctor_id) | Q(doctor_profile__isnull=True, doctor__isnull=True),
             **filters
         ).values_list('date', flat=True).distinct().order_by('date')
     else:

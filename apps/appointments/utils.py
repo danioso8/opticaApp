@@ -73,9 +73,10 @@ def get_available_slots_for_date(date, organization=None, doctor_id=None):
     # Filtrar por doctor si se especifica
     if doctor_id:
         # Buscar por doctor_profile (nuevo) o doctor (deprecated)
+        # TAMBIÉN incluir horarios sin doctor asignado (None) para compartir disponibilidad
         from django.db.models import Q
         specific_schedules = SpecificDateSchedule.objects.filter(
-            Q(doctor_profile_id=doctor_id) | Q(doctor_id=doctor_id),
+            Q(doctor_profile_id=doctor_id) | Q(doctor_id=doctor_id) | Q(doctor_profile__isnull=True, doctor__isnull=True),
             **specific_filters
         )
     else:
