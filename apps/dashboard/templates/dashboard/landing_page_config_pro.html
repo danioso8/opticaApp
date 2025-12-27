@@ -80,6 +80,11 @@
                             <i class="fas fa-th-large w-6 text-green-600"></i>
                             <span class="ml-3 font-medium">Servicios</span>
                         </button>
+                        <button type="button" onclick="showSection('schedule')" 
+                                class="config-tab w-full text-left px-4 py-3 rounded-lg hover:bg-blue-50 transition flex items-center">
+                            <i class="fas fa-clock w-6 text-orange-600"></i>
+                            <span class="ml-3 font-medium">Horarios de Atención</span>
+                        </button>
                         <button type="button" onclick="showSection('design')" 
                                 class="config-tab w-full text-left px-4 py-3 rounded-lg hover:bg-blue-50 transition flex items-center">
                             <i class="fas fa-magic w-6 text-pink-600"></i>
@@ -462,20 +467,38 @@
                             </label>
                             
                             <!-- Vista previa interactiva -->
-                            <div class="bg-gray-800 rounded-lg overflow-hidden mb-4 relative" style="height: 300px;">
-                                <div id="hero_preview_container" class="absolute transition-all duration-300" 
-                                     style="width: {{ config.hero_image_scale|default:100 }}%; 
-                                            height: {{ config.hero_image_scale|default:100 }}%; 
-                                            top: 50%; 
-                                            left: 50%; 
-                                            transform: translate(-50%, -50%);">
-                                    <img id="hero_preview_image" 
+                            <div class="bg-gray-800 rounded-lg overflow-hidden mb-4 relative cursor-pointer group" 
+                                 style="height: 500px;"
+                                 id="hero_preview_wrapper">
+                                <!-- Imagen con transform -->
+                                <div class="absolute inset-0 overflow-hidden">
+                                    <img id="hero_preview_image"
                                          src="{{ config.hero_image.url }}" 
                                          alt="Preview" 
-                                         class="w-full h-full object-cover transition-all duration-300"
-                                         style="object-position: {{ config.hero_image_position_x|default:50 }}% {{ config.hero_image_position_y|default:50 }}%;">
+                                         class="absolute w-full h-full object-cover transition-all duration-300"
+                                         style="object-position: {{ config.hero_image_position_x|default:50 }}% {{ config.hero_image_position_y|default:50 }}%;
+                                                transform: scale({{ config.hero_image_scale|default:100|floatformat:-2|cut:'.0' }}%);
+                                                transform-origin: {{ config.hero_image_position_x|default:50 }}% {{ config.hero_image_position_y|default:50 }}%;">
                                 </div>
                                 <div id="hero_preview_overlay" class="absolute inset-0 bg-gradient-to-r from-blue-900 via-blue-800 to-transparent pointer-events-none" style="opacity: {{ config.hero_overlay_opacity|default:70 }}%;"></div>
+                                
+                                <!-- Indicador de zoom -->
+                                <div class="absolute top-4 right-4 bg-black bg-opacity-50 text-white px-3 py-2 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                                    <i class="fas fa-search-plus mr-2"></i>Click para ver en tamaño completo
+                                </div>
+                            </div>
+                            
+                            <!-- Modal para ver imagen completa -->
+                            <div id="hero_image_modal" class="hidden fixed inset-0 bg-black bg-opacity-90 z-50 flex items-center justify-center p-4"
+                                 onclick="this.classList.add('hidden')">
+                                <div class="relative max-w-7xl max-h-full">
+                                    <img src="{{ config.hero_image.url }}" 
+                                         alt="Imagen completa" 
+                                         class="max-w-full max-h-screen object-contain">
+                                    <button class="absolute top-4 right-4 bg-white text-gray-800 px-4 py-2 rounded-lg hover:bg-gray-200">
+                                        <i class="fas fa-times mr-2"></i>Cerrar
+                                    </button>
+                                </div>
                             </div>
                             
                             <!-- Controles -->
@@ -559,56 +582,132 @@
                         </div>
                         
                         <script>
-                        document.addEventListener('DOMContentLoaded', function() {
-                            const previewImage = document.getElementById('hero_preview_image');
-                            const previewContainer = document.getElementById('hero_preview_container');
-                            const posXSlider = document.getElementById('hero_image_position_x');
-                            const posYSlider = document.getElementById('hero_image_position_y');
-                            const scaleSlider = document.getElementById('hero_image_scale');
-                            const opacitySlider = document.getElementById('hero_overlay_opacity');
-                            const posXValue = document.getElementById('pos_x_value');
-                            const posYValue = document.getElementById('pos_y_value');
-                            const scaleValue = document.getElementById('scale_value');
-                            const opacityValue = document.getElementById('overlay_opacity_value');
-                            const previewOverlay = document.getElementById('hero_preview_overlay');
-                            const resetBtn = document.getElementById('reset_hero_position');
-                            
-                            function updatePreview() {
-                                const posX = posXSlider.value;
-                                const posY = posYSlider.value;
-                                const scale = scaleSlider.value;
-                                const opacity = opacitySlider.value;
-                                
-                                // Actualizar posición de la imagen dentro del contenedor
-                                previewImage.style.objectPosition = `${posX}% ${posY}%`;
-                                
-                                // Actualizar tamaño del contenedor (zoom)
-                                previewContainer.style.width = `${scale}%`;
-                                previewContainer.style.height = `${scale}%`;
-                                
-                                // Actualizar opacidad del overlay
-                                previewOverlay.style.opacity = `${opacity}%`;
-                                
-                                // Actualizar valores mostrados
-                                posXValue.textContent = `${posX}%`;
-                                posYValue.textContent = `${posY}%`;
-                                scaleValue.textContent = `${scale}%`;
-                                opacityValue.textContent = `${opacity}%`;
+                        (function() {
+                            // Esperar a que el DOM esté listo
+                            if (document.readyState === 'loading') {
+                                document.addEventListener('DOMContentLoaded', initHeroImageControls);
+                            } else {
+                                initHeroImageControls();
                             }
                             
-                            posXSlider.addEventListener('input', updatePreview);
-                            posYSlider.addEventListener('input', updatePreview);
-                            scaleSlider.addEventListener('input', updatePreview);
-                            opacitySlider.addEventListener('input', updatePreview);
-                            
-                            resetBtn.addEventListener('click', function() {
-                                posXSlider.value = 50;
-                                posYSlider.value = 50;
-                                scaleSlider.value = 100;
-                                opacitySlider.value = 70;
+                            function initHeroImageControls() {
+                                console.log('🎨 Inicializando controles de imagen hero...');
+                                
+                                // Obtener elementos
+                                const previewImage = document.getElementById('hero_preview_image');
+                                const previewWrapper = document.getElementById('hero_preview_wrapper');
+                                const posXSlider = document.getElementById('hero_image_position_x');
+                                const posYSlider = document.getElementById('hero_image_position_y');
+                                const scaleSlider = document.getElementById('hero_image_scale');
+                                const opacitySlider = document.getElementById('hero_overlay_opacity');
+                                const posXValue = document.getElementById('pos_x_value');
+                                const posYValue = document.getElementById('pos_y_value');
+                                const scaleValue = document.getElementById('scale_value');
+                                const opacityValue = document.getElementById('overlay_opacity_value');
+                                const previewOverlay = document.getElementById('hero_preview_overlay');
+                                const resetBtn = document.getElementById('reset_hero_position');
+                                const modal = document.getElementById('hero_image_modal');
+                                
+                                // Debug: Verificar elementos
+                                console.log('📋 Elementos encontrados:', {
+                                    previewImage: !!previewImage,
+                                    posXSlider: !!posXSlider,
+                                    posYSlider: !!posYSlider,
+                                    scaleSlider: !!scaleSlider,
+                                    opacitySlider: !!opacitySlider
+                                });
+                                
+                                // Verificar elementos críticos
+                                if (!previewImage || !posXSlider || !posYSlider || !scaleSlider || !opacitySlider) {
+                                    console.error('❌ Faltan elementos críticos del preview');
+                                    return;
+                                }
+                                
+                                console.log('✅ Todos los elementos encontrados correctamente');
+                                
+                                // Función para actualizar el preview
+                                function updatePreview() {
+                                    const posX = posXSlider.value;
+                                    const posY = posYSlider.value;
+                                    const scale = scaleSlider.value;
+                                    const opacity = opacitySlider.value;
+                                    
+                                    console.log('🔄 Actualizando preview:', { posX, posY, scale, opacity });
+                                    
+                                    // Actualizar object-position y transform scale
+                                    previewImage.style.objectPosition = `${posX}% ${posY}%`;
+                                    previewImage.style.transform = `scale(${scale / 100})`;
+                                    previewImage.style.transformOrigin = `${posX}% ${posY}%`;
+                                    
+                                    // Actualizar opacidad del overlay
+                                    if (previewOverlay) {
+                                        previewOverlay.style.opacity = `${opacity}%`;
+                                    }
+                                    
+                                    // Actualizar valores mostrados
+                                    if (posXValue) posXValue.textContent = `${posX}%`;
+                                    if (posYValue) posYValue.textContent = `${posY}%`;
+                                    if (scaleValue) scaleValue.textContent = `${scale}%`;
+                                    if (opacityValue) opacityValue.textContent = `${opacity}%`;
+                                }
+                                
+                                // Agregar event listeners
+                                posXSlider.addEventListener('input', function(e) {
+                                    console.log('Posición X cambiada:', e.target.value);
+                                    updatePreview();
+                                });
+                                
+                                posYSlider.addEventListener('input', function(e) {
+                                    console.log('Posición Y cambiada:', e.target.value);
+                                    updatePreview();
+                                });
+                                
+                                scaleSlider.addEventListener('input', function(e) {
+                                    console.log('Escala cambiada:', e.target.value);
+                                    updatePreview();
+                                });
+                                
+                                opacitySlider.addEventListener('input', function(e) {
+                                    console.log('Opacidad cambiada:', e.target.value);
+                                    updatePreview();
+                                });
+                                
+                                console.log('✅ Event listeners agregados');
+                                
+                                // Botón de reset
+                                if (resetBtn) {
+                                    resetBtn.addEventListener('click', function(e) {
+                                        e.preventDefault();
+                                        console.log('Reseteando valores...');
+                                        posXSlider.value = 50;
+                                        posYSlider.value = 50;
+                                        scaleSlider.value = 100;
+                                        opacitySlider.value = 70;
+                                        updatePreview();
+                                    });
+                                }
+                                
+                                // Click en la imagen para ver en tamaño completo
+                                if (previewWrapper && modal) {
+                                    previewWrapper.addEventListener('click', function(e) {
+                                        console.log('Abriendo modal...');
+                                        modal.classList.remove('hidden');
+                                    });
+                                }
+                                
+                                // Cerrar modal
+                                if (modal) {
+                                    modal.addEventListener('click', function(e) {
+                                        console.log('Cerrando modal...');
+                                        modal.classList.add('hidden');
+                                    });
+                                }
+                                
+                                // Actualizar preview inicial
                                 updatePreview();
-                            });
-                        });
+                                console.log('✅ Controles de imagen hero inicializados correctamente');
+                            }
+                        })();
                         </script>
                         {% else %}
                         <div class="bg-yellow-50 border-2 border-yellow-200 rounded-lg p-4">
@@ -729,6 +828,127 @@
                                     {{ form.service_4_description }}
                                 </div>
                             </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sección: Horarios de Atención -->
+                <div id="section-schedule" class="config-section bg-white rounded-lg shadow-md p-6 hidden">
+                    <h2 class="text-2xl font-bold text-gray-800 mb-6 flex items-center">
+                        <i class="fas fa-clock text-orange-600 mr-3"></i>
+                        Horarios de Atención
+                    </h2>
+                    
+                    <div class="space-y-6">
+                        <!-- Lunes a Viernes -->
+                        <div class="bg-blue-50 p-4 rounded-lg">
+                            <h3 class="font-semibold text-gray-800 mb-4 flex items-center">
+                                <i class="fas fa-calendar-week mr-2 text-blue-600"></i>
+                                Lunes - Viernes
+                            </h3>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Hora de Inicio</label>
+                                    {{ form.schedule_weekday_start }}
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Hora de Fin</label>
+                                    {{ form.schedule_weekday_end }}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Horario de Almuerzo -->
+                        <div class="bg-yellow-50 p-4 rounded-lg border-2 border-yellow-200">
+                            <div class="flex items-center justify-between mb-4">
+                                <h3 class="font-semibold text-gray-800 flex items-center">
+                                    <i class="fas fa-utensils mr-2 text-yellow-600"></i>
+                                    Horario de Almuerzo
+                                </h3>
+                                <label class="flex items-center">
+                                    <input type="checkbox" 
+                                           name="has_lunch_break" 
+                                           id="has_lunch_break"
+                                           {% if config.has_lunch_break %}checked{% endif %} 
+                                           class="mr-2 h-5 w-5 text-yellow-600"
+                                           onchange="toggleLunchFields()">
+                                    <span class="font-medium text-sm">Cierra para almorzar</span>
+                                </label>
+                            </div>
+                            <div id="lunch-fields" class="grid grid-cols-2 gap-4" style="{% if not config.has_lunch_break %}display: none;{% endif %}">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Inicio del Almuerzo</label>
+                                    {{ form.lunch_break_start }}
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Fin del Almuerzo</label>
+                                    {{ form.lunch_break_end }}
+                                </div>
+                            </div>
+                            <p class="text-xs text-gray-600 mt-2">
+                                <i class="fas fa-info-circle mr-1"></i>
+                                El horario de almuerzo se mostrará destacado en la landing page
+                            </p>
+                        </div>
+
+                        <!-- Sábado -->
+                        <div class="bg-green-50 p-4 rounded-lg">
+                            <h3 class="font-semibold text-gray-800 mb-4 flex items-center">
+                                <i class="fas fa-calendar-day mr-2 text-green-600"></i>
+                                Sábado
+                            </h3>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Hora de Inicio</label>
+                                    {{ form.schedule_saturday_start }}
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Hora de Fin</label>
+                                    {{ form.schedule_saturday_end }}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Domingo -->
+                        <div class="bg-purple-50 p-4 rounded-lg">
+                            <div class="flex items-center justify-between mb-4">
+                                <h3 class="font-semibold text-gray-800 flex items-center">
+                                    <i class="fas fa-calendar mr-2 text-purple-600"></i>
+                                    Domingo
+                                </h3>
+                                <label class="flex items-center">
+                                    <input type="checkbox" 
+                                           name="schedule_sunday_closed" 
+                                           id="sunday_closed"
+                                           {% if config.schedule_sunday_closed %}checked{% endif %} 
+                                           class="mr-2 h-5 w-5 text-purple-600"
+                                           onchange="toggleSundayFields()">
+                                    <span class="font-medium text-sm">Cerrado los domingos</span>
+                                </label>
+                            </div>
+                            <div id="sunday-fields" class="grid grid-cols-2 gap-4" style="{% if config.schedule_sunday_closed %}display: none;{% endif %}">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Hora de Inicio</label>
+                                    {{ form.schedule_sunday_start }}
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Hora de Fin</label>
+                                    {{ form.schedule_sunday_end }}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Ayuda -->
+                        <div class="bg-blue-50 p-4 rounded-lg border-l-4 border-blue-500">
+                            <h4 class="font-semibold text-gray-800 mb-2">
+                                <i class="fas fa-lightbulb mr-2 text-blue-600"></i>
+                                Consejos
+                            </h4>
+                            <ul class="text-sm text-gray-700 space-y-1">
+                                <li>• Usa formato de 12 horas con AM/PM (ej: 10:00 AM, 7:00 PM)</li>
+                                <li>• El horario de almuerzo aplica a todos los días de atención</li>
+                                <li>• Los cambios se reflejan inmediatamente en tu landing page</li>
+                            </ul>
                         </div>
                     </div>
                 </div>
@@ -1156,6 +1376,30 @@ function copyPublicUrl() {
         document.execCommand('copy');
         Toast.success('¡URL copiada!');
     });
+}
+
+// Toggle campos de horario de almuerzo
+function toggleLunchFields() {
+    const checkbox = document.getElementById('has_lunch_break');
+    const fields = document.getElementById('lunch-fields');
+    
+    if (checkbox.checked) {
+        fields.style.display = 'grid';
+    } else {
+        fields.style.display = 'none';
+    }
+}
+
+// Toggle campos de domingo
+function toggleSundayFields() {
+    const checkbox = document.getElementById('sunday_closed');
+    const fields = document.getElementById('sunday-fields');
+    
+    if (checkbox.checked) {
+        fields.style.display = 'none';
+    } else {
+        fields.style.display = 'grid';
+    }
 }
 
 // Mensaje de guardado

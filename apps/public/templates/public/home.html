@@ -9,14 +9,23 @@
     <!-- Background Image with Overlay -->
     <div class="absolute inset-0 z-0">
         {% if landing_config and landing_config.hero_image %}
-            {% with scale=landing_config.hero_image_scale|default:100 %}
-            <div style="width: {{ scale }}%; height: {{ scale }}%; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);">
-                <img src="{{ landing_config.hero_image.url }}" 
+            <div class="w-full h-full overflow-hidden relative">
+                <img id="landing-hero-img"
+                     src="{{ landing_config.hero_image.url }}" 
                      alt="Hero Image" 
-                     class="w-full h-full object-cover"
+                     class="absolute w-full h-full object-cover"
                      style="object-position: {{ landing_config.hero_image_position_x|default:50 }}% {{ landing_config.hero_image_position_y|default:50 }}%;">
             </div>
-            {% endwith %}
+            <script>
+                (function(){
+                    var img=document.getElementById('landing-hero-img');
+                    var s={{ landing_config.hero_image_scale|default:100 }}/100;
+                    var x={{ landing_config.hero_image_position_x|default:50 }};
+                    var y={{ landing_config.hero_image_position_y|default:50 }};
+                    img.style.transform='scale('+s+')';
+                    img.style.transformOrigin=x+'% '+y+'%';
+                })();
+            </script>
         {% else %}
             <img src="{% static 'img/beautiful-smiling-brunette-woman-trying-260nw-2627315263.webp' %}" 
                  alt="Mujer eligiendo monturas" 
@@ -431,15 +440,41 @@
                 <div class="space-y-4">
                     <div class="flex justify-between items-center pb-4 border-b">
                         <span class="font-semibold">Lunes - Viernes</span>
-                        <span>10:00 AM - 7:00 PM</span>
+                        <span>
+                            {% if landing_config %}
+                                {{ landing_config.schedule_weekday_start }} - {{ landing_config.schedule_weekday_end }}
+                            {% else %}
+                                10:00 AM - 7:00 PM
+                            {% endif %}
+                        </span>
                     </div>
+                    
+                    {% if landing_config and landing_config.has_lunch_break %}
+                    <div class="flex justify-between items-center pb-4 border-b bg-yellow-50 -mx-4 px-4 py-2 rounded">
+                        <span class="font-semibold text-yellow-800">
+                            <i class="fas fa-utensils mr-2"></i>Hora de Almuerzo
+                        </span>
+                        <span class="text-yellow-700">{{ landing_config.lunch_break_start }} - {{ landing_config.lunch_break_end }}</span>
+                    </div>
+                    {% endif %}
+                    
                     <div class="flex justify-between items-center pb-4 border-b">
                         <span class="font-semibold">Sábado</span>
-                        <span>10:00 AM - 2:00 PM</span>
+                        <span>
+                            {% if landing_config %}
+                                {{ landing_config.schedule_saturday_start }} - {{ landing_config.schedule_saturday_end }}
+                            {% else %}
+                                10:00 AM - 2:00 PM
+                            {% endif %}
+                        </span>
                     </div>
                     <div class="flex justify-between items-center">
                         <span class="font-semibold">Domingo</span>
-                        <span class="text-gray-500">Cerrado</span>
+                        {% if landing_config and not landing_config.schedule_sunday_closed %}
+                            <span>{{ landing_config.schedule_sunday_start }} - {{ landing_config.schedule_sunday_end }}</span>
+                        {% else %}
+                            <span class="text-gray-500">Cerrado</span>
+                        {% endif %}
                     </div>
                 </div>
             </div>

@@ -35,6 +35,11 @@ class LandingPageConfigForm(forms.ModelForm):
             'service_image_4', 'service_4_title', 'service_4_description',
             # Contacto
             'contact_title', 'contact_subtitle',
+            # Horarios de Atención
+            'schedule_weekday_start', 'schedule_weekday_end',
+            'schedule_saturday_start', 'schedule_saturday_end',
+            'schedule_sunday_closed', 'schedule_sunday_start', 'schedule_sunday_end',
+            'has_lunch_break', 'lunch_break_start', 'lunch_break_end',
             # Diseño y estilo
             'font_family', 'heading_font_size',
             'primary_button_color', 'secondary_button_color', 'button_border_radius', 'button_shadow',
@@ -249,5 +254,44 @@ class LandingPageConfigForm(forms.ModelForm):
             }),
             'show_stats': forms.CheckboxInput(attrs={
                 'class': 'form-checkbox h-5 w-5 text-blue-600'
+            }),
+            # Horarios
+            'schedule_weekday_start': forms.TextInput(attrs={
+                'class': 'form-input w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500',
+                'placeholder': '10:00 AM'
+            }),
+            'schedule_weekday_end': forms.TextInput(attrs={
+                'class': 'form-input w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500',
+                'placeholder': '7:00 PM'
+            }),
+            'schedule_saturday_start': forms.TextInput(attrs={
+                'class': 'form-input w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500',
+                'placeholder': '10:00 AM'
+            }),
+            'schedule_saturday_end': forms.TextInput(attrs={
+                'class': 'form-input w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500',
+                'placeholder': '2:00 PM'
+            }),
+            'schedule_sunday_start': forms.TextInput(attrs={
+                'class': 'form-input w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500',
+                'placeholder': '10:00 AM'
+            }),
+            'schedule_sunday_end': forms.TextInput(attrs={
+                'class': 'form-input w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500',
+                'placeholder': '2:00 PM'
+            }),
+            'schedule_sunday_closed': forms.CheckboxInput(attrs={
+                'class': 'form-checkbox h-5 w-5 text-blue-600'
+            }),
+            'has_lunch_break': forms.CheckboxInput(attrs={
+                'class': 'form-checkbox h-5 w-5 text-blue-600'
+            }),
+            'lunch_break_start': forms.TextInput(attrs={
+                'class': 'form-input w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500',
+                'placeholder': '12:00 PM'
+            }),
+            'lunch_break_end': forms.TextInput(attrs={
+                'class': 'form-input w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500',
+                'placeholder': '1:00 PM'
             }),
         }

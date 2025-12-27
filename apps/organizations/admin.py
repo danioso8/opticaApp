@@ -111,6 +111,15 @@ class LandingPageConfigAdmin(admin.ModelAdmin):
         ('Sección Contacto', {
             'fields': ('contact_title', 'contact_subtitle')
         }),
+        ('Horarios de Atención', {
+            'fields': (
+                'schedule_weekday_start', 'schedule_weekday_end',
+                'schedule_saturday_start', 'schedule_saturday_end',
+                'schedule_sunday_closed', 'schedule_sunday_start', 'schedule_sunday_end',
+                'has_lunch_break', 'lunch_break_start', 'lunch_break_end'
+            ),
+            'description': 'Configure los horarios de atención que se mostrarán en la landing page'
+        }),
         ('Botones', {
             'fields': ('primary_button_color', 'secondary_button_color', 'button_border_radius', 'button_shadow')
         }),

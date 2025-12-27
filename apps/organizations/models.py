@@ -832,6 +832,72 @@ class LandingPageConfig(models.Model):
         help_text='Color en formato hexadecimal (ej: #111827)'
     )
     
+    # Horarios de Atención
+    schedule_weekday_start = models.CharField(
+        max_length=10,
+        default='10:00 AM',
+        verbose_name='Hora de Inicio (Lunes-Viernes)',
+        help_text='Formato: 10:00 AM'
+    )
+    schedule_weekday_end = models.CharField(
+        max_length=10,
+        default='7:00 PM',
+        verbose_name='Hora de Fin (Lunes-Viernes)',
+        help_text='Formato: 7:00 PM'
+    )
+    schedule_saturday_start = models.CharField(
+        max_length=10,
+        default='10:00 AM',
+        verbose_name='Hora de Inicio (Sábado)',
+        help_text='Formato: 10:00 AM'
+    )
+    schedule_saturday_end = models.CharField(
+        max_length=10,
+        default='2:00 PM',
+        verbose_name='Hora de Fin (Sábado)',
+        help_text='Formato: 2:00 PM'
+    )
+    schedule_sunday_closed = models.BooleanField(
+        default=True,
+        verbose_name='Domingo Cerrado',
+        help_text='Marcar si el negocio cierra los domingos'
+    )
+    schedule_sunday_start = models.CharField(
+        max_length=10,
+        blank=True,
+        default='',
+        verbose_name='Hora de Inicio (Domingo)',
+        help_text='Formato: 10:00 AM (dejar vacío si está cerrado)'
+    )
+    schedule_sunday_end = models.CharField(
+        max_length=10,
+        blank=True,
+        default='',
+        verbose_name='Hora de Fin (Domingo)',
+        help_text='Formato: 2:00 PM (dejar vacío si está cerrado)'
+    )
+    
+    # Horario de Almuerzo
+    has_lunch_break = models.BooleanField(
+        default=False,
+        verbose_name='Cierra para Almorzar',
+        help_text='Marcar si el negocio cierra para almorzar'
+    )
+    lunch_break_start = models.CharField(
+        max_length=10,
+        blank=True,
+        default='12:00 PM',
+        verbose_name='Inicio del Almuerzo',
+        help_text='Formato: 12:00 PM'
+    )
+    lunch_break_end = models.CharField(
+        max_length=10,
+        blank=True,
+        default='1:00 PM',
+        verbose_name='Fin del Almuerzo',
+        help_text='Formato: 1:00 PM'
+    )
+    
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     
