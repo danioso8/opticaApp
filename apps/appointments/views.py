@@ -126,7 +126,10 @@ def available_dates(request):
             status=status.HTTP_404_NOT_FOUND
         )
     
-    today = timezone.now().date()
+    # Usar fecha local de Colombia en lugar de UTC
+    import pytz
+    local_tz = pytz.timezone('America/Bogota')
+    today = timezone.now().astimezone(local_tz).date()
     doctor_id = request.query_params.get('doctor_id')
     
     # Construir filtros

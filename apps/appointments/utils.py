@@ -58,8 +58,11 @@ def get_available_slots_for_date(date, organization=None, doctor_id=None):
     if BlockedDate.objects.filter(date=date, **org_filter).exists():
         return []
     
-    # Verificar si es fecha pasada
-    if date < timezone.now().date():
+    # Verificar si es fecha pasada (comparar con fecha local de Colombia)
+    import pytz
+    local_tz = pytz.timezone('America/Bogota')
+    current_date_local = timezone.now().astimezone(local_tz).date()
+    if date < current_date_local:
         return []
     
     # Primero verificar si hay horarios específicos para esta fecha
@@ -130,8 +133,10 @@ def get_available_slots_for_date(date, organization=None, doctor_id=None):
     from datetime import datetime
     import pytz
     local_tz = pytz.timezone('America/Bogota')
-    current_time = timezone.now().astimezone(local_tz).time()
-    is_today = date == timezone.now().date()
+    now_local = timezone.now().astimezone(local_tz)
+    current_time = now_local.time()
+    current_date = now_local.date()
+    is_today = date == current_date
     
     for slot in all_slots:
         # Si es hoy, solo mostrar horarios futuros
@@ -165,7 +170,10 @@ def get_available_dates(days_ahead=30, organization=None):
         return []
     
     from .models import SpecificDateSchedule
-    today = timezone.now().date()
+    # Usar fecha local de Colombia
+    import pytz
+    local_tz = pytz.timezone('America/Bogota')
+    today = timezone.now().astimezone(local_tz).date()
     dates = []
     org_filter = {'organization': organization} if organization else {}
     
