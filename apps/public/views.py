@@ -70,6 +70,14 @@ def booking(request, org_slug=None):
     colombia_tz = pytz.timezone(settings.TIME_ZONE)
     today = timezone.now().astimezone(colombia_tz).date()
     
+    # Si hay org_slug, filtrar por el owner de esa organización
+    owner_filter = {}
+    if org_slug:
+        from django.shortcuts import get_object_or_404
+        reference_org = get_object_or_404(Organization, slug=org_slug, is_active=True)
+        owner_filter = {'owner': reference_org.owner}
+        first_organization = reference_org
+    
     if request.user.is_authenticated:
         from apps.organizations.models import OrganizationMember
         
@@ -88,22 +96,21 @@ def booking(request, org_slug=None):
         
         available_organizations = Organization.objects.filter(
             id__in=orgs_with_schedules,
-            is_active=True
+            is_active=True,
+            **owner_filter  # Filtrar por owner si org_slug fue proporcionado
         ).order_by('name')
         
-        # Obtener primera organización del usuario
-        first_membership = OrganizationMember.objects.filter(
-            user=request.user,
-            is_active=True
-        ).select_related('organization').first()
-        
-        if first_membership:
-            first_organization = first_membership.organization
+        # Si no se proporcionó org_slug, obtener primera organización del usuario
+        if not first_organization:
+            first_membership = OrganizationMember.objects.filter(
+                user=request.user,
+                is_active=True
+            ).select_related('organization').first()
+            
+            if first_membership:
+                first_organization = first_membership.organization
     else:
         # Si no está autenticado, obtener todas las organizaciones públicas con horarios
-        from apps.appointments.models import SpecificDateSchedule
-        today = timezone.now().date()
-        
         orgs_with_schedules = SpecificDateSchedule.objects.filter(
             date__gte=today,
             is_active=True
@@ -111,18 +118,13 @@ def booking(request, org_slug=None):
         
         available_organizations = Organization.objects.filter(
             id__in=orgs_with_schedules,
-            is_active=True
+            is_active=True,
+            **owner_filter  # Filtrar por owner si org_slug fue proporcionado
         ).order_by('name')
     
-    # Si no hay organización del usuario autenticado, usar la del org_slug si existe
-    if not first_organization and org_slug:
-        try:
-            first_organization = Organization.objects.get(slug=org_slug, is_active=True)
-        except Organization.DoesNotExist:
-            first_organization = Organization.objects.filter(is_active=True).first()
-    elif not first_organization:
-        # Solo como último recurso, obtener la primera organización activa
-        first_organization = Organization.objects.filter(is_active=True).first()
+    # Si no hay organización, usar la primera disponible
+    if not first_organization:
+        first_organization = available_organizations.first()
     
     # Obtener configuración de la landing page
     landing_config = None
@@ -141,7 +143,7 @@ def booking(request, org_slug=None):
         available_doctors = Doctor.objects.filter(
             is_active=True,
             organization_id__in=org_ids
-        ).values('id', 'full_name')
+        ).values('id', 'full_name', 'organization_id')
     else:
         # Para usuarios no autenticados, mostrar doctores de organizaciones públicas
         if available_organizations.exists():
@@ -149,7 +151,7 @@ def booking(request, org_slug=None):
             available_doctors = Doctor.objects.filter(
                 is_active=True,
                 organization_id__in=org_ids
-            ).values('id', 'full_name')
+            ).values('id', 'full_name', 'organization_id')
         else:
             available_doctors = Doctor.objects.none()
     

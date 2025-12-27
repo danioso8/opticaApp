@@ -176,7 +176,7 @@
                                     class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition">
                                 <option value="">Todos los doctores</option>
                                 {% for doctor in available_doctors %}
-                                <option value="{{ doctor.id }}">Dr. {{ doctor.full_name }}</option>
+                                <option value="{{ doctor.id }}" data-organization-id="{{ doctor.organization_id }}">Dr. {{ doctor.full_name }}</option>
                                 {% endfor %}
                             </select>
                         </div>
@@ -358,6 +358,9 @@ document.addEventListener('DOMContentLoaded', function() {
     selectedOrganizationCity = '{{ available_organizations.first.city|default:''|escapejs }}';
     console.log('Auto-selected organization:', selectedOrganizationId);
     
+    // Filtrar doctores por la organización seleccionada
+    filterDoctorsByOrganization(selectedOrganizationId);
+    
     // Establecer currentStep en 2 y cargar fechas automáticamente
     currentStep = 2;
     loadAvailableDates(selectedOrganizationId);
@@ -407,8 +410,52 @@ function selectOrganization(orgId, orgName, neighborhood, city) {
     });
     event.target.closest('.org-option').classList.add('border-blue-500', 'bg-blue-50');
     
+    // Filtrar doctores por organización seleccionada
+    filterDoctorsByOrganization(orgId);
+    
     // Enable next button
     document.getElementById('btnStep1').disabled = false;
+}
+
+function filterDoctorsByOrganization(orgId) {
+    const doctorSelect = document.getElementById('doctorSelect');
+    if (!doctorSelect) return;
+    
+    const options = doctorSelect.querySelectorAll('option');
+    let hasVisibleDoctors = false;
+    
+    options.forEach(option => {
+        if (option.value === '') {
+            // Mantener la opción "Todos los doctores"
+            option.style.display = '';
+            return;
+        }
+        
+        const doctorOrgId = option.getAttribute('data-organization-id');
+        if (doctorOrgId === String(orgId)) {
+            option.style.display = '';
+            hasVisibleDoctors = true;
+        } else {
+            option.style.display = 'none';
+        }
+    });
+    
+    // Resetear selección si el doctor actual no pertenece a la org seleccionada
+    if (doctorSelect.value) {
+        const selectedOption = doctorSelect.querySelector(`option[value="${doctorSelect.value}"]`);
+        if (selectedOption && selectedOption.style.display === 'none') {
+            doctorSelect.value = '';
+            selectedDoctorId = null;
+            document.getElementById('selectedDoctor').value = '';
+        }
+    }
+    
+    // Si no hay doctores para esta organización, ocultar el selector
+    if (!hasVisibleDoctors) {
+        doctorSelect.closest('.mb-6').style.display = 'none';
+    } else {
+        doctorSelect.closest('.mb-6').style.display = '';
+    }
 }
 
 function selectDoctor(doctorId) {
