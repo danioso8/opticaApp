@@ -59,7 +59,8 @@
 
     <!-- Filtros y Búsqueda -->
     <div class="bg-white rounded-lg shadow-md p-6 mb-6">
-        <form method="get" class="grid grid-cols-1 md:grid-cols-5 gap-4">
+        <form method="get" class="space-y-4">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-2">Buscar</label>
                 <input type="text" name="search" value="{{ search }}" placeholder="Nombre, código..." 
@@ -95,18 +96,19 @@
                     <option value="agotado" {% if stock == 'agotado' %}selected{% endif %}>Agotados</option>
                 </select>
             </div>
-            <div class="flex items-end gap-2">
-                <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded-md transition">
+            </div>
+            <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 pt-2">
+                <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded-md transition w-full sm:w-auto">
                     <i class="fas fa-search mr-2"></i>Buscar
                 </button>
-                <a href="{% url 'billing:product_create' %}" class="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-md transition whitespace-nowrap">
+                <a href="{% url 'billing:product_create' %}" class="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-md transition whitespace-nowrap text-center w-full sm:w-auto">
                     <i class="fas fa-plus mr-2"></i>Nuevo
                 </a>
-                <div class="flex border-2 border-gray-400 rounded-md overflow-hidden shadow-sm">
-                    <button type="button" onclick="setView('cards')" id="view-cards" class="px-4 py-2 bg-indigo-600 text-white hover:bg-indigo-700 transition font-medium">
+                <div class="flex border-2 border-gray-400 rounded-md overflow-hidden shadow-sm w-full sm:w-auto">
+                    <button type="button" onclick="setView('cards')" id="view-cards" class="px-4 py-2 bg-indigo-600 text-white hover:bg-indigo-700 transition font-medium flex-1 sm:flex-none">
                         <i class="fas fa-th text-lg"></i>
                     </button>
-                    <button type="button" onclick="setView('list')" id="view-list" class="px-4 py-2 bg-white text-gray-700 hover:bg-gray-100 transition border-l-2 border-gray-400 font-medium">
+                    <button type="button" onclick="setView('list')" id="view-list" class="px-4 py-2 bg-white text-gray-700 hover:bg-gray-100 transition border-l-2 border-gray-400 font-medium flex-1 sm:flex-none">
                         <i class="fas fa-list text-lg"></i>
                     </button>
                 </div>

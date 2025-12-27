@@ -1901,17 +1901,22 @@ def doctors_list(request):
     from apps.patients.models import Doctor
     from apps.organizations.models import OrganizationMember
     
-    # Obtener la organización del usuario
-    try:
-        org_member = OrganizationMember.objects.filter(user=request.user).first()
+    # Obtener la organización del usuario desde el middleware
+    organization = request.organization
+    
+    if not organization:
+        # Si no hay organización del middleware, buscar la primera activa
+        org_member = OrganizationMember.objects.filter(
+            user=request.user,
+            is_active=True,
+            organization__is_active=True
+        ).first()
+        
         if not org_member:
             messages.error(request, 'No tienes una organización asignada')
             return redirect('dashboard:home')
         
         organization = org_member.organization
-    except Exception as e:
-        messages.error(request, f'Error al obtener organización: {str(e)}')
-        return redirect('dashboard:home')
     
     # Obtener doctores de la organización
     doctors = Doctor.objects.filter(
@@ -1933,17 +1938,25 @@ def doctor_detail(request, pk):
     from apps.patients.models import Doctor
     from apps.organizations.models import OrganizationMember
     
-    # Obtener la organización del usuario
-    org_member = OrganizationMember.objects.filter(user=request.user).first()
-    if not org_member:
-        messages.error(request, 'No tienes una organización asignada')
-        return redirect('dashboard:home')
+    # Obtener la organización del usuario desde el middleware
+    organization = request.organization
+    
+    if not organization:
+        org_member = OrganizationMember.objects.filter(
+            user=request.user,
+            is_active=True,
+            organization__is_active=True
+        ).first()
+        if not org_member:
+            messages.error(request, 'No tienes una organización asignada')
+            return redirect('dashboard:home')
+        organization = org_member.organization
     
     # Obtener el doctor
     doctor = get_object_or_404(
         Doctor,
         pk=pk,
-        organization=org_member.organization
+        organization=organization
     )
     
     context = {
@@ -1959,17 +1972,25 @@ def doctor_create(request):
     from apps.patients.models import Doctor
     from apps.organizations.models import OrganizationMember
     
-    # Obtener la organización del usuario
-    org_member = OrganizationMember.objects.filter(user=request.user).first()
-    if not org_member:
-        messages.error(request, 'No tienes una organización asignada')
-        return redirect('dashboard:home')
+    # Obtener la organización del usuario desde el middleware
+    organization = request.organization
+    
+    if not organization:
+        org_member = OrganizationMember.objects.filter(
+            user=request.user,
+            is_active=True,
+            organization__is_active=True
+        ).first()
+        if not org_member:
+            messages.error(request, 'No tienes una organización asignada')
+            return redirect('dashboard:home')
+        organization = org_member.organization
     
     if request.method == 'POST':
         try:
             # Crear el doctor
             doctor = Doctor(
-                organization=org_member.organization,
+                organization=organization,
                 full_name=request.POST.get('full_name'),
                 identification_type=request.POST.get('identification_type', 'CC'),
                 identification=request.POST.get('identification'),
@@ -2021,17 +2042,25 @@ def doctor_edit(request, pk):
     from apps.patients.models import Doctor
     from apps.organizations.models import OrganizationMember
     
-    # Obtener la organización del usuario
-    org_member = OrganizationMember.objects.filter(user=request.user).first()
-    if not org_member:
-        messages.error(request, 'No tienes una organización asignada')
-        return redirect('dashboard:home')
+    # Obtener la organización del usuario desde el middleware
+    organization = request.organization
+    
+    if not organization:
+        org_member = OrganizationMember.objects.filter(
+            user=request.user,
+            is_active=True,
+            organization__is_active=True
+        ).first()
+        if not org_member:
+            messages.error(request, 'No tienes una organización asignada')
+            return redirect('dashboard:home')
+        organization = org_member.organization
     
     # Obtener el doctor
     doctor = get_object_or_404(
         Doctor,
         pk=pk,
-        organization=org_member.organization
+        organization=organization
     )
     
     if request.method == 'POST':
@@ -2094,17 +2123,25 @@ def doctor_delete(request, pk):
     from apps.organizations.models import OrganizationMember
     
     if request.method == 'POST':
-        # Obtener la organización del usuario
-        org_member = OrganizationMember.objects.filter(user=request.user).first()
-        if not org_member:
-            messages.error(request, 'No tienes una organización asignada')
-            return redirect('dashboard:home')
+        # Obtener la organización del usuario desde el middleware
+        organization = request.organization
+        
+        if not organization:
+            org_member = OrganizationMember.objects.filter(
+                user=request.user,
+                is_active=True,
+                organization__is_active=True
+            ).first()
+            if not org_member:
+                messages.error(request, 'No tienes una organización asignada')
+                return redirect('dashboard:home')
+            organization = org_member.organization
         
         # Obtener el doctor
         doctor = get_object_or_404(
             Doctor,
             pk=pk,
-            organization=org_member.organization
+            organization=organization
         )
         
         try:

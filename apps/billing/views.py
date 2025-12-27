@@ -13,6 +13,22 @@ from apps.patients.models import Patient
 from .models import DianConfiguration, Invoice, InvoiceItem, Payment, Supplier, InvoiceProduct, InvoiceConfiguration
 
 
+def get_user_organization(request):
+    """Helper para obtener la organización del usuario desde el middleware"""
+    organization = request.organization if hasattr(request, 'organization') else None
+    
+    if not organization:
+        org_member = OrganizationMember.objects.filter(
+            user=request.user,
+            is_active=True,
+            organization__is_active=True
+        ).first()
+        if org_member:
+            organization = org_member.organization
+    
+    return organization
+
+
 @login_required
 def dian_configuration_view(request):
     """
@@ -21,12 +37,10 @@ def dian_configuration_view(request):
     Solo para usuarios con plan Profesional o Empresarial.
     """
     # Obtener organización del usuario
-    org_member = OrganizationMember.objects.filter(user=request.user).first()
-    if not org_member:
+    organization = get_user_organization(request)
+    if not organization:
         messages.error(request, 'No tienes una organización asignada')
         return redirect('dashboard:home')
-    
-    organization = org_member.organization
     
     # Verificar si el plan permite facturación electrónica
     can_use, message = Invoice.puede_crear_factura_electronica(organization)
@@ -818,12 +832,10 @@ def supplier_delete(request, supplier_id):
 @login_required
 def product_list(request):
     """Lista de productos"""
-    org_member = OrganizationMember.objects.filter(user=request.user).first()
-    if not org_member:
+    organization = get_user_organization(request)
+    if not organization:
         messages.error(request, 'No tienes una organización asignada')
         return redirect('dashboard:home')
-    
-    organization = org_member.organization
     
     # Filtros
     categoria = request.GET.get('categoria', '')
@@ -894,12 +906,10 @@ def product_list(request):
 @login_required
 def product_create(request):
     """Crear nuevo producto"""
-    org_member = OrganizationMember.objects.filter(user=request.user).first()
-    if not org_member:
+    organization = get_user_organization(request)
+    if not organization:
         messages.error(request, 'No tienes una organización asignada')
         return redirect('dashboard:home')
-    
-    organization = org_member.organization
     
     if request.method == 'POST':
         try:
@@ -962,12 +972,11 @@ def product_create(request):
 @login_required
 def product_edit(request, product_id):
     """Editar producto"""
-    org_member = OrganizationMember.objects.filter(user=request.user).first()
-    if not org_member:
+    organization = get_user_organization(request)
+    if not organization:
         messages.error(request, 'No tienes una organización asignada')
         return redirect('dashboard:home')
     
-    organization = org_member.organization
     product = get_object_or_404(InvoiceProduct, id=product_id, organization=organization)
     
     if request.method == 'POST':
@@ -1546,3 +1555,4 @@ def invoice_pdf(request, invoice_id):
     response.write(pdf)
     
     return response
+

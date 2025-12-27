@@ -131,8 +131,14 @@ def booking(request, org_slug=None):
             is_active=True
         ).order_by('name')
     
-    # Si no hay organización del usuario autenticado, obtener la primera organización activa
-    if not first_organization:
+    # Si no hay organización del usuario autenticado, usar la del org_slug si existe
+    if not first_organization and org_slug:
+        try:
+            first_organization = Organization.objects.get(slug=org_slug, is_active=True)
+        except Organization.DoesNotExist:
+            first_organization = Organization.objects.filter(is_active=True).first()
+    elif not first_organization:
+        # Solo como último recurso, obtener la primera organización activa
         first_organization = Organization.objects.filter(is_active=True).first()
     
     # Obtener configuración de la landing page
@@ -170,6 +176,7 @@ def booking(request, org_slug=None):
         'available_doctors': available_doctors,
         'organization_data': first_organization,
         'landing_config': landing_config,
+        'org_slug': org_slug,  # Pasar org_slug al contexto
     }
     
     return render(request, 'public/booking.html', context)
