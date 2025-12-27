@@ -58,37 +58,20 @@ def booking(request, org_slug=None):
     from apps.organizations.models import Organization, LandingPageConfig
     from django.contrib.auth.models import Group
     
-    # Si el usuario está autenticado, obtener solo SUS organizaciones
+    # Obtener todas las organizaciones con horarios disponibles
     first_organization = None
     available_organizations = Organization.objects.none()
     
-    # Si se proporciona org_slug, filtrar solo esa organización
-    if org_slug:
-        from django.shortcuts import get_object_or_404
-        from apps.appointments.models import SpecificDateSchedule
-        today = timezone.now().date()
-        
-        # Obtener la organización específica
-        specific_org = get_object_or_404(Organization, slug=org_slug, is_active=True)
-        
-        # Verificar que tenga horarios configurados
-        has_schedules = SpecificDateSchedule.objects.filter(
-            date__gte=today,
-            is_active=True,
-            organization=specific_org
-        ).exists()
-        
-        if has_schedules:
-            available_organizations = Organization.objects.filter(id=specific_org.id)
-            first_organization = specific_org
-        else:
-            # Si no tiene horarios, mostrar lista vacía
-            available_organizations = Organization.objects.none()
-            first_organization = specific_org
-    elif request.user.is_authenticated:
+    from apps.appointments.models import SpecificDateSchedule
+    import pytz
+    from django.conf import settings
+    
+    # Obtener fecha local de Colombia
+    colombia_tz = pytz.timezone(settings.TIME_ZONE)
+    today = timezone.now().astimezone(colombia_tz).date()
+    
+    if request.user.is_authenticated:
         from apps.organizations.models import OrganizationMember
-        from apps.appointments.models import SpecificDateSchedule
-        today = timezone.now().date()
         
         # Obtener organizaciones del usuario que tienen horarios configurados
         user_org_ids = OrganizationMember.objects.filter(
@@ -117,7 +100,7 @@ def booking(request, org_slug=None):
         if first_membership:
             first_organization = first_membership.organization
     else:
-        # Si no está autenticado, obtener todas las organizaciones públicas
+        # Si no está autenticado, obtener todas las organizaciones públicas con horarios
         from apps.appointments.models import SpecificDateSchedule
         today = timezone.now().date()
         
