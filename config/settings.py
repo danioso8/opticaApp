@@ -91,6 +91,9 @@ MIDDLEWARE = [
     'apps.organizations.middleware.TenantMiddleware',  # Multi-tenant support
     'apps.users.email_verification_middleware.EmailVerificationMiddleware',  # Email verification
     'apps.organizations.middleware.SubscriptionMiddleware',  # Subscription validation
+    'apps.organizations.middleware.PlanLimitsMiddleware',  # Plan limits and info
+    'apps.organizations.middleware.PlanFeatureMiddleware',  # Feature access control
+    'apps.organizations.middleware.LimitEnforcementMiddleware',  # Resource creation limits
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
@@ -317,3 +320,8 @@ WOMPI_EVENTS_SECRET = config('WOMPI_EVENTS_SECRET', default='prod_events_cmDhDmW
 WOMPI_INTEGRITY_SECRET = config('WOMPI_INTEGRITY_SECRET', default='prod_integrity_YW2t43XJOhLUAOONX5u6U8AO5sEosmTT')
 WOMPI_BASE_URL = config('WOMPI_BASE_URL', default='https://production.wompi.co/v1')
 WOMPI_TEST_MODE = config('WOMPI_TEST_MODE', default=False, cast=bool)
+
+# ==================== CURRENCY CONFIGURATION ====================
+# Tasa de cambio USD a COP (actualizar según necesites)
+USD_TO_COP_RATE = config('USD_TO_COP_RATE', default=4000.00, cast=float)
+CURRENCY_DISPLAY = config('CURRENCY_DISPLAY', default='COP')  # COP, USD, BOTH

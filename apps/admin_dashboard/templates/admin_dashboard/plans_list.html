@@ -21,13 +21,33 @@
         {% if plan.is_active %}border-indigo-200{% else %}border-gray-200{% endif %}">
         <div class="p-6">
             <div class="flex justify-between items-start mb-4">
-                <h3 class="text-xl font-bold text-gray-800">{{ plan.name }}</h3>
+                <div class="flex-1">
+                    <h3 class="text-xl font-bold text-gray-800">{{ plan.name }}</h3>
+                    {% if plan.plan_badge %}
+                    <span class="inline-block mt-1 px-2 py-1 text-xs font-bold rounded-full bg-gradient-to-r from-yellow-400 to-orange-500 text-white">
+                        ⭐ {{ plan.plan_badge }}
+                    </span>
+                    {% endif %}
+                </div>
                 <span class="px-2 py-1 text-xs font-semibold rounded-full 
                     {% if plan.is_active %}bg-green-100 text-green-800
                     {% else %}bg-gray-100 text-gray-800{% endif %}">
                     {% if plan.is_active %}Activo{% else %}Inactivo{% endif %}
                 </span>
             </div>
+            
+            {% if plan.ideal_for %}
+            <p class="text-gray-600 text-sm mb-2">
+                <i class="fas fa-bullseye text-indigo-500 mr-1"></i>
+                <strong>Ideal para:</strong> {{ plan.ideal_for }}
+            </p>
+            {% endif %}
+            
+            {% if plan.coverage_description %}
+            <p class="text-gray-600 text-xs mb-4 italic border-l-2 border-indigo-300 pl-2">
+                {{ plan.coverage_description }}
+            </p>
+            {% endif %}
             
             <p class="text-gray-600 text-sm mb-4">Para {{ plan.get_plan_type_display }}</p>
             
@@ -42,26 +62,34 @@
             </div>
             
             <div class="space-y-2 mb-6 text-sm">
+                <!-- Landing Page (siempre incluida) -->
+                {% if plan.includes_landing_page %}
+                <div class="flex items-center text-emerald-700 bg-emerald-50 px-2 py-1 rounded">
+                    <i class="fas fa-check-circle text-emerald-600 w-5 mr-2"></i>
+                    <span><strong>Landing Page incluida</strong></span>
+                </div>
+                {% endif %}
+                
                 <!-- Límites principales -->
                 <div class="flex items-center text-gray-700">
                     <i class="fas fa-building text-indigo-600 w-5 mr-2"></i>
-                    <span><strong>{% if plan.max_users >= 999999 %}∞{% else %}{{ plan.max_users }}{% endif %}</strong> organizaciones</span>
+                    <span><strong>{{ plan.get_max_organizations_display }}</strong> organizaciones</span>
                 </div>
                 <div class="flex items-center text-gray-700">
                     <i class="fas fa-users text-blue-600 w-5 mr-2"></i>
-                    <span><strong>{% if plan.max_users >= 999999 %}∞{% else %}{{ plan.max_users }}{% endif %}</strong> usuarios</span>
+                    <span><strong>{{ plan.get_max_users_display }}</strong> usuarios</span>
                 </div>
                 <div class="flex items-center text-gray-700">
                     <i class="fas fa-calendar-check text-green-600 w-5 mr-2"></i>
-                    <span><strong>{% if plan.max_appointments_month >= 999999 %}∞{% else %}{{ plan.max_appointments_month }}{% endif %}</strong> citas/mes</span>
+                    <span><strong>{{ plan.get_max_appointments_display }}</strong></span>
                 </div>
                 <div class="flex items-center text-gray-700">
                     <i class="fas fa-user-injured text-teal-600 w-5 mr-2"></i>
-                    <span><strong>{% if plan.max_patients >= 999999 %}∞{% else %}{{ plan.max_patients }}{% endif %}</strong> pacientes</span>
+                    <span><strong>{{ plan.get_max_patients_display }}</strong> pacientes</span>
                 </div>
                 <div class="flex items-center text-gray-700">
                     <i class="fas fa-database text-purple-600 w-5 mr-2"></i>
-                    <span><strong>{{ plan.max_storage_mb }} MB</strong> almacenamiento</span>
+                    <span><strong>{{ plan.get_max_storage_display }}</strong> almacenamiento</span>
                 </div>
                 
                 <!-- Facturación Electrónica -->

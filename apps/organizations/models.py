@@ -99,6 +99,87 @@ class SubscriptionPlan(models.Model):
         verbose_name='Módulos/Características'
     )
     
+    # ========== NUEVOS CAMPOS DE MARKETING Y DESCRIPCIÓN ==========
+    
+    # Descripción y posicionamiento
+    coverage_description = models.TextField(
+        blank=True,
+        verbose_name='Descripción de Cobertura',
+        help_text='Describe qué tipo de negocio es ideal para este plan. Ej: "Perfecto para ópticas pequeñas en crecimiento"'
+    )
+    
+    ideal_for = models.CharField(
+        max_length=200,
+        blank=True,
+        verbose_name='Ideal Para',
+        help_text='Target del plan. Ej: "Ópticas pequeñas con 2-3 empleados"'
+    )
+    
+    plan_badge = models.CharField(
+        max_length=50,
+        blank=True,
+        verbose_name='Etiqueta/Badge',
+        help_text='Ej: "MÁS POPULAR", "RECOMENDADO", "MEJOR VALOR"'
+    )
+    
+    # Características destacadas y beneficios
+    highlighted_features = models.TextField(
+        blank=True,
+        verbose_name='Características Destacadas',
+        help_text='Lista de características principales, una por línea. Estas se mostrarán como bullets.'
+    )
+    
+    main_benefits = models.TextField(
+        blank=True,
+        verbose_name='Beneficios Principales',
+        help_text='Beneficios clave del plan, uno por línea'
+    )
+    
+    additional_features = models.TextField(
+        blank=True,
+        verbose_name='Características Adicionales',
+        help_text='Otras características no listadas en los campos booleanos, una por línea'
+    )
+    
+    # Landing page (todos los planes la incluyen)
+    includes_landing_page = models.BooleanField(
+        default=True,
+        verbose_name='Incluye Landing Page',
+        help_text='Todos los planes incluyen landing page personalizable'
+    )
+    
+    # Almacenamiento ilimitado (para plan enterprise)
+    unlimited_storage = models.BooleanField(
+        default=False,
+        verbose_name='Almacenamiento Ilimitado',
+        help_text='Si está activo, ignora el límite de max_storage_mb'
+    )
+    
+    # Campos para controlar límites ilimitados
+    unlimited_users = models.BooleanField(
+        default=False,
+        verbose_name='Usuarios Ilimitados',
+        help_text='Si está activo, ignora max_users'
+    )
+    
+    unlimited_appointments = models.BooleanField(
+        default=False,
+        verbose_name='Citas Ilimitadas',
+        help_text='Si está activo, ignora max_appointments_month'
+    )
+    
+    unlimited_patients = models.BooleanField(
+        default=False,
+        verbose_name='Pacientes Ilimitados',
+        help_text='Si está activo, ignora max_patients'
+    )
+    
+    unlimited_organizations = models.BooleanField(
+        default=False,
+        verbose_name='Organizaciones Ilimitadas',
+        help_text='Si está activo, ignora max_organizations'
+    )
+    
     is_active = models.BooleanField(default=True, verbose_name='Activo')
     created_at = models.DateTimeField(auto_now_add=True)
     
@@ -113,6 +194,68 @@ class SubscriptionPlan(models.Model):
     def has_feature(self, feature_code):
         """Verifica si el plan tiene un módulo específico"""
         return self.features.filter(code=feature_code, is_active=True).exists()
+    
+    def get_max_users_display(self):
+        """Retorna el límite de usuarios o 'Ilimitado'"""
+        return 'Ilimitado' if self.unlimited_users else self.max_users
+    
+    def get_max_appointments_display(self):
+        """Retorna el límite de citas o 'Ilimitado'"""
+        return 'Ilimitado' if self.unlimited_appointments else f"{self.max_appointments_month}/mes"
+    
+    def get_max_patients_display(self):
+        """Retorna el límite de pacientes o 'Ilimitado'"""
+        return 'Ilimitado' if self.unlimited_patients else self.max_patients
+    
+    def get_max_storage_display(self):
+        """Retorna el límite de almacenamiento o 'Ilimitado'"""
+        return 'Ilimitado' if self.unlimited_storage else f"{self.max_storage_mb} MB"
+    
+    def get_max_organizations_display(self):
+        """Retorna el límite de organizaciones o 'Ilimitado'"""
+        return 'Ilimitado' if self.unlimited_organizations else self.max_organizations
+    
+    def get_highlighted_features_list(self):
+        """Retorna las características destacadas como lista"""
+        if not self.highlighted_features:
+            return []
+        return [f.strip() for f in self.highlighted_features.split('\n') if f.strip()]
+    
+    def get_main_benefits_list(self):
+        """Retorna los beneficios principales como lista"""
+        if not self.main_benefits:
+            return []
+        return [b.strip() for b in self.main_benefits.split('\n') if b.strip()]
+    
+    def check_limit_reached(self, limit_type, current_count):
+        """
+        Verifica si se ha alcanzado un límite del plan
+        
+        Args:
+            limit_type: 'users', 'appointments', 'patients', 'storage', 'organizations', 'invoices'
+            current_count: Cantidad actual
+            
+        Returns:
+            tuple: (limit_reached: bool, max_allowed: int or 'unlimited')
+        """
+        limit_map = {
+            'users': (self.unlimited_users, self.max_users),
+            'appointments': (self.unlimited_appointments, self.max_appointments_month),
+            'patients': (self.unlimited_patients, self.max_patients),
+            'storage': (self.unlimited_storage, self.max_storage_mb),
+            'organizations': (self.unlimited_organizations, self.max_organizations),
+            'invoices': (self.max_invoices_month == 0, self.max_invoices_month),
+        }
+        
+        if limit_type not in limit_map:
+            return False, 0
+        
+        is_unlimited, max_value = limit_map[limit_type]
+        
+        if is_unlimited:
+            return False, 'unlimited'
+        
+        return current_count >= max_value, max_value
 
 
 class Organization(models.Model):

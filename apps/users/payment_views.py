@@ -16,6 +16,7 @@ import json
 import uuid
 
 from apps.organizations.models import SubscriptionPlan
+from apps.organizations.currency_utils import usd_to_cop, usd_to_cop_cents, format_cop
 from .models import UserSubscription, PaymentMethod, Transaction, SubscriptionRenewalLog
 from .wompi_service import wompi_service
 from datetime import timedelta
@@ -29,14 +30,18 @@ def subscription_checkout(request, plan_id):
     # Determinar el ciclo de facturación (por defecto mensual)
     billing_cycle = request.GET.get('cycle', 'monthly')
     
-    # Calcular el monto
+    # Calcular el monto en USD
     if billing_cycle == 'yearly':
-        amount = plan.price_yearly
+        amount_usd = plan.price_yearly
     else:
-        amount = plan.price_monthly
+        amount_usd = plan.price_monthly
+    
+    # Convertir a COP para mostrar y cobrar
+    amount_cop = usd_to_cop(amount_usd)
+    amount_cop_cents = usd_to_cop_cents(amount_usd)  # Para Wompi
     
     # SI ES PLAN FREE ($0), ACTIVAR DIRECTAMENTE SIN PEDIR TARJETA
-    if amount == 0 or plan.plan_type == 'free':
+    if amount_usd == 0 or plan.plan_type == 'free':
         # Activar suscripción gratuita inmediatamente
         from apps.organizations.models import OrganizationMember
         
@@ -69,7 +74,9 @@ def subscription_checkout(request, plan_id):
     context = {
         'plan': plan,
         'billing_cycle': billing_cycle,
-        'amount': amount,
+        'amount': amount_cop,  # Monto en COP para mostrar
+        'amount_usd': amount_usd,  # Monto en USD para referencia
+        'amount_cop_cents': amount_cop_cents,  # Para Wompi (centavos)
         'payment_methods': payment_methods,
         'wompi_public_key': settings.WOMPI_PUBLIC_KEY,
     }
@@ -108,13 +115,15 @@ def process_subscription_payment(request, plan_id):
         
         payment_method_id = payment_method.id
     
-    # Calcular monto
+    # Calcular monto en USD y convertir a COP
     if billing_cycle == 'yearly':
-        amount = plan.price_yearly
+        amount_usd = plan.price_yearly
     else:
-        amount = plan.price_monthly
+        amount_usd = plan.price_monthly
     
-    amount_in_cents = int(amount * 100)
+    # Convertir a COP centavos para Wompi
+    amount_in_cents = usd_to_cop_cents(amount_usd)
+    amount_cop = usd_to_cop(amount_usd)
     
     # Generar referencia única
     reference = f"SUB-{request.user.id}-{plan.id}-{uuid.uuid4().hex[:8]}"
@@ -145,7 +154,7 @@ def process_subscription_payment(request, plan_id):
             
             user_subscription.is_active = True
             user_subscription.payment_status = 'paid'
-            user_subscription.amount_paid = amount
+            user_subscription.amount_paid = amount_usd  # Guardar USD en base de datos
             user_subscription.save()
             
         except UserSubscription.DoesNotExist:
@@ -163,14 +172,14 @@ def process_subscription_payment(request, plan_id):
                 end_date=end_date,
                 is_active=True,
                 payment_status='paid',
-                amount_paid=amount
+                amount_paid=amount_usd  # Guardar USD en base de datos
             )
         
         # Asociar transacción con suscripción
         transaction.subscription = user_subscription
         transaction.save()
         
-        messages.success(request, '¡Pago procesado exitosamente! Tu suscripción está activa.')
+        messages.success(request, f'¡Pago procesado exitosamente por {format_cop(amount_cop)}! Tu suscripción está activa.')
         return redirect('users:subscription_success', transaction_id=transaction.id)
     else:
         messages.error(request, f'Error al procesar el pago: {error}')

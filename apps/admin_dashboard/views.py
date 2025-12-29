@@ -509,6 +509,21 @@ def plan_create(request):
         analytics = request.POST.get('analytics') == '1'
         multi_location = request.POST.get('multi_location') == '1'
         
+        # Nuevos campos de marketing
+        coverage_description = request.POST.get('coverage_description', '')
+        ideal_for = request.POST.get('ideal_for', '')
+        plan_badge = request.POST.get('plan_badge', '')
+        highlighted_features = request.POST.get('highlighted_features', '')
+        main_benefits = request.POST.get('main_benefits', '')
+        additional_features = request.POST.get('additional_features', '')
+        
+        # Nuevos campos de límites ilimitados
+        unlimited_users = request.POST.get('unlimited_users') == '1'
+        unlimited_patients = request.POST.get('unlimited_patients') == '1'
+        unlimited_appointments = request.POST.get('unlimited_appointments') == '1'
+        unlimited_organizations = request.POST.get('unlimited_organizations') == '1'
+        unlimited_storage = request.POST.get('unlimited_storage') == '1'
+        
         # Módulos seleccionados
         selected_features = request.POST.getlist('features')
         
@@ -528,6 +543,20 @@ def plan_create(request):
             priority_support=priority_support,
             analytics=analytics,
             multi_location=multi_location,
+            # Nuevos campos de marketing
+            coverage_description=coverage_description,
+            ideal_for=ideal_for,
+            plan_badge=plan_badge,
+            highlighted_features=highlighted_features,
+            main_benefits=main_benefits,
+            additional_features=additional_features,
+            includes_landing_page=True,
+            # Nuevos campos de límites ilimitados
+            unlimited_users=unlimited_users,
+            unlimited_patients=unlimited_patients,
+            unlimited_appointments=unlimited_appointments,
+            unlimited_organizations=unlimited_organizations,
+            unlimited_storage=unlimited_storage,
             is_active=is_active,
         )
         
@@ -592,6 +621,22 @@ def plan_edit(request, plan_id):
         plan.priority_support = request.POST.get('priority_support') == '1'
         plan.analytics = request.POST.get('analytics') == '1'
         plan.multi_location = request.POST.get('multi_location') == '1'
+        
+        # NUEVOS CAMPOS DE MARKETING
+        plan.coverage_description = request.POST.get('coverage_description', '')
+        plan.ideal_for = request.POST.get('ideal_for', '')
+        plan.plan_badge = request.POST.get('plan_badge', '')
+        plan.highlighted_features = request.POST.get('highlighted_features', '')
+        plan.main_benefits = request.POST.get('main_benefits', '')
+        plan.additional_features = request.POST.get('additional_features', '')
+        plan.includes_landing_page = True  # Siempre True por defecto
+        
+        # NUEVOS CAMPOS DE LÍMITES ILIMITADOS
+        plan.unlimited_users = request.POST.get('unlimited_users') == '1'
+        plan.unlimited_patients = request.POST.get('unlimited_patients') == '1'
+        plan.unlimited_appointments = request.POST.get('unlimited_appointments') == '1'
+        plan.unlimited_organizations = request.POST.get('unlimited_organizations') == '1'
+        plan.unlimited_storage = request.POST.get('unlimited_storage') == '1'
         
         plan.is_active = request.POST.get('is_active') == 'on'
         

@@ -193,7 +193,15 @@ def organization_switch(request, org_id):
 @login_required
 def subscription_plans(request):
     """Mostrar planes de suscripción disponibles"""
+    from .currency_utils import get_plan_prices_display
+    
     plans = SubscriptionPlan.objects.filter(is_active=True).order_by('price_monthly')
+    
+    # Agregar precios COP a cada plan
+    plans_with_prices = []
+    for plan in plans:
+        plan.cop_prices = get_plan_prices_display(plan)
+        plans_with_prices.append(plan)
     
     # Obtener suscripción actual del usuario
     current_subscription = None
@@ -210,7 +218,7 @@ def subscription_plans(request):
         pass
     
     context = {
-        'plans': plans,
+        'plans': plans_with_prices,
         'current_subscription': current_subscription,
         'has_unlimited_access': has_unlimited_access,
         'is_highest_plan': is_highest_plan,
@@ -399,7 +407,15 @@ def user_register(request):
     if request.user.is_authenticated:
         return redirect('dashboard:home')
     
+    from .currency_utils import get_plan_prices_display
+    
     plans = SubscriptionPlan.objects.filter(is_active=True).order_by('price_monthly')
+    
+    # Agregar precios en COP a cada plan
+    plans_with_prices = []
+    for plan in plans:
+        plan.cop_prices = get_plan_prices_display(plan)
+        plans_with_prices.append(plan)
     
     if request.method == 'POST':
         # Datos del usuario
@@ -435,7 +451,7 @@ def user_register(request):
             for error in errors:
                 messages.error(request, error)
             context = {
-                'plans': plans,
+                'plans': plans_with_prices,
                 'form_data': request.POST,
             }
             return render(request, 'organizations/user_register.html', context)
@@ -498,6 +514,6 @@ def user_register(request):
             messages.error(request, f'Error al crear la cuenta: {str(e)}')
     
     context = {
-        'plans': plans,
+        'plans': plans_with_prices,
     }
     return render(request, 'organizations/user_register.html', context)

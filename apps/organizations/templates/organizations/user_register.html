@@ -27,6 +27,7 @@
             height: 100%;
             position: relative;
             background: white;
+            overflow: visible;
         }
         
         .plan-card:hover {
@@ -39,6 +40,22 @@
             border-color: #6366f1;
             background: linear-gradient(135deg, rgba(99, 102, 241, 0.05) 0%, rgba(168, 85, 247, 0.05) 100%);
             box-shadow: 0 10px 30px rgba(99, 102, 241, 0.2);
+        }
+        
+        /* Badge destacado superior */
+        .plan-highlight-badge {
+            position: absolute;
+            top: -12px;
+            right: 10px;
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            color: white;
+            padding: 0.4rem 1rem;
+            border-radius: 20px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            box-shadow: 0 4px 12px rgba(245, 158, 11, 0.4);
+            z-index: 10;
         }
         
         .plan-card input[type="radio"] {
@@ -275,26 +292,58 @@
                                                    {% if forloop.first and not form_data.plan_id %}checked{% endif %}
                                                    {% if form_data.plan_id == plan.id|stringformat:'s' %}checked{% endif %} required>
                                             
+                                            <!-- Badge destacado del plan (si existe) -->
+                                            {% if plan.plan_badge %}
+                                            <div class="plan-highlight-badge">
+                                                ⭐ {{ plan.plan_badge }}
+                                            </div>
+                                            {% endif %}
+                                            
                                             <span class="plan-badge {{ plan.plan_type }}">{{ plan.get_plan_type_display }}</span>
                                             <div class="plan-name">{{ plan.name }}</div>
+                                            
+                                            <!-- Ideal para -->
+                                            {% if plan.ideal_for %}
+                                            <p class="text-xs text-gray-500 italic mb-2">{{ plan.ideal_for }}</p>
+                                            {% endif %}
+                                            
                                             <div class="plan-price">
-                                                $<span class="monthly-price">{{ plan.price_monthly }}</span>
-                                                <span class="yearly-price" style="display:none;">{{ plan.price_yearly }}</span>
-                                                <small class="billing-label">/mes</small>
+                                                $<span class="monthly-price">{{ plan.cop_prices.monthly_cop|floatformat:0 }}</span>
+                                                <span class="yearly-price" style="display:none;">{{ plan.cop_prices.yearly_cop|floatformat:0 }}</span>
+                                                <small class="billing-label">COP/mes</small>
                                             </div>
+                                            <p class="text-xs text-gray-400 mt-1">≈ ${{ plan.price_monthly }} USD</p>
                                             
                                             <ul class="plan-features">
-                                                <li><i class="fas fa-check-circle text-green-500"></i> {{ plan.max_users }} Organizaciones</li>
-                                                <li><i class="fas fa-check-circle text-green-500"></i> {{ plan.max_patients }} Pacientes</li>
-                                                <li><i class="fas fa-check-circle text-green-500"></i> {{ plan.max_appointments_month }} Citas/mes</li>
+                                                <!-- Landing page (siempre incluida) -->
+                                                {% if plan.includes_landing_page %}
+                                                <li><i class="fas fa-check-circle text-emerald-500"></i> Landing Page incluida</li>
+                                                {% endif %}
+                                                
+                                                <!-- Límites con soporte para ilimitados -->
+                                                <li><i class="fas fa-check-circle text-green-500"></i> {{ plan.get_max_users_display }} usuarios</li>
+                                                <li><i class="fas fa-check-circle text-green-500"></i> {{ plan.get_max_patients_display }} pacientes</li>
+                                                <li><i class="fas fa-check-circle text-green-500"></i> {{ plan.get_max_appointments_display }}</li>
+                                                <li><i class="fas fa-check-circle text-green-500"></i> {{ plan.get_max_storage_display }}</li>
+                                                
+                                                <!-- Características destacadas -->
                                                 {% if plan.whatsapp_integration %}
-                                                <li><i class="fas fa-check-circle text-green-500"></i> WhatsApp</li>
+                                                <li><i class="fas fa-check-circle text-green-500"></i> WhatsApp Business</li>
                                                 {% endif %}
                                                 {% if plan.custom_branding %}
-                                                <li><i class="fas fa-check-circle text-green-500"></i> Marca propia</li>
+                                                <li><i class="fas fa-check-circle text-green-500"></i> Marca personalizada</li>
                                                 {% endif %}
                                                 {% if plan.analytics %}
-                                                <li><i class="fas fa-check-circle text-green-500"></i> Análisis avanzado</li>
+                                                <li><i class="fas fa-check-circle text-green-500"></i> Analytics avanzado</li>
+                                                {% endif %}
+                                                {% if plan.api_access %}
+                                                <li><i class="fas fa-check-circle text-green-500"></i> API completa</li>
+                                                {% endif %}
+                                                {% if plan.multi_location %}
+                                                <li><i class="fas fa-check-circle text-green-500"></i> Múltiples ubicaciones</li>
+                                                {% endif %}
+                                                {% if plan.allow_electronic_invoicing %}
+                                                <li><i class="fas fa-check-circle text-green-500"></i> Facturación DIAN</li>
                                                 {% endif %}
                                             </ul>
                                         </div>
@@ -350,11 +399,11 @@
                     if (isYearly) {
                         monthlyPrice.style.display = 'none';
                         yearlyPrice.style.display = 'inline';
-                        billingLabel.textContent = '/año';
+                        billingLabel.textContent = 'COP/año';
                     } else {
                         monthlyPrice.style.display = 'inline';
                         yearlyPrice.style.display = 'none';
-                        billingLabel.textContent = '/mes';
+                        billingLabel.textContent = 'COP/mes';
                     }
                 });
             });
