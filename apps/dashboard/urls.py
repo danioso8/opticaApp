@@ -48,6 +48,7 @@ urlpatterns = [
     path('team/<int:member_id>/permissions/', views_team.team_member_permissions, name='team_member_permissions'),
     path('team/<int:member_id>/delete/', views_team.team_member_delete, name='team_member_delete'),
     path('team/modules/', views_team.team_modules_list, name='team_modules_list'),
+    path('team/doctor/<int:doctor_id>/data/', views_team.get_doctor_data, name='get_doctor_data'),
     
     # Analytics Dashboard
     path('analytics/', analytics_dashboard, name='analytics_dashboard'),

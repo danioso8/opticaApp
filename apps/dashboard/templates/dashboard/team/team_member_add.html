@@ -168,12 +168,29 @@
     <div class="row justify-content-center">
         <div class="col-lg-8">
             <div class="form-card">
-                <form method="post">
+                <form method="post" id="teamMemberForm">
                     {% csrf_token %}
                     
                     <div class="info-alert">
                         <i class="fas fa-info-circle me-2"></i> 
-                        Si el usuario ya existe en el sistema, se agregará a tu organización. Si no existe, se creará una nueva cuenta.
+                        Puedes seleccionar un doctor existente para autocompletar los campos, o crear un usuario manualmente.
+                    </div>
+
+                    <!-- Selector de Doctor -->
+                    <div class="mb-4">
+                        <label for="doctor_id" class="form-label">
+                            <i class="fas fa-user-md"></i>
+                            <span>Seleccionar Doctor Existente (Opcional)</span>
+                        </label>
+                        <select class="form-select modern-select" id="doctor_id" name="doctor_id">
+                            <option value="">-- Crear usuario manualmente --</option>
+                            {% for doctor in doctors %}
+                            <option value="{{ doctor.id }}">
+                                {{ doctor.full_name }} - {{ doctor.identification }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                        <small class="text-muted ms-2">Si seleccionas un doctor, se autocompletarán los campos del formulario</small>
                     </div>
 
                     <div class="mb-4">
@@ -187,7 +204,7 @@
                                name="email" 
                                required
                                placeholder="usuario@ejemplo.com">
-                        <small class="text-muted ms-2">El usuario recibirá una invitación en este correo</small>
+                        <small class="text-muted ms-2">Correo electrónico para acceder al sistema</small>
                     </div>
 
                     <div class="row">
@@ -213,6 +230,58 @@
                                    name="last_name"
                                    placeholder="Apellido">
                         </div>
+                    </div>
+
+                    <!-- Credenciales de Acceso -->
+                    <div class="mb-4 p-4" style="background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); border-radius: 16px; border: 1px solid #fbbf24;">
+                        <div class="section-title mb-3" style="color: #92400e;">
+                            <i class="fas fa-key"></i>
+                            <span>Credenciales de Acceso</span>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="username" class="form-label">
+                                    <i class="fas fa-user-circle"></i>
+                                    <span>Nombre de Usuario</span>
+                                </label>
+                                <input type="text" 
+                                       class="form-control modern-input" 
+                                       id="username" 
+                                       name="username"
+                                       placeholder="Opcional - se generará del email si no se ingresa">
+                                <small class="text-muted">Si no se ingresa, se generará automáticamente del email</small>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="password" class="form-label">
+                                    <i class="fas fa-lock"></i>
+                                    <span>Contraseña</span>
+                                </label>
+                                <div class="input-group">
+                                    <input type="password" 
+                                           class="form-control modern-input" 
+                                           id="password" 
+                                           name="password"
+                                           placeholder="Opcional - se generará aleatoria">
+                                    <button class="btn btn-outline-secondary" type="button" id="togglePassword">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                </div>
+                                <small class="text-muted">Si no se ingresa, se generará una contraseña aleatoria</small>
+                            </div>
+                        </div>
+                        
+                        <div class="form-check mt-2">
+                            <input class="form-check-input" type="checkbox" id="send_email" name="send_email" checked>
+                            <label class="form-check-label" for="send_email">
+                                <i class="fas fa-envelope me-1"></i>
+                                Enviar email de invitación con credenciales
+                            </label>
+                        </div>
+                        <small class="text-muted d-block mt-1">
+                            <i class="fas fa-info-circle me-1"></i>
+                            Si no envías email, las credenciales se mostrarán en pantalla (guárdalas antes de continuar)
+                        </small>
                     </div>
 
                     <div class="mb-4">
@@ -268,4 +337,89 @@
         </div>
     </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Toggle password visibility
+    const togglePassword = document.getElementById('togglePassword');
+    const passwordInput = document.getElementById('password');
+    
+    if (togglePassword) {
+        togglePassword.addEventListener('click', function() {
+            const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+            passwordInput.setAttribute('type', type);
+            
+            const icon = this.querySelector('i');
+            icon.classList.toggle('fa-eye');
+            icon.classList.toggle('fa-eye-slash');
+        });
+    }
+    
+    // Autocompletar desde doctor
+    const doctorSelect = document.getElementById('doctor_id');
+    
+    if (doctorSelect) {
+        doctorSelect.addEventListener('change', function() {
+            const doctorId = this.value;
+            
+            if (!doctorId) {
+                // Limpiar campos si se deselecciona
+                return;
+            }
+            
+            // Mostrar loading
+            const loadingMsg = document.createElement('div');
+            loadingMsg.className = 'alert alert-info mt-2';
+            loadingMsg.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Cargando datos del doctor...';
+            this.parentElement.appendChild(loadingMsg);
+            
+            // Hacer petición AJAX
+            fetch(`/dashboard/team/doctor/${doctorId}/data/`)
+                .then(response => response.json())
+                .then(data => {
+                    loadingMsg.remove();
+                    
+                    if (data.success) {
+                        const doctor = data.doctor;
+                        
+                        // Autocompletar campos
+                        document.getElementById('email').value = doctor.email;
+                        document.getElementById('first_name').value = doctor.first_name;
+                        document.getElementById('last_name').value = doctor.last_name;
+                        
+                        // Generar username del email si existe
+                        if (doctor.email) {
+                            const suggestedUsername = doctor.email.split('@')[0];
+                            document.getElementById('username').value = suggestedUsername;
+                        }
+                        
+                        // Cambiar rol a doctor automáticamente
+                        const roleSelect = document.getElementById('role');
+                        roleSelect.value = 'doctor';
+                        
+                        // Mostrar mensaje de éxito
+                        const successMsg = document.createElement('div');
+                        successMsg.className = 'alert alert-success alert-dismissible fade show mt-2';
+                        successMsg.innerHTML = `
+                            <i class="fas fa-check-circle me-2"></i>
+                            Datos del Dr. ${doctor.full_name} cargados correctamente
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        `;
+                        doctorSelect.parentElement.appendChild(successMsg);
+                        
+                        // Remover mensaje después de 3 segundos
+                        setTimeout(() => successMsg.remove(), 3000);
+                    } else {
+                        alert('Error al cargar datos del doctor: ' + data.error);
+                    }
+                })
+                .catch(error => {
+                    loadingMsg.remove();
+                    console.error('Error:', error);
+                    alert('Error de conexión al cargar datos del doctor');
+                });
+        });
+    }
+});
+</script>
 {% endblock %}

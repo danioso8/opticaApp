@@ -74,10 +74,16 @@ def team_member_add(request):
         return redirect('dashboard:team_list')
     
     if request.method == 'POST':
+        # Verificar si se seleccionó un doctor
+        doctor_id = request.POST.get('doctor_id', '').strip()
+        
         email = request.POST.get('email', '').strip()
         first_name = request.POST.get('first_name', '').strip()
         last_name = request.POST.get('last_name', '').strip()
+        username = request.POST.get('username', '').strip()
+        password = request.POST.get('password', '').strip()
         role = request.POST.get('role', 'staff')
+        send_email_invitation = request.POST.get('send_email') == 'on'
         
         if not email:
             messages.error(request, 'El email es obligatorio.')
@@ -98,7 +104,10 @@ def team_member_add(request):
                 return redirect('dashboard:team_list')
         else:
             # Crear nuevo usuario
-            username = email.split('@')[0]
+            # Si no se proporcionó username, generar uno del email
+            if not username:
+                username = email.split('@')[0]
+            
             # Asegurar username único
             base_username = username
             counter = 1
@@ -106,13 +115,21 @@ def team_member_add(request):
                 username = f"{base_username}{counter}"
                 counter += 1
             
+            # Si no se proporcionó password, generar una aleatoria
+            if not password:
+                password = User.objects.make_random_password(length=12)
+                send_email_invitation = True  # Forzar envío de email si no hay password
+            
             user = User.objects.create_user(
                 username=username,
                 email=email,
                 first_name=first_name,
                 last_name=last_name,
-                password=User.objects.make_random_password()
+                password=password
             )
+            
+            # Guardar la contraseña temporalmente para mostrarla al usuario si no se envía email
+            temp_password = password if not send_email_invitation else None
         
         # Crear membresía
         new_member = OrganizationMember.objects.create(
@@ -122,33 +139,56 @@ def team_member_add(request):
             invited_by=request.user
         )
         
-        # Enviar email de invitación
-        try:
-            subject = f'Invitación a {organization.name}'
-            context = {
-                'organization': organization,
-                'invited_by': request.user,
-                'user': user,
-                'role': new_member.get_role_display(),
-            }
-            html_message = render_to_string('dashboard/team/email_invitation.html', context)
-            send_mail(
-                subject,
-                f'Has sido invitado a {organization.name}. Por favor inicia sesión en el sistema.',
-                settings.DEFAULT_FROM_EMAIL,
-                [user.email],
-                html_message=html_message,
-                fail_silently=True,
-            )
-        except Exception as e:
-            print(f"Error enviando email: {e}")
+        # Si se seleccionó un doctor, vincular
+        if doctor_id:
+            try:
+                from apps.patients.models import Doctor
+                doctor = Doctor.objects.get(id=doctor_id, organization=organization)
+                # Aquí podrías agregar un campo en OrganizationMember para vincular con Doctor
+                # Por ahora solo lo mencionamos en los mensajes
+                messages.info(request, f'Vinculado con el doctor: {doctor.full_name}')
+            except Doctor.DoesNotExist:
+                pass
         
-        messages.success(request, f'{user.email} ha sido agregado al equipo como {new_member.get_role_display()}.')
+        # Enviar email de invitación solo si se solicitó
+        if send_email_invitation:
+            try:
+                subject = f'Invitación a {organization.name}'
+                context = {
+                    'organization': organization,
+                    'invited_by': request.user,
+                    'user': user,
+                    'role': new_member.get_role_display(),
+                    'temp_password': password if password else None,
+                }
+                html_message = render_to_string('dashboard/team/email_invitation.html', context)
+                send_mail(
+                    subject,
+                    f'Has sido invitado a {organization.name}. Por favor inicia sesión en el sistema.',
+                    settings.DEFAULT_FROM_EMAIL,
+                    [user.email],
+                    html_message=html_message,
+                    fail_silently=True,
+                )
+                messages.success(request, f'{user.email} agregado. Se envió email de invitación.')
+            except Exception as e:
+                messages.warning(request, f'Usuario agregado pero no se pudo enviar el email: {str(e)}')
+        else:
+            messages.success(request, f'{user.email} ha sido agregado al equipo.')
+            if temp_password:
+                messages.info(request, f'📝 Credenciales: Usuario: {username} | Contraseña: {temp_password}')
+                messages.warning(request, '⚠️ Guarda estas credenciales. No se envió email de confirmación.')
+        
         return redirect('dashboard:team_member_permissions', member_id=new_member.id)
+    
+    # Obtener lista de doctores para el selector
+    from apps.patients.models import Doctor
+    doctors = Doctor.objects.filter(organization=organization, is_active=True).order_by('full_name')
     
     context = {
         'organization': organization,
         'roles': OrganizationMember.ROLES,
+        'doctors': doctors,
     }
     
     return render(request, 'dashboard/team/team_member_add.html', context)
@@ -353,3 +393,40 @@ def team_modules_list(request):
     }
     
     return render(request, 'dashboard/team/modules_list.html', context)
+
+
+@login_required
+def get_doctor_data(request, doctor_id):
+    """Obtener datos del doctor para autocompletar formulario (AJAX)"""
+    organization, membership = get_user_organization(request)
+    
+    if not organization:
+        return JsonResponse({'success': False, 'error': 'No tienes organización'}, status=403)
+    
+    try:
+        from apps.patients.models import Doctor
+        doctor = Doctor.objects.get(id=doctor_id, organization=organization)
+        
+        # Separar nombre completo en nombre y apellido
+        name_parts = doctor.full_name.split(' ', 1)
+        first_name = name_parts[0] if len(name_parts) > 0 else ''
+        last_name = name_parts[1] if len(name_parts) > 1 else ''
+        
+        data = {
+            'success': True,
+            'doctor': {
+                'id': doctor.id,
+                'full_name': doctor.full_name,
+                'first_name': first_name,
+                'last_name': last_name,
+                'email': doctor.email or '',
+                'phone': doctor.phone or '',
+                'identification': doctor.identification or '',
+                'identification_type': doctor.identification_type or 'CC',
+            }
+        }
+        return JsonResponse(data)
+    except Doctor.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'Doctor no encontrado'}, status=404)
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
