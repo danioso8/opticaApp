@@ -7,6 +7,7 @@
     
     <!-- Tailwind CSS Compiled -->
     {% load static %}
+    {% load plan_features %}
     <link rel="stylesheet" href="{% static 'dashboard/css/output.css' %}">
     
     <!-- Font Awesome -->
@@ -243,19 +244,27 @@
                 </a>
                 {% endif %}
                 
+                <!-- Productos (Plan Básico o superior) -->
+                {% has_module 'products' as can_access_products %}
                 {% if user_perms.all_access or user_perms.products.can_view %}
-                <a href="{% url 'billing:product_list' %}" class="flex items-center px-4 py-3 hover:bg-indigo-800 {% if 'product' in request.path %}bg-indigo-800{% endif %} relative">
+                <a href="{% if can_access_products %}{% url 'billing:product_list' %}{% else %}{% url 'organizations:subscription_plans' %}{% endif %}" 
+                   class="flex items-center px-4 py-3 hover:bg-indigo-800 {% if 'product' in request.path %}bg-indigo-800{% endif %} relative">
                     <i class="fas fa-box mr-3"></i>
                     <span class="sidebar-text">Productos</span>
                     <span class="sidebar-tooltip">Productos</span>
+                    {% module_badge 'products' %}
                 </a>
                 {% endif %}
                 
+                <!-- Proveedores (Plan Básico o superior) -->
+                {% has_module 'suppliers' as can_access_suppliers %}
                 {% if user_perms.all_access or user_perms.suppliers.can_view %}
-                <a href="{% url 'billing:supplier_list' %}" class="flex items-center px-4 py-3 hover:bg-indigo-800 {% if 'supplier' in request.path %}bg-indigo-800{% endif %} relative">
+                <a href="{% if can_access_suppliers %}{% url 'billing:supplier_list' %}{% else %}{% url 'organizations:subscription_plans' %}{% endif %}" 
+                   class="flex items-center px-4 py-3 hover:bg-indigo-800 {% if 'supplier' in request.path %}bg-indigo-800{% endif %} relative">
                     <i class="fas fa-truck mr-3"></i>
                     <span class="sidebar-text">Proveedores</span>
                     <span class="sidebar-tooltip">Proveedores</span>
+                    {% module_badge 'suppliers' %}
                 </a>
                 {% endif %}
                 
@@ -329,30 +338,46 @@
                         <span class="sidebar-tooltip">Configuración</span>
                     </button>
                     <div id="configuration-submenu" class="bg-indigo-950 hidden sidebar-submenu">
-                        <a href="{% url 'dashboard:notification_settings' %}" class="flex items-center px-8 py-2 hover:bg-indigo-800 text-sm {% if 'notifications' in request.path %}bg-indigo-800{% endif %} relative">
+                        <!-- WhatsApp (Plan Profesional o superior) -->
+                        {% has_module 'whatsapp' as can_access_whatsapp %}
+                        <a href="{% if can_access_whatsapp %}{% url 'dashboard:notification_settings' %}{% else %}{% url 'organizations:subscription_plans' %}{% endif %}" 
+                           class="flex items-center px-8 py-2 hover:bg-indigo-800 text-sm {% if 'notifications' in request.path %}bg-indigo-800{% endif %} relative">
                             <i class="fab fa-whatsapp mr-3"></i>
                             <span class="sidebar-text">WhatsApp Twilio</span>
                             <span class="sidebar-tooltip">WhatsApp Twilio</span>
+                            {% module_badge 'whatsapp' %}
                         </a>
+                        
                         <a href="{% url 'dashboard:clinical_parameters' %}" class="flex items-center px-8 py-2 hover:bg-indigo-800 text-sm {% if 'clinical-parameters' in request.path %}bg-indigo-800{% endif %} relative">
                             <i class="fas fa-pills mr-3"></i>
                             <span class="sidebar-text">Parámetros Clínicos</span>
                             <span class="sidebar-tooltip">Parámetros Clínicos</span>
                         </a>
-                        <a href="{% url 'billing:dian_configuration' %}" class="flex items-center px-8 py-2 hover:bg-indigo-800 text-sm {% if 'dian-configuration' in request.path %}bg-indigo-800{% endif %} relative">
+                        
+                        <!-- Configuración DIAN (Plan Profesional o superior) -->
+                        {% has_module 'dian_config' as can_access_dian %}
+                        <a href="{% if can_access_dian %}{% url 'billing:dian_configuration' %}{% else %}{% url 'organizations:subscription_plans' %}{% endif %}" 
+                           class="flex items-center px-8 py-2 hover:bg-indigo-800 text-sm {% if 'dian-configuration' in request.path %}bg-indigo-800{% endif %} relative">
                             <i class="fas fa-file-invoice-dollar mr-3"></i>
                             <span class="sidebar-text">Configuración DIAN</span>
                             <span class="sidebar-tooltip">Configuración DIAN</span>
+                            {% module_badge 'dian_config' %}
                         </a>
+                        
                         <a href="{% url 'dashboard:landing_page_config' %}" class="flex items-center px-8 py-2 hover:bg-indigo-800 text-sm {% if 'landing-page' in request.path %}bg-indigo-800{% endif %} relative">
                             <i class="fas fa-paint-brush mr-3"></i>
                             <span class="sidebar-text">Landing Page</span>
                             <span class="sidebar-tooltip">Landing Page</span>
                         </a>
-                        <a href="{% url 'dashboard:team_list' %}" class="flex items-center px-8 py-2 hover:bg-indigo-800 text-sm {% if '/team/' in request.path %}bg-indigo-800{% endif %} relative">
+                        
+                        <!-- Gestión de Equipo (Plan Premium o superior) -->
+                        {% has_module 'team_management' as can_access_team %}
+                        <a href="{% if can_access_team %}{% url 'dashboard:team_list' %}{% else %}{% url 'organizations:subscription_plans' %}{% endif %}" 
+                           class="flex items-center px-8 py-2 hover:bg-indigo-800 text-sm {% if '/team/' in request.path %}bg-indigo-800{% endif %} relative">
                             <i class="fas fa-users-cog mr-3"></i>
                             <span class="sidebar-text">Gestión de Equipo</span>
                             <span class="sidebar-tooltip">Gestión de Equipo</span>
+                            {% module_badge 'team_management' %}
                         </a>
                     </div>
                 </div>

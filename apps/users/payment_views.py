@@ -313,6 +313,17 @@ def wompi_webhook(request):
                     # Enviar email de confirmación
                     send_subscription_confirmation_email(subscription)
                 
+                # Si fue aprobada y es conversión de trial
+                elif status == 'APPROVED' and transaction.metadata.get('trial_conversion'):
+                    # Buscar suscripción del usuario y convertir trial
+                    try:
+                        subscription = UserSubscription.objects.get(user=transaction.user)
+                        if subscription.is_trial:
+                            subscription.convert_trial_to_paid()
+                            send_subscription_confirmation_email(subscription)
+                    except UserSubscription.DoesNotExist:
+                        pass
+                
                 # Si fue rechazada, enviar email
                 elif status == 'DECLINED' and transaction.subscription:
                     send_payment_failed_email(transaction)
@@ -401,6 +412,148 @@ def send_payment_failed_email(transaction):
     )
 
 
+@login_required
+def trial_expired_checkout(request):
+    """Vista de checkout específica para usuarios con trial expirado"""
+    try:
+        subscription = UserSubscription.objects.get(user=request.user)
+    except UserSubscription.DoesNotExist:
+        messages.error(request, 'No se encontró tu suscripción.')
+        return redirect('organizations:subscription_plans')
+    
+    # Verificar que realmente necesita pago
+    if not subscription.needs_payment_after_trial():
+        return redirect('dashboard:home')
+    
+    plan = subscription.plan
+    
+    # El precio es mensual después del trial
+    amount_usd = plan.price_monthly
+    amount_cop = usd_to_cop(amount_usd)
+    amount_cop_cents = usd_to_cop_cents(amount_usd)
+    
+    # Obtener métodos de pago del usuario
+    payment_methods = PaymentMethod.objects.filter(user=request.user, is_active=True)
+    
+    context = {
+        'plan': plan,
+        'subscription': subscription,
+        'amount': amount_cop,
+        'amount_usd': amount_usd,
+        'amount_cop_cents': amount_cop_cents,
+        'payment_methods': payment_methods,
+        'wompi_public_key': settings.WOMPI_PUBLIC_KEY,
+    }
+    
+    return render(request, 'users/trial_expired_checkout.html', context)
+
+
+@login_required
+@require_http_methods(["POST"])
+def process_trial_payment(request):
+    """Procesa el pago cuando el trial ha expirado"""
+    try:
+        subscription = UserSubscription.objects.get(user=request.user)
+    except UserSubscription.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'Suscripción no encontrada'}, status=404)
+    
+    if not subscription.needs_payment_after_trial():
+        return JsonResponse({'success': False, 'error': 'No necesita pago'}, status=400)
+    
+    plan = subscription.plan
+    billing_cycle = request.POST.get('billing_cycle', 'monthly')
+    payment_method_id = request.POST.get('payment_method_id')
+    
+    # Monto en USD y convertir a COP
+    amount_usd = plan.price_monthly if billing_cycle == 'monthly' else plan.price_yearly
+    amount_cop_cents = usd_to_cop_cents(amount_usd)
+    
+    # Crear transacción
+    transaction = Transaction.objects.create(
+        user=request.user,
+        transaction_type='subscription',
+        amount=amount_usd,
+        currency='USD',
+        status='pending',
+        reference=f'trial-conversion-{request.user.id}-{uuid.uuid4().hex[:8]}',
+        metadata={
+            'plan_id': plan.id,
+            'billing_cycle': billing_cycle,
+            'trial_conversion': True,
+        }
+    )
+    
+    try:
+        # Si hay método de pago guardado
+        if payment_method_id:
+            payment_method = PaymentMethod.objects.get(id=payment_method_id, user=request.user)
+            
+            # Crear transacción con Wompi usando token guardado
+            success, response = wompi_service.create_transaction(
+                amount_in_cents=amount_cop_cents,
+                currency='COP',
+                customer_email=request.user.email,
+                payment_method=payment_method.wompi_token,
+                reference=transaction.reference,
+            )
+        else:
+            # Nueva tarjeta
+            card_token = request.POST.get('card_token')
+            
+            if not card_token:
+                raise ValueError('Se requiere token de tarjeta')
+            
+            # Crear transacción con Wompi
+            success, response = wompi_service.create_transaction(
+                amount_in_cents=amount_cop_cents,
+                currency='COP',
+                customer_email=request.user.email,
+                payment_method=card_token,
+                reference=transaction.reference,
+            )
+            
+            # Guardar método de pago si la transacción fue exitosa
+            if success and response.get('status') in ['APPROVED', 'PENDING']:
+                PaymentMethod.objects.create(
+                    user=request.user,
+                    wompi_token=card_token,
+                    card_type=request.POST.get('card_type', 'CARD'),
+                    last_four=request.POST.get('card_last_four', '****'),
+                    expiry_month=request.POST.get('expiry_month', '12'),
+                    expiry_year=request.POST.get('expiry_year', '2030'),
+                    is_default=not PaymentMethod.objects.filter(user=request.user).exists(),
+                )
+        
+        # Actualizar transacción con respuesta de Wompi
+        if success:
+            transaction.wompi_transaction_id = response.get('id')
+            transaction.status = response.get('status', '').lower()
+            transaction.save()
+            
+            # Si el pago fue aprobado, convertir el trial
+            if response.get('status') == 'APPROVED':
+                subscription.convert_trial_to_paid()
+                
+                messages.success(request, '✅ ¡Pago exitoso! Tu suscripción ha sido activada.')
+                return redirect('users:subscription_success', transaction_id=transaction.id)
+            else:
+                messages.info(request, 'Tu pago está siendo procesado. Te notificaremos cuando se complete.')
+                return redirect('users:subscription_status')
+        else:
+            transaction.status = 'failed'
+            transaction.save()
+            messages.error(request, f'Error al procesar el pago: {response.get("message", "Error desconocido")}')
+            return redirect('users:trial_expired_checkout')
+            
+    except Exception as e:
+        transaction.status = 'failed'
+        transaction.metadata['error'] = str(e)
+        transaction.save()
+        
+        messages.error(request, f'Error al procesar el pago: {str(e)}')
+        return redirect('users:trial_expired_checkout')
+
+
 def send_subscription_renewal_failed_email(subscription, error_message):
     """Envía email cuando falla la renovación automática"""
     from django.core.mail import send_mail
@@ -413,6 +566,121 @@ def send_subscription_renewal_failed_email(subscription, error_message):
         'subscription': subscription,
         'user': subscription.user,
         'error_message': error_message,
+        'current_year': datetime.now().year,
+    })
+    
+    send_mail(
+        subject=subject,
+        message='',
+        html_message=html_message,
+        from_email=settings.DEFAULT_FROM_EMAIL,
+        recipient_list=[subscription.user.email],
+        fail_silently=True,
+    )
+
+
+@login_required
+def manage_subscription(request):
+    """Vista para gestionar la suscripción del usuario"""
+    try:
+        subscription = UserSubscription.objects.get(user=request.user)
+    except UserSubscription.DoesNotExist:
+        messages.error(request, 'No tienes una suscripción activa.')
+        return redirect('organizations:subscription_plans')
+    
+    # Obtener métodos de pago
+    payment_methods = PaymentMethod.objects.filter(user=request.user, is_active=True)
+    default_payment_method = payment_methods.filter(is_default=True).first()
+    
+    # Calcular monto de próxima renovación
+    if subscription.billing_cycle == 'yearly':
+        next_payment_amount = subscription.plan.price_yearly
+    else:
+        next_payment_amount = subscription.plan.price_monthly
+    
+    next_payment_cop = usd_to_cop(next_payment_amount)
+    
+    # Obtener logs de renovación
+    renewal_logs = SubscriptionRenewalLog.objects.filter(
+        subscription=subscription
+    ).order_by('-attempted_at')[:5]
+    
+    # Calcular días hasta renovación
+    days_until_renewal = (subscription.end_date - timezone.now()).days
+    
+    context = {
+        'subscription': subscription,
+        'payment_methods': payment_methods,
+        'default_payment_method': default_payment_method,
+        'next_payment_amount': next_payment_amount,
+        'next_payment_cop': next_payment_cop,
+        'renewal_logs': renewal_logs,
+        'days_until_renewal': days_until_renewal,
+        'page_title': 'Gestionar Suscripción',
+    }
+    
+    return render(request, 'users/manage_subscription.html', context)
+
+
+@login_required
+@require_http_methods(["POST"])
+def toggle_auto_renew(request):
+    """Activa o desactiva la renovación automática"""
+    try:
+        subscription = UserSubscription.objects.get(user=request.user)
+        
+        # Cambiar estado
+        subscription.auto_renew = not subscription.auto_renew
+        subscription.save()
+        
+        if subscription.auto_renew:
+            messages.success(request, '✓ Renovación automática activada. Tu suscripción se renovará automáticamente.')
+        else:
+            messages.warning(request, 'Renovación automática desactivada. Tu suscripción expirará el ' + 
+                           subscription.end_date.strftime('%d/%m/%Y'))
+        
+    except UserSubscription.DoesNotExist:
+        messages.error(request, 'No se encontró tu suscripción.')
+    
+    return redirect('users:manage_subscription')
+
+
+@login_required
+@require_http_methods(["POST"])
+def cancel_subscription(request):
+    """Cancela la suscripción (desactiva auto-renew)"""
+    try:
+        subscription = UserSubscription.objects.get(user=request.user)
+        
+        # Solo desactivar auto_renew, no eliminar la suscripción
+        subscription.auto_renew = False
+        subscription.save()
+        
+        messages.success(request, 
+            f'Tu suscripción ha sido cancelada. Seguirás teniendo acceso hasta el {subscription.end_date.strftime("%d/%m/%Y")}. '
+            f'Después de esa fecha, tu cuenta será desactivada.'
+        )
+        
+        # Enviar email de confirmación de cancelación
+        send_cancellation_email(subscription)
+        
+    except UserSubscription.DoesNotExist:
+        messages.error(request, 'No se encontró tu suscripción.')
+    
+    return redirect('users:manage_subscription')
+
+
+def send_cancellation_email(subscription):
+    """Envía email confirmando la cancelación"""
+    from django.core.mail import send_mail
+    from django.template.loader import render_to_string
+    from datetime import datetime
+    
+    subject = 'Confirmación de cancelación de suscripción'
+    
+    html_message = render_to_string('users/emails/subscription_cancelled.html', {
+        'subscription': subscription,
+        'user': subscription.user,
         'current_year': datetime.now().year,
     })
     

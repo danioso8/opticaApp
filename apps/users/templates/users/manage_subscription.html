@@ -1,0 +1,219 @@
+{% extends "dashboard/base.html" %}
+
+{% block title %}Gestionar Suscripción{% endblock %}
+
+{% block page_title %}Gestionar Suscripción{% endblock %}
+{% block page_subtitle %}Controla tu plan, método de pago y renovación automática{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto">
+    
+    <!-- Mensajes -->
+    {% if messages %}
+        {% for message in messages %}
+        <div class="mb-6 p-4 rounded-lg {% if message.tags == 'success' %}bg-green-100 text-green-800{% elif message.tags == 'error' %}bg-red-100 text-red-800{% elif message.tags == 'warning' %}bg-yellow-100 text-yellow-800{% else %}bg-blue-100 text-blue-800{% endif %}">
+            <i class="fas {% if message.tags == 'success' %}fa-check-circle{% elif message.tags == 'error' %}fa-exclamation-circle{% elif message.tags == 'warning' %}fa-exclamation-triangle{% else %}fa-info-circle{% endif %} mr-2"></i>
+            {{ message }}
+        </div>
+        {% endfor %}
+    {% endif %}
+
+    <!-- Información del Plan Actual -->
+    <div class="bg-white rounded-xl shadow-lg p-6 mb-6">
+        <div class="flex items-start justify-between mb-4">
+            <div>
+                <h2 class="text-2xl font-bold text-gray-800">{{ subscription.plan.name }}</h2>
+                <p class="text-gray-600">{{ subscription.get_billing_cycle_display }}</p>
+            </div>
+            <span class="px-4 py-2 rounded-full text-sm font-semibold 
+                {% if subscription.is_active %}bg-green-100 text-green-800{% else %}bg-red-100 text-red-800{% endif %}">
+                {% if subscription.is_active %}✓ Activa{% else %}✗ Inactiva{% endif %}
+            </span>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
+            <div class="bg-gray-50 p-4 rounded-lg">
+                <p class="text-sm text-gray-600">Fecha de inicio</p>
+                <p class="text-lg font-semibold">{{ subscription.start_date|date:"d/m/Y" }}</p>
+            </div>
+            <div class="bg-gray-50 p-4 rounded-lg">
+                <p class="text-sm text-gray-600">Próxima renovación</p>
+                <p class="text-lg font-semibold">{{ subscription.end_date|date:"d/m/Y" }}</p>
+                <p class="text-xs text-gray-500 mt-1">
+                    {% if days_until_renewal > 0 %}
+                        En {{ days_until_renewal }} día{{ days_until_renewal|pluralize }}
+                    {% else %}
+                        Vencida
+                    {% endif %}
+                </p>
+            </div>
+            <div class="bg-gray-50 p-4 rounded-lg">
+                <p class="text-sm text-gray-600">Monto próximo cobro</p>
+                <p class="text-lg font-semibold">${{ next_payment_cop|floatformat:0 }} COP</p>
+                <p class="text-xs text-gray-500 mt-1">≈ ${{ next_payment_amount|floatformat:2 }} USD</p>
+            </div>
+        </div>
+
+        {% if subscription.is_trial %}
+        <div class="mt-4 p-4 bg-blue-50 border-l-4 border-blue-500 rounded">
+            <p class="text-sm text-blue-800">
+                <i class="fas fa-gift mr-2"></i>
+                <strong>Período de prueba:</strong> Termina el {{ subscription.trial_ends_at|date:"d/m/Y" }}
+            </p>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Renovación Automática -->
+    <div class="bg-white rounded-xl shadow-lg p-6 mb-6">
+        <div class="flex items-center justify-between">
+            <div>
+                <h3 class="text-xl font-bold text-gray-800 mb-2">
+                    <i class="fas fa-sync-alt mr-2"></i>Renovación Automática
+                </h3>
+                <p class="text-gray-600">
+                    {% if subscription.auto_renew %}
+                        Tu suscripción se renovará automáticamente el {{ subscription.end_date|date:"d/m/Y" }}
+                    {% else %}
+                        Tu suscripción NO se renovará automáticamente y expirará el {{ subscription.end_date|date:"d/m/Y" }}
+                    {% endif %}
+                </p>
+            </div>
+            <form method="post" action="{% url 'users:toggle_auto_renew' %}">
+                {% csrf_token %}
+                <button type="submit" class="relative inline-flex items-center h-8 rounded-full w-14 transition-colors focus:outline-none 
+                    {% if subscription.auto_renew %}bg-green-500{% else %}bg-gray-300{% endif %}">
+                    <span class="sr-only">Toggle</span>
+                    <span class="inline-block w-6 h-6 bg-white rounded-full shadow transform transition-transform
+                        {% if subscription.auto_renew %}translate-x-7{% else %}translate-x-1{% endif %}"></span>
+                </button>
+            </form>
+        </div>
+
+        {% if not subscription.auto_renew %}
+        <div class="mt-4 p-4 bg-yellow-50 border-l-4 border-yellow-500 rounded">
+            <p class="text-sm text-yellow-800">
+                <i class="fas fa-exclamation-triangle mr-2"></i>
+                <strong>Advertencia:</strong> Si no activas la renovación automática, perderás acceso a todas las funcionalidades después del {{ subscription.end_date|date:"d/m/Y" }}.
+            </p>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Método de Pago -->
+    <div class="bg-white rounded-xl shadow-lg p-6 mb-6">
+        <h3 class="text-xl font-bold text-gray-800 mb-4">
+            <i class="fas fa-credit-card mr-2"></i>Método de Pago
+        </h3>
+
+        {% if default_payment_method %}
+        <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+            <div class="flex items-center">
+                <div class="bg-indigo-100 text-indigo-800 rounded-full w-12 h-12 flex items-center justify-center mr-4">
+                    <i class="fas fa-credit-card text-xl"></i>
+                </div>
+                <div>
+                    <p class="font-semibold">{{ default_payment_method.card_brand }} **** {{ default_payment_method.card_last_four }}</p>
+                    <p class="text-sm text-gray-600">{{ default_payment_method.card_holder_name }}</p>
+                </div>
+            </div>
+            <a href="{% url 'users:payment_methods' %}" class="text-indigo-600 hover:text-indigo-800 font-medium">
+                Cambiar
+            </a>
+        </div>
+        {% else %}
+        <div class="p-4 bg-red-50 border-l-4 border-red-500 rounded">
+            <p class="text-sm text-red-800 mb-3">
+                <i class="fas fa-exclamation-circle mr-2"></i>
+                <strong>No tienes un método de pago configurado.</strong> 
+                Si la renovación automática está activada, no podremos cobrar tu suscripción.
+            </p>
+            <a href="{% url 'users:add_payment_method' %}" class="inline-block bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition">
+                <i class="fas fa-plus mr-2"></i>Agregar Método de Pago
+            </a>
+        </div>
+        {% endif %}
+
+        <div class="mt-4">
+            <a href="{% url 'users:payment_methods' %}" class="text-indigo-600 hover:text-indigo-800 font-medium">
+                <i class="fas fa-cog mr-2"></i>Gestionar métodos de pago
+            </a>
+        </div>
+    </div>
+
+    <!-- Historial de Renovaciones -->
+    {% if renewal_logs %}
+    <div class="bg-white rounded-xl shadow-lg p-6 mb-6">
+        <h3 class="text-xl font-bold text-gray-800 mb-4">
+            <i class="fas fa-history mr-2"></i>Historial de Renovaciones
+        </h3>
+        
+        <div class="overflow-x-auto">
+            <table class="min-w-full">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Fecha</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Monto</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Estado</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Detalles</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-200">
+                    {% for log in renewal_logs %}
+                    <tr>
+                        <td class="px-4 py-3 text-sm">{{ log.attempted_at|date:"d/m/Y H:i" }}</td>
+                        <td class="px-4 py-3 text-sm">${{ log.amount_attempted|floatformat:2 }}</td>
+                        <td class="px-4 py-3">
+                            <span class="px-2 py-1 text-xs rounded-full 
+                                {% if log.status == 'success' %}bg-green-100 text-green-800
+                                {% elif log.status == 'failed' %}bg-red-100 text-red-800
+                                {% elif log.status == 'pending' %}bg-yellow-100 text-yellow-800
+                                {% else %}bg-gray-100 text-gray-800{% endif %}">
+                                {{ log.get_status_display }}
+                            </span>
+                        </td>
+                        <td class="px-4 py-3 text-sm text-gray-600">
+                            {% if log.error_message %}
+                                {{ log.error_message|truncatewords:10 }}
+                            {% else %}
+                                Renovación exitosa
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Cambiar Plan -->
+    <div class="bg-white rounded-xl shadow-lg p-6 mb-6">
+        <h3 class="text-xl font-bold text-gray-800 mb-4">
+            <i class="fas fa-arrow-up mr-2"></i>Cambiar Plan
+        </h3>
+        <p class="text-gray-600 mb-4">¿Necesitas más funcionalidades o quieres reducir tu plan?</p>
+        <a href="{% url 'organizations:subscription_plans' %}" class="inline-block bg-indigo-600 text-white px-6 py-3 rounded-lg hover:bg-indigo-700 transition">
+            Ver Planes Disponibles
+        </a>
+    </div>
+
+    <!-- Cancelar Suscripción -->
+    <div class="bg-white rounded-xl shadow-lg p-6 border-2 border-red-200">
+        <h3 class="text-xl font-bold text-red-600 mb-4">
+            <i class="fas fa-times-circle mr-2"></i>Cancelar Suscripción
+        </h3>
+        <p class="text-gray-600 mb-4">
+            Si cancelas tu suscripción, seguirás teniendo acceso hasta el {{ subscription.end_date|date:"d/m/Y" }}. 
+            Después de esa fecha, tu cuenta será desactivada.
+        </p>
+        <form method="post" action="{% url 'users:cancel_subscription' %}" onsubmit="return confirm('¿Estás seguro de que deseas cancelar tu suscripción?');">
+            {% csrf_token %}
+            <button type="submit" class="bg-red-600 text-white px-6 py-3 rounded-lg hover:bg-red-700 transition">
+                Cancelar mi Suscripción
+            </button>
+        </form>
+    </div>
+
+</div>
+{% endblock %}

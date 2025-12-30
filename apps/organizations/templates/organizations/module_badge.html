@@ -1,0 +1,5 @@
+{% if not has_access %}
+<span class="ml-2 px-2 py-1 bg-gradient-to-r from-purple-500 to-pink-500 text-white text-xs font-bold rounded-full shadow-sm">
+    <i class="fas fa-crown mr-1"></i>{{ required_plan|upper }}
+</span>
+{% endif %}

@@ -1,0 +1,265 @@
+{
+  "project_name": "CompraVentaApp",
+  "industry": "retail",
+  "developer": "Daniel (danioso8)",
+  
+  "core_features": {
+    "multi_tenant": true,
+    "subscription_system": true,
+    "trial_system": {
+      "enabled": true,
+      "duration_days": 90,
+      "post_trial_plan": "free",
+      "auto_convert": true
+    },
+    "payment_gateway": "wompi",
+    "whatsapp_notifications": true,
+    "email_verification": true,
+    "landing_pages": true,
+    "electronic_invoicing": "dian_colombia",
+    "auto_renewal": true
+  },
+  
+  "subscription_plans": [
+    {
+      "code": "free",
+      "name": "Gratis",
+      "price_usd": 10,
+      "billing_cycle": "monthly",
+      "trial_enabled": true,
+      "modules": ["dashboard", "products", "customers", "sales", "purchases", "landing", "basic_billing"]
+    },
+    {
+      "code": "basic",
+      "name": "Básico",
+      "price_usd": 30,
+      "billing_cycle": "monthly",
+      "trial_enabled": false,
+      "modules": ["dashboard", "products", "customers", "sales", "purchases", "landing", "basic_billing", "inventory", "suppliers", "pos"]
+    },
+    {
+      "code": "professional",
+      "name": "Profesional",
+      "price_usd": 60,
+      "billing_cycle": "monthly",
+      "trial_enabled": false,
+      "modules": ["dashboard", "products", "customers", "sales", "purchases", "landing", "basic_billing", "inventory", "suppliers", "pos", "dian_invoicing", "whatsapp", "payment_gateway", "barcode_scanner"]
+    },
+    {
+      "code": "premium",
+      "name": "Premium",
+      "price_usd": 110,
+      "billing_cycle": "monthly",
+      "trial_enabled": false,
+      "modules": ["dashboard", "products", "customers", "sales", "purchases", "landing", "basic_billing", "inventory", "suppliers", "pos", "dian_invoicing", "whatsapp", "payment_gateway", "barcode_scanner", "analytics", "reports", "team_management", "multi_location", "loyalty_program"]
+    },
+    {
+      "code": "enterprise",
+      "name": "Empresarial",
+      "price_usd": 220,
+      "billing_cycle": "monthly",
+      "trial_enabled": false,
+      "modules": ["dashboard", "products", "customers", "sales", "purchases", "landing", "basic_billing", "inventory", "suppliers", "pos", "dian_invoicing", "whatsapp", "payment_gateway", "barcode_scanner", "analytics", "reports", "team_management", "multi_location", "loyalty_program", "api_access", "ecommerce"]
+    }
+  ],
+  
+  "modules": {
+    "dashboard": {
+      "name": "Dashboard",
+      "icon": "bi-speedometer2",
+      "description": "Panel con ventas y estadísticas"
+    },
+    "products": {
+      "name": "Productos",
+      "icon": "bi-box",
+      "description": "Catálogo de productos con imágenes y precios"
+    },
+    "customers": {
+      "name": "Clientes",
+      "icon": "bi-people",
+      "description": "Base de datos de clientes"
+    },
+    "sales": {
+      "name": "Ventas",
+      "icon": "bi-cart",
+      "description": "Registro de ventas y cotizaciones"
+    },
+    "purchases": {
+      "name": "Compras",
+      "icon": "bi-bag",
+      "description": "Registro de compras a proveedores"
+    },
+    "landing": {
+      "name": "Landing Page",
+      "icon": "bi-globe",
+      "description": "Catálogo online de productos"
+    },
+    "basic_billing": {
+      "name": "Facturación Básica",
+      "icon": "bi-receipt-cutoff",
+      "description": "Facturas simples"
+    },
+    "inventory": {
+      "name": "Inventario",
+      "icon": "bi-box-seam",
+      "description": "Control de stock con alertas"
+    },
+    "suppliers": {
+      "name": "Proveedores",
+      "icon": "bi-truck",
+      "description": "Gestión de proveedores"
+    },
+    "pos": {
+      "name": "Punto de Venta",
+      "icon": "bi-shop",
+      "description": "Terminal de venta rápida (POS)"
+    },
+    "dian_invoicing": {
+      "name": "Facturación DIAN",
+      "icon": "bi-receipt",
+      "description": "Facturación electrónica Colombia"
+    },
+    "whatsapp": {
+      "name": "WhatsApp",
+      "icon": "bi-whatsapp",
+      "description": "Notificaciones automáticas"
+    },
+    "payment_gateway": {
+      "name": "Pagos Online",
+      "icon": "bi-credit-card",
+      "description": "Procesamiento de pagos"
+    },
+    "barcode_scanner": {
+      "name": "Escáner Códigos",
+      "icon": "bi-upc-scan",
+      "description": "Lectura de códigos de barras"
+    },
+    "analytics": {
+      "name": "Analytics",
+      "icon": "bi-graph-up",
+      "description": "Estadísticas de ventas"
+    },
+    "reports": {
+      "name": "Reportes",
+      "icon": "bi-file-earmark-bar-graph",
+      "description": "Reportes personalizados"
+    },
+    "team_management": {
+      "name": "Gestión de Equipo",
+      "icon": "bi-people-fill",
+      "description": "Roles, permisos y comisiones"
+    },
+    "multi_location": {
+      "name": "Multi-sede",
+      "icon": "bi-buildings",
+      "description": "Múltiples tiendas/bodegas"
+    },
+    "loyalty_program": {
+      "name": "Programa Lealtad",
+      "icon": "bi-gift",
+      "description": "Puntos y descuentos para clientes"
+    },
+    "api_access": {
+      "name": "Acceso API",
+      "icon": "bi-code-slash",
+      "description": "API REST para integraciones"
+    },
+    "ecommerce": {
+      "name": "E-commerce",
+      "icon": "bi-cart4",
+      "description": "Tienda online completa con carrito"
+    }
+  },
+  
+  "integrations": {
+    "wompi": {
+      "enabled": true,
+      "country": "colombia",
+      "currency_conversion": {
+        "usd_to_cop": 4000
+      },
+      "features": ["tokenization", "recurring_payments", "webhooks", "pos_integration"]
+    },
+    "twilio_whatsapp": {
+      "enabled": true,
+      "sandbox_mode": false,
+      "notification_types": ["order_confirmation", "shipping_updates", "promotions", "low_stock_alerts"]
+    },
+    "email": {
+      "enabled": true,
+      "provider": "smtp",
+      "features": ["verification", "password_reset", "subscription_reminders", "order_confirmations", "invoices"]
+    },
+    "dian": {
+      "enabled": true,
+      "country": "colombia",
+      "integration_type": "direct",
+      "features": ["xml_generation", "digital_signature", "qr_codes", "cufe_generation"]
+    }
+  },
+  
+  "user_roles": [
+    {
+      "code": "owner",
+      "name": "Propietario",
+      "permissions": ["all"]
+    },
+    {
+      "code": "admin",
+      "name": "Administrador",
+      "permissions": ["manage_users", "manage_settings", "view_reports", "edit_data", "manage_inventory"]
+    },
+    {
+      "code": "salesperson",
+      "name": "Vendedor",
+      "permissions": ["create_sales", "view_products", "view_customers", "use_pos"]
+    },
+    {
+      "code": "cashier",
+      "name": "Cajero",
+      "permissions": ["create_sales", "use_pos", "view_products"]
+    }
+  ],
+  
+  "automation": {
+    "trial_expiration_check": {
+      "enabled": true,
+      "frequency": "daily",
+      "time": "02:00",
+      "notification_days_before": [7, 3, 1]
+    },
+    "subscription_renewal": {
+      "enabled": true,
+      "frequency": "daily",
+      "time": "02:00",
+      "days_before_renewal": 3
+    },
+    "renewal_reminders": {
+      "enabled": true,
+      "frequency": "daily",
+      "time": "09:00",
+      "days_before_renewal": 7
+    },
+    "low_stock_alerts": {
+      "enabled": true,
+      "frequency": "daily",
+      "time": "08:00",
+      "threshold": 10
+    }
+  },
+  
+  "ui_customization": {
+    "theme": "bootstrap5",
+    "primary_color": "#28a745",
+    "sidebar_icons": "bootstrap-icons",
+    "dashboard_layout": "grid",
+    "enable_dark_mode": true
+  },
+  
+  "database": {
+    "multi_tenant_strategy": "shared_database",
+    "tenant_field": "organization_id",
+    "soft_delete": true,
+    "audit_trail": true
+  }
+}

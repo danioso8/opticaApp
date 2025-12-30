@@ -1,0 +1,281 @@
+{
+  "project_name": "OpticaApp",
+  "industry": "healthcare",
+  "developer": "Daniel (danioso8)",
+  
+  "core_features": {
+    "multi_tenant": true,
+    "subscription_system": true,
+    "trial_system": {
+      "enabled": true,
+      "duration_days": 90,
+      "post_trial_plan": "free",
+      "auto_convert": true
+    },
+    "payment_gateway": "wompi",
+    "whatsapp_notifications": true,
+    "email_verification": true,
+    "landing_pages": true,
+    "electronic_invoicing": "dian_colombia",
+    "auto_renewal": true
+  },
+  
+  "subscription_plans": [
+    {
+      "code": "free",
+      "name": "Free",
+      "price_usd": 12,
+      "billing_cycle": "monthly",
+      "trial_enabled": true,
+      "modules": ["dashboard", "patients", "appointments", "doctors", "landing", "basic_billing", "clinical_history"]
+    },
+    {
+      "code": "basic",
+      "name": "Básico",
+      "price_usd": 25,
+      "billing_cycle": "monthly",
+      "trial_enabled": false,
+      "modules": ["dashboard", "patients", "appointments", "doctors", "landing", "basic_billing", "clinical_history", "inventory", "products", "suppliers"]
+    },
+    {
+      "code": "professional",
+      "name": "Profesional",
+      "price_usd": 50,
+      "billing_cycle": "monthly",
+      "trial_enabled": false,
+      "modules": ["dashboard", "patients", "appointments", "doctors", "landing", "basic_billing", "clinical_history", "inventory", "products", "suppliers", "dian_invoicing", "whatsapp", "payment_gateway"]
+    },
+    {
+      "code": "premium",
+      "name": "Premium",
+      "price_usd": 100,
+      "billing_cycle": "monthly",
+      "trial_enabled": false,
+      "modules": ["dashboard", "patients", "appointments", "doctors", "landing", "basic_billing", "clinical_history", "inventory", "products", "suppliers", "dian_invoicing", "whatsapp", "payment_gateway", "analytics", "reports", "team_management", "multi_location"]
+    },
+    {
+      "code": "enterprise",
+      "name": "Empresarial",
+      "price_usd": 200,
+      "billing_cycle": "monthly",
+      "trial_enabled": false,
+      "modules": ["dashboard", "patients", "appointments", "doctors", "landing", "basic_billing", "clinical_history", "inventory", "products", "suppliers", "dian_invoicing", "whatsapp", "payment_gateway", "analytics", "reports", "team_management", "multi_location", "api_access"]
+    }
+  ],
+  
+  "modules": {
+    "dashboard": {
+      "name": "Dashboard",
+      "icon": "bi-speedometer2",
+      "description": "Panel principal con métricas y gráficas",
+      "industry_agnostic": true
+    },
+    "patients": {
+      "name": "Pacientes",
+      "icon": "bi-people",
+      "description": "Gestión completa de pacientes",
+      "industry_specific": "healthcare",
+      "alternatives": {
+        "real_estate": "clients",
+        "retail": "customers"
+      }
+    },
+    "appointments": {
+      "name": "Citas",
+      "icon": "bi-calendar-check",
+      "description": "Sistema de agendamiento",
+      "industry_agnostic": true
+    },
+    "doctors": {
+      "name": "Doctores",
+      "icon": "bi-heart-pulse",
+      "description": "Gestión de profesionales",
+      "industry_specific": "healthcare",
+      "alternatives": {
+        "real_estate": "agents",
+        "retail": "staff"
+      }
+    },
+    "clinical_history": {
+      "name": "Historia Clínica",
+      "icon": "bi-journal-medical",
+      "description": "Registros médicos digitales",
+      "industry_specific": "healthcare",
+      "alternatives": {
+        "real_estate": "property_history",
+        "retail": "purchase_history"
+      }
+    },
+    "inventory": {
+      "name": "Inventario",
+      "icon": "bi-box-seam",
+      "description": "Control de stock",
+      "industry_agnostic": true
+    },
+    "products": {
+      "name": "Productos",
+      "icon": "bi-grid",
+      "description": "Catálogo de productos/servicios",
+      "industry_agnostic": true
+    },
+    "suppliers": {
+      "name": "Proveedores",
+      "icon": "bi-truck",
+      "description": "Gestión de proveedores",
+      "industry_agnostic": true
+    },
+    "dian_invoicing": {
+      "name": "Facturación DIAN",
+      "icon": "bi-receipt",
+      "description": "Facturación electrónica Colombia",
+      "country_specific": "colombia"
+    },
+    "whatsapp": {
+      "name": "WhatsApp",
+      "icon": "bi-whatsapp",
+      "description": "Notificaciones automáticas",
+      "industry_agnostic": true
+    },
+    "payment_gateway": {
+      "name": "Pagos Online",
+      "icon": "bi-credit-card",
+      "description": "Procesamiento de pagos Wompi",
+      "industry_agnostic": true
+    },
+    "analytics": {
+      "name": "Analytics",
+      "icon": "bi-graph-up",
+      "description": "Reportes y estadísticas avanzadas",
+      "industry_agnostic": true
+    },
+    "reports": {
+      "name": "Reportes",
+      "icon": "bi-file-earmark-bar-graph",
+      "description": "Generación de reportes personalizados",
+      "industry_agnostic": true
+    },
+    "team_management": {
+      "name": "Gestión de Equipo",
+      "icon": "bi-person-badge",
+      "description": "Roles y permisos granulares",
+      "industry_agnostic": true
+    },
+    "multi_location": {
+      "name": "Multi-sede",
+      "icon": "bi-buildings",
+      "description": "Múltiples ubicaciones/sucursales",
+      "industry_agnostic": true
+    },
+    "api_access": {
+      "name": "Acceso API",
+      "icon": "bi-code-slash",
+      "description": "API REST para integraciones",
+      "industry_agnostic": true
+    },
+    "landing": {
+      "name": "Landing Page",
+      "icon": "bi-globe",
+      "description": "Página web personalizable",
+      "industry_agnostic": true
+    },
+    "basic_billing": {
+      "name": "Facturación Básica",
+      "icon": "bi-receipt-cutoff",
+      "description": "Facturas simples sin DIAN",
+      "industry_agnostic": true
+    }
+  },
+  
+  "integrations": {
+    "wompi": {
+      "enabled": true,
+      "country": "colombia",
+      "currency_conversion": {
+        "usd_to_cop": 4000
+      },
+      "features": ["tokenization", "recurring_payments", "webhooks"]
+    },
+    "twilio_whatsapp": {
+      "enabled": true,
+      "sandbox_mode": true,
+      "notification_types": ["appointments", "reminders", "cancellations", "confirmations"]
+    },
+    "email": {
+      "enabled": true,
+      "provider": "smtp",
+      "features": ["verification", "password_reset", "subscription_reminders", "renewal_notices"]
+    },
+    "dian": {
+      "enabled": true,
+      "country": "colombia",
+      "integration_type": "direct",
+      "features": ["xml_generation", "digital_signature", "qr_codes", "cufe_generation"]
+    }
+  },
+  
+  "user_roles": [
+    {
+      "code": "owner",
+      "name": "Propietario",
+      "permissions": ["all"]
+    },
+    {
+      "code": "admin",
+      "name": "Administrador",
+      "permissions": ["manage_users", "manage_settings", "view_reports", "edit_data"]
+    },
+    {
+      "code": "professional",
+      "name": "Profesional",
+      "permissions": ["view_data", "edit_data", "create_appointments"],
+      "industry_specific": true,
+      "alternatives": {
+        "healthcare": "doctor",
+        "real_estate": "agent",
+        "retail": "salesperson"
+      }
+    },
+    {
+      "code": "receptionist",
+      "name": "Recepcionista",
+      "permissions": ["view_data", "create_appointments"],
+      "industry_agnostic": true
+    }
+  ],
+  
+  "automation": {
+    "trial_expiration_check": {
+      "enabled": true,
+      "frequency": "daily",
+      "time": "02:00",
+      "notification_days_before": [7, 3, 1]
+    },
+    "subscription_renewal": {
+      "enabled": true,
+      "frequency": "daily",
+      "time": "02:00",
+      "days_before_renewal": 3
+    },
+    "renewal_reminders": {
+      "enabled": true,
+      "frequency": "daily",
+      "time": "09:00",
+      "days_before_renewal": 7
+    }
+  },
+  
+  "ui_customization": {
+    "theme": "bootstrap5",
+    "primary_color": "#007bff",
+    "sidebar_icons": "bootstrap-icons",
+    "dashboard_layout": "cards",
+    "enable_dark_mode": false
+  },
+  
+  "database": {
+    "multi_tenant_strategy": "shared_database",
+    "tenant_field": "organization_id",
+    "soft_delete": true,
+    "audit_trail": true
+  }
+}

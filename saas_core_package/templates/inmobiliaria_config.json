@@ -1,0 +1,259 @@
+{
+  "project_name": "InmobiliariaApp",
+  "industry": "real_estate",
+  "developer": "Daniel (danioso8)",
+  
+  "core_features": {
+    "multi_tenant": true,
+    "subscription_system": true,
+    "trial_system": {
+      "enabled": true,
+      "duration_days": 90,
+      "post_trial_plan": "free",
+      "auto_convert": true
+    },
+    "payment_gateway": "wompi",
+    "whatsapp_notifications": true,
+    "email_verification": true,
+    "landing_pages": true,
+    "electronic_invoicing": "dian_colombia",
+    "auto_renewal": true
+  },
+  
+  "subscription_plans": [
+    {
+      "code": "free",
+      "name": "Gratis",
+      "price_usd": 15,
+      "billing_cycle": "monthly",
+      "trial_enabled": true,
+      "modules": ["dashboard", "properties", "clients", "appointments", "agents", "landing", "basic_billing"]
+    },
+    {
+      "code": "basic",
+      "name": "Básico",
+      "price_usd": 35,
+      "billing_cycle": "monthly",
+      "trial_enabled": false,
+      "modules": ["dashboard", "properties", "clients", "appointments", "agents", "landing", "basic_billing", "property_gallery", "virtual_tours"]
+    },
+    {
+      "code": "professional",
+      "name": "Profesional",
+      "price_usd": 70,
+      "billing_cycle": "monthly",
+      "trial_enabled": false,
+      "modules": ["dashboard", "properties", "clients", "appointments", "agents", "landing", "basic_billing", "property_gallery", "virtual_tours", "dian_invoicing", "whatsapp", "payment_gateway", "crm"]
+    },
+    {
+      "code": "premium",
+      "name": "Premium",
+      "price_usd": 120,
+      "billing_cycle": "monthly",
+      "trial_enabled": false,
+      "modules": ["dashboard", "properties", "clients", "appointments", "agents", "landing", "basic_billing", "property_gallery", "virtual_tours", "dian_invoicing", "whatsapp", "payment_gateway", "crm", "analytics", "reports", "team_management", "multi_location", "lead_scoring"]
+    },
+    {
+      "code": "enterprise",
+      "name": "Empresarial",
+      "price_usd": 250,
+      "billing_cycle": "monthly",
+      "trial_enabled": false,
+      "modules": ["dashboard", "properties", "clients", "appointments", "agents", "landing", "basic_billing", "property_gallery", "virtual_tours", "dian_invoicing", "whatsapp", "payment_gateway", "crm", "analytics", "reports", "team_management", "multi_location", "lead_scoring", "api_access", "white_label"]
+    }
+  ],
+  
+  "modules": {
+    "dashboard": {
+      "name": "Dashboard",
+      "icon": "bi-speedometer2",
+      "description": "Panel principal con métricas"
+    },
+    "properties": {
+      "name": "Propiedades",
+      "icon": "bi-house",
+      "description": "Gestión de inmuebles en venta/arriendo"
+    },
+    "clients": {
+      "name": "Clientes",
+      "icon": "bi-people",
+      "description": "Base de datos de clientes potenciales y compradores"
+    },
+    "appointments": {
+      "name": "Citas",
+      "icon": "bi-calendar-check",
+      "description": "Visitas y reuniones agendadas"
+    },
+    "agents": {
+      "name": "Asesores",
+      "icon": "bi-person-badge",
+      "description": "Gestión de agentes inmobiliarios"
+    },
+    "landing": {
+      "name": "Landing Page",
+      "icon": "bi-globe",
+      "description": "Sitio web personalizable con catálogo"
+    },
+    "basic_billing": {
+      "name": "Facturación Básica",
+      "icon": "bi-receipt-cutoff",
+      "description": "Facturas y cotizaciones simples"
+    },
+    "property_gallery": {
+      "name": "Galería",
+      "icon": "bi-images",
+      "description": "Fotos y videos de propiedades"
+    },
+    "virtual_tours": {
+      "name": "Tours Virtuales",
+      "icon": "bi-camera-video",
+      "description": "Recorridos 360° y videos"
+    },
+    "dian_invoicing": {
+      "name": "Facturación DIAN",
+      "icon": "bi-receipt",
+      "description": "Facturación electrónica Colombia"
+    },
+    "whatsapp": {
+      "name": "WhatsApp",
+      "icon": "bi-whatsapp",
+      "description": "Notificaciones automáticas"
+    },
+    "payment_gateway": {
+      "name": "Pagos Online",
+      "icon": "bi-credit-card",
+      "description": "Procesamiento de pagos y reservas"
+    },
+    "crm": {
+      "name": "CRM",
+      "icon": "bi-funnel",
+      "description": "Embudo de ventas y seguimiento"
+    },
+    "analytics": {
+      "name": "Analytics",
+      "icon": "bi-graph-up",
+      "description": "Estadísticas de propiedades y conversiones"
+    },
+    "reports": {
+      "name": "Reportes",
+      "icon": "bi-file-earmark-bar-graph",
+      "description": "Reportes personalizados"
+    },
+    "team_management": {
+      "name": "Gestión de Equipo",
+      "icon": "bi-people-fill",
+      "description": "Roles y comisiones"
+    },
+    "multi_location": {
+      "name": "Multi-sede",
+      "icon": "bi-buildings",
+      "description": "Múltiples oficinas"
+    },
+    "lead_scoring": {
+      "name": "Lead Scoring",
+      "icon": "bi-star",
+      "description": "Clasificación automática de prospectos"
+    },
+    "api_access": {
+      "name": "Acceso API",
+      "icon": "bi-code-slash",
+      "description": "API REST para portales"
+    },
+    "white_label": {
+      "name": "Marca Blanca",
+      "icon": "bi-brush",
+      "description": "Personalización completa de marca"
+    }
+  },
+  
+  "integrations": {
+    "wompi": {
+      "enabled": true,
+      "country": "colombia",
+      "currency_conversion": {
+        "usd_to_cop": 4000
+      },
+      "features": ["tokenization", "recurring_payments", "webhooks", "property_reservations"]
+    },
+    "twilio_whatsapp": {
+      "enabled": true,
+      "sandbox_mode": false,
+      "notification_types": ["appointments", "property_alerts", "price_changes", "new_listings"]
+    },
+    "email": {
+      "enabled": true,
+      "provider": "smtp",
+      "features": ["verification", "password_reset", "subscription_reminders", "property_alerts", "newsletters"]
+    },
+    "dian": {
+      "enabled": true,
+      "country": "colombia",
+      "integration_type": "direct",
+      "features": ["xml_generation", "digital_signature", "qr_codes", "cufe_generation"]
+    }
+  },
+  
+  "user_roles": [
+    {
+      "code": "owner",
+      "name": "Propietario",
+      "permissions": ["all"]
+    },
+    {
+      "code": "admin",
+      "name": "Administrador",
+      "permissions": ["manage_users", "manage_settings", "view_reports", "edit_data"]
+    },
+    {
+      "code": "agent",
+      "name": "Asesor Inmobiliario",
+      "permissions": ["view_properties", "edit_properties", "create_appointments", "manage_clients", "view_commissions"]
+    },
+    {
+      "code": "receptionist",
+      "name": "Recepcionista",
+      "permissions": ["view_data", "create_appointments", "register_clients"]
+    }
+  ],
+  
+  "automation": {
+    "trial_expiration_check": {
+      "enabled": true,
+      "frequency": "daily",
+      "time": "02:00",
+      "notification_days_before": [7, 3, 1]
+    },
+    "subscription_renewal": {
+      "enabled": true,
+      "frequency": "daily",
+      "time": "02:00",
+      "days_before_renewal": 3
+    },
+    "renewal_reminders": {
+      "enabled": true,
+      "frequency": "daily",
+      "time": "09:00",
+      "days_before_renewal": 7
+    },
+    "property_alerts": {
+      "enabled": true,
+      "frequency": "hourly",
+      "match_client_preferences": true
+    }
+  },
+  
+  "ui_customization": {
+    "theme": "bootstrap5",
+    "primary_color": "#2c3e50",
+    "sidebar_icons": "bootstrap-icons",
+    "dashboard_layout": "cards",
+    "enable_dark_mode": true
+  },
+  
+  "database": {
+    "multi_tenant_strategy": "shared_database",
+    "tenant_field": "organization_id",
+    "soft_delete": true,
+    "audit_trail": true
+  }
+}

@@ -1,0 +1,210 @@
+{% extends 'dashboard/base.html' %}
+{% load static %}
+
+{% block title %}Trial Expirado - Renovar Suscripción{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gradient-to-br from-purple-50 to-blue-50 py-12 px-4">
+    <div class="max-w-4xl mx-auto">
+        
+        <!-- Header -->
+        <div class="text-center mb-8">
+            <div class="inline-flex items-center justify-center w-20 h-20 rounded-full bg-yellow-100 mb-4">
+                <svg class="w-10 h-10 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+            </div>
+            <h1 class="text-3xl font-bold text-gray-900 mb-2">Tu Período de Prueba ha Terminado</h1>
+            <p class="text-lg text-gray-600">¡Esperamos que hayas disfrutado tu experiencia con OpticaApp!</p>
+        </div>
+
+        <div class="grid md:grid-cols-2 gap-8">
+            
+            <!-- Información del Plan -->
+            <div class="bg-white rounded-lg shadow-lg p-8">
+                <div class="flex items-center mb-6">
+                    <div class="w-12 h-12 rounded-full bg-purple-100 flex items-center justify-center mr-4">
+                        <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"></path>
+                        </svg>
+                    </div>
+                    <div>
+                        <h2 class="text-2xl font-bold text-gray-900">{{ plan.name }}</h2>
+                        <p class="text-sm text-gray-500">Continúa disfrutando todas las funciones</p>
+                    </div>
+                </div>
+
+                <!-- Precio -->
+                <div class="mb-6 pb-6 border-b">
+                    <div class="flex items-baseline mb-2">
+                        <span class="text-4xl font-bold text-gray-900">${{ amount_cop|floatformat:0 }}</span>
+                        <span class="text-xl text-gray-500 ml-2">COP</span>
+                        <span class="text-gray-500 ml-2">/ mes</span>
+                    </div>
+                    <p class="text-sm text-gray-600">≈ ${{ amount_usd|floatformat:2 }} USD</p>
+                </div>
+
+                <!-- Características del Plan -->
+                <div class="space-y-3 mb-6">
+                    <h3 class="font-semibold text-gray-900 mb-3">Tu plan incluye:</h3>
+                    <div class="flex items-start">
+                        <svg class="w-5 h-5 text-green-500 mr-3 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                        </svg>
+                        <span class="text-gray-700">Gestión de pacientes</span>
+                    </div>
+                    <div class="flex items-start">
+                        <svg class="w-5 h-5 text-green-500 mr-3 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                        </svg>
+                        <span class="text-gray-700">Agendamiento de citas</span>
+                    </div>
+                    <div class="flex items-start">
+                        <svg class="w-5 h-5 text-green-500 mr-3 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                        </svg>
+                        <span class="text-gray-700">Historia clínica</span>
+                    </div>
+                    <div class="flex items-start">
+                        <svg class="w-5 h-5 text-green-500 mr-3 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                        </svg>
+                        <span class="text-gray-700">Landing page personalizada</span>
+                    </div>
+                    <div class="flex items-start">
+                        <svg class="w-5 h-5 text-green-500 mr-3 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                        </svg>
+                        <span class="text-gray-700">Facturación básica</span>
+                    </div>
+                </div>
+
+                <!-- Beneficios -->
+                <div class="bg-blue-50 rounded-lg p-4">
+                    <h4 class="font-semibold text-blue-900 mb-2">💡 Mantén el acceso a:</h4>
+                    <ul class="text-sm text-blue-800 space-y-1">
+                        <li>✓ Todos tus datos de pacientes</li>
+                        <li>✓ Historial completo de citas</li>
+                        <li>✓ Historias clínicas registradas</li>
+                        <li>✓ Configuraciones personalizadas</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Formulario de Pago -->
+            <div class="bg-white rounded-lg shadow-lg p-8">
+                <h3 class="text-xl font-bold text-gray-900 mb-6">Continuar con el Pago</h3>
+                
+                {% if payment_methods %}
+                <!-- Tarjetas guardadas -->
+                <div class="mb-6">
+                    <h4 class="text-sm font-semibold text-gray-700 mb-3">Tarjetas guardadas</h4>
+                    <div class="space-y-2">
+                        {% for pm in payment_methods %}
+                        <label class="flex items-center p-4 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-purple-500 transition">
+                            <input type="radio" name="payment_method" value="{{ pm.id }}" class="mr-3">
+                            <div class="flex-1">
+                                <div class="flex items-center">
+                                    <span class="font-medium">•••• {{ pm.last_four }}</span>
+                                    <span class="ml-2 text-sm text-gray-500">{{ pm.card_type }}</span>
+                                </div>
+                                <div class="text-xs text-gray-500">Vence: {{ pm.expiry_month }}/{{ pm.expiry_year }}</div>
+                            </div>
+                        </label>
+                        {% endfor %}
+                    </div>
+                </div>
+                <div class="text-center text-gray-500 my-4">O</div>
+                {% endif %}
+
+                <!-- Nueva tarjeta -->
+                <form id="payment-form" method="POST" action="{% url 'users:process_trial_payment' %}">
+                    {% csrf_token %}
+                    
+                    <div class="space-y-4">
+                        <!-- Widget de Wompi -->
+                        <div id="wompi-widget"></div>
+                        
+                        <input type="hidden" name="card_token" id="card_token">
+                        <input type="hidden" name="amount_cents" value="{{ amount_cop_cents }}">
+                        <input type="hidden" name="billing_cycle" value="monthly">
+                        
+                        <!-- Botón de Pago -->
+                        <button type="submit" class="w-full bg-gradient-to-r from-purple-600 to-blue-600 text-white py-4 rounded-lg font-semibold hover:from-purple-700 hover:to-blue-700 transition shadow-lg">
+                            💳 Pagar ${{ amount_cop|floatformat:0 }} COP
+                        </button>
+                        
+                        <!-- Seguridad -->
+                        <div class="flex items-center justify-center text-sm text-gray-500">
+                            <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd"></path>
+                            </svg>
+                            Pago seguro con Wompi
+                        </div>
+                    </div>
+                </form>
+
+                <!-- Info adicional -->
+                <div class="mt-6 pt-6 border-t">
+                    <p class="text-xs text-gray-500 text-center mb-2">
+                        Al confirmar el pago, aceptas nuestros términos y condiciones.
+                    </p>
+                    <p class="text-xs text-gray-500 text-center">
+                        Se renovará automáticamente cada mes. Puedes cancelar en cualquier momento.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- FAQ Rápido -->
+        <div class="mt-8 bg-white rounded-lg shadow-lg p-6">
+            <h3 class="text-lg font-bold text-gray-900 mb-4">Preguntas Frecuentes</h3>
+            <div class="space-y-3 text-sm">
+                <div>
+                    <p class="font-semibold text-gray-900">¿Qué pasa si no pago?</p>
+                    <p class="text-gray-600">Tu cuenta quedará limitada y no podrás acceder a tus datos hasta que realices el pago.</p>
+                </div>
+                <div>
+                    <p class="font-semibold text-gray-900">¿Puedo cambiar de plan después?</p>
+                    <p class="text-gray-600">Sí, puedes actualizar a un plan superior en cualquier momento desde Configuración.</p>
+                </div>
+                <div>
+                    <p class="font-semibold text-gray-900">¿Cómo cancelo mi suscripción?</p>
+                    <p class="text-gray-600">Puedes cancelar en cualquier momento desde tu perfil. Tendrás acceso hasta el fin del período pagado.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://checkout.wompi.co/widget.js"></script>
+<script>
+    // Configurar widget de Wompi
+    const wompiWidget = new WompiWidget({
+        currency: 'COP',
+        amountInCents: {{ amount_cop_cents }},
+        reference: 'trial-{{ user.id }}-{{ plan.id }}',
+        publicKey: '{{ wompi_public_key }}',
+        redirectUrl: '{% url "users:subscription_success" %}',
+        customerData: {
+            email: '{{ user.email }}',
+            fullName: '{{ user.get_full_name }}',
+        }
+    });
+
+    wompiWidget.render('#wompi-widget');
+
+    // Manejar envío del formulario
+    document.getElementById('payment-form').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        // Obtener token de Wompi
+        wompiWidget.getToken().then(token => {
+            document.getElementById('card_token').value = token;
+            this.submit();
+        }).catch(error => {
+            alert('Error al procesar el pago: ' + error.message);
+        });
+    });
+</script>
+{% endblock %}

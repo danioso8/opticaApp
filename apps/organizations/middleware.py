@@ -135,6 +135,12 @@ class SubscriptionMiddleware(MiddlewareMixin):
             from apps.users.models import UserSubscription
             user_subscription = UserSubscription.objects.get(user=request.user)
             
+            # VERIFICAR SI EL TRIAL HA EXPIRADO Y NECESITA PAGAR
+            if user_subscription.needs_payment_after_trial():
+                # Redirigir a checkout específico para trial expirado
+                if not request.path.startswith('/users/subscription/') and not request.path.startswith('/users/payment-methods/'):
+                    return redirect('users:trial_expired_checkout')
+            
             # Si la suscripción no está pagada Y NO es plan gratuito, redirigir al checkout
             if user_subscription.payment_status == 'pending' and user_subscription.plan.plan_type != 'free':
                 # Permitir acceso solo al checkout y rutas de pago

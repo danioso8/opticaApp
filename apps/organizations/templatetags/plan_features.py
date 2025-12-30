@@ -2,13 +2,105 @@
 Template tags para verificar acceso a módulos en las plantillas
 """
 from django import template
+from apps.organizations.plan_features import (
+    has_module_access, 
+    get_user_modules, 
+    get_required_plan_for_module,
+    get_module_info
+)
 
 register = template.Library()
 
 
 @register.simple_tag(takes_context=True)
+def has_module(context, module_code):
+    """
+    Verifica si el usuario tiene acceso a un módulo específico
+    
+    Uso en templates:
+        {% load plan_features %}
+        {% has_module 'whatsapp' as has_whatsapp %}
+        {% if has_whatsapp %}
+            <a href="{% url 'whatsapp:dashboard' %}">WhatsApp</a>
+        {% endif %}
+    """
+    request = context.get('request')
+    if not request or not request.user.is_authenticated:
+        return False
+    
+    return has_module_access(request.user, module_code)
+
+
+@register.simple_tag(takes_context=True)
+def user_modules(context):
+    """
+    Retorna la lista de códigos de módulos a los que el usuario tiene acceso
+    
+    Uso en templates:
+        {% load plan_features %}
+        {% user_modules as modules %}
+        {% if 'products' in modules %}
+            <a href="{% url 'products:list' %}">Productos</a>
+        {% endif %}
+    """
+    request = context.get('request')
+    if not request or not request.user.is_authenticated:
+        return []
+    
+    return get_user_modules(request.user)
+
+
+@register.simple_tag
+def module_required_plan(module_code):
+    """
+    Retorna el plan mínimo requerido para un módulo
+    
+    Uso en templates:
+        {% module_required_plan 'analytics' %}
+    """
+    return get_required_plan_for_module(module_code)
+
+
+@register.simple_tag
+def module_info(module_code):
+    """
+    Retorna información completa de un módulo
+    
+    Uso en templates:
+        {% module_info 'whatsapp' as info %}
+        {{ info.name }} - {{ info.description }}
+    """
+    return get_module_info(module_code)
+
+
+@register.inclusion_tag('organizations/module_badge.html', takes_context=True)
+def module_badge(context, module_code):
+    """
+    Muestra un badge de "Upgrade" si el usuario no tiene acceso al módulo
+    
+    Uso en templates:
+        {% load plan_features %}
+        {% module_badge 'whatsapp' %}
+    """
+    request = context.get('request')
+    has_access = False
+    required_plan = get_required_plan_for_module(module_code)
+    module_data = get_module_info(module_code)
+    
+    if request and request.user.is_authenticated:
+        has_access = has_module_access(request.user, module_code)
+    
+    return {
+        'has_access': has_access,
+        'module_code': module_code,
+        'required_plan': required_plan,
+        'module_name': module_data.get('name', module_code) if module_data else module_code,
+    }
+# LEGACY: Mantener compatibilidad con código antiguo
+@register.simple_tag(takes_context=True)
 def has_feature(context, feature_code):
     """
+    LEGACY: Redirige al nuevo sistema de módulos
     Verifica si el usuario tiene acceso a un módulo
     
     Uso en templates:
@@ -22,16 +114,8 @@ def has_feature(context, feature_code):
     if not request or not request.user.is_authenticated:
         return False
     
-    user = request.user
-    
-    if not hasattr(user, 'subscription'):
-        return False
-    
-    subscription = user.subscription
-    if not subscription.is_active:
-        return False
-    
-    return subscription.plan.has_feature(feature_code)
+    # Usar el nuevo sistema
+    return has_module_access(request.user, feature_code)
 
 
 @register.inclusion_tag('organizations/feature_lock.html', takes_context=True)

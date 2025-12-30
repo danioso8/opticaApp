@@ -29,6 +29,25 @@ class UserSubscription(models.Model):
     start_date = models.DateTimeField(default=timezone.now)
     end_date = models.DateTimeField()
     
+    # Campos para período de prueba (Trial)
+    is_trial = models.BooleanField(
+        default=False, 
+        verbose_name='En Período de Prueba',
+        help_text='Indica si está en período de prueba gratuito'
+    )
+    trial_ends_at = models.DateTimeField(
+        null=True, 
+        blank=True,
+        verbose_name='Fin del Período de Prueba',
+        help_text='Fecha en que termina el trial (solo para plan Free)'
+    )
+    trial_converted_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        verbose_name='Fecha de Conversión',
+        help_text='Fecha en que el trial se convirtió a suscripción pagada'
+    )
+    
     is_active = models.BooleanField(default=True)
     auto_renew = models.BooleanField(default=True, verbose_name='Renovación Automática')
     
@@ -54,17 +73,24 @@ class UserSubscription(models.Model):
             else:  # yearly
                 self.end_date = self.start_date + timedelta(days=365)
         
+        # Manejar período de prueba para Plan Free
+        if self.plan.plan_type == 'free' and not self.pk:  # Solo al crear
+            self.is_trial = True
+            self.trial_ends_at = self.start_date + timedelta(days=90)  # 3 meses
+            self.payment_status = 'paid'
+            self.amount_paid = 0
+        
         # Establecer el monto pagado según el plan
-        if not self.amount_paid:
+        if not self.amount_paid and not self.is_trial:
             if self.billing_cycle == 'monthly':
                 self.amount_paid = self.plan.price_monthly
             else:
                 self.amount_paid = self.plan.price_yearly
         
-        # Plan Free siempre está pagado automáticamente
-        if self.plan.plan_type == 'free' and self.payment_status == 'pending':
+        # Plan Free siempre está pagado automáticamente durante el trial
+        if self.plan.plan_type == 'free' and self.payment_status == 'pending' and self.is_trial:
             self.payment_status = 'paid'
-            self.amount_paid = 0  # Planes gratuitos no tienen costo
+            self.amount_paid = 0  # Trial gratuito
         
         super().save(*args, **kwargs)
     
@@ -74,6 +100,21 @@ class UserSubscription(models.Model):
         return timezone.now() > self.end_date
     
     @property
+    def trial_is_expired(self):
+        """Verifica si el período de prueba ha expirado"""
+        if not self.is_trial or not self.trial_ends_at:
+            return False
+        return timezone.now() > self.trial_ends_at
+    
+    @property
+    def trial_days_remaining(self):
+        """Calcula los días restantes del trial"""
+        if not self.is_trial or not self.trial_ends_at or self.trial_is_expired:
+            return 0
+        delta = self.trial_ends_at - timezone.now()
+        return delta.days
+    
+    @property
     def days_remaining(self):
         """Calcula los días restantes de la suscripción"""
         if self.is_expired:
@@ -81,8 +122,38 @@ class UserSubscription(models.Model):
         delta = self.end_date - timezone.now()
         return delta.days
     
+    def needs_payment_after_trial(self):
+        """Verifica si necesita pago después del trial"""
+        return (
+            self.is_trial and 
+            self.trial_is_expired and 
+            self.payment_status != 'paid'
+        )
+    
+    def convert_trial_to_paid(self):
+        """Convierte el trial a suscripción pagada"""
+        if not self.is_trial:
+            return False
+        
+        self.is_trial = False
+        self.trial_converted_at = timezone.now()
+        self.payment_status = 'paid'
+        
+        # Establecer el precio según el ciclo de facturación
+        if self.billing_cycle == 'monthly':
+            self.amount_paid = self.plan.price_monthly
+        else:
+            self.amount_paid = self.plan.price_yearly
+        
+        self.save()
+        return True
+    
     def can_create_organizations(self):
         """Verifica si puede crear más organizaciones según su plan"""
+        # Verificar si está en trial expirado sin pagar
+        if self.needs_payment_after_trial():
+            return False
+            
         if not self.is_active or self.is_expired:
             return False
         

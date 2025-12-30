@@ -9,6 +9,7 @@ from datetime import datetime, timedelta
 from decimal import Decimal
 
 from apps.organizations.models import Organization, OrganizationMember
+from apps.organizations.decorators import require_module, require_inventory, require_dian
 from apps.patients.models import Patient
 from apps.dashboard.decorators import require_module_permission
 from .models import DianConfiguration, Invoice, InvoiceItem, Payment, Supplier, InvoiceProduct, InvoiceConfiguration
@@ -31,6 +32,7 @@ def get_user_organization(request):
 
 
 @login_required
+@require_dian
 def dian_configuration_view(request):
     """
     Vista para configurar los parámetros de la DIAN.
@@ -518,6 +520,7 @@ def invoice_create(request):
 # =====================================================
 
 @require_module_permission('suppliers', 'view')
+@require_inventory
 def supplier_list(request):
     """Lista de proveedores"""
     org_member = OrganizationMember.objects.filter(user=request.user).first()
@@ -880,6 +883,7 @@ def supplier_delete(request, supplier_id):
 # =====================================================
 
 @require_module_permission('products', 'view')
+@require_inventory
 def product_list(request):
     """Lista de productos"""
     organization = get_user_organization(request)

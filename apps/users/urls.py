@@ -19,6 +19,15 @@ urlpatterns = [
     path('subscription/success/<uuid:transaction_id>/', payment_views.subscription_success, name='subscription_success'),
     path('subscription/status/', payment_views.subscription_status, name='subscription_status'),
     
+    # Trial Expirado
+    path('subscription/trial-expired/', payment_views.trial_expired_checkout, name='trial_expired_checkout'),
+    path('subscription/trial-expired/process/', payment_views.process_trial_payment, name='process_trial_payment'),
+    
+    # Gestión de Suscripción
+    path('subscription/manage/', payment_views.manage_subscription, name='manage_subscription'),
+    path('subscription/toggle-auto-renew/', payment_views.toggle_auto_renew, name='toggle_auto_renew'),
+    path('subscription/cancel/', payment_views.cancel_subscription, name='cancel_subscription'),
+    
     # Métodos de Pago
     path('payment-methods/', payment_views.payment_methods_list, name='payment_methods'),
     path('payment-methods/add/', payment_views.add_payment_method, name='add_payment_method'),

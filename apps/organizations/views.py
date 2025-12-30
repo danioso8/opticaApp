@@ -194,13 +194,19 @@ def organization_switch(request, org_id):
 def subscription_plans(request):
     """Mostrar planes de suscripción disponibles"""
     from .currency_utils import get_plan_prices_display
+    from .plan_features import PLAN_MODULES, get_module_info
     
     plans = SubscriptionPlan.objects.filter(is_active=True).order_by('price_monthly')
     
-    # Agregar precios COP a cada plan
+    # Agregar precios COP y módulos a cada plan
     plans_with_prices = []
     for plan in plans:
         plan.cop_prices = get_plan_prices_display(plan)
+        
+        # Agregar lista de módulos incluidos con sus detalles
+        plan_modules = PLAN_MODULES.get(plan.plan_type, [])
+        plan.modules_info = [get_module_info(module) for module in plan_modules]
+        
         plans_with_prices.append(plan)
     
     # Obtener suscripción actual del usuario

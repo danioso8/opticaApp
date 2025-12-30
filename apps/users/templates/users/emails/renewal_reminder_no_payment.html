@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Acción Requerida - Sin Método de Pago</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background-color: white;
+            border-radius: 8px;
+            padding: 30px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 3px solid #ef4444;
+        }
+        .header h1 {
+            color: #ef4444;
+            margin: 0;
+            font-size: 24px;
+        }
+        .badge-warning {
+            display: inline-block;
+            background: linear-gradient(135deg, #f59e0b 0%, #ef4444 100%);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 600;
+            margin: 15px 0;
+        }
+        .info-box {
+            background-color: #f8fafc;
+            border-left: 4px solid #ef4444;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+        .info-box h3 {
+            margin-top: 0;
+            color: #ef4444;
+            font-size: 18px;
+        }
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        .info-row:last-child {
+            border-bottom: none;
+        }
+        .info-label {
+            font-weight: 600;
+            color: #6b7280;
+        }
+        .info-value {
+            color: #111827;
+            font-weight: 500;
+        }
+        .warning-box {
+            background-color: #fef2f2;
+            border: 2px solid #ef4444;
+            padding: 20px;
+            border-radius: 6px;
+            margin: 20px 0;
+        }
+        .warning-box strong {
+            color: #dc2626;
+            font-size: 16px;
+        }
+        .button-primary {
+            display: inline-block;
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            color: white;
+            padding: 14px 28px;
+            text-decoration: none;
+            border-radius: 6px;
+            font-weight: 600;
+            text-align: center;
+            margin: 20px 0;
+        }
+        .button-primary:hover {
+            background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+        }
+        .steps {
+            background-color: #f0fdf4;
+            border-left: 4px solid #10b981;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+        .steps h3 {
+            color: #059669;
+            margin-top: 0;
+        }
+        .steps ol {
+            margin: 10px 0;
+            padding-left: 20px;
+        }
+        .steps li {
+            padding: 5px 0;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #e5e7eb;
+            color: #6b7280;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>⚠️ Acción Requerida</h1>
+            <span class="badge-warning">Tu suscripción vence en {{ days_until_renewal }} días</span>
+        </div>
+
+        <p>Hola <strong>{{ user.get_full_name|default:user.username }}</strong>,</p>
+
+        <p>Tu suscripción de <strong>{{ plan.name }}</strong> está próxima a vencer, pero <strong>no tienes un método de pago configurado</strong> para la renovación automática.</p>
+
+        <div class="info-box">
+            <h3>📋 Detalles de Suscripción</h3>
+            <div class="info-row">
+                <span class="info-label">Plan actual:</span>
+                <span class="info-value">{{ plan.name }}</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Fecha de vencimiento:</span>
+                <span class="info-value">{{ renewal_date|date:"d/m/Y" }}</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Días restantes:</span>
+                <span class="info-value">{{ days_until_renewal }} días</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Costo de renovación:</span>
+                <span class="info-value">${{ renewal_amount_cop|floatformat:0 }} COP (≈ ${{ renewal_amount|floatformat:2 }} USD)</span>
+            </div>
+        </div>
+
+        <div class="warning-box">
+            <strong>🚨 ¿Qué pasará si no agregas un método de pago?</strong><br><br>
+            El {{ renewal_date|date:"d de F de Y" }}, tu suscripción se <strong>desactivará automáticamente</strong> y perderás acceso a:
+            <ul>
+                <li>Panel administrativo</li>
+                <li>Gestión de pacientes y citas</li>
+                <li>Facturación electrónica</li>
+                <li>Todas las funcionalidades del sistema</li>
+            </ul>
+        </div>
+
+        <div class="steps">
+            <h3>✅ Pasos para continuar usando el servicio:</h3>
+            <ol>
+                <li>Haz clic en el botón "Agregar Método de Pago" abajo</li>
+                <li>Ingresa los datos de tu tarjeta de crédito o débito</li>
+                <li>Confirma tu método de pago</li>
+                <li>¡Listo! Tu suscripción se renovará automáticamente</li>
+            </ol>
+        </div>
+
+        <p style="text-align: center;">
+            <a href="{{ manage_url }}" class="button-primary">Agregar Método de Pago</a>
+        </p>
+
+        <p style="font-size: 14px; color: #6b7280; text-align: center;">
+            Si tienes alguna pregunta o necesitas ayuda, no dudes en contactarnos.
+        </p>
+
+        <div class="footer">
+            <p><strong>Oceano Optico</strong></p>
+            <p>© {{ current_year }} - Sistema de Gestión Óptica</p>
+            <p style="font-size: 12px; margin-top: 15px;">
+                Este es un correo automático importante sobre tu suscripción.<br>
+                Por favor, toma acción antes de que tu servicio se suspenda.
+            </p>
+        </div>
+    </div>
+</body>
+</html>
