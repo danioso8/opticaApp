@@ -493,12 +493,51 @@ class Subscription(models.Model):
         return self.plan.has_feature(feature_code)
 
 
+class ModulePermission(models.Model):
+    """Define qué módulos están disponibles en el sistema"""
+    MODULE_CATEGORIES = [
+        ('core', 'Núcleo'),
+        ('medical', 'Médico'),
+        ('sales', 'Ventas'),
+        ('inventory', 'Inventario'),
+        ('reports', 'Reportes'),
+        ('settings', 'Configuración'),
+    ]
+    
+    code = models.SlugField(unique=True, verbose_name='Código', help_text='Ej: appointments, patients, sales')
+    name = models.CharField(max_length=100, verbose_name='Nombre del Módulo')
+    description = models.TextField(blank=True, verbose_name='Descripción')
+    category = models.CharField(max_length=20, choices=MODULE_CATEGORIES, default='core')
+    icon = models.CharField(max_length=50, default='fa-cube', verbose_name='Ícono FontAwesome')
+    url_pattern = models.CharField(max_length=200, blank=True, verbose_name='Patrón URL', help_text='Ej: /dashboard/appointments/')
+    
+    # Permisos granulares
+    requires_view = models.BooleanField(default=True, verbose_name='Requiere permiso de Ver')
+    requires_create = models.BooleanField(default=True, verbose_name='Requiere permiso de Crear')
+    requires_edit = models.BooleanField(default=True, verbose_name='Requiere permiso de Editar')
+    requires_delete = models.BooleanField(default=True, verbose_name='Requiere permiso de Eliminar')
+    
+    is_active = models.BooleanField(default=True)
+    order = models.IntegerField(default=0, verbose_name='Orden de visualización')
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        verbose_name = 'Módulo del Sistema'
+        verbose_name_plural = 'Módulos del Sistema'
+        ordering = ['category', 'order', 'name']
+    
+    def __str__(self):
+        return f"{self.name} ({self.code})"
+
+
 class OrganizationMember(models.Model):
     """Miembros de una organización con sus roles"""
     ROLES = [
         ('owner', 'Propietario'),
         ('admin', 'Administrador'),
+        ('doctor', 'Doctor/Optómetra'),
         ('staff', 'Personal'),
+        ('cashier', 'Cajero'),
         ('viewer', 'Visualizador'),
     ]
     
@@ -506,8 +545,18 @@ class OrganizationMember(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='organization_memberships')
     role = models.CharField(max_length=20, choices=ROLES, default='staff')
     
+    # Permisos personalizados por módulo
+    custom_permissions = models.ManyToManyField(
+        ModulePermission,
+        through='MemberModulePermission',
+        related_name='members',
+        blank=True,
+        verbose_name='Permisos Personalizados'
+    )
+    
     is_active = models.BooleanField(default=True)
     joined_at = models.DateTimeField(auto_now_add=True)
+    invited_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='invited_members')
     
     class Meta:
         verbose_name = 'Miembro de Organización'
@@ -516,6 +565,77 @@ class OrganizationMember(models.Model):
     
     def __str__(self):
         return f"{self.user.get_full_name() or self.user.username} - {self.organization.name} ({self.get_role_display()})"
+    
+    def has_module_access(self, module_code):
+        """Verifica si el miembro tiene acceso a un módulo específico"""
+        # Owner y Admin tienen acceso total
+        if self.role in ['owner', 'admin']:
+            return True
+        
+        # Verificar permisos personalizados
+        return self.custom_permissions.filter(code=module_code, is_active=True).exists()
+    
+    def can_view(self, module_code):
+        """Verifica si puede ver un módulo"""
+        if self.role in ['owner', 'admin']:
+            return True
+        perm = MemberModulePermission.objects.filter(
+            member=self, 
+            module__code=module_code
+        ).first()
+        return perm.can_view if perm else False
+    
+    def can_create(self, module_code):
+        """Verifica si puede crear en un módulo"""
+        if self.role in ['owner', 'admin']:
+            return True
+        perm = MemberModulePermission.objects.filter(
+            member=self, 
+            module__code=module_code
+        ).first()
+        return perm.can_create if perm else False
+    
+    def can_edit(self, module_code):
+        """Verifica si puede editar en un módulo"""
+        if self.role in ['owner', 'admin']:
+            return True
+        perm = MemberModulePermission.objects.filter(
+            member=self, 
+            module__code=module_code
+        ).first()
+        return perm.can_edit if perm else False
+    
+    def can_delete(self, module_code):
+        """Verifica si puede eliminar en un módulo"""
+        if self.role in ['owner', 'admin']:
+            return True
+        perm = MemberModulePermission.objects.filter(
+            member=self, 
+            module__code=module_code
+        ).first()
+        return perm.can_delete if perm else False
+
+
+class MemberModulePermission(models.Model):
+    """Tabla intermedia para permisos granulares por módulo"""
+    member = models.ForeignKey(OrganizationMember, on_delete=models.CASCADE, related_name='module_permissions')
+    module = models.ForeignKey(ModulePermission, on_delete=models.CASCADE, related_name='member_permissions')
+    
+    can_view = models.BooleanField(default=True, verbose_name='Puede Ver')
+    can_create = models.BooleanField(default=False, verbose_name='Puede Crear')
+    can_edit = models.BooleanField(default=False, verbose_name='Puede Editar')
+    can_delete = models.BooleanField(default=False, verbose_name='Puede Eliminar')
+    
+    granted_at = models.DateTimeField(auto_now_add=True)
+    granted_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='granted_permissions')
+    
+    class Meta:
+        verbose_name = 'Permiso de Módulo'
+        verbose_name_plural = 'Permisos de Módulos'
+        unique_together = ['member', 'module']
+    
+    def __str__(self):
+        return f"{self.member.user.username} - {self.module.name}"
 
 
 class LandingPageConfig(models.Model):

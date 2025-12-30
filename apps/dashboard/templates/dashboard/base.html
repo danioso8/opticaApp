@@ -219,37 +219,48 @@
                     <span class="sidebar-tooltip">Panel de Ventas</span>
                 </a>
 
+                {% if user_perms.all_access or user_perms.patients.can_view %}
                 <a href="{% url 'dashboard:patients_list' %}" class="flex items-center px-4 py-3 hover:bg-indigo-800 {% if 'patients' in request.path %}bg-indigo-800{% endif %} relative">
                     <i class="fas fa-users mr-3"></i>
                     <span class="sidebar-text">Pacientes</span>
                     <span class="sidebar-tooltip">Pacientes</span>
                 </a>
+                {% endif %}
                 
+                {% if user_perms.all_access or user_perms.doctors.can_view %}
                 <a href="{% url 'dashboard:doctors_list' %}" class="flex items-center px-4 py-3 hover:bg-indigo-800 {% if 'doctors' in request.path %}bg-indigo-800{% endif %} relative">
                     <i class="fas fa-user-md mr-3"></i>
                     <span class="sidebar-text">Doctores / Optómetras</span>
                     <span class="sidebar-tooltip">Doctores / Optómetras</span>
                 </a>
+                {% endif %}
                 
+                {% if user_perms.all_access or user_perms.exam_orders.can_view %}
                 <a href="{% url 'dashboard:exam_order_list' %}" class="flex items-center px-4 py-3 hover:bg-indigo-800 {% if 'exam' in request.path %}bg-indigo-800{% endif %} relative">
                     <i class="fas fa-microscope mr-3"></i>
                     <span class="sidebar-text">Exámenes Especiales</span>
                     <span class="sidebar-tooltip">Exámenes Especiales</span>
                 </a>
+                {% endif %}
                 
+                {% if user_perms.all_access or user_perms.products.can_view %}
                 <a href="{% url 'billing:product_list' %}" class="flex items-center px-4 py-3 hover:bg-indigo-800 {% if 'product' in request.path %}bg-indigo-800{% endif %} relative">
                     <i class="fas fa-box mr-3"></i>
                     <span class="sidebar-text">Productos</span>
                     <span class="sidebar-tooltip">Productos</span>
                 </a>
+                {% endif %}
                 
+                {% if user_perms.all_access or user_perms.suppliers.can_view %}
                 <a href="{% url 'billing:supplier_list' %}" class="flex items-center px-4 py-3 hover:bg-indigo-800 {% if 'supplier' in request.path %}bg-indigo-800{% endif %} relative">
                     <i class="fas fa-truck mr-3"></i>
                     <span class="sidebar-text">Proveedores</span>
                     <span class="sidebar-tooltip">Proveedores</span>
                 </a>
+                {% endif %}
                 
                 <!-- Facturación Electrónica DIAN (Menú Desplegable) -->
+                {% if user_perms.all_access or user_perms.invoices.can_view %}
                 <div class="billing-menu">
                     <button onclick="toggleSubmenu('billing-submenu')" class="flex items-center justify-between w-full px-4 py-3 hover:bg-indigo-800 {% if 'billing' in request.path %}bg-indigo-800{% endif %} relative">
                         <div class="flex items-center">
@@ -277,8 +288,10 @@
                         </a>
                     </div>
                 </div>
+                {% endif %}
                 
                 <!-- Gestión de Citas (Menú Desplegable) -->
+                {% if user_perms.all_access or user_perms.appointments.can_view %}
                 <div class="appointments-menu">
                     <button onclick="toggleSubmenu('appointments-submenu')" class="flex items-center justify-between w-full px-4 py-3 hover:bg-indigo-800 {% if 'appointments' in request.path or 'configuration' in request.path %}bg-indigo-800{% endif %} relative">
                         <div class="flex items-center">
@@ -301,6 +314,7 @@
                         </a>
                     </div>
                 </div>
+                {% endif %}
                 
                 
                 
@@ -334,6 +348,11 @@
                             <i class="fas fa-paint-brush mr-3"></i>
                             <span class="sidebar-text">Landing Page</span>
                             <span class="sidebar-tooltip">Landing Page</span>
+                        </a>
+                        <a href="{% url 'dashboard:team_list' %}" class="flex items-center px-8 py-2 hover:bg-indigo-800 text-sm {% if '/team/' in request.path %}bg-indigo-800{% endif %} relative">
+                            <i class="fas fa-users-cog mr-3"></i>
+                            <span class="sidebar-text">Gestión de Equipo</span>
+                            <span class="sidebar-tooltip">Gestión de Equipo</span>
                         </a>
                     </div>
                 </div>

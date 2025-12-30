@@ -293,11 +293,22 @@ class DianConfiguration(TenantModel):
     def __str__(self):
         return f"{self.organization.name} - {self.razon_social}"
     
-    def get_next_numero(self):
+    def get_next_numero(self, es_factura_electronica=True):
         """
-        Obtiene y reserva el siguiente número consecutivo de factura.
+        Obtiene y reserva el siguiente número consecutivo de factura DIAN.
+        Solo debe llamarse para facturas electrónicas.
         Lanza excepción si se agotó la numeración.
+        
+        Args:
+            es_factura_electronica: Si es True, consume consecutivo DIAN. Si es False, no hace nada.
+        
+        Returns:
+            int: Número consecutivo asignado (solo si es factura electrónica)
         """
+        if not es_factura_electronica:
+            # No consumir consecutivo DIAN para facturas normales
+            return None
+        
         if self.resolucion_numero_actual == 0:
             # Primera vez, usar el número inicial
             self.resolucion_numero_actual = self.resolucion_numero_inicio
@@ -306,7 +317,7 @@ class DianConfiguration(TenantModel):
         
         if self.resolucion_numero_actual > self.resolucion_numero_fin:
             raise ValueError(
-                f"⚠️ Numeración agotada. Rango autorizado: "
+                f"⚠️ Numeración DIAN agotada. Rango autorizado: "
                 f"{self.resolucion_numero_inicio}-{self.resolucion_numero_fin}"
             )
         
@@ -390,6 +401,18 @@ class Invoice(TenantModel):
             ('mixed', 'Examen + Productos'),
         ],
         verbose_name="Tipo de Factura"
+    )
+    
+    # ===== TIPO DE FACTURACIÓN =====
+    es_factura_electronica = models.BooleanField(
+        default=False,
+        verbose_name="Es Factura Electrónica",
+        help_text="Si es True, consume consecutivo DIAN y se envía ante la DIAN. Si es False, es factura normal/interna."
+    )
+    requiere_envio_dian = models.BooleanField(
+        default=False,
+        verbose_name="Requiere Envío a DIAN",
+        help_text="Indica si el usuario solicitó que esta factura sea enviada a la DIAN"
     )
     
     # ===== CLIENTE/PACIENTE =====
@@ -724,9 +747,17 @@ class Invoice(TenantModel):
     
     def puede_enviar_dian(self):
         """Valida si la factura puede enviarse a DIAN"""
+        # Solo si es factura electrónica
+        if not self.es_factura_electronica:
+            return False, "Esta es una factura normal, no electrónica"
+        
+        # Solo si el usuario solicitó envío a DIAN
+        if not self.requiere_envio_dian:
+            return False, "No se solicitó envío a DIAN para esta factura"
+        
         # Solo facturas 100% pagadas
         if self.estado_pago != 'paid':
-            return False, "La factura debe estar completamente pagada"
+            return False, "La factura debe estar completamente pagada para enviarse a DIAN"
         
         # Solo en estados draft o rejected
         if self.estado_dian not in ['draft', 'rejected']:

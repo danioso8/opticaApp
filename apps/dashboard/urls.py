@@ -2,6 +2,7 @@ from django.urls import path
 from . import views
 from . import views_exam_orders
 from . import views_clinical_exams
+from . import views_team
 from .views_analytics import (
     analytics_dashboard,
     api_realtime_metrics,
@@ -39,6 +40,14 @@ urlpatterns = [
     
     # Dashboard principal
     path('', views.dashboard_home, name='home'),
+    
+    # Gestión de Equipo (Usuarios y Permisos)
+    path('team/', views_team.team_list, name='team_list'),
+    path('team/add/', views_team.team_member_add, name='team_member_add'),
+    path('team/<int:member_id>/edit/', views_team.team_member_edit, name='team_member_edit'),
+    path('team/<int:member_id>/permissions/', views_team.team_member_permissions, name='team_member_permissions'),
+    path('team/<int:member_id>/delete/', views_team.team_member_delete, name='team_member_delete'),
+    path('team/modules/', views_team.team_modules_list, name='team_modules_list'),
     
     # Analytics Dashboard
     path('analytics/', analytics_dashboard, name='analytics_dashboard'),

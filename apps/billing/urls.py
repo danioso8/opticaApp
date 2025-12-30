@@ -15,6 +15,7 @@ urlpatterns = [
     path('invoices/<int:invoice_id>/', views.invoice_detail, name='invoice_detail'),
     path('invoices/<int:invoice_id>/pdf/', views.invoice_pdf, name='invoice_pdf'),
     path('invoices/<int:invoice_id>/register-payment/', views.register_payment, name='register_payment'),
+    path('invoices/<int:invoice_id>/send-to-dian/', views.send_invoice_to_dian, name='send_invoice_to_dian'),
     
     # Proveedores (Suppliers)
     path('suppliers/', views.supplier_list, name='supplier_list'),

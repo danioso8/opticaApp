@@ -207,6 +207,68 @@
                       placeholder="Notas adicionales (opcional)"></textarea>
         </div>
         
+        <!-- Tipo de Facturación -->
+        <div class="mb-8">
+            <div class="bg-gradient-to-r from-purple-50 to-blue-50 p-6 rounded-lg border-2 border-purple-200">
+                <h3 class="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+                    <i class="fas fa-file-invoice mr-2 text-purple-600"></i>
+                    Tipo de Facturación
+                </h3>
+                
+                <div class="space-y-4">
+                    <!-- Checkbox Factura Electrónica -->
+                    <div class="flex items-start">
+                        <div class="flex items-center h-5">
+                            <input type="checkbox" id="es_factura_electronica" name="es_factura_electronica"
+                                   class="w-5 h-5 text-purple-600 border-gray-300 rounded focus:ring-purple-500"
+                                   onchange="toggleDianOptions()">
+                        </div>
+                        <div class="ml-3">
+                            <label for="es_factura_electronica" class="font-medium text-gray-900 cursor-pointer">
+                                <i class="fas fa-certificate text-purple-600 mr-1"></i>
+                                Es Factura Electrónica (DIAN)
+                            </label>
+                            <p class="text-sm text-gray-600">
+                                Consume consecutivo DIAN y genera CUFE, XML firmado y código QR. Tiene validez legal ante la DIAN.
+                            </p>
+                        </div>
+                    </div>
+                    
+                    <!-- Checkbox Enviar a DIAN (solo visible si es electrónica) -->
+                    <div id="dian_options" class="hidden ml-8 pl-4 border-l-4 border-purple-300">
+                        <div class="flex items-start">
+                            <div class="flex items-center h-5">
+                                <input type="checkbox" id="requiere_envio_dian" name="requiere_envio_dian"
+                                       class="w-5 h-5 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
+                            </div>
+                            <div class="ml-3">
+                                <label for="requiere_envio_dian" class="font-medium text-gray-900 cursor-pointer">
+                                    <i class="fas fa-paper-plane text-blue-600 mr-1"></i>
+                                    Enviar a DIAN inmediatamente
+                                </label>
+                                <p class="text-sm text-gray-600">
+                                    Solo disponible si la factura está completamente pagada. Requiere certificado digital configurado.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Info sobre factura normal -->
+                    <div id="normal_invoice_info" class="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                        <div class="flex items-start">
+                            <i class="fas fa-info-circle text-blue-600 mt-1 mr-2"></i>
+                            <div>
+                                <p class="text-sm font-medium text-blue-900">Factura Normal/Interna</p>
+                                <p class="text-sm text-blue-700">
+                                    Usa consecutivo interno (ilimitado), no se envía a DIAN. Ideal para control interno.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
         <!-- Botones de Acción -->
         <div class="flex justify-end space-x-4">
             <a href="{% url 'billing:invoice_list' %}" 
@@ -978,6 +1040,23 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('clientInfoFields').classList.add('hidden');
     }
 });
+
+// ===== TOGGLE OPCIONES DE FACTURA ELECTRÓNICA =====
+function toggleDianOptions() {
+    const esElectronica = document.getElementById('es_factura_electronica').checked;
+    const dianOptions = document.getElementById('dian_options');
+    const normalInfo = document.getElementById('normal_invoice_info');
+    
+    if (esElectronica) {
+        dianOptions.classList.remove('hidden');
+        normalInfo.classList.add('hidden');
+    } else {
+        dianOptions.classList.add('hidden');
+        normalInfo.classList.remove('hidden');
+        // Desmarcar envío a DIAN si se desmarca factura electrónica
+        document.getElementById('requiere_envio_dian').checked = false;
+    }
+}
 </script>
 
 <!-- Modal de Búsqueda Avanzada de Pacientes -->

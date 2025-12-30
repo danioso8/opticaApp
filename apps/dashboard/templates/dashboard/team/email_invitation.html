@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Invitación a {{ organization.name }}</title>
+</head>
+<body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+    <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
+        <h1 style="color: white; margin: 0;">¡Has sido invitado!</h1>
+    </div>
+    
+    <div style="background: #f8f9fa; padding: 30px; border-radius: 0 0 10px 10px;">
+        <p style="font-size: 16px;">Hola <strong>{{ user.first_name|default:user.username }}</strong>,</p>
+        
+        <p><strong>{{ invited_by.get_full_name|default:invited_by.username }}</strong> te ha invitado a unirte al equipo de <strong>{{ organization.name }}</strong> como <strong>{{ role }}</strong>.</p>
+        
+        <div style="background: white; padding: 20px; border-radius: 8px; margin: 20px 0;">
+            <h3 style="color: #667eea; margin-top: 0;">Detalles de la invitación:</h3>
+            <ul style="list-style: none; padding: 0;">
+                <li style="padding: 8px 0; border-bottom: 1px solid #eee;">
+                    <strong>Organización:</strong> {{ organization.name }}
+                </li>
+                <li style="padding: 8px 0; border-bottom: 1px solid #eee;">
+                    <strong>Tu rol:</strong> {{ role }}
+                </li>
+                <li style="padding: 8px 0; border-bottom: 1px solid #eee;">
+                    <strong>Invitado por:</strong> {{ invited_by.get_full_name|default:invited_by.username }}
+                </li>
+                <li style="padding: 8px 0;">
+                    <strong>Tu email:</strong> {{ user.email }}
+                </li>
+            </ul>
+        </div>
+        
+        <p>Para acceder al sistema, por favor:</p>
+        <ol>
+            <li>Ingresa a la plataforma con tu email: <strong>{{ user.email }}</strong></li>
+            <li>Si es tu primera vez, solicita restablecer tu contraseña</li>
+            <li>Inicia sesión y comienza a trabajar</li>
+        </ol>
+        
+        <div style="text-align: center; margin: 30px 0;">
+            <a href="{{ site_url }}/dashboard/login/" 
+               style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 15px 40px; text-decoration: none; border-radius: 50px; display: inline-block; font-weight: bold;">
+                Iniciar Sesión
+            </a>
+        </div>
+        
+        <p style="color: #666; font-size: 14px; margin-top: 30px;">
+            Si tienes alguna pregunta, contacta directamente con {{ invited_by.get_full_name|default:invited_by.username }} o con el soporte de la plataforma.
+        </p>
+    </div>
+    
+    <div style="text-align: center; margin-top: 20px; color: #999; font-size: 12px;">
+        <p>Este es un correo automático, por favor no respondas a este mensaje.</p>
+        <p>&copy; 2025 OpticaApp. Todos los derechos reservados.</p>
+    </div>
+</body>
+</html>

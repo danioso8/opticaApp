@@ -1,0 +1,522 @@
+{% extends 'dashboard/base.html' %}
+{% load static %}
+{% load team_filters %}
+
+{% block title %}Permisos de {{ member.user.get_full_name }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+    
+    .permissions-container {
+        font-family: 'Inter', sans-serif;
+    }
+    
+    .permissions-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 24px;
+        padding: 2.5rem;
+        margin-bottom: 2rem;
+        color: white;
+        box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
+    }
+    
+    .member-info-card {
+        background: white;
+        border-radius: 24px;
+        padding: 2rem;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+        border: 1px solid rgba(102, 126, 234, 0.1);
+        margin-bottom: 2rem;
+    }
+    
+    .avatar-circle {
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        box-shadow: 0 8px 24px rgba(102, 126, 234, 0.3);
+        animation: pulse 3s infinite;
+    }
+    
+    @keyframes pulse {
+        0%, 100% { box-shadow: 0 8px 24px rgba(102, 126, 234, 0.3); }
+        50% { box-shadow: 0 8px 32px rgba(102, 126, 234, 0.5); }
+    }
+    
+    .quick-actions-card {
+        background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+        border-radius: 20px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+        border: 1px solid rgba(102, 126, 234, 0.1);
+    }
+    
+    .quick-action-btn {
+        padding: 0.75rem 1.5rem;
+        border-radius: 12px;
+        font-weight: 600;
+        font-size: 0.875rem;
+        transition: all 0.3s ease;
+        border: none;
+        white-space: nowrap;
+    }
+    
+    .quick-action-btn.view {
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        color: white;
+    }
+    
+    .quick-action-btn.view:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 16px rgba(16, 185, 129, 0.3);
+    }
+    
+    .quick-action-btn.create {
+        background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+        color: white;
+    }
+    
+    .quick-action-btn.create:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 16px rgba(59, 130, 246, 0.3);
+    }
+    
+    .quick-action-btn.edit {
+        background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+        color: white;
+    }
+    
+    .quick-action-btn.edit:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 16px rgba(245, 158, 11, 0.3);
+    }
+    
+    .quick-action-btn.delete {
+        background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+        color: white;
+    }
+    
+    .quick-action-btn.delete:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 16px rgba(239, 68, 68, 0.3);
+    }
+    
+    .quick-action-btn.clear {
+        background: white;
+        color: #6b7280;
+        border: 2px solid #e5e7eb;
+    }
+    
+    .quick-action-btn.clear:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+        background: #f9fafb;
+        border-color: #9ca3af;
+    }
+    
+    .module-category-card {
+        background: white;
+        border-radius: 20px;
+        overflow: hidden;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+        border: 1px solid rgba(102, 126, 234, 0.1);
+        margin-bottom: 2rem;
+        border-left: 4px solid #667eea;
+    }
+    
+    .category-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 1.5rem 2rem;
+        font-weight: 700;
+        font-size: 1.125rem;
+    }
+    
+    .permissions-table {
+        width: 100%;
+    }
+    
+    .permissions-table thead {
+        background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+    }
+    
+    .permissions-table th {
+        padding: 1.25rem 1.5rem;
+        font-weight: 700;
+        font-size: 0.875rem;
+        border-bottom: 2px solid #e5e7eb;
+        color: #374151;
+    }
+    
+    .permissions-table td {
+        padding: 1.25rem 1.5rem;
+        border-bottom: 1px solid #f3f4f6;
+        vertical-align: middle;
+    }
+    
+    .module-row {
+        transition: all 0.2s ease;
+    }
+    
+    .module-row:hover {
+        background: linear-gradient(135deg, #faf5ff 0%, #f5f3ff 100%);
+    }
+    
+    .permission-checkbox {
+        width: 24px;
+        height: 24px;
+        cursor: pointer;
+        accent-color: #667eea;
+    }
+    
+    .module-checkbox {
+        width: 20px;
+        height: 20px;
+        cursor: pointer;
+        accent-color: #667eea;
+    }
+    
+    .module-label {
+        font-weight: 600;
+        color: #1f2937;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+    
+    .module-description {
+        color: #6b7280;
+        font-size: 0.875rem;
+        margin-top: 0.25rem;
+    }
+    
+    .role-badge-large {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 0.75rem 1.5rem;
+        border-radius: 50px;
+        font-weight: 700;
+        font-size: 0.875rem;
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+    }
+    
+    .back-btn {
+        background: white;
+        color: #667eea;
+        padding: 0.875rem 1.75rem;
+        border-radius: 50px;
+        font-weight: 700;
+        border: 2px solid white;
+        box-shadow: 0 4px 16px rgba(255,255,255,0.3);
+        transition: all 0.3s ease;
+        text-decoration: none;
+    }
+    
+    .back-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 24px rgba(255,255,255,0.5);
+        color: #5568d3;
+    }
+    
+    .submit-actions {
+        background: white;
+        border-radius: 20px;
+        padding: 2rem;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+        border: 1px solid rgba(102, 126, 234, 0.1);
+    }
+    
+    .btn-save {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 1rem 2.5rem;
+        border-radius: 50px;
+        font-weight: 700;
+        font-size: 1rem;
+        border: none;
+        box-shadow: 0 8px 24px rgba(102, 126, 234, 0.3);
+        transition: all 0.3s ease;
+    }
+    
+    .btn-save:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 12px 32px rgba(102, 126, 234, 0.5);
+        background: linear-gradient(135deg, #5568d3 0%, #6b3f99 100%);
+        color: white;
+    }
+    
+    .btn-cancel {
+        background: white;
+        color: #6b7280;
+        padding: 1rem 2.5rem;
+        border-radius: 50px;
+        font-weight: 700;
+        font-size: 1rem;
+        border: 2px solid #e5e7eb;
+        transition: all 0.3s ease;
+        text-decoration: none;
+    }
+    
+    .btn-cancel:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+        background: #f9fafb;
+        border-color: #9ca3af;
+        color: #374151;
+    }
+    
+    .icon-wrapper {
+        width: 40px;
+        height: 40px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+        color: #667eea;
+        font-size: 1.25rem;
+    }
+</style>
+{% endblock %}
+
+
+{% block content %}
+<div class="container-fluid py-4 permissions-container">
+    <div class="row">
+        <div class="col-lg-11 mx-auto">
+            <!-- Modern Header -->
+            <div class="permissions-header">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h1 class="mb-2" style="font-size: 2.25rem; font-weight: 800;">
+                            <i class="fas fa-key me-3"></i>Gestión de Permisos
+                        </h1>
+                        <p class="mb-0" style="font-size: 1.1rem; opacity: 0.95;">
+                            Configura los permisos de acceso para <strong>{{ member.user.get_full_name|default:member.user.username }}</strong>
+                        </p>
+                    </div>
+                    <a href="{% url 'dashboard:team_list' %}" class="back-btn d-inline-flex align-items-center">
+                        <i class="fas fa-arrow-left me-2"></i>Volver
+                    </a>
+                </div>
+            </div>
+
+            <!-- Member Info Card -->
+            <div class="member-info-card">
+                <div class="d-flex align-items-center">
+                    <div class="avatar-circle text-white me-4">
+                        <i class="fas fa-user fa-2x"></i>
+                    </div>
+                    <div class="flex-grow-1">
+                        <h4 class="mb-1" style="font-weight: 700; color: #1f2937;">
+                            {{ member.user.get_full_name|default:member.user.username }}
+                        </h4>
+                        <p class="text-muted mb-0" style="font-size: 0.95rem;">
+                            <i class="fas fa-envelope me-2"></i>{{ member.user.email }}
+                        </p>
+                    </div>
+                    <span class="role-badge-large">
+                        {% if member.role == 'owner' %}
+                            <i class="fas fa-crown me-2"></i>
+                        {% elif member.role == 'admin' %}
+                            <i class="fas fa-user-shield me-2"></i>
+                        {% elif member.role == 'doctor' %}
+                            <i class="fas fa-user-md me-2"></i>
+                        {% elif member.role == 'staff' %}
+                            <i class="fas fa-user-tie me-2"></i>
+                        {% elif member.role == 'cashier' %}
+                            <i class="fas fa-cash-register me-2"></i>
+                        {% else %}
+                            <i class="fas fa-eye me-2"></i>
+                        {% endif %}
+                        {{ member.get_role_display }}
+                    </span>
+                </div>
+            </div>
+
+            <form method="post" id="permissionsForm">
+                {% csrf_token %}
+                
+                <!-- Quick Actions -->
+                <div class="quick-actions-card">
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="icon-wrapper me-3">
+                            <i class="fas fa-bolt"></i>
+                        </div>
+                        <h5 class="mb-0" style="font-weight: 700; color: #1f2937;">Acciones Rápidas</h5>
+                    </div>
+                    <div class="d-flex flex-wrap gap-2">
+                        <button type="button" class="quick-action-btn view" onclick="selectAllPermissions('view')">
+                            <i class="fas fa-eye me-2"></i>Todos: Ver
+                        </button>
+                        <button type="button" class="quick-action-btn create" onclick="selectAllPermissions('create')">
+                            <i class="fas fa-plus me-2"></i>Todos: Crear
+                        </button>
+                        <button type="button" class="quick-action-btn edit" onclick="selectAllPermissions('edit')">
+                            <i class="fas fa-edit me-2"></i>Todos: Editar
+                        </button>
+                        <button type="button" class="quick-action-btn delete" onclick="selectAllPermissions('delete')">
+                            <i class="fas fa-trash me-2"></i>Todos: Eliminar
+                        </button>
+                        <button type="button" class="quick-action-btn clear" onclick="clearAllPermissions()">
+                            <i class="fas fa-times me-2"></i>Desmarcar Todo
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Modules by Category -->
+                {% for category, modules in modules_by_category.items %}
+                <div class="module-category-card">
+                    <div class="category-header">
+                        <i class="fas fa-folder-open me-2"></i>{{ category|title }}
+                    </div>
+                    <div class="table-responsive">
+                        <table class="permissions-table">
+                            <thead>
+                                <tr>
+                                    <th style="width: 40%">
+                                        <i class="fas fa-cube me-2"></i>Módulo
+                                    </th>
+                                    <th class="text-center" style="width: 15%">
+                                        <i class="fas fa-eye me-1" style="color: #10b981;"></i>Ver
+                                    </th>
+                                    <th class="text-center" style="width: 15%">
+                                        <i class="fas fa-plus me-1" style="color: #3b82f6;"></i>Crear
+                                    </th>
+                                    <th class="text-center" style="width: 15%">
+                                        <i class="fas fa-edit me-1" style="color: #f59e0b;"></i>Editar
+                                    </th>
+                                    <th class="text-center" style="width: 15%">
+                                        <i class="fas fa-trash me-1" style="color: #ef4444;"></i>Eliminar
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                    {% for module in modules %}
+                                    <tr class="module-row">
+                                        <td>
+                                            <div class="d-flex align-items-start">
+                                                <input class="module-checkbox me-3 mt-1" 
+                                                       type="checkbox" 
+                                                       name="module_{{ module.id }}" 
+                                                       id="module_{{ module.id }}"
+                                                       {% if module.id in current_permissions %}checked{% endif %}
+                                                       onchange="toggleModulePermissions({{ module.id }})">
+                                                <label class="module-label" for="module_{{ module.id }}" style="cursor: pointer;">
+                                                    <div class="icon-wrapper" style="width: 36px; height: 36px; font-size: 1rem;">
+                                                        <i class="{{ module.icon }}"></i>
+                                                    </div>
+                                                    <div>
+                                                        <div style="font-weight: 700; color: #1f2937;">{{ module.name }}</div>
+                                                        {% if module.description %}
+                                                        <div class="module-description">{{ module.description }}</div>
+                                                        {% endif %}
+                                                    </div>
+                                                </label>
+                                            </div>
+                                        </td>
+                                        <td class="text-center">
+                                            <input type="checkbox" 
+                                                   class="permission-checkbox view-checkbox" 
+                                                   name="view_{{ module.id }}"
+                                                   data-module="{{ module.id }}"
+                                                   {% if module.id in current_permissions %}{% if current_permissions|lookup:module.id|lookup:"can_view" %}checked{% endif %}{% endif %}>
+                                        </td>
+                                        <td class="text-center">
+                                            <input type="checkbox" 
+                                                   class="permission-checkbox create-checkbox" 
+                                                   name="create_{{ module.id }}"
+                                                   data-module="{{ module.id }}"
+                                                   {% if module.id in current_permissions %}{% if current_permissions|lookup:module.id|lookup:"can_create" %}checked{% endif %}{% endif %}>
+                                        </td>
+                                        <td class="text-center">
+                                            <input type="checkbox" 
+                                                   class="permission-checkbox edit-checkbox" 
+                                                   name="edit_{{ module.id }}"
+                                                   data-module="{{ module.id }}"
+                                                   {% if module.id in current_permissions %}{% if current_permissions|lookup:module.id|lookup:"can_edit" %}checked{% endif %}{% endif %}>
+                                        </td>
+                                        <td class="text-center">
+                                            <input type="checkbox" 
+                                                   class="permission-checkbox delete-checkbox" 
+                                                   name="delete_{{ module.id }}"
+                                                   data-module="{{ module.id }}"
+                                                   {% if module.id in current_permissions %}{% if current_permissions|lookup:module.id|lookup:"can_delete" %}checked{% endif %}{% endif %}>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                {% endfor %}
+
+                <!-- Submit Buttons -->
+                <div class="submit-actions">
+                    <div class="d-flex gap-3 justify-content-end align-items-center">
+                        <a href="{% url 'dashboard:team_list' %}" class="btn-cancel">
+                            <i class="fas fa-times me-2"></i>Cancelar
+                        </a>
+                        <button type="submit" class="btn-save">
+                            <i class="fas fa-save me-2"></i>Guardar Permisos
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+function toggleModulePermissions(moduleId) {
+    const moduleCheckbox = document.getElementById('module_' + moduleId);
+    const permissionCheckboxes = document.querySelectorAll(`input[data-module="${moduleId}"]`);
+    
+    if (moduleCheckbox.checked) {
+        // Si se marca el módulo, marcar al menos "Ver"
+        const viewCheckbox = document.querySelector(`input[name="view_${moduleId}"]`);
+        if (viewCheckbox) {
+            viewCheckbox.checked = true;
+        }
+    } else {
+        // Si se desmarca el módulo, desmarcar todos los permisos
+        permissionCheckboxes.forEach(cb => cb.checked = false);
+    }
+}
+
+function selectAllPermissions(type) {
+    const checkboxes = document.querySelectorAll(`.${type}-checkbox`);
+    checkboxes.forEach(cb => {
+        cb.checked = true;
+        // También marcar el módulo correspondiente
+        const moduleId = cb.getAttribute('data-module');
+        const moduleCheckbox = document.getElementById('module_' + moduleId);
+        if (moduleCheckbox) {
+            moduleCheckbox.checked = true;
+        }
+    });
+}
+
+function clearAllPermissions() {
+    const allCheckboxes = document.querySelectorAll('input[type="checkbox"]');
+    allCheckboxes.forEach(cb => cb.checked = false);
+}
+
+// Auto-marcar módulo si se marca algún permiso
+document.querySelectorAll('.permission-checkbox').forEach(checkbox => {
+    checkbox.addEventListener('change', function() {
+        const moduleId = this.getAttribute('data-module');
+        const moduleCheckbox = document.getElementById('module_' + moduleId);
+        
+        if (this.checked && moduleCheckbox) {
+            moduleCheckbox.checked = true;
+        }
+    });
+});
+</script>
+
+{% endblock %}

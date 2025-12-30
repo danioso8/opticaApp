@@ -1,0 +1,55 @@
+{% extends 'dashboard/base.html' %}
+
+{% block title %}Eliminar Miembro{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-6">
+            <div class="card border-0 shadow-sm border-danger">
+                <div class="card-header bg-danger text-white py-3">
+                    <h4 class="mb-0">
+                        <i class="fas fa-exclamation-triangle"></i> Eliminar Miembro
+                    </h4>
+                </div>
+                <div class="card-body p-4">
+                    <div class="alert alert-danger">
+                        <h5>
+                            <i class="fas fa-exclamation-circle"></i> ¿Estás seguro?
+                        </h5>
+                        <p class="mb-0">
+                            Estás a punto de eliminar a <strong>{{ member.user.get_full_name|default:member.user.username }}</strong> ({{ member.user.email }}) del equipo.
+                        </p>
+                    </div>
+
+                    <div class="mb-4">
+                        <h6>Información del miembro:</h6>
+                        <ul>
+                            <li><strong>Nombre:</strong> {{ member.user.get_full_name|default:member.user.username }}</li>
+                            <li><strong>Email:</strong> {{ member.user.email }}</li>
+                            <li><strong>Rol:</strong> {{ member.get_role_display }}</li>
+                            <li><strong>Fecha de ingreso:</strong> {{ member.joined_at|date:"d/m/Y" }}</li>
+                        </ul>
+                    </div>
+
+                    <div class="alert alert-warning">
+                        <i class="fas fa-info-circle"></i> Esta acción no se puede deshacer. El usuario perderá acceso a todos los datos de la organización.
+                    </div>
+
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="d-flex gap-2 justify-content-end">
+                            <a href="{% url 'dashboard:team_list' %}" class="btn btn-secondary">
+                                <i class="fas fa-times"></i> Cancelar
+                            </a>
+                            <button type="submit" class="btn btn-danger">
+                                <i class="fas fa-trash"></i> Sí, Eliminar Miembro
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

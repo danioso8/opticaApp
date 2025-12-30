@@ -1,0 +1,271 @@
+{% extends 'dashboard/base.html' %}
+{% load static %}
+
+{% block title %}Agregar Miembro{% endblock %}
+
+{% block extra_css %}
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+    
+    .add-member-container {
+        font-family: 'Inter', sans-serif;
+    }
+    
+    .page-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 24px;
+        padding: 2.5rem;
+        margin-bottom: 2rem;
+        color: white;
+        box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
+    }
+    
+    .form-card {
+        background: white;
+        border-radius: 24px;
+        padding: 2.5rem;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        border: 1px solid rgba(0,0,0,0.06);
+        transition: all 0.3s ease;
+    }
+    
+    .form-card:hover {
+        box-shadow: 0 12px 24px rgba(102, 126, 234, 0.15);
+    }
+    
+    .modern-input, .modern-select {
+        border: 2px solid #e5e7eb;
+        border-radius: 12px;
+        padding: 0.875rem 1.25rem;
+        font-size: 1rem;
+        font-weight: 500;
+        transition: all 0.3s ease;
+        font-family: 'Inter', sans-serif;
+    }
+    
+    .modern-input:focus, .modern-select:focus {
+        border-color: #667eea;
+        box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+        outline: none;
+    }
+    
+    .form-label {
+        font-weight: 600;
+        color: #374151;
+        margin-bottom: 0.75rem;
+        font-size: 0.95rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .info-alert {
+        background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+        border-left: 4px solid #3b82f6;
+        border-radius: 16px;
+        padding: 1.25rem;
+        margin-bottom: 2rem;
+        color: #1e40af;
+        font-weight: 500;
+    }
+    
+    .role-descriptions {
+        background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+        border-radius: 20px;
+        padding: 2rem;
+        border: 1px solid rgba(102, 126, 234, 0.1);
+    }
+    
+    .role-item {
+        padding: 1rem;
+        background: white;
+        border-radius: 12px;
+        margin-bottom: 0.75rem;
+        transition: all 0.3s ease;
+        border: 1px solid rgba(0,0,0,0.05);
+    }
+    
+    .role-item:hover {
+        transform: translateX(8px);
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
+        border-color: rgba(102, 126, 234, 0.3);
+    }
+    
+    .role-item strong {
+        color: #667eea;
+        font-weight: 700;
+    }
+    
+    .btn-modern-primary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 1rem 2.5rem;
+        border-radius: 50px;
+        font-weight: 700;
+        border: none;
+        box-shadow: 0 8px 24px rgba(102, 126, 234, 0.4);
+        transition: all 0.3s ease;
+        font-family: 'Inter', sans-serif;
+    }
+    
+    .btn-modern-primary:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 12px 32px rgba(102, 126, 234, 0.5);
+        background: linear-gradient(135deg, #5568d3 0%, #6b3f99 100%);
+    }
+    
+    .btn-modern-secondary {
+        background: white;
+        color: #6b7280;
+        padding: 1rem 2.5rem;
+        border-radius: 50px;
+        font-weight: 700;
+        border: 2px solid #e5e7eb;
+        transition: all 0.3s ease;
+        font-family: 'Inter', sans-serif;
+    }
+    
+    .btn-modern-secondary:hover {
+        background: #f9fafb;
+        border-color: #d1d5db;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+    
+    .section-title {
+        font-weight: 800;
+        color: #1f2937;
+        margin-bottom: 1.5rem;
+        font-size: 1.25rem;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+    
+    .section-title i {
+        color: #667eea;
+        font-size: 1.5rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4 add-member-container">
+    <!-- Modern Header -->
+    <div class="page-header">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h1 class="mb-2" style="font-size: 2.5rem; font-weight: 800;">
+                    <i class="fas fa-user-plus me-3"></i>Agregar Nuevo Miembro
+                </h1>
+                <p class="mb-0" style="font-size: 1.1rem; opacity: 0.95;">
+                    Invita a un nuevo miembro a tu equipo y asigna su rol
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="form-card">
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    <div class="info-alert">
+                        <i class="fas fa-info-circle me-2"></i> 
+                        Si el usuario ya existe en el sistema, se agregará a tu organización. Si no existe, se creará una nueva cuenta.
+                    </div>
+
+                    <div class="mb-4">
+                        <label for="email" class="form-label">
+                            <i class="fas fa-envelope"></i>
+                            <span>Email <span class="text-danger">*</span></span>
+                        </label>
+                        <input type="email" 
+                               class="form-control modern-input" 
+                               id="email" 
+                               name="email" 
+                               required
+                               placeholder="usuario@ejemplo.com">
+                        <small class="text-muted ms-2">El usuario recibirá una invitación en este correo</small>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-4">
+                            <label for="first_name" class="form-label">
+                                <i class="fas fa-user"></i>
+                                <span>Nombre</span>
+                            </label>
+                            <input type="text" 
+                                   class="form-control modern-input" 
+                                   id="first_name" 
+                                   name="first_name"
+                                   placeholder="Nombre">
+                        </div>
+                        <div class="col-md-6 mb-4">
+                            <label for="last_name" class="form-label">
+                                <i class="fas fa-user"></i>
+                                <span>Apellido</span>
+                            </label>
+                            <input type="text" 
+                                   class="form-control modern-input" 
+                                   id="last_name" 
+                                   name="last_name"
+                                   placeholder="Apellido">
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label for="role" class="form-label">
+                            <i class="fas fa-user-tag"></i>
+                            <span>Rol <span class="text-danger">*</span></span>
+                        </label>
+                        <select class="form-select modern-select" id="role" name="role" required>
+                            {% for role_code, role_name in roles %}
+                                {% if role_code != 'owner' %}
+                                <option value="{{ role_code }}" {% if role_code == 'staff' %}selected{% endif %}>
+                                    {{ role_name }}
+                                </option>
+                                {% endif %}
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <!-- Role Descriptions -->
+                    <div class="role-descriptions mb-4">
+                        <div class="section-title">
+                            <i class="fas fa-info-circle"></i>
+                            <span>Descripción de Roles</span>
+                        </div>
+                        <div class="role-item">
+                            <strong>Administrador:</strong> Acceso total a todos los módulos y gestión de equipo
+                        </div>
+                        <div class="role-item">
+                            <strong>Doctor/Optómetra:</strong> Acceso a módulos clínicos y gestión de pacientes
+                        </div>
+                        <div class="role-item">
+                            <strong>Personal:</strong> Permisos personalizados según función
+                        </div>
+                        <div class="role-item">
+                            <strong>Cajero:</strong> Acceso a ventas y facturación
+                        </div>
+                        <div class="role-item mb-0">
+                            <strong>Visualizador:</strong> Solo lectura, sin permisos de edición
+                        </div>
+                    </div>
+
+                    <div class="d-flex gap-3 justify-content-end">
+                        <a href="{% url 'dashboard:team_list' %}" class="btn btn-modern-secondary text-decoration-none">
+                            <i class="fas fa-times me-2"></i>Cancelar
+                        </a>
+                        <button type="submit" class="btn btn-modern-primary">
+                            <i class="fas fa-user-plus me-2"></i>Agregar Miembro
+                        </button>
+                    </div>
+                </form>
+            </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

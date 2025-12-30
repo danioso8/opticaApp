@@ -10,6 +10,7 @@ from decimal import Decimal
 
 from apps.organizations.models import Organization, OrganizationMember
 from apps.patients.models import Patient
+from apps.dashboard.decorators import require_module_permission
 from .models import DianConfiguration, Invoice, InvoiceItem, Payment, Supplier, InvoiceProduct, InvoiceConfiguration
 
 
@@ -108,7 +109,7 @@ def dian_configuration_view(request):
     return render(request, 'billing/dian_config.html', context)
 
 
-@login_required
+@require_module_permission('invoices', 'view')
 def invoice_list(request):
     """Lista de facturas electrónicas"""
     # Obtener organización del usuario
@@ -184,7 +185,7 @@ def invoice_list(request):
     return render(request, 'billing/invoice_list.html', context)
 
 
-@login_required
+@require_module_permission('invoices', 'create')
 def invoice_create(request):
     """Crear nueva factura electrónica"""
     from django.utils import timezone
@@ -219,6 +220,10 @@ def invoice_create(request):
             telefono_cliente = request.POST.get('telefono_cliente', '')
             forma_pago = request.POST.get('forma_pago', '1')
             medio_pago = request.POST.get('medio_pago', '10')
+            
+            # NUEVO: Tipo de facturación (electrónica o normal)
+            es_factura_electronica = request.POST.get('es_factura_electronica') == 'on'
+            requiere_envio_dian = request.POST.get('requiere_envio_dian') == 'on'
             
             # Items
             items_data = json.loads(request.POST.get('items', '[]'))
@@ -296,26 +301,48 @@ def invoice_create(request):
             
             # TODO: Iniciar transacción atómica ANTES de generar el número
             with transaction.atomic():
-                # Generar número de factura con lock para evitar duplicados
-                # Usar select_for_update() para bloquear la última factura durante la transacción
-                last_invoice = Invoice.objects.filter(
-                    organization=organization
-                ).select_for_update().order_by('-numero').first()
+                # Determinar prefijo y número según tipo de factura
+                if es_factura_electronica:
+                    # Factura Electrónica: Usar consecutivo DIAN
+                    try:
+                        dian_config = DianConfiguration.objects.get(organization=organization)
+                        numero_dian = dian_config.get_next_numero(es_factura_electronica=True)
+                        prefijo = dian_config.resolucion_prefijo
+                        numero_completo = dian_config.get_numero_completo(numero_dian)
+                        nuevo_numero = numero_dian
+                    except DianConfiguration.DoesNotExist:
+                        messages.error(request, '❌ No hay configuración DIAN. Configure primero la facturación electrónica.')
+                        return redirect('billing:dian_configuration')
+                    except ValueError as e:
+                        messages.error(request, f'❌ Error en consecutivo DIAN: {str(e)}')
+                        return redirect('billing:invoice_create')
+                else:
+                    # Factura Normal/Interna: Usar consecutivo interno
+                    # Generar número de factura con lock para evitar duplicados
+                    # Usar select_for_update() para bloquear la última factura durante la transacción
+                    last_invoice = Invoice.objects.filter(
+                        organization=organization,
+                        es_factura_electronica=False  # Solo contar facturas normales
+                    ).select_for_update().order_by('-numero').first()
+                    
+                    nuevo_numero = (last_invoice.numero + 1) if last_invoice else 1
+                    prefijo = config.prefijo_factura
+                    numero_completo = f"{prefijo}-{str(nuevo_numero).zfill(5)}"
+                    
+                    # Verificar que el número no exista (doble verificación)
+                    while Invoice.objects.filter(organization=organization, numero_completo=numero_completo).exists():
+                        nuevo_numero += 1
+                        numero_completo = f"{prefijo}-{str(nuevo_numero).zfill(5)}"
                 
-                nuevo_numero = (last_invoice.numero + 1) if last_invoice else 1
-                numero_completo = f"{config.prefijo_factura}-{str(nuevo_numero).zfill(5)}"
-                
-                # Verificar que el número no exista (doble verificación)
-                while Invoice.objects.filter(organization=organization, numero_completo=numero_completo).exists():
-                    nuevo_numero += 1
-                    numero_completo = f"{config.prefijo_factura}-{str(nuevo_numero).zfill(5)}"
                 # Crear factura
                 invoice = Invoice.objects.create(
                     organization=organization,
-                    prefijo=config.prefijo_factura,
+                    prefijo=prefijo,
                     numero=nuevo_numero,
                     numero_completo=numero_completo,
                     tipo='product',
+                    es_factura_electronica=es_factura_electronica,
+                    requiere_envio_dian=requiere_envio_dian,
                     patient=patient,
                     cliente_tipo_documento=patient.identification_type,
                     cliente_numero_documento=numero_documento or patient.identification_number,
@@ -390,45 +417,68 @@ def invoice_create(request):
                     )
                     payment_counter += 1
                 
-                # Procesar facturación electrónica si está habilitada
-                if config.facturacion_electronica_activa:
-                    try:
-                        from apps.billing.services import FacturacionElectronicaService
-                        
-                        # Usar mock si estamos en desarrollo o no hay certificado
-                        usar_mock = not config.certificado_digital or config.ambiente == 'pruebas'
-                        
-                        servicio = FacturacionElectronicaService(
-                            invoice=invoice,
-                            usar_mock=usar_mock
-                        )
-                        
-                        exito, resultado = servicio.procesar_factura_completa()
-                        
-                        if exito:
-                            messages.success(
-                                request,
-                                f'✅ Factura {invoice.numero_completo} creada y procesada exitosamente'
+                # Procesar facturación electrónica si cumple condiciones
+                # 1. Es factura electrónica
+                # 2. Usuario solicitó envío a DIAN
+                # 3. Está completamente pagada
+                if es_factura_electronica and requiere_envio_dian and config.facturacion_electronica_activa:
+                    # Verificar si está completamente pagada
+                    puede_enviar, mensaje_envio = invoice.puede_enviar_dian()
+                    
+                    if puede_enviar:
+                        try:
+                            from apps.billing.services import FacturacionElectronicaService
+                            
+                            # Usar mock si estamos en desarrollo o no hay certificado
+                            usar_mock = not config.certificado_digital or config.ambiente == 'pruebas'
+                            
+                            servicio = FacturacionElectronicaService(
+                                invoice=invoice,
+                                usar_mock=usar_mock
                             )
-                            if usar_mock:
-                                messages.info(request, '⚠️ Procesada en modo PRUEBA (sin envío real a DIAN)')
+                            
+                            exito, resultado = servicio.procesar_factura_completa()
+                            
+                            if exito:
+                                messages.success(
+                                    request,
+                                    f'✅ Factura Electrónica {invoice.numero_completo} creada y enviada a DIAN exitosamente'
+                                )
+                                if usar_mock:
+                                    messages.info(request, '⚠️ Procesada en modo PRUEBA (sin envío real a DIAN)')
+                                else:
+                                    messages.success(request, f'📄 CUFE: {invoice.cufe[:30]}...')
                             else:
-                                messages.success(request, f'📄 CUFE: {invoice.cufe[:30]}...')
-                        else:
+                                messages.warning(
+                                    request,
+                                    f'⚠️ Factura {invoice.numero_completo} creada pero hubo errores al enviar a DIAN'
+                                )
+                                messages.error(request, f"Error: {resultado.get('mensaje', 'Error desconocido')}")
+                                
+                        except Exception as e:
                             messages.warning(
                                 request,
-                                f'⚠️ Factura {invoice.numero_completo} creada pero hubo errores en DIAN'
+                                f'⚠️ Factura {invoice.numero_completo} creada pero no se pudo enviar a DIAN: {str(e)}'
                             )
-                            messages.error(request, f"Error: {resultado.get('mensaje', 'Error desconocido')}")
-                            
-                    except Exception as e:
-                        messages.warning(
-                            request,
-                            f'⚠️ Factura {invoice.numero_completo} creada pero no se pudo procesar con DIAN: {str(e)}'
-                        )
+                    else:
+                        # No se puede enviar a DIAN aún
+                        messages.success(request, f'✅ Factura Electrónica {invoice.numero_completo} creada exitosamente')
+                        messages.info(request, f'ℹ️ {mensaje_envio}. Podrá enviarse a DIAN cuando esté completamente pagada.')
+                        
+                elif es_factura_electronica and not requiere_envio_dian:
+                    # Es electrónica pero no se solicitó envío inmediato
+                    messages.success(request, f'✅ Factura Electrónica {invoice.numero_completo} creada exitosamente')
+                    messages.info(request, 'ℹ️ No se solicitó envío a DIAN. Puede enviarla posteriormente.')
+                    
                 else:
-                    messages.success(request, f'✅ Factura {invoice.numero_completo} creada exitosamente')
-                    messages.info(request, 'ℹ️ Facturación electrónica no está activada')
+                    # Factura normal/interna
+                    if es_factura_electronica:
+                        tipo_factura = "Factura Electrónica"
+                    else:
+                        tipo_factura = "Factura"
+                    messages.success(request, f'✅ {tipo_factura} {invoice.numero_completo} creada exitosamente')
+                    if not es_factura_electronica:
+                        messages.info(request, 'ℹ️ Esta es una factura normal/interna, no consume consecutivo DIAN')
                 
                 return redirect('billing:invoice_detail', invoice_id=invoice.id)
                 
@@ -467,7 +517,7 @@ def invoice_create(request):
 # VISTAS PARA PROVEEDORES
 # =====================================================
 
-@login_required
+@require_module_permission('suppliers', 'view')
 def supplier_list(request):
     """Lista de proveedores"""
     org_member = OrganizationMember.objects.filter(user=request.user).first()
@@ -503,7 +553,7 @@ def supplier_list(request):
     return render(request, 'billing/supplier_list.html', context)
 
 
-@login_required
+@require_module_permission('suppliers', 'create')
 def supplier_create(request):
     """Crear nuevo proveedor"""
     org_member = OrganizationMember.objects.filter(user=request.user).first()
@@ -565,7 +615,7 @@ def supplier_create(request):
     return render(request, 'billing/supplier_form.html', context)
 
 
-@login_required
+@require_module_permission('suppliers', 'edit')
 def supplier_edit(request, supplier_id):
     """Editar proveedor"""
     org_member = OrganizationMember.objects.filter(user=request.user).first()
@@ -829,7 +879,7 @@ def supplier_delete(request, supplier_id):
 # VISTAS PARA PRODUCTOS
 # =====================================================
 
-@login_required
+@require_module_permission('products', 'view')
 def product_list(request):
     """Lista de productos"""
     organization = get_user_organization(request)
@@ -903,7 +953,7 @@ def product_list(request):
     return render(request, 'billing/product_list.html', context)
 
 
-@login_required
+@require_module_permission('products', 'create')
 def product_create(request):
     """Crear nuevo producto"""
     organization = get_user_organization(request)
@@ -969,7 +1019,7 @@ def product_create(request):
     return render(request, 'billing/product_form.html', context)
 
 
-@login_required
+@require_module_permission('products', 'edit')
 def product_edit(request, product_id):
     """Editar producto"""
     organization = get_user_organization(request)
@@ -1035,7 +1085,7 @@ def product_edit(request, product_id):
     return render(request, 'billing/product_form.html', context)
 
 
-@login_required
+@require_module_permission('products', 'delete')
 def product_delete(request, product_id):
     """Eliminar producto"""
     org_member = OrganizationMember.objects.filter(user=request.user).first()
@@ -1149,7 +1199,7 @@ def invoice_config(request):
     return render(request, 'billing/invoice_config.html', context)
 
 
-@login_required
+@require_module_permission('invoices', 'view')
 def invoice_detail(request, invoice_id):
     """Ver detalle de factura"""
     org_member = OrganizationMember.objects.filter(user=request.user).first()
@@ -1258,6 +1308,83 @@ def register_payment(request, invoice_id):
         except Exception as e:
             messages.error(request, f'Error al registrar el pago: {str(e)}')
             return redirect('billing:invoice_detail', invoice_id=invoice.id)
+    
+    return redirect('billing:invoice_detail', invoice_id=invoice.id)
+
+
+@login_required
+@require_http_methods(["POST"])
+def send_invoice_to_dian(request, invoice_id):
+    """Enviar factura electrónica a DIAN manualmente (cuando esté completamente pagada)"""
+    org_member = OrganizationMember.objects.filter(user=request.user).first()
+    if not org_member:
+        messages.error(request, 'No tienes una organización asignada')
+        return redirect('dashboard:home')
+    
+    organization = org_member.organization
+    invoice = get_object_or_404(Invoice, id=invoice_id, organization=organization)
+    
+    # Verificar que sea factura electrónica
+    if not invoice.es_factura_electronica:
+        messages.error(request, '❌ Esta es una factura normal/interna, no se puede enviar a DIAN')
+        return redirect('billing:invoice_detail', invoice_id=invoice.id)
+    
+    # Verificar si puede enviarse a DIAN
+    puede_enviar, mensaje = invoice.puede_enviar_dian()
+    
+    if not puede_enviar:
+        messages.error(request, f'❌ No se puede enviar a DIAN: {mensaje}')
+        return redirect('billing:invoice_detail', invoice_id=invoice.id)
+    
+    try:
+        # Obtener configuración
+        config = InvoiceConfiguration.get_config(organization)
+        
+        if not config.facturacion_electronica_activa:
+            messages.error(request, '❌ La facturación electrónica no está activada')
+            return redirect('billing:invoice_detail', invoice_id=invoice.id)
+        
+        # Procesar envío a DIAN
+        from apps.billing.services import FacturacionElectronicaService
+        
+        # Usar mock si estamos en desarrollo o no hay certificado
+        usar_mock = not config.certificado_digital or config.ambiente == 'pruebas'
+        
+        servicio = FacturacionElectronicaService(
+            invoice=invoice,
+            usar_mock=usar_mock
+        )
+        
+        # Actualizar estado a "procesando"
+        invoice.estado_dian = 'processing'
+        invoice.save(update_fields=['estado_dian'])
+        
+        exito, resultado = servicio.procesar_factura_completa()
+        
+        if exito:
+            messages.success(
+                request,
+                f'✅ Factura {invoice.numero_completo} enviada a DIAN exitosamente'
+            )
+            if usar_mock:
+                messages.info(request, '⚠️ Procesada en modo PRUEBA (sin envío real a DIAN)')
+            else:
+                messages.success(request, f'📄 CUFE: {invoice.cufe[:30]}...')
+        else:
+            messages.error(
+                request,
+                f'❌ Error al enviar factura a DIAN'
+            )
+            messages.error(request, f"Detalle: {resultado.get('mensaje', 'Error desconocido')}")
+            # Revertir estado
+            invoice.estado_dian = 'draft'
+            invoice.save(update_fields=['estado_dian'])
+            
+    except Exception as e:
+        messages.error(request, f'❌ Error inesperado al enviar a DIAN: {str(e)}')
+        # Revertir estado
+        invoice.estado_dian = 'draft'
+        invoice.save(update_fields=['estado_dian'])
     
     return redirect('billing:invoice_detail', invoice_id=invoice.id)
 

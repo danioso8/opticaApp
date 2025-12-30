@@ -3,130 +3,537 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistema de Gestión para Ópticas</title>
+    <title>Sistema de Gestión para Ópticas - OpticaApp</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     
     <style>
-        body { font-family: 'Poppins', sans-serif; }
+        body { 
+            font-family: 'Poppins', sans-serif; 
+        }
+        .gradient-bg {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .card-hover {
+            transition: all 0.3s ease;
+        }
+        .card-hover:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+        }
+        .feature-icon {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-20px); }
+        }
+        .floating {
+            animation: float 3s ease-in-out infinite;
+        }
     </style>
 </head>
 <body class="bg-gray-50">
 
 <!-- Hero Section Genérica -->
-<section class="relative min-h-screen flex items-center overflow-hidden bg-gradient-to-br from-blue-600 via-purple-600 to-pink-500">
-    <div class="absolute inset-0 opacity-20">
+<section class="relative min-h-screen flex items-center overflow-hidden gradient-bg">
+    <!-- Decorative Background Pattern -->
+    <div class="absolute inset-0 opacity-10">
         <div class="absolute inset-0" style="background-image: url('data:image/svg+xml,%3Csvg width=&quot;60&quot; height=&quot;60&quot; viewBox=&quot;0 0 60 60&quot; xmlns=&quot;http://www.w3.org/2000/svg&quot;%3E%3Cg fill=&quot;none&quot; fill-rule=&quot;evenodd&quot;%3E%3Cg fill=&quot;%23ffffff&quot; fill-opacity=&quot;0.4&quot;%3E%3Cpath d=&quot;M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z&quot;/%3E%3C/g%3E%3C/g%3E%3C/svg%3E');"></div>
+    </div>
+    
+    <!-- Floating shapes decoration -->
+    <div class="absolute inset-0 overflow-hidden pointer-events-none">
+        <div class="absolute top-20 left-10 w-72 h-72 bg-white/5 rounded-full blur-3xl floating"></div>
+        <div class="absolute bottom-20 right-10 w-96 h-96 bg-white/5 rounded-full blur-3xl floating" style="animation-delay: 1s;"></div>
     </div>
     
     <div class="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 w-full">
         <div class="text-center text-white">
+            <!-- Logo/Icon -->
             <div class="mb-8">
-                <i class="fas fa-glasses text-8xl mb-4 animate-pulse"></i>
+                <div class="inline-block bg-white/10 backdrop-blur-md p-6 rounded-3xl border border-white/20 floating">
+                    <i class="fas fa-glasses text-7xl text-white"></i>
+                </div>
             </div>
             
-            <h1 class="text-6xl md:text-7xl font-bold mb-6 leading-tight">
+            <h1 class="text-5xl md:text-7xl font-extrabold mb-6 leading-tight">
                 Sistema de Gestión para Ópticas
             </h1>
             
-            <p class="text-2xl mb-12 text-blue-100 max-w-3xl mx-auto">
-                Plataforma completa para la gestión de tu óptica:<br>
+            <p class="text-xl md:text-2xl mb-4 text-white/90 max-w-3xl mx-auto font-medium">
+                Plataforma completa para la gestión de tu óptica:
+            </p>
+            <p class="text-lg md:text-xl mb-12 text-white/80 max-w-3xl mx-auto">
                 Agendamiento, Historia Clínica, Ventas y más
             </p>
             
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12 max-w-5xl mx-auto">
-                <div class="bg-white/10 backdrop-blur-md rounded-2xl p-6 border border-white/20">
-                    <i class="fas fa-calendar-check text-5xl mb-4"></i>
-                    <h3 class="text-xl font-bold mb-2">Agendamiento Online</h3>
-                    <p class="text-blue-100">Gestiona citas desde tu landing page pública</p>
+            <!-- Main Features Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12 max-w-6xl mx-auto">
+                <div class="bg-white/10 backdrop-blur-md rounded-2xl p-8 border border-white/20 card-hover">
+                    <div class="bg-white/20 w-20 h-20 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                        <i class="fas fa-calendar-check text-4xl text-white"></i>
+                    </div>
+                    <h3 class="text-2xl font-bold mb-3">Agendamiento Online</h3>
+                    <p class="text-white/80 text-base">Gestiona citas desde tu landing page pública</p>
                 </div>
                 
-                <div class="bg-white/10 backdrop-blur-md rounded-2xl p-6 border border-white/20">
-                    <i class="fas fa-notes-medical text-5xl mb-4"></i>
-                    <h3 class="text-xl font-bold mb-2">Historia Clínica</h3>
-                    <p class="text-blue-100">Completo sistema de expedientes médicos</p>
+                <div class="bg-white/10 backdrop-blur-md rounded-2xl p-8 border border-white/20 card-hover">
+                    <div class="bg-white/20 w-20 h-20 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                        <i class="fas fa-notes-medical text-4xl text-white"></i>
+                    </div>
+                    <h3 class="text-2xl font-bold mb-3">Historia Clínica</h3>
+                    <p class="text-white/80 text-base">Completo sistema de expedientes médicos</p>
                 </div>
                 
-                <div class="bg-white/10 backdrop-blur-md rounded-2xl p-6 border border-white/20">
-                    <i class="fas fa-store text-5xl mb-4"></i>
-                    <h3 class="text-xl font-bold mb-2">Punto de Venta</h3>
-                    <p class="text-blue-100">Ventas, inventario y facturación DIAN</p>
+                <div class="bg-white/10 backdrop-blur-md rounded-2xl p-8 border border-white/20 card-hover">
+                    <div class="bg-white/20 w-20 h-20 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                        <i class="fas fa-store text-4xl text-white"></i>
+                    </div>
+                    <h3 class="text-2xl font-bold mb-3">Punto de Venta</h3>
+                    <p class="text-white/80 text-base">Ventas, inventario y facturación DIAN</p>
                 </div>
             </div>
             
-            <div class="flex flex-col sm:flex-row gap-4 justify-center items-center">
+            <!-- CTA Buttons -->
+            <div class="flex flex-col sm:flex-row gap-4 justify-center items-center mb-16">
                 <a href="/dashboard/login/" 
-                   class="inline-flex items-center gap-3 bg-white text-blue-600 px-8 py-4 rounded-full font-bold text-lg shadow-2xl hover:shadow-white/50 hover:scale-105 transition-all">
+                   class="inline-flex items-center gap-3 bg-white text-purple-600 px-10 py-4 rounded-full font-bold text-lg shadow-2xl hover:shadow-white/50 hover:scale-105 transition-all">
                     <i class="fas fa-sign-in-alt"></i>
                     Iniciar Sesión
                 </a>
                 
                 <a href="/organizations/register/" 
-                   class="inline-flex items-center gap-3 bg-transparent border-2 border-white text-white px-8 py-4 rounded-full font-bold text-lg hover:bg-white hover:text-blue-600 transition-all">
+                   class="inline-flex items-center gap-3 bg-transparent border-2 border-white text-white px-10 py-4 rounded-full font-bold text-lg hover:bg-white hover:text-purple-600 transition-all">
                     <i class="fas fa-user-plus"></i>
                     Crear Cuenta
                 </a>
             </div>
             
-            <div class="mt-16 p-6 bg-white/10 backdrop-blur-md rounded-2xl border border-white/20 max-w-2xl mx-auto">
-                <i class="fas fa-info-circle text-3xl mb-3"></i>
-                <p class="text-lg text-blue-100">
-                    ¿Buscas una óptica específica?<br>
-                    <span class="font-bold text-white">Solicita el link directo</span> para ver sus servicios y agendar citas.
+            <!-- Info Box -->
+            <div class="p-8 bg-white/10 backdrop-blur-md rounded-2xl border border-white/20 max-w-2xl mx-auto">
+                <i class="fas fa-question-circle text-4xl mb-4"></i>
+                <p class="text-xl text-white/90 mb-2 font-semibold">
+                    ¿Buscas una óptica específica?
+                </p>
+                <p class="text-base text-white/80">
+                    Solicita el <span class="font-bold text-white">link directo</span> a tu óptica favorita para ver sus servicios y agendar citas en línea.
                 </p>
             </div>
         </div>
     </div>
 </section>
 
-<section class="py-20 bg-white">
+<!-- Features Section -->
+<section class="py-24 bg-white">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="text-center mb-16">
-            <h2 class="text-4xl font-bold text-gray-900 mb-4">
+        <div class="text-center mb-20">
+            <h2 class="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
                 Todo lo que necesitas para tu óptica
             </h2>
-            <p class="text-xl text-gray-600">
-                Sistema integral diseñado específicamente para ópticas modernas
+            <p class="text-xl text-gray-600 max-w-3xl mx-auto">
+                Sistema integral diseñado específicamente para ópticas modernas que quieren crecer
             </p>
         </div>
         
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-            <div class="text-center p-6">
-                <div class="bg-blue-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <i class="fas fa-globe text-blue-600 text-2xl"></i>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-16">
+            <div class="text-center p-6 card-hover bg-gray-50 rounded-2xl">
+                <div class="feature-icon w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                    <i class="fas fa-globe text-white text-2xl"></i>
                 </div>
-                <h3 class="text-lg font-bold mb-2">Landing Page Personalizada</h3>
-                <p class="text-gray-600">Tu propia página web con tu marca y colores</p>
+                <h3 class="text-lg font-bold mb-2 text-gray-900">Landing Page Personalizada</h3>
+                <p class="text-gray-600">Tu propia página web con tu marca, colores y logo</p>
             </div>
             
-            <div class="text-center p-6">
-                <div class="bg-purple-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <i class="fas fa-eye text-purple-600 text-2xl"></i>
+            <div class="text-center p-6 card-hover bg-gray-50 rounded-2xl">
+                <div class="feature-icon w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                    <i class="fas fa-eye text-white text-2xl"></i>
                 </div>
-                <h3 class="text-lg font-bold mb-2">Exámenes Visuales</h3>
-                <p class="text-gray-600">Registro completo de pruebas oftalmológicas</p>
+                <h3 class="text-lg font-bold mb-2 text-gray-900">Exámenes Visuales</h3>
+                <p class="text-gray-600">Registro completo de pruebas oftalmológicas digitales</p>
             </div>
             
-            <div class="text-center p-6">
-                <div class="bg-green-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <i class="fas fa-receipt text-green-600 text-2xl"></i>
+            <div class="text-center p-6 card-hover bg-gray-50 rounded-2xl">
+                <div class="feature-icon w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                    <i class="fas fa-file-invoice text-white text-2xl"></i>
                 </div>
-                <h3 class="text-lg font-bold mb-2">Facturación DIAN</h3>
-                <p class="text-gray-600">Integración directa con facturación electrónica</p>
+                <h3 class="text-lg font-bold mb-2 text-gray-900">Facturación Electrónica DIAN</h3>
+                <p class="text-gray-600">Integración directa con facturación electrónica Colombia</p>
             </div>
             
-            <div class="text-center p-6">
-                <div class="bg-pink-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <i class="fas fa-chart-line text-pink-600 text-2xl"></i>
+            <div class="text-center p-6 card-hover bg-gray-50 rounded-2xl">
+                <div class="feature-icon w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                    <i class="fas fa-chart-line text-white text-2xl"></i>
                 </div>
-                <h3 class="text-lg font-bold mb-2">Reportes y Analytics</h3>
-                <p class="text-gray-600">Métricas y estadísticas de tu negocio</p>
+                <h3 class="text-lg font-bold mb-2 text-gray-900">Reportes y Analytics</h3>
+                <p class="text-gray-600">Métricas en tiempo real de ventas y citas</p>
+            </div>
+            
+            <div class="text-center p-6 card-hover bg-gray-50 rounded-2xl">
+                <div class="feature-icon w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                    <i class="fas fa-boxes text-white text-2xl"></i>
+                </div>
+                <h3 class="text-lg font-bold mb-2 text-gray-900">Gestión de Inventario</h3>
+                <p class="text-gray-600">Control completo de productos, monturas y lentes</p>
+            </div>
+            
+            <div class="text-center p-6 card-hover bg-gray-50 rounded-2xl">
+                <div class="feature-icon w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                    <i class="fas fa-users text-white text-2xl"></i>
+                </div>
+                <h3 class="text-lg font-bold mb-2 text-gray-900">Multi-usuario</h3>
+                <p class="text-gray-600">Roles y permisos para todo tu equipo</p>
+            </div>
+            
+            <div class="text-center p-6 card-hover bg-gray-50 rounded-2xl">
+                <div class="feature-icon w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                    <i class="fas fa-bell text-white text-2xl"></i>
+                </div>
+                <h3 class="text-lg font-bold mb-2 text-gray-900">Notificaciones Automáticas</h3>
+                <p class="text-gray-600">Recordatorios por WhatsApp, Email y SMS</p>
+            </div>
+            
+            <div class="text-center p-6 card-hover bg-gray-50 rounded-2xl">
+                <div class="feature-icon w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                    <i class="fas fa-mobile-alt text-white text-2xl"></i>
+                </div>
+                <h3 class="text-lg font-bold mb-2 text-gray-900">100% Responsive</h3>
+                <p class="text-gray-600">Funciona perfecto en móvil, tablet y computador</p>
             </div>
         </div>
     </div>
 </section>
+
+<!-- Integrations Section -->
+<section class="py-24 bg-gradient-to-br from-purple-50 to-blue-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-20">
+            <h2 class="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
+                Integraciones y Servicios
+            </h2>
+            <p class="text-xl text-gray-600 max-w-3xl mx-auto">
+                Conecta tu óptica con las mejores herramientas del mercado
+            </p>
+        </div>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <!-- DIAN Integration -->
+            <div class="bg-white rounded-2xl p-8 shadow-lg card-hover border border-gray-100">
+                <div class="flex items-center mb-4">
+                    <div class="bg-green-100 p-3 rounded-xl">
+                        <i class="fas fa-file-invoice-dollar text-green-600 text-3xl"></i>
+                    </div>
+                    <div class="ml-4">
+                        <h3 class="text-xl font-bold text-gray-900">DIAN Colombia</h3>
+                        <span class="text-sm text-green-600 font-semibold">✓ Integrado</span>
+                    </div>
+                </div>
+                <p class="text-gray-600">Facturación electrónica oficial para cumplir con todas las normativas colombianas.</p>
+            </div>
+            
+            <!-- Payment Gateways -->
+            <div class="bg-white rounded-2xl p-8 shadow-lg card-hover border border-gray-100">
+                <div class="flex items-center mb-4">
+                    <div class="bg-blue-100 p-3 rounded-xl">
+                        <i class="fas fa-credit-card text-blue-600 text-3xl"></i>
+                    </div>
+                    <div class="ml-4">
+                        <h3 class="text-xl font-bold text-gray-900">Pagos Online</h3>
+                        <span class="text-sm text-blue-600 font-semibold">✓ Disponible</span>
+                    </div>
+                </div>
+                <p class="text-gray-600">Acepta pagos con tarjetas, PSE y más. Integración con pasarelas de pago.</p>
+            </div>
+            
+            <!-- WhatsApp Integration -->
+            <div class="bg-white rounded-2xl p-8 shadow-lg card-hover border border-gray-100">
+                <div class="flex items-center mb-4">
+                    <div class="bg-green-100 p-3 rounded-xl">
+                        <i class="fab fa-whatsapp text-green-600 text-3xl"></i>
+                    </div>
+                    <div class="ml-4">
+                        <h3 class="text-xl font-bold text-gray-900">WhatsApp</h3>
+                        <span class="text-sm text-green-600 font-semibold">✓ Integrado</span>
+                    </div>
+                </div>
+                <p class="text-gray-600">Envía recordatorios automáticos de citas por WhatsApp a tus clientes.</p>
+            </div>
+            
+            <!-- Email Service -->
+            <div class="bg-white rounded-2xl p-8 shadow-lg card-hover border border-gray-100">
+                <div class="flex items-center mb-4">
+                    <div class="bg-red-100 p-3 rounded-xl">
+                        <i class="fas fa-envelope text-red-600 text-3xl"></i>
+                    </div>
+                    <div class="ml-4">
+                        <h3 class="text-xl font-bold text-gray-900">Email Marketing</h3>
+                        <span class="text-sm text-red-600 font-semibold">✓ Integrado</span>
+                    </div>
+                </div>
+                <p class="text-gray-600">Sistema de envío masivo de correos para promociones y recordatorios.</p>
+            </div>
+            
+            <!-- SMS Service -->
+            <div class="bg-white rounded-2xl p-8 shadow-lg card-hover border border-gray-100">
+                <div class="flex items-center mb-4">
+                    <div class="bg-purple-100 p-3 rounded-xl">
+                        <i class="fas fa-sms text-purple-600 text-3xl"></i>
+                    </div>
+                    <div class="ml-4">
+                        <h3 class="text-xl font-bold text-gray-900">SMS</h3>
+                        <span class="text-sm text-purple-600 font-semibold">✓ Disponible</span>
+                    </div>
+                </div>
+                <p class="text-gray-600">Notificaciones por SMS para recordatorios urgentes y confirmaciones.</p>
+            </div>
+            
+            <!-- Cloud Storage -->
+            <div class="bg-white rounded-2xl p-8 shadow-lg card-hover border border-gray-100">
+                <div class="flex items-center mb-4">
+                    <div class="bg-indigo-100 p-3 rounded-xl">
+                        <i class="fas fa-cloud text-indigo-600 text-3xl"></i>
+                    </div>
+                    <div class="ml-4">
+                        <h3 class="text-xl font-bold text-gray-900">Almacenamiento Cloud</h3>
+                        <span class="text-sm text-indigo-600 font-semibold">✓ Incluido</span>
+                    </div>
+                </div>
+                <p class="text-gray-600">Almacena archivos, imágenes y documentos de forma segura en la nube.</p>
+            </div>
+            
+            <!-- Analytics -->
+            <div class="bg-white rounded-2xl p-8 shadow-lg card-hover border border-gray-100">
+                <div class="flex items-center mb-4">
+                    <div class="bg-yellow-100 p-3 rounded-xl">
+                        <i class="fas fa-chart-bar text-yellow-600 text-3xl"></i>
+                    </div>
+                    <div class="ml-4">
+                        <h3 class="text-xl font-bold text-gray-900">Analytics</h3>
+                        <span class="text-sm text-yellow-600 font-semibold">✓ Integrado</span>
+                    </div>
+                </div>
+                <p class="text-gray-600">Seguimiento de métricas clave y análisis del comportamiento de clientes.</p>
+            </div>
+            
+            <!-- Google Calendar -->
+            <div class="bg-white rounded-2xl p-8 shadow-lg card-hover border border-gray-100">
+                <div class="flex items-center mb-4">
+                    <div class="bg-red-100 p-3 rounded-xl">
+                        <i class="fab fa-google text-red-600 text-3xl"></i>
+                    </div>
+                    <div class="ml-4">
+                        <h3 class="text-xl font-bold text-gray-900">Google Calendar</h3>
+                        <span class="text-sm text-orange-600 font-semibold">⏳ Próximamente</span>
+                    </div>
+                </div>
+                <p class="text-gray-600">Sincroniza citas automáticamente con Google Calendar.</p>
+            </div>
+            
+            <!-- Multi-currency -->
+            <div class="bg-white rounded-2xl p-8 shadow-lg card-hover border border-gray-100">
+                <div class="flex items-center mb-4">
+                    <div class="bg-green-100 p-3 rounded-xl">
+                        <i class="fas fa-dollar-sign text-green-600 text-3xl"></i>
+                    </div>
+                    <div class="ml-4">
+                        <h3 class="text-xl font-bold text-gray-900">Multi-moneda</h3>
+                        <span class="text-sm text-green-600 font-semibold">✓ Incluido</span>
+                    </div>
+                </div>
+                <p class="text-gray-600">Soporte para COP, USD y otras monedas con conversión automática.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Pricing Section -->
+<section class="py-24 bg-white">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-20">
+            <h2 class="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
+                Planes que se adaptan a ti
+            </h2>
+            <p class="text-xl text-gray-600 max-w-3xl mx-auto">
+                Elige el plan perfecto para tu óptica. Sin contratos, cancela cuando quieras
+            </p>
+        </div>
+        
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
+            <!-- Plan Básico -->
+            <div class="bg-white border-2 border-gray-200 rounded-3xl p-8 card-hover">
+                <div class="text-center mb-8">
+                    <h3 class="text-2xl font-bold text-gray-900 mb-2">Básico</h3>
+                    <p class="text-gray-600 mb-4">Para iniciar tu óptica</p>
+                    <div class="text-5xl font-bold text-gray-900 mb-2">Gratis</div>
+                    <p class="text-gray-600">Por siempre</p>
+                </div>
+                <ul class="space-y-4 mb-8">
+                    <li class="flex items-center">
+                        <i class="fas fa-check text-green-600 mr-3"></i>
+                        <span>Hasta 50 citas/mes</span>
+                    </li>
+                    <li class="flex items-center">
+                        <i class="fas fa-check text-green-600 mr-3"></i>
+                        <span>1 usuario</span>
+                    </li>
+                    <li class="flex items-center">
+                        <i class="fas fa-check text-green-600 mr-3"></i>
+                        <span>Landing page básica</span>
+                    </li>
+                    <li class="flex items-center text-gray-400">
+                        <i class="fas fa-times mr-3"></i>
+                        <span>Sin facturación DIAN</span>
+                    </li>
+                </ul>
+                <a href="/organizations/register/" class="block w-full text-center bg-gray-200 text-gray-800 py-3 rounded-full font-bold hover:bg-gray-300 transition">
+                    Comenzar Gratis
+                </a>
+            </div>
+            
+            <!-- Plan Profesional -->
+            <div class="bg-gradient-to-br from-purple-600 to-blue-600 border-2 border-purple-600 rounded-3xl p-8 card-hover shadow-2xl transform scale-105">
+                <div class="absolute top-0 right-0 bg-yellow-400 text-gray-900 px-4 py-1 rounded-bl-lg rounded-tr-2xl font-bold text-sm">
+                    Popular
+                </div>
+                <div class="text-center mb-8 text-white">
+                    <h3 class="text-2xl font-bold mb-2">Profesional</h3>
+                    <p class="text-purple-100 mb-4">Para crecer tu negocio</p>
+                    <div class="text-5xl font-bold mb-2">$99.900</div>
+                    <p class="text-purple-100">COP / mes</p>
+                </div>
+                <ul class="space-y-4 mb-8 text-white">
+                    <li class="flex items-center">
+                        <i class="fas fa-check mr-3"></i>
+                        <span>Citas ilimitadas</span>
+                    </li>
+                    <li class="flex items-center">
+                        <i class="fas fa-check mr-3"></i>
+                        <span>Hasta 5 usuarios</span>
+                    </li>
+                    <li class="flex items-center">
+                        <i class="fas fa-check mr-3"></i>
+                        <span>Landing page personalizada</span>
+                    </li>
+                    <li class="flex items-center">
+                        <i class="fas fa-check mr-3"></i>
+                        <span>Facturación DIAN incluida</span>
+                    </li>
+                    <li class="flex items-center">
+                        <i class="fas fa-check mr-3"></i>
+                        <span>Notificaciones WhatsApp</span>
+                    </li>
+                </ul>
+                <a href="/organizations/register/" class="block w-full text-center bg-white text-purple-600 py-3 rounded-full font-bold hover:bg-gray-100 transition">
+                    Empezar Ahora
+                </a>
+            </div>
+            
+            <!-- Plan Empresarial -->
+            <div class="bg-white border-2 border-gray-200 rounded-3xl p-8 card-hover">
+                <div class="text-center mb-8">
+                    <h3 class="text-2xl font-bold text-gray-900 mb-2">Empresarial</h3>
+                    <p class="text-gray-600 mb-4">Para grandes ópticas</p>
+                    <div class="text-5xl font-bold text-gray-900 mb-2">$199.900</div>
+                    <p class="text-gray-600">COP / mes</p>
+                </div>
+                <ul class="space-y-4 mb-8">
+                    <li class="flex items-center">
+                        <i class="fas fa-check text-green-600 mr-3"></i>
+                        <span>Todo ilimitado</span>
+                    </li>
+                    <li class="flex items-center">
+                        <i class="fas fa-check text-green-600 mr-3"></i>
+                        <span>Usuarios ilimitados</span>
+                    </li>
+                    <li class="flex items-center">
+                        <i class="fas fa-check text-green-600 mr-3"></i>
+                        <span>Multi-sucursal</span>
+                    </li>
+                    <li class="flex items-center">
+                        <i class="fas fa-check text-green-600 mr-3"></i>
+                        <span>Soporte prioritario 24/7</span>
+                    </li>
+                    <li class="flex items-center">
+                        <i class="fas fa-check text-green-600 mr-3"></i>
+                        <span>API personalizada</span>
+                    </li>
+                </ul>
+                <a href="/organizations/register/" class="block w-full text-center bg-gray-900 text-white py-3 rounded-full font-bold hover:bg-gray-800 transition">
+                    Contactar Ventas
+                </a>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- CTA Section -->
+<section class="py-24 gradient-bg">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+        <h2 class="text-4xl md:text-5xl font-bold text-white mb-6">
+            ¿Listo para modernizar tu óptica?
+        </h2>
+        <p class="text-xl text-white/90 mb-12">
+            Únete a cientos de ópticas que ya confían en nosotros
+        </p>
+        <div class="flex flex-col sm:flex-row gap-4 justify-center">
+            <a href="/organizations/register/" 
+               class="inline-flex items-center justify-center gap-3 bg-white text-purple-600 px-10 py-4 rounded-full font-bold text-lg shadow-2xl hover:scale-105 transition-all">
+                <i class="fas fa-rocket"></i>
+                Comenzar Gratis
+            </a>
+            <a href="/dashboard/login/" 
+               class="inline-flex items-center justify-center gap-3 bg-transparent border-2 border-white text-white px-10 py-4 rounded-full font-bold text-lg hover:bg-white hover:text-purple-600 transition-all">
+                <i class="fas fa-sign-in-alt"></i>
+                Ya tengo cuenta
+            </a>
+        </div>
+    </div>
+</section>
+
+<!-- Footer -->
+<footer class="bg-gray-900 text-white py-12">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+            <div>
+                <h3 class="text-xl font-bold mb-4">
+                    <i class="fas fa-glasses mr-2"></i>OpticaApp
+                </h3>
+                <p class="text-gray-400">
+                    Sistema completo de gestión para ópticas modernas
+                </p>
+            </div>
+            <div>
+                <h4 class="font-bold mb-4">Producto</h4>
+                <ul class="space-y-2 text-gray-400">
+                    <li><a href="#" class="hover:text-white transition">Características</a></li>
+                    <li><a href="#" class="hover:text-white transition">Precios</a></li>
+                    <li><a href="#" class="hover:text-white transition">Integraciones</a></li>
+                </ul>
+            </div>
+            <div>
+                <h4 class="font-bold mb-4">Soporte</h4>
+                <ul class="space-y-2 text-gray-400">
+                    <li><a href="#" class="hover:text-white transition">Documentación</a></li>
+                    <li><a href="#" class="hover:text-white transition">Tutoriales</a></li>
+                    <li><a href="#" class="hover:text-white transition">Contacto</a></li>
+                </ul>
+            </div>
+            <div>
+                <h4 class="font-bold mb-4">Legal</h4>
+                <ul class="space-y-2 text-gray-400">
+                    <li><a href="#" class="hover:text-white transition">Privacidad</a></li>
+                    <li><a href="#" class="hover:text-white transition">Términos</a></li>
+                    <li><a href="#" class="hover:text-white transition">Cookies</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="border-t border-gray-800 mt-8 pt-8 text-center text-gray-400">
+            <p>&copy; 2025 OpticaApp. Todos los derechos reservados.</p>
+        </div>
+    </div>
+</footer>
 
 </body>
 </html>
