@@ -140,21 +140,9 @@ def sales_dashboard(request):
         revenue=Sum('subtotal')
     ).order_by('-quantity')[:10]
     
-    # ==================== ÚLTIMAS TRANSACCIONES (VENTAS + FACTURAS) ====================
-    # Crear lista combinada de ventas y facturas (solo completadas/activas)
+    # ==================== ÚLTIMAS TRANSACCIONES (SOLO FACTURAS) ====================
+    # Mostrar solo facturas para evitar duplicados (las facturas ya tienen ventas asociadas)
     recent_transactions = []
-    
-    # Ventas recientes (solo completadas, no canceladas)
-    for sale in Sale.objects.filter(status='completed', **org_filter).order_by('-created_at')[:5]:
-        recent_transactions.append({
-            'type': 'sale',
-            'id': sale.id,
-            'number': sale.sale_number,
-            'customer': sale.get_customer_display(),
-            'total': sale.total,
-            'payment_method': dict(sale.PAYMENT_METHODS).get(sale.payment_method, sale.payment_method),
-            'date': sale.created_at,
-        })
     
     # Facturas recientes (solo activas, no asociadas a ventas canceladas)
     for invoice in Invoice.objects.filter(
@@ -162,7 +150,7 @@ def sales_dashboard(request):
         estado_pago__in=['unpaid', 'partial', 'paid']
     ).exclude(
         sale__status='cancelled'  # Excluir facturas con ventas canceladas
-    ).order_by('-fecha_emision')[:5]:
+    ).order_by('-fecha_emision')[:10]:
         # Obtener método de pago de los pagos asociados
         first_payment = invoice.payments.filter(status='approved').first()
         payment_method = 'Pendiente'
@@ -177,11 +165,8 @@ def sales_dashboard(request):
             'total': invoice.total,
             'payment_method': payment_method,
             'date': invoice.fecha_emision,
+            'tipo_factura': 'Electrónica' if invoice.es_factura_electronica else 'Normal',
         })
-    
-    # Ordenar por fecha
-    recent_transactions.sort(key=lambda x: x['date'], reverse=True)
-    recent_transactions = recent_transactions[:10]  # Top 10
     
     # ==================== PRODUCTOS CON BAJO STOCK ====================
     low_stock_products = Product.objects.filter(

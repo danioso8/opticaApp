@@ -1788,11 +1788,42 @@ def invoice_delete(request, invoice_id):
     if request.method == 'POST':
         numero_completo = invoice.numero_completo
         total_factura = invoice.total
+        numero_a_liberar = invoice.numero
+        es_electronica = invoice.es_factura_electronica
         
         try:
             from django.db import transaction
             
             with transaction.atomic():
+                # ==================== LIBERAR CONSECUTIVO ====================
+                if es_electronica:
+                    # Para facturas electrónicas, liberar consecutivo DIAN
+                    try:
+                        dian_config = DianConfiguration.objects.get(organization=organization)
+                        # Decrementar el consecutivo actual si es la última factura
+                        ultima_factura = Invoice.objects.filter(
+                            organization=organization,
+                            es_factura_electronica=True
+                        ).exclude(id=invoice.id).order_by('-numero').first()
+                        
+                        if ultima_factura:
+                            # Si hay facturas después, no decrementar (dejar hueco)
+                            if numero_a_liberar == dian_config.resolucion_numero_actual:
+                                dian_config.resolucion_numero_actual -= 1
+                                dian_config.save()
+                                messages.info(request, f'ℹ️ Consecutivo DIAN {numero_a_liberar} liberado')
+                        else:
+                            # Es la única factura electrónica, resetear contador
+                            dian_config.resolucion_numero_actual = dian_config.resolucion_numero_inicio - 1
+                            dian_config.save()
+                            messages.info(request, f'ℹ️ Consecutivo DIAN reseteado')
+                    except DianConfiguration.DoesNotExist:
+                        pass
+                else:
+                    # Para facturas normales, simplemente se puede reutilizar el número
+                    # El sistema generará automáticamente el siguiente número disponible
+                    messages.info(request, f'ℹ️ Consecutivo interno {numero_a_liberar} disponible para reutilizar')
+                
                 # ==================== SINCRONIZAR CON MÓDULO DE VENTAS ====================
                 # Si la factura tiene una venta asociada, marcarla como cancelada
                 if invoice.sale:
