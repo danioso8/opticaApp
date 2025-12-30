@@ -157,6 +157,9 @@
                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Pagado</th>
                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estado Pago</th>
                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estado DIAN</th>
+                <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <i class="fas fa-sync-alt" title="Sincronización con Ventas"></i>
+                </th>
             </tr>
         </thead>
         <tbody class="bg-white divide-y divide-gray-200">
@@ -212,10 +215,25 @@
                     </span>
                     {% endif %}
                 </td>
+                <td class="px-6 py-4 whitespace-nowrap text-center">
+                    {% if invoice.sale %}
+                        {% if invoice.sale.status == 'completed' %}
+                        <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800" title="Sincronizada con venta {{ invoice.sale.sale_number }}">
+                            <i class="fas fa-check-circle mr-1"></i>Venta
+                        </span>
+                        {% elif invoice.sale.status == 'cancelled' %}
+                        <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-800" title="Venta cancelada">
+                            <i class="fas fa-times-circle mr-1"></i>Cancelada
+                        </span>
+                        {% endif %}
+                    {% else %}
+                        <span class="text-gray-400 text-xs">-</span>
+                    {% endif %}
+                </td>
             </tr>
             {% empty %}
             <tr>
-                <td colspan="7" class="px-6 py-12 text-center">
+                <td colspan="8" class="px-6 py-12 text-center">
                     <i class="fas fa-file-invoice text-gray-400 text-5xl mb-4"></i>
                     <p class="text-gray-600 font-semibold mb-2">No hay facturas registradas</p>
                     <p class="text-sm text-gray-500 mb-4">Comience creando su primera factura electrónica</p>

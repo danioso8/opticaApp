@@ -17,6 +17,16 @@
         </div>
         
         <div class="flex gap-3">
+            <!-- Botón Eliminar (solo para Owner y Admin, y solo si no está aprobada por DIAN) -->
+            {% if org_member.role == 'owner' or org_member.role == 'admin' %}
+                {% if invoice.estado_dian != 'approved' %}
+                <button onclick="confirmarEliminacion()" 
+                        class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition">
+                    <i class="fas fa-trash mr-2"></i>Eliminar
+                </button>
+                {% endif %}
+            {% endif %}
+            
             <!-- Botón Enviar a DIAN (solo para facturas electrónicas pagadas no enviadas) -->
             {% if invoice.es_factura_electronica and invoice.estado_pago == 'paid' and invoice.estado_dian != 'approved' %}
             <a href="{% url 'billing:send_invoice_to_dian' invoice.id %}"
@@ -27,7 +37,7 @@
             {% endif %}
             
             <a href="{% url 'billing:invoice_pdf' invoice.id %}" target="_blank"
-               class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition">
+               class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition">
                 <i class="fas fa-file-pdf mr-2"></i>Descargar PDF
             </a>
             <a href="{% url 'billing:invoice_list' %}"
@@ -102,6 +112,61 @@
             <p class="text-sm opacity-75 mt-2">Saldo: ${{ invoice.saldo_pendiente|floatformat:0 }}</p>
         </div>
     </div>
+    
+    <!-- Sincronización con Ventas -->
+    {% if invoice.sale %}
+    <div class="bg-gradient-to-r from-emerald-50 to-blue-50 border-l-4 border-emerald-500 rounded-lg shadow-md p-6 mb-8">
+        <h2 class="text-lg font-semibold text-gray-800 mb-3 flex items-center">
+            <i class="fas fa-sync-alt mr-2 text-emerald-600"></i>
+            Sincronización con Panel de Ventas
+        </h2>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div class="flex items-center space-x-3">
+                <div class="bg-emerald-100 rounded-full p-3">
+                    <i class="fas fa-shopping-cart text-emerald-600 text-xl"></i>
+                </div>
+                <div>
+                    <p class="text-sm text-gray-600">Número de Venta</p>
+                    <p class="font-semibold text-gray-900">{{ invoice.sale.sale_number }}</p>
+                </div>
+            </div>
+            <div class="flex items-center space-x-3">
+                <div class="bg-blue-100 rounded-full p-3">
+                    <i class="fas fa-calendar text-blue-600 text-xl"></i>
+                </div>
+                <div>
+                    <p class="text-sm text-gray-600">Fecha de Venta</p>
+                    <p class="font-semibold text-gray-900">{{ invoice.sale.created_at|date:"d/m/Y H:i" }}</p>
+                </div>
+            </div>
+            <div class="flex items-center space-x-3">
+                {% if invoice.sale.status == 'completed' %}
+                <div class="bg-green-100 rounded-full p-3">
+                    <i class="fas fa-check-circle text-green-600 text-xl"></i>
+                </div>
+                <div>
+                    <p class="text-sm text-gray-600">Estado</p>
+                    <p class="font-semibold text-green-600">Completada</p>
+                </div>
+                {% elif invoice.sale.status == 'cancelled' %}
+                <div class="bg-red-100 rounded-full p-3">
+                    <i class="fas fa-times-circle text-red-600 text-xl"></i>
+                </div>
+                <div>
+                    <p class="text-sm text-gray-600">Estado</p>
+                    <p class="font-semibold text-red-600">Cancelada</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        <div class="mt-4 pt-4 border-t border-emerald-200">
+            <p class="text-sm text-gray-600">
+                <i class="fas fa-info-circle mr-1 text-blue-500"></i>
+                Esta factura está sincronizada con el panel de ventas. Los ingresos se reflejan automáticamente en las estadísticas.
+            </p>
+        </div>
+    </div>
+    {% endif %}
     
     <!-- Información del Cliente -->
     <div class="bg-white rounded-lg shadow-md p-6 mb-8">
@@ -386,5 +451,18 @@
     {% endif %}
     
 </div>
+
+<!-- Form oculto para eliminar factura -->
+<form id="deleteForm" method="POST" action="{% url 'billing:invoice_delete' invoice.id %}" style="display: none;">
+    {% csrf_token %}
+</form>
+
+<script>
+function confirmarEliminacion() {
+    if (confirm('⚠️ ¿Está seguro que desea eliminar la factura {{ invoice.numero_completo }}?\n\nEsta acción no se puede deshacer.')) {
+        document.getElementById('deleteForm').submit();
+    }
+}
+</script>
 
 {% endblock %}

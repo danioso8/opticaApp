@@ -16,6 +16,8 @@ urlpatterns = [
     path('invoices/<int:invoice_id>/pdf/', views.invoice_pdf, name='invoice_pdf'),
     path('invoices/<int:invoice_id>/register-payment/', views.register_payment, name='register_payment'),
     path('invoices/<int:invoice_id>/send-to-dian/', views.send_invoice_to_dian, name='send_invoice_to_dian'),
+    path('invoices/<int:invoice_id>/delete/', views.invoice_delete, name='invoice_delete'),
+    path('patients/search/', views.search_patients_ajax, name='search_patients_ajax'),
     
     # Proveedores (Suppliers)
     path('suppliers/', views.supplier_list, name='supplier_list'),

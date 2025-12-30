@@ -37,28 +37,50 @@
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div class="md:col-span-2">
                     <label class="block text-sm font-medium text-gray-700 mb-2">
-                        Paciente/Cliente *
+                        Buscar Paciente por Cédula o Nombre *
                     </label>
-                    <div class="flex gap-2">
-                        <select name="patient_id" id="patient_id" required
-                                class="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                onchange="handlePatientSelection()">
-                            <option value="">Seleccione un paciente...</option>
-                            {% for patient in patients %}
-                            <option value="{{ patient.id }}" 
-                                    data-name="{{ patient.full_name }}"
-                                    data-identification="{{ patient.identification }}"
-                                    data-phone="{{ patient.phone_number }}"
-                                    data-email="{{ patient.email }}">
-                                {{ patient.full_name }} - {{ patient.identification }}
-                            </option>
-                            {% endfor %}
-                        </select>
-                        <button type="button" onclick="openPatientSearchModal()" 
-                                class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition flex items-center justify-center"
-                                title="Búsqueda avanzada de pacientes">
-                            <i class="fas fa-search"></i>
-                        </button>
+                    <div class="relative">
+                        <input type="text" 
+                               id="patientSearch" 
+                               placeholder="Escriba cédula o nombre del paciente..."
+                               autocomplete="off"
+                               class="w-full px-4 py-3 pr-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                               oninput="searchPatients(this.value)">
+                        <i class="fas fa-search absolute right-3 top-4 text-gray-400"></i>
+                        
+                        <!-- Campo hidden para el ID del paciente -->
+                        <input type="hidden" name="patient_id" id="patient_id" required>
+                        
+                        <!-- Dropdown de resultados -->
+                        <div id="searchResultsDropdown" 
+                             class="hidden absolute z-50 w-full mt-2 bg-white border border-gray-300 rounded-lg shadow-lg max-h-80 overflow-y-auto">
+                            <!-- Resultados se llenarán aquí -->
+                        </div>
+                        
+                        <!-- Indicador de carga -->
+                        <div id="searchLoading" class="hidden absolute z-50 w-full mt-2 bg-white border border-gray-300 rounded-lg shadow-lg p-4">
+                            <div class="flex items-center justify-center text-gray-600">
+                                <i class="fas fa-spinner fa-spin mr-2"></i>
+                                Buscando pacientes...
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Paciente seleccionado -->
+                    <div id="selectedPatientInfo" class="hidden mt-3 p-3 bg-blue-50 border-l-4 border-blue-500 rounded">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center">
+                                <i class="fas fa-user-check text-blue-600 mr-2"></i>
+                                <div>
+                                    <p class="font-semibold text-gray-800" id="selectedPatientName"></p>
+                                    <p class="text-sm text-gray-600" id="selectedPatientDoc"></p>
+                                </div>
+                            </div>
+                            <button type="button" onclick="clearPatientSelection()" 
+                                    class="text-red-600 hover:text-red-800 transition">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
                     </div>
                 </div>
                 
@@ -148,6 +170,10 @@
                     <div class="flex justify-between mb-2">
                         <span class="text-gray-600">Subtotal:</span>
                         <span class="font-semibold" id="subtotal">$0.00</span>
+                    </div>
+                    <div class="flex justify-between mb-2 text-red-600">
+                        <span>Descuento:</span>
+                        <span class="font-semibold" id="descuento">$0.00</span>
                     </div>
                     <div class="flex justify-between mb-2">
                         <span class="text-gray-600">IVA:</span>
@@ -276,9 +302,10 @@
                 <i class="fas fa-times mr-2"></i>Cancelar
             </a>
             <button type="submit" 
-                    class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg transition"
+                    id="btnGenerarFactura"
+                    class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed"
                     {% if not can_create %}disabled{% endif %}>
-                <i class="fas fa-save mr-2"></i>Generar Factura
+                <i class="fas fa-save mr-2"></i><span id="btnText">Generar Factura</span>
             </button>
         </div>
     </form>
@@ -816,9 +843,11 @@ function calculateTotals() {
     
     const total = subtotal - totalDescuento + totalIva;
     
-    document.getElementById('subtotal').textContent = '$' + subtotal.toFixed(2);
-    document.getElementById('iva').textContent = '$' + totalIva.toFixed(2);
-    document.getElementById('total').textContent = '$' + total.toFixed(2);
+    // Actualizar UI con formato de moneda
+    document.getElementById('subtotal').textContent = '$' + subtotal.toLocaleString('es-CO', {minimumFractionDigits: 0, maximumFractionDigits: 0});
+    document.getElementById('descuento').textContent = '-$' + totalDescuento.toLocaleString('es-CO', {minimumFractionDigits: 0, maximumFractionDigits: 0});
+    document.getElementById('iva').textContent = '$' + totalIva.toLocaleString('es-CO', {minimumFractionDigits: 0, maximumFractionDigits: 0});
+    document.getElementById('total').textContent = '$' + total.toLocaleString('es-CO', {minimumFractionDigits: 0, maximumFractionDigits: 0});
     
     // Recalcular pagos cuando cambie el total
     calculatePayments();
@@ -827,6 +856,17 @@ function calculateTotals() {
 // Enviar formulario
 document.getElementById('invoiceForm').addEventListener('submit', function(e) {
     e.preventDefault();
+    
+    // Deshabilitar el botón para evitar múltiples clics
+    const btnGenerar = document.getElementById('btnGenerarFactura');
+    const btnText = document.getElementById('btnText');
+    
+    if (btnGenerar.disabled) {
+        return; // Ya está procesando
+    }
+    
+    btnGenerar.disabled = true;
+    btnText.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Generando...';
     
     // Validar que haya items
     const items = [];
@@ -850,6 +890,8 @@ document.getElementById('invoiceForm').addEventListener('submit', function(e) {
     
     if (items.length === 0) {
         alert('Debe agregar al menos un item a la factura');
+        btnGenerar.disabled = false;
+        btnText.innerHTML = 'Generar Factura';
         return;
     }
     
@@ -886,158 +928,153 @@ document.getElementById('invoiceForm').addEventListener('submit', function(e) {
     this.submit();
 });
 
-// ===== BÚSQUEDA AVANZADA DE PACIENTES =====
+// ===== BÚSQUEDA DE PACIENTES CON AUTOCOMPLETADO =====
 
-function openPatientSearchModal() {
-    document.getElementById('patientSearchModal').classList.remove('hidden');
-    document.getElementById('searchPatientInput').focus();
-}
-
-function closePatientSearchModal() {
-    document.getElementById('patientSearchModal').classList.add('hidden');
-    document.getElementById('searchPatientInput').value = '';
-    document.getElementById('searchResults').innerHTML = '';
-}
-
-// Búsqueda con debounce
 let searchTimeout;
-function searchPatients() {
-    const query = document.getElementById('searchPatientInput').value.trim();
+let selectedPatientData = null;
+
+function searchPatients(query) {
+    const dropdown = document.getElementById('searchResultsDropdown');
+    const loading = document.getElementById('searchLoading');
     
+    // Limpiar timeout anterior
+    clearTimeout(searchTimeout);
+    
+    // Si la búsqueda está vacía o muy corta
     if (query.length < 2) {
-        document.getElementById('searchResults').innerHTML = 
-            '<div class="text-center text-gray-500 py-4">Ingrese al menos 2 caracteres para buscar</div>';
+        dropdown.classList.add('hidden');
+        loading.classList.add('hidden');
         return;
     }
     
-    clearTimeout(searchTimeout);
+    // Mostrar indicador de carga
+    loading.classList.remove('hidden');
+    dropdown.classList.add('hidden');
+    
+    // Esperar 300ms antes de buscar (debounce)
     searchTimeout = setTimeout(() => {
-        document.getElementById('searchResults').innerHTML = 
-            '<div class="text-center text-gray-500 py-4"><i class="fas fa-spinner fa-spin mr-2"></i>Buscando...</div>';
-        
-        fetch(`/dashboard/patients/search-api/?q=${encodeURIComponent(query)}`)
+        fetch(`{% url 'billing:search_patients_ajax' %}?q=${encodeURIComponent(query)}`)
             .then(response => response.json())
             .then(data => {
-                displaySearchResults(data.results);
+                loading.classList.add('hidden');
+                
+                if (data.success && data.patients.length > 0) {
+                    displayPatientResults(data.patients);
+                } else {
+                    showNoResults();
+                }
             })
             .catch(error => {
                 console.error('Error:', error);
-                document.getElementById('searchResults').innerHTML = 
-                    '<div class="text-center text-red-500 py-4">Error al buscar pacientes</div>';
+                loading.classList.add('hidden');
+                showError();
             });
     }, 300);
 }
 
-function displaySearchResults(results) {
-    const container = document.getElementById('searchResults');
-    
-    if (results.length === 0) {
-        container.innerHTML = 
-            '<div class="text-center text-gray-500 py-4">No se encontraron pacientes</div>';
-        return;
-    }
+function displayPatientResults(patients) {
+    const dropdown = document.getElementById('searchResultsDropdown');
     
     let html = '<div class="divide-y divide-gray-200">';
-    results.forEach(patient => {
-        // Escapar valores para evitar problemas con comillas y undefined
-        const safeName = (patient.full_name || '').replace(/'/g, "\\'").replace(/"/g, '\\"');
-        const safeIdentification = (patient.identification || '').replace(/'/g, "\\'");
-        const safePhone = (patient.phone_number || '').replace(/'/g, "\\'");
-        const safeEmail = (patient.email || '').replace(/'/g, "\\'");
-        
+    patients.forEach(patient => {
         html += `
-            <div class="p-4 hover:bg-blue-50 cursor-pointer transition" 
-                 onclick="selectPatientFromSearch('${patient.id}', '${safeName}', '${safeIdentification}', '${safePhone}', '${safeEmail}')">
+            <div class="p-4 hover:bg-blue-50 cursor-pointer transition"
+                 onclick='selectPatient(${JSON.stringify(patient)})'>
                 <div class="flex items-center justify-between">
                     <div>
-                        <div class="font-semibold text-gray-900">${patient.full_name || 'Sin nombre'}</div>
+                        <div class="font-semibold text-gray-900">${patient.full_name}</div>
                         <div class="text-sm text-gray-600">
-                            <i class="fas fa-id-card mr-1"></i>CC: ${patient.identification || 'N/A'}
-                            ${patient.phone_number ? `<span class="ml-3"><i class="fas fa-phone mr-1"></i>${patient.phone_number}</span>` : ''}
-                            ${patient.age ? `<span class="ml-3"><i class="fas fa-calendar mr-1"></i>${patient.age} años</span>` : ''}
+                            <i class="fas fa-id-card mr-1"></i>${patient.identification_type}: ${patient.identification_number}
+                            ${patient.phone ? `<span class="ml-3"><i class="fas fa-phone mr-1"></i>${patient.phone}</span>` : ''}
                         </div>
                     </div>
-                    <div>
-                        <i class="fas fa-chevron-right text-gray-400"></i>
-                    </div>
+                    <i class="fas fa-check-circle text-green-500"></i>
                 </div>
             </div>
         `;
     });
     html += '</div>';
     
-    container.innerHTML = html;
+    dropdown.innerHTML = html;
+    dropdown.classList.remove('hidden');
 }
 
-function selectPatientFromSearch(id, name, identification, phone, email) {
-    // Buscar si el paciente ya existe en el select
-    let option = document.querySelector(`#patient_id option[value="${id}"]`);
+function showNoResults() {
+    const dropdown = document.getElementById('searchResultsDropdown');
+    dropdown.innerHTML = `
+        <div class="p-6 text-center text-gray-500">
+            <i class="fas fa-user-slash text-3xl mb-2"></i>
+            <p>No se encontraron pacientes</p>
+            <p class="text-xs mt-1">Intente con otro nombre o cédula</p>
+        </div>
+    `;
+    dropdown.classList.remove('hidden');
+}
+
+function showError() {
+    const dropdown = document.getElementById('searchResultsDropdown');
+    dropdown.innerHTML = `
+        <div class="p-6 text-center text-red-500">
+            <i class="fas fa-exclamation-triangle text-3xl mb-2"></i>
+            <p>Error al buscar pacientes</p>
+        </div>
+    `;
+    dropdown.classList.remove('hidden');
+}
+
+function selectPatient(patient) {
+    selectedPatientData = patient;
     
-    if (!option) {
-        // Si no existe, agregarlo al select
-        option = document.createElement('option');
-        option.value = id;
-        option.textContent = `${name} - ${identification}`;
-        option.setAttribute('data-name', name);
-        option.setAttribute('data-identification', identification);
-        option.setAttribute('data-phone', phone || '');
-        option.setAttribute('data-email', email || '');
-        document.getElementById('patient_id').appendChild(option);
+    // Llenar campo hidden con el ID
+    document.getElementById('patient_id').value = patient.id;
+    
+    // Actualizar input de búsqueda
+    document.getElementById('patientSearch').value = patient.display;
+    
+    // Ocultar dropdown
+    document.getElementById('searchResultsDropdown').classList.add('hidden');
+    
+    // Mostrar información del paciente seleccionado
+    document.getElementById('selectedPatientName').textContent = patient.full_name;
+    document.getElementById('selectedPatientDoc').textContent = `${patient.identification_type}: ${patient.identification_number}`;
+    document.getElementById('selectedPatientInfo').classList.remove('hidden');
+    
+    // Mostrar y llenar campos de cliente
+    document.getElementById('clientInfoFields').classList.remove('hidden');
+    document.getElementById('numero_documento').value = patient.identification_number;
+    document.getElementById('nombre_cliente').value = patient.full_name;
+    document.getElementById('email_cliente').value = patient.email || '';
+    document.getElementById('telefono_cliente').value = patient.phone || '';
+}
+
+function clearPatientSelection() {
+    selectedPatientData = null;
+    document.getElementById('patient_id').value = '';
+    document.getElementById('patientSearch').value = '';
+    document.getElementById('selectedPatientInfo').classList.add('hidden');
+    document.getElementById('clientInfoFields').classList.add('hidden');
+    document.getElementById('searchResultsDropdown').classList.add('hidden');
+}
+
+// Cerrar dropdown al hacer clic fuera
+document.addEventListener('click', function(e) {
+    const searchInput = document.getElementById('patientSearch');
+    const dropdown = document.getElementById('searchResultsDropdown');
+    
+    if (searchInput && dropdown && !searchInput.contains(e.target) && !dropdown.contains(e.target)) {
+        dropdown.classList.add('hidden');
     }
-    
-    // Seleccionar el paciente
-    document.getElementById('patient_id').value = id;
-    
-    // Trigger handlePatientSelection para mostrar los campos y autocompletar
-    handlePatientSelection();
-    
-    // Cerrar el modal
-    closePatientSearchModal();
-}
+});
 
-// ===== MOSTRAR/OCULTAR CAMPOS DE CLIENTE =====
-
-function handlePatientSelection() {
-    const patientSelect = document.getElementById('patient_id');
-    const clientInfoFields = document.getElementById('clientInfoFields');
-    const selectedOption = patientSelect.options[patientSelect.selectedIndex];
-    
-    if (patientSelect.value) {
-        // Mostrar los campos de información del cliente
-        clientInfoFields.classList.remove('hidden');
-        
-        // Autocompletar con los datos del paciente seleccionado
-        const name = selectedOption.getAttribute('data-name');
-        const identification = selectedOption.getAttribute('data-identification');
-        const phone = selectedOption.getAttribute('data-phone');
-        const email = selectedOption.getAttribute('data-email');
-        
-        document.getElementById('nombre_cliente').value = name || '';
-        document.getElementById('numero_documento').value = identification || '';
-        document.getElementById('telefono_cliente').value = phone || '';
-        document.getElementById('email_cliente').value = email || '';
-    } else {
-        // Ocultar los campos si no hay paciente seleccionado
-        clientInfoFields.classList.add('hidden');
-    }
-}
-
-// Event listener para búsqueda en tiempo real
+// Event listener para búsqueda
 document.addEventListener('DOMContentLoaded', function() {
-    const searchInput = document.getElementById('searchPatientInput');
+    const searchInput = document.getElementById('patientSearch');
     if (searchInput) {
-        searchInput.addEventListener('input', searchPatients);
-        searchInput.addEventListener('keyup', function(e) {
-            if (e.key === 'Escape') {
-                closePatientSearchModal();
+        searchInput.addEventListener('focus', function() {
+            if (this.value.length >= 2) {
+                searchPatients(this.value);
             }
         });
-    }
-    
-    // Ocultar campos de cliente al cargar la página si no hay paciente seleccionado
-    const patientSelect = document.getElementById('patient_id');
-    if (patientSelect && !patientSelect.value) {
-        document.getElementById('clientInfoFields').classList.add('hidden');
     }
 });
 
@@ -1058,51 +1095,5 @@ function toggleDianOptions() {
     }
 }
 </script>
-
-<!-- Modal de Búsqueda Avanzada de Pacientes -->
-<div id="patientSearchModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-    <div class="relative top-20 mx-auto p-5 border w-11/12 md:w-3/4 lg:w-1/2 shadow-lg rounded-lg bg-white">
-        <!-- Header -->
-        <div class="flex items-center justify-between border-b pb-3 mb-4">
-            <h3 class="text-xl font-semibold text-gray-900">
-                <i class="fas fa-search mr-2 text-blue-600"></i>
-                Búsqueda Avanzada de Pacientes
-            </h3>
-            <button onclick="closePatientSearchModal()" class="text-gray-400 hover:text-gray-600">
-                <i class="fas fa-times text-2xl"></i>
-            </button>
-        </div>
-        
-        <!-- Campo de búsqueda -->
-        <div class="mb-4">
-            <div class="relative">
-                <input type="text" id="searchPatientInput" 
-                       placeholder="Buscar por nombre, cédula o teléfono..."
-                       class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 pl-10">
-                <i class="fas fa-search absolute left-3 top-4 text-gray-400"></i>
-            </div>
-            <p class="text-xs text-gray-500 mt-2">
-                <i class="fas fa-info-circle mr-1"></i>
-                Puede buscar por nombre completo, número de cédula o teléfono
-            </p>
-        </div>
-        
-        <!-- Resultados de búsqueda -->
-        <div id="searchResults" class="max-h-96 overflow-y-auto border border-gray-200 rounded-lg">
-            <div class="text-center text-gray-500 py-8">
-                <i class="fas fa-search text-4xl mb-3 text-gray-300"></i>
-                <p>Ingrese un término de búsqueda</p>
-            </div>
-        </div>
-        
-        <!-- Footer -->
-        <div class="mt-4 flex justify-end">
-            <button onclick="closePatientSearchModal()" 
-                    class="bg-gray-300 hover:bg-gray-400 text-gray-800 px-6 py-2 rounded-lg transition">
-                <i class="fas fa-times mr-2"></i>Cancelar
-            </button>
-        </div>
-    </div>
-</div>
 
 {% endblock %}

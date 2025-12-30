@@ -1,0 +1,264 @@
+{
+  "project_name": "ClinicaDental",
+  "industry": "healthcare_dental",
+  "developer": "Daniel (danioso8)",
+  
+  "core_features": {
+    "multi_tenant": true,
+    "subscription_system": true,
+    "trial_system": {
+      "enabled": true,
+      "duration_days": 90,
+      "post_trial_plan": "free",
+      "auto_convert": true
+    },
+    "payment_gateway": "wompi",
+    "whatsapp_notifications": true,
+    "email_verification": true,
+    "landing_pages": true,
+    "electronic_invoicing": "dian_colombia",
+    "auto_renewal": true
+  },
+  
+  "subscription_plans": [
+    {
+      "code": "free",
+      "name": "Gratis",
+      "price_usd": 12,
+      "billing_cycle": "monthly",
+      "trial_enabled": true,
+      "modules": ["dashboard", "patients", "appointments", "dentists", "landing", "basic_billing", "clinical_history"]
+    },
+    {
+      "code": "basic",
+      "name": "Básico",
+      "price_usd": 30,
+      "billing_cycle": "monthly",
+      "trial_enabled": false,
+      "modules": ["dashboard", "patients", "appointments", "dentists", "landing", "basic_billing", "clinical_history", "odontogram", "treatment_plans", "xrays"]
+    },
+    {
+      "code": "professional",
+      "name": "Profesional",
+      "price_usd": 60,
+      "billing_cycle": "monthly",
+      "trial_enabled": false,
+      "modules": ["dashboard", "patients", "appointments", "dentists", "landing", "basic_billing", "clinical_history", "odontogram", "treatment_plans", "xrays", "dian_invoicing", "whatsapp", "payment_gateway", "inventory"]
+    },
+    {
+      "code": "premium",
+      "name": "Premium",
+      "price_usd": 110,
+      "billing_cycle": "monthly",
+      "trial_enabled": false,
+      "modules": ["dashboard", "patients", "appointments", "dentists", "landing", "basic_billing", "clinical_history", "odontogram", "treatment_plans", "xrays", "dian_invoicing", "whatsapp", "payment_gateway", "inventory", "analytics", "reports", "team_management", "multi_location", "orthodontics"]
+    },
+    {
+      "code": "enterprise",
+      "name": "Empresarial",
+      "price_usd": 220,
+      "billing_cycle": "monthly",
+      "trial_enabled": false,
+      "modules": ["dashboard", "patients", "appointments", "dentists", "landing", "basic_billing", "clinical_history", "odontogram", "treatment_plans", "xrays", "dian_invoicing", "whatsapp", "payment_gateway", "inventory", "analytics", "reports", "team_management", "multi_location", "orthodontics", "api_access", "lab_integration"]
+    }
+  ],
+  
+  "modules": {
+    "dashboard": {
+      "name": "Dashboard",
+      "icon": "bi-speedometer2",
+      "description": "Panel principal con métricas y citas del día"
+    },
+    "patients": {
+      "name": "Pacientes",
+      "icon": "bi-people",
+      "description": "Gestión completa de pacientes"
+    },
+    "appointments": {
+      "name": "Citas",
+      "icon": "bi-calendar-check",
+      "description": "Sistema de agendamiento odontológico"
+    },
+    "dentists": {
+      "name": "Odontólogos",
+      "icon": "bi-heart-pulse",
+      "description": "Gestión de profesionales odontológicos"
+    },
+    "clinical_history": {
+      "name": "Historia Clínica",
+      "icon": "bi-journal-medical",
+      "description": "Registros médicos odontológicos digitales"
+    },
+    "odontogram": {
+      "name": "Odontograma",
+      "icon": "bi-grid-3x3",
+      "description": "Odontograma digital interactivo"
+    },
+    "treatment_plans": {
+      "name": "Planes de Tratamiento",
+      "icon": "bi-clipboard-check",
+      "description": "Presupuestos y planes terapéuticos"
+    },
+    "xrays": {
+      "name": "Radiografías",
+      "icon": "bi-file-earmark-image",
+      "description": "Gestión de imágenes radiográficas"
+    },
+    "inventory": {
+      "name": "Inventario",
+      "icon": "bi-box-seam",
+      "description": "Control de insumos y materiales dentales"
+    },
+    "landing": {
+      "name": "Landing Page",
+      "icon": "bi-globe",
+      "description": "Sitio web personalizable de la clínica"
+    },
+    "basic_billing": {
+      "name": "Facturación Básica",
+      "icon": "bi-receipt-cutoff",
+      "description": "Facturas simples sin DIAN"
+    },
+    "dian_invoicing": {
+      "name": "Facturación DIAN",
+      "icon": "bi-receipt",
+      "description": "Facturación electrónica Colombia"
+    },
+    "whatsapp": {
+      "name": "WhatsApp",
+      "icon": "bi-whatsapp",
+      "description": "Recordatorios automáticos de citas"
+    },
+    "payment_gateway": {
+      "name": "Pagos Online",
+      "icon": "bi-credit-card",
+      "description": "Procesamiento de pagos Wompi"
+    },
+    "analytics": {
+      "name": "Analytics",
+      "icon": "bi-graph-up",
+      "description": "Estadísticas de pacientes y tratamientos"
+    },
+    "reports": {
+      "name": "Reportes",
+      "icon": "bi-file-earmark-bar-graph",
+      "description": "Reportes personalizados"
+    },
+    "team_management": {
+      "name": "Gestión de Equipo",
+      "icon": "bi-people-fill",
+      "description": "Roles y permisos para el equipo"
+    },
+    "multi_location": {
+      "name": "Multi-sede",
+      "icon": "bi-buildings",
+      "description": "Múltiples sedes/consultorios"
+    },
+    "orthodontics": {
+      "name": "Ortodoncia",
+      "icon": "bi-chevron-bar-contract",
+      "description": "Seguimiento de tratamientos ortodónticos"
+    },
+    "api_access": {
+      "name": "Acceso API",
+      "icon": "bi-code-slash",
+      "description": "API REST para integraciones"
+    },
+    "lab_integration": {
+      "name": "Integración Laboratorio",
+      "icon": "bi-database-gear",
+      "description": "Órdenes a laboratorios dentales"
+    }
+  },
+  
+  "integrations": {
+    "wompi": {
+      "enabled": true,
+      "country": "colombia",
+      "currency_conversion": {
+        "usd_to_cop": 4000
+      },
+      "features": ["tokenization", "recurring_payments", "webhooks"]
+    },
+    "twilio_whatsapp": {
+      "enabled": true,
+      "sandbox_mode": false,
+      "notification_types": ["appointments", "reminders", "treatment_updates", "payment_reminders"]
+    },
+    "email": {
+      "enabled": true,
+      "provider": "smtp",
+      "features": ["verification", "password_reset", "subscription_reminders", "appointment_confirmations"]
+    },
+    "dian": {
+      "enabled": true,
+      "country": "colombia",
+      "integration_type": "direct",
+      "features": ["xml_generation", "digital_signature", "qr_codes", "cufe_generation"]
+    }
+  },
+  
+  "user_roles": [
+    {
+      "code": "owner",
+      "name": "Propietario",
+      "permissions": ["all"]
+    },
+    {
+      "code": "admin",
+      "name": "Administrador",
+      "permissions": ["manage_users", "manage_settings", "view_reports", "edit_data"]
+    },
+    {
+      "code": "dentist",
+      "name": "Odontólogo",
+      "permissions": ["view_patients", "edit_clinical_data", "create_appointments", "create_treatments"]
+    },
+    {
+      "code": "receptionist",
+      "name": "Recepcionista",
+      "permissions": ["view_data", "create_appointments", "basic_billing"]
+    }
+  ],
+  
+  "automation": {
+    "trial_expiration_check": {
+      "enabled": true,
+      "frequency": "daily",
+      "time": "02:00",
+      "notification_days_before": [7, 3, 1]
+    },
+    "subscription_renewal": {
+      "enabled": true,
+      "frequency": "daily",
+      "time": "02:00",
+      "days_before_renewal": 3
+    },
+    "renewal_reminders": {
+      "enabled": true,
+      "frequency": "daily",
+      "time": "09:00",
+      "days_before_renewal": 7
+    },
+    "appointment_reminders": {
+      "enabled": true,
+      "frequency": "hourly",
+      "hours_before": 24
+    }
+  },
+  
+  "ui_customization": {
+    "theme": "bootstrap5",
+    "primary_color": "#0d6efd",
+    "sidebar_icons": "bootstrap-icons",
+    "dashboard_layout": "cards",
+    "enable_dark_mode": false
+  },
+  
+  "database": {
+    "multi_tenant_strategy": "shared_database",
+    "tenant_field": "organization_id",
+    "soft_delete": true,
+    "audit_trail": true
+  }
+}

@@ -39,10 +39,11 @@ def sales_dashboard(request):
     org_filter = {'organization': request.organization} if hasattr(request, 'organization') and request.organization else {}
     
     # ==================== VENTAS DEL MÓDULO DE VENTAS ====================
+    # Solo ventas completadas (excluye canceladas y pendientes)
     sales = Sale.objects.filter(
         created_at__date__gte=start_date,
         created_at__date__lte=end_date,
-        status='completed',
+        status='completed',  # Excluye las canceladas automáticamente
         **org_filter
     )
     
@@ -50,11 +51,14 @@ def sales_dashboard(request):
     sales_count = sales.count()
     
     # ==================== FACTURAS DEL MÓDULO DE FACTURACIÓN ====================
+    # Solo facturas activas (excluye las que tienen ventas canceladas)
     invoices = Invoice.objects.filter(
         fecha_emision__gte=start_date,
         fecha_emision__lte=end_date,
         estado_pago__in=['unpaid', 'partial', 'paid'],  # Todos los estados activos
         **org_filter
+    ).exclude(
+        sale__status='cancelled'  # Excluir facturas con ventas canceladas
     )
     
     invoices_revenue = invoices.aggregate(Sum('total'))['total__sum'] or Decimal('0')
@@ -126,21 +130,21 @@ def sales_dashboard(request):
         })
     
     # ==================== PRODUCTOS MÁS VENDIDOS ====================
-    # Solo del módulo de ventas (las facturas no tienen items de producto rastreables de la misma forma)
+    # Solo del módulo de ventas completadas (excluye canceladas)
     top_products = SaleItem.objects.filter(
         sale__created_at__date__gte=start_date,
         sale__created_at__date__lte=end_date,
-        sale__status='completed'
+        sale__status='completed'  # Excluye items de ventas canceladas
     ).values('product__name').annotate(
         quantity=Sum('quantity'),
         revenue=Sum('subtotal')
     ).order_by('-quantity')[:10]
     
     # ==================== ÚLTIMAS TRANSACCIONES (VENTAS + FACTURAS) ====================
-    # Crear lista combinada de ventas y facturas
+    # Crear lista combinada de ventas y facturas (solo completadas/activas)
     recent_transactions = []
     
-    # Ventas recientes
+    # Ventas recientes (solo completadas, no canceladas)
     for sale in Sale.objects.filter(status='completed', **org_filter).order_by('-created_at')[:5]:
         recent_transactions.append({
             'type': 'sale',
@@ -152,8 +156,13 @@ def sales_dashboard(request):
             'date': sale.created_at,
         })
     
-    # Facturas recientes
-    for invoice in Invoice.objects.filter(**org_filter, estado_pago__in=['unpaid', 'partial', 'paid']).order_by('-fecha_emision')[:5]:
+    # Facturas recientes (solo activas, no asociadas a ventas canceladas)
+    for invoice in Invoice.objects.filter(
+        **org_filter, 
+        estado_pago__in=['unpaid', 'partial', 'paid']
+    ).exclude(
+        sale__status='cancelled'  # Excluir facturas con ventas canceladas
+    ).order_by('-fecha_emision')[:5]:
         # Obtener método de pago de los pagos asociados
         first_payment = invoice.payments.filter(status='approved').first()
         payment_method = 'Pendiente'

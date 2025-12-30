@@ -419,6 +419,51 @@ def invoice_create(request):
                     )
                     payment_counter += 1
                 
+                # ==================== CREAR VENTA EN MÓDULO DE VENTAS ====================
+                # Sincronizar con el panel de ventas si el módulo está activo
+                try:
+                    from apps.sales.models import Sale, SaleItem
+                    
+                    # Generar número de venta
+                    last_sale = Sale.objects.filter(organization=organization).order_by('-id').first()
+                    sale_number = f"VT-{(last_sale.id + 1):05d}" if last_sale else "VT-00001"
+                    
+                    # Mapear método de pago a formato de ventas
+                    sale_payment_method = 'cash'  # Por defecto
+                    if pagos_data:
+                        primer_pago = pagos_data[0].get('metodo', 'Efectivo')
+                        if primer_pago == 'Tarjeta':
+                            sale_payment_method = 'card'
+                        elif primer_pago == 'Transferencia':
+                            sale_payment_method = 'transfer'
+                        elif len(pagos_data) > 1:
+                            sale_payment_method = 'mixed'
+                    
+                    # Crear la venta
+                    sale = Sale.objects.create(
+                        organization=organization,
+                        sale_number=sale_number,
+                        patient=patient,
+                        sold_by=request.user,
+                        payment_method=sale_payment_method,
+                        status='completed',
+                        subtotal=subtotal,
+                        discount=total_descuento,
+                        tax=total_iva,
+                        total=total,
+                        notes=f'Generada desde factura {invoice.numero_completo}'
+                    )
+                    
+                    # Vincular factura con venta
+                    invoice.sale = sale
+                    invoice.save()
+                    
+                except Exception as e:
+                    # Si falla la creación de venta, solo registrar pero no detener
+                    import logging
+                    logger = logging.getLogger(__name__)
+                    logger.warning(f'No se pudo crear venta para factura {invoice.numero_completo}: {str(e)}')
+                
                 # Procesar facturación electrónica si cumple condiciones
                 # 1. Es factura electrónica
                 # 2. Usuario solicitó envío a DIAN
@@ -1223,6 +1268,7 @@ def invoice_detail(request, invoice_id):
         'items': items,
         'payments': payments,
         'organization': organization,
+        'org_member': org_member,  # Agregar org_member al contexto
     }
     
     return render(request, 'billing/invoice_detail.html', context)
@@ -1268,12 +1314,14 @@ def register_payment(request, invoice_id):
             else:
                 tipo_pago = 'partial'
             
-            # Generar número de pago
+            # Generar número de pago único
+            # Buscar el número más alto existente
             ultimo_pago = Payment.objects.filter(
-                organization=organization
-            ).order_by('-id').first()
+                organization=organization,
+                payment_number__startswith='PAY-'
+            ).order_by('-payment_number').first()
             
-            if ultimo_pago and ultimo_pago.payment_number.startswith('PAY-'):
+            if ultimo_pago:
                 try:
                     ultimo_num = int(ultimo_pago.payment_number.split('-')[1])
                     nuevo_num = ultimo_num + 1
@@ -1282,7 +1330,11 @@ def register_payment(request, invoice_id):
             else:
                 nuevo_num = 1
             
+            # Asegurar que el número sea único
             payment_number = f"PAY-{nuevo_num:05d}"
+            while Payment.objects.filter(payment_number=payment_number).exists():
+                nuevo_num += 1
+                payment_number = f"PAY-{nuevo_num:05d}"
             
             # Crear el pago
             payment = Payment.objects.create(
@@ -1686,4 +1738,118 @@ def invoice_pdf(request, invoice_id):
     response.write(pdf)
     
     return response
+
+
+@login_required
+def invoice_delete(request, invoice_id):
+    """Eliminar una factura"""
+    # Obtener organización del usuario
+    org_member = OrganizationMember.objects.filter(user=request.user).first()
+    if not org_member:
+        messages.error(request, 'No tienes una organización asignada')
+        return redirect('dashboard:home')
+    
+    organization = org_member.organization
+    
+    # Verificar permisos (solo Owner y Admin pueden eliminar facturas)
+    if org_member.role not in ['owner', 'admin']:
+        messages.error(request, 'No tienes permisos para eliminar facturas')
+        return redirect('billing:invoice_list')
+    
+    # Obtener la factura
+    invoice = get_object_or_404(Invoice, id=invoice_id, organization=organization)
+    
+    # Verificar si la factura ya fue enviada a la DIAN
+    if invoice.estado_dian == 'approved':
+        messages.error(request, '❌ No se puede eliminar una factura ya aprobada por la DIAN')
+        return redirect('billing:invoice_detail', invoice_id=invoice.id)
+    
+    if request.method == 'POST':
+        numero_completo = invoice.numero_completo
+        total_factura = invoice.total
+        
+        try:
+            from django.db import transaction
+            
+            with transaction.atomic():
+                # ==================== SINCRONIZAR CON MÓDULO DE VENTAS ====================
+                # Si la factura tiene una venta asociada, marcarla como cancelada
+                if invoice.sale:
+                    try:
+                        from apps.sales.models import Sale
+                        sale = invoice.sale
+                        sale.status = 'cancelled'
+                        sale.notes = f'{sale.notes}\n\nVenta cancelada por eliminación de factura {numero_completo}'.strip()
+                        sale.save()
+                        
+                        messages.info(request, f'ℹ️ Venta {sale.sale_number} marcada como cancelada')
+                    except Exception as e:
+                        import logging
+                        logger = logging.getLogger(__name__)
+                        logger.warning(f'Error al cancelar venta asociada: {str(e)}')
+                
+                # Eliminar la factura
+                invoice.delete()
+                
+            messages.success(request, f'✅ Factura {numero_completo} eliminada exitosamente')
+            messages.info(request, f'💰 Total descontado: ${total_factura:,.0f}')
+            return redirect('billing:invoice_list')
+            
+        except Exception as e:
+            messages.error(request, f'❌ Error al eliminar factura: {str(e)}')
+            return redirect('billing:invoice_detail', invoice_id=invoice.id)
+    
+    # Si es GET, redirigir al detalle
+    return redirect('billing:invoice_detail', invoice_id=invoice.id)
+
+
+@login_required
+def search_patients_ajax(request):
+    """Buscar pacientes en tiempo real para autocompletado"""
+    if request.method != 'GET':
+        return JsonResponse({'success': False, 'error': 'Método no permitido'}, status=405)
+    
+    org_member = OrganizationMember.objects.filter(user=request.user).first()
+    if not org_member:
+        return JsonResponse({'success': False, 'error': 'No tienes una organización asignada'}, status=403)
+    
+    organization = org_member.organization
+    query = request.GET.get('q', '').strip()
+    
+    if len(query) < 2:
+        return JsonResponse({'success': True, 'patients': []})
+    
+    try:
+        from apps.patients.models import Patient
+        from django.db.models import Q
+        
+        # Buscar por nombre completo, cédula o teléfono
+        patients = Patient.objects.filter(
+            organization=organization,
+            is_active=True
+        ).filter(
+            Q(full_name__icontains=query) |
+            Q(identification__icontains=query) |
+            Q(phone_number__icontains=query)
+        )[:10]  # Limitar a 10 resultados
+        
+        results = []
+        for patient in patients:
+            results.append({
+                'id': patient.id,
+                'full_name': patient.full_name,
+                'identification_type': patient.identification_type,
+                'identification_number': patient.identification or '',
+                'phone': patient.phone_number or '',
+                'email': patient.email or '',
+                'display': f"{patient.full_name} - {patient.identification_type}: {patient.identification or 'Sin documento'}"
+            })
+        
+        return JsonResponse({'success': True, 'patients': results})
+        
+    except Exception as e:
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.error(f'Error en búsqueda de pacientes: {str(e)}')
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
 
