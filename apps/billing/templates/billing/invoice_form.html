@@ -328,10 +328,10 @@
             </div>
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Monto *</label>
-                <input type="number" name="payment_monto[]" required min="0" step="0.01"
+                <input type="text" name="payment_monto[]" required
                        class="payment-monto w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                       placeholder="0.00"
-                       onchange="calculatePayments()">
+                       placeholder="0"
+                       oninput="formatPriceInput(this); calculatePayments()">
             </div>
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Referencia</label>
@@ -384,10 +384,10 @@
             </div>
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Precio Unit. *</label>
-                <input type="number" name="item_precio[]" required min="0" step="0.01"
+                <input type="text" name="item_precio[]" required
                        class="item-precio w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                       placeholder="0.00"
-                       oninput="calculateTotals()">
+                       placeholder="0"
+                       oninput="formatPriceInput(this); calculateTotals()">
             </div>
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">% Desc.</label>
@@ -471,7 +471,7 @@
                             {{ product.stock_actual }} unid.
                         </td>
                         <td class="px-4 py-3">
-                            <button type="button" onclick="selectProduct(this, '{{ product.nombre }}', {{ product.precio_venta }}, {{ product.porcentaje_iva|default:19 }})"
+                            <button type="button" onclick="selectProduct(this, '{{ product.nombre }}', {{ product.precio_venta }}, {{ product.porcentaje_iva|default:19 }}, 0)"
                                     class="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-sm transition">
                                 <i class="fas fa-plus mr-1"></i>Agregar
                             </button>
@@ -614,15 +614,21 @@ function filterProducts() {
 }
 
 // Seleccionar producto del modal
-function selectProduct(button, nombre, precio, iva) {
+function selectProduct(button, nombre, precio, iva, descuento = 0) {
     if (currentItemRow) {
         const descripcion = currentItemRow.querySelector('.item-descripcion');
         const precioInput = currentItemRow.querySelector('.item-precio');
         const ivaInput = currentItemRow.querySelector('.item-iva');
+        const descuentoInput = currentItemRow.querySelector('.item-descuento');
         
         descripcion.value = nombre;
-        precioInput.value = parseFloat(precio).toFixed(2);
+        // Formatear precio sin decimales
+        precioInput.value = Math.round(precio).toString();
         ivaInput.value = parseFloat(iva).toFixed(2);
+        descuentoInput.value = parseFloat(descuento).toFixed(2);
+        
+        // Aplicar formato después de establecer el valor
+        formatPriceInput(precioInput);
         
         calculateTotals();
         closeProductModal();
@@ -692,7 +698,7 @@ document.getElementById('newProductForm').addEventListener('submit', function(e)
                     ${data.product.stock_actual || 0} unid.
                 </td>
                 <td class="px-4 py-3">
-                    <button type="button" onclick="selectProduct(this, '${data.product.nombre}', ${data.product.precio_venta}, ${data.product.porcentaje_iva})"
+                    <button type="button" onclick="selectProduct(this, '${data.product.nombre}', ${data.product.precio_venta}, ${data.product.porcentaje_iva}, 0)"
                             class="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-sm transition">
                         <i class="fas fa-plus mr-1"></i>Agregar
                     </button>
@@ -788,16 +794,16 @@ function calculatePayments() {
     let totalPagado = 0;
     
     document.querySelectorAll('.payment-row').forEach(row => {
-        const monto = parseFloat(row.querySelector('.payment-monto').value) || 0;
+        const monto = getNumericValue(row.querySelector('.payment-monto'));
         totalPagado += monto;
     });
     
-    const totalFactura = parseFloat(document.getElementById('total').textContent.replace('$', '').replace(',', '')) || 0;
+    const totalFactura = parseFloat(document.getElementById('total').textContent.replace(/\$/g, '').replace(/\./g, '').replace(/,/g, '')) || 0;
     const saldoPendiente = totalFactura - totalPagado;
     
-    document.getElementById('total-factura').textContent = '$' + totalFactura.toFixed(2);
-    document.getElementById('total-pagado').textContent = '$' + totalPagado.toFixed(2);
-    document.getElementById('saldo-pendiente').textContent = '$' + saldoPendiente.toFixed(2);
+    document.getElementById('total-factura').textContent = '$' + totalFactura.toLocaleString('es-CO', {minimumFractionDigits: 0, maximumFractionDigits: 0});
+    document.getElementById('total-pagado').textContent = '$' + totalPagado.toLocaleString('es-CO', {minimumFractionDigits: 0, maximumFractionDigits: 0});
+    document.getElementById('saldo-pendiente').textContent = '$' + saldoPendiente.toLocaleString('es-CO', {minimumFractionDigits: 0, maximumFractionDigits: 0});
     
     // Cambiar color del saldo según estado
     const saldoElement = document.getElementById('saldo-pendiente');
@@ -813,6 +819,35 @@ function calculatePayments() {
     }
 }
 
+// Formatear input de precio con separador de miles
+function formatPriceInput(input) {
+    // Obtener el valor sin formato
+    let value = input.value.replace(/\./g, '').replace(/,/g, '');
+    
+    // Si está vacío, salir
+    if (value === '') {
+        return;
+    }
+    
+    // Convertir a número
+    let number = parseInt(value);
+    
+    // Si no es un número válido, limpiar
+    if (isNaN(number)) {
+        input.value = '';
+        return;
+    }
+    
+    // Formatear con separador de miles (punto)
+    input.value = number.toLocaleString('es-CO');
+}
+
+// Función helper para obtener valor numérico de un input formateado
+function getNumericValue(input) {
+    const value = input.value.replace(/\./g, '').replace(/,/g, '');
+    return parseFloat(value) || 0;
+}
+
 // Calcular totales generales
 function calculateTotals() {
     let subtotal = 0;
@@ -821,7 +856,7 @@ function calculateTotals() {
     
     document.querySelectorAll('.item-row').forEach(row => {
         const cantidad = parseFloat(row.querySelector('.item-cantidad').value) || 0;
-        const precio = parseFloat(row.querySelector('.item-precio').value) || 0;
+        const precio = getNumericValue(row.querySelector('.item-precio'));
         const descuentoPct = parseFloat(row.querySelector('.item-descuento').value) || 0;
         const porcentajeIva = parseFloat(row.querySelector('.item-iva').value) || 0;
         
@@ -873,7 +908,7 @@ document.getElementById('invoiceForm').addEventListener('submit', function(e) {
     document.querySelectorAll('.item-row').forEach(row => {
         const descripcion = row.querySelector('.item-descripcion').value.trim();
         const cantidad = parseFloat(row.querySelector('.item-cantidad').value) || 0;
-        const precio = parseFloat(row.querySelector('.item-precio').value) || 0;
+        const precio = getNumericValue(row.querySelector('.item-precio'));
         const descuento = parseFloat(row.querySelector('.item-descuento').value) || 0;
         const iva = parseFloat(row.querySelector('.item-iva').value) || 0;
         
@@ -899,7 +934,7 @@ document.getElementById('invoiceForm').addEventListener('submit', function(e) {
     const pagos = [];
     document.querySelectorAll('.payment-row').forEach(row => {
         const metodo = row.querySelector('.payment-metodo').value;
-        const monto = parseFloat(row.querySelector('.payment-monto').value) || 0;
+        const monto = getNumericValue(row.querySelector('.payment-monto'));
         const referencia = row.querySelector('.payment-referencia').value.trim();
         
         if (monto > 0) {

@@ -407,10 +407,31 @@ def invoice_create(request):
                     metodo_form = pago_data.get('metodo', 'Efectivo')
                     metodo_db = metodo_map.get(metodo_form, 'cash')
                     
+                    # Generar número de pago único
+                    ultimo_pago = Payment.objects.filter(
+                        organization=organization,
+                        payment_number__startswith='PAY-'
+                    ).order_by('-payment_number').first()
+                    
+                    if ultimo_pago:
+                        try:
+                            ultimo_num = int(ultimo_pago.payment_number.split('-')[1])
+                            nuevo_num = ultimo_num + 1
+                        except (IndexError, ValueError):
+                            nuevo_num = 1
+                    else:
+                        nuevo_num = 1
+                    
+                    # Asegurar que el número sea único
+                    payment_number = f"PAY-{nuevo_num:05d}"
+                    while Payment.objects.filter(payment_number=payment_number).exists():
+                        nuevo_num += 1
+                        payment_number = f"PAY-{nuevo_num:05d}"
+                    
                     Payment.objects.create(
                         organization=organization,
                         invoice=invoice,
-                        payment_number=f'PAY-{invoice.numero_completo}-{payment_counter:03d}',
+                        payment_number=payment_number,
                         amount=Decimal(str(pago_data.get('monto', 0))),
                         payment_method=metodo_db,
                         reference_number=pago_data.get('referencia', ''),
