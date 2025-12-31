@@ -8,18 +8,10 @@ from apps.organizations.models import OrganizationMember
 from datetime import datetime
 
 
-def get_user_organization(request):
-    """Helper para obtener la organización del usuario actual"""
-    membership = OrganizationMember.objects.filter(user=request.user, is_active=True).first()
-    if membership:
-        return membership.organization, membership
-    return None, None
-
-
 @login_required
 def employee_list(request):
     """Vista para listar empleados"""
-    organization, membership = get_user_organization(request)
+    organization = request.organization
     
     if not organization:
         messages.error(request, 'No tienes una organización asignada.')
@@ -65,7 +57,7 @@ def employee_create(request):
     """Vista para crear empleado vía AJAX"""
     if request.method == 'POST':
         try:
-            organization, membership = get_user_organization(request)
+            organization = request.organization
             
             if not organization:
                 return JsonResponse({
@@ -120,7 +112,7 @@ def employee_update(request, pk):
     """Vista para actualizar empleado vía AJAX"""
     if request.method == 'POST':
         try:
-            organization, membership = get_user_organization(request)
+            organization = request.organization
             
             if not organization:
                 return JsonResponse({
@@ -177,7 +169,7 @@ def employee_delete(request, pk):
     """Vista para eliminar empleado"""
     if request.method == 'POST':
         try:
-            organization, membership = get_user_organization(request)
+            organization = request.organization
             
             if not organization:
                 return JsonResponse({
@@ -208,7 +200,7 @@ def employee_delete(request, pk):
 def get_employee_data(request, pk):
     """Vista para obtener datos de un empleado en formato JSON"""
     try:
-        organization, membership = get_user_organization(request)
+        organization = request.organization
         
         if not organization:
             return JsonResponse({

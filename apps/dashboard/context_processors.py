@@ -15,13 +15,25 @@ def user_permissions(request):
     if not request.user.is_authenticated:
         return {'user_perms': {}}
     
-    membership = OrganizationMember.objects.filter(
-        user=request.user,
-        is_active=True
-    ).select_related('organization').first()
+    # Usar la organización del middleware (request.organization)
+    organization = getattr(request, 'organization', None)
+    
+    if not organization:
+        # Fallback si no hay organización en request
+        membership = OrganizationMember.objects.filter(
+            user=request.user,
+            is_active=True
+        ).select_related('organization').first()
+    else:
+        # Buscar membership específico para la organización actual
+        membership = OrganizationMember.objects.filter(
+            user=request.user,
+            organization=organization,
+            is_active=True
+        ).select_related('organization').first()
     
     if not membership:
-        return {'user_perms': {}, 'user_membership': None}
+        return {'user_perms': {}, 'user_membership': None, 'is_owner_or_admin': False, 'user_role': None}
     
     # Owner y Admin tienen todos los permisos
     if membership.role in ['owner', 'admin']:
@@ -29,6 +41,8 @@ def user_permissions(request):
             'user_perms': {'is_admin': True, 'all_access': True},
             'user_membership': membership,
             'user_organization': membership.organization,
+            'is_owner_or_admin': True,
+            'user_role': membership.role,
         }
     
     from apps.organizations.models import MemberModulePermission
@@ -46,4 +60,6 @@ def user_permissions(request):
         'user_perms': permissions,
         'user_membership': membership,
         'user_organization': membership.organization,
+        'is_owner_or_admin': False,
+        'user_role': membership.role,
     }

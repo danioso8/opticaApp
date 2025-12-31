@@ -1,4 +1,5 @@
 from django.db import models
+from django.contrib.auth.models import User
 from apps.organizations.models import Organization
 
 
@@ -35,6 +36,16 @@ class Employee(models.Model):
         on_delete=models.CASCADE, 
         related_name='employees',
         verbose_name='Organización'
+    )
+    
+    # Vinculación con usuario (opcional - para dar acceso al sistema)
+    user = models.OneToOneField(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='employee_profile',
+        verbose_name='Usuario del Sistema'
     )
     
     # Información personal

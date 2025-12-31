@@ -538,6 +538,7 @@ class OrganizationMember(models.Model):
         ('doctor', 'Doctor/Optómetra'),
         ('staff', 'Personal'),
         ('cashier', 'Cajero'),
+        ('vendedor', 'Vendedor'),
         ('viewer', 'Visualizador'),
     ]
     

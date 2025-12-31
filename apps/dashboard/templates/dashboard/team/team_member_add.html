@@ -3,354 +3,243 @@
 
 {% block title %}Agregar Miembro{% endblock %}
 
-{% block extra_css %}
-<style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
-    
-    .add-member-container {
-        font-family: 'Inter', sans-serif;
-    }
-    
-    .page-header {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        border-radius: 24px;
-        padding: 2.5rem;
-        margin-bottom: 2rem;
-        color: white;
-        box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
-    }
-    
-    .form-card {
-        background: white;
-        border-radius: 24px;
-        padding: 2.5rem;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-        border: 1px solid rgba(0,0,0,0.06);
-        transition: all 0.3s ease;
-    }
-    
-    .form-card:hover {
-        box-shadow: 0 12px 24px rgba(102, 126, 234, 0.15);
-    }
-    
-    .modern-input, .modern-select {
-        border: 2px solid #e5e7eb;
-        border-radius: 12px;
-        padding: 0.875rem 1.25rem;
-        font-size: 1rem;
-        font-weight: 500;
-        transition: all 0.3s ease;
-        font-family: 'Inter', sans-serif;
-    }
-    
-    .modern-input:focus, .modern-select:focus {
-        border-color: #667eea;
-        box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
-        outline: none;
-    }
-    
-    .form-label {
-        font-weight: 600;
-        color: #374151;
-        margin-bottom: 0.75rem;
-        font-size: 0.95rem;
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-    }
-    
-    .info-alert {
-        background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
-        border-left: 4px solid #3b82f6;
-        border-radius: 16px;
-        padding: 1.25rem;
-        margin-bottom: 2rem;
-        color: #1e40af;
-        font-weight: 500;
-    }
-    
-    .role-descriptions {
-        background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-        border-radius: 20px;
-        padding: 2rem;
-        border: 1px solid rgba(102, 126, 234, 0.1);
-    }
-    
-    .role-item {
-        padding: 1rem;
-        background: white;
-        border-radius: 12px;
-        margin-bottom: 0.75rem;
-        transition: all 0.3s ease;
-        border: 1px solid rgba(0,0,0,0.05);
-    }
-    
-    .role-item:hover {
-        transform: translateX(8px);
-        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
-        border-color: rgba(102, 126, 234, 0.3);
-    }
-    
-    .role-item strong {
-        color: #667eea;
-        font-weight: 700;
-    }
-    
-    .btn-modern-primary {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
-        padding: 1rem 2.5rem;
-        border-radius: 50px;
-        font-weight: 700;
-        border: none;
-        box-shadow: 0 8px 24px rgba(102, 126, 234, 0.4);
-        transition: all 0.3s ease;
-        font-family: 'Inter', sans-serif;
-    }
-    
-    .btn-modern-primary:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 12px 32px rgba(102, 126, 234, 0.5);
-        background: linear-gradient(135deg, #5568d3 0%, #6b3f99 100%);
-    }
-    
-    .btn-modern-secondary {
-        background: white;
-        color: #6b7280;
-        padding: 1rem 2.5rem;
-        border-radius: 50px;
-        font-weight: 700;
-        border: 2px solid #e5e7eb;
-        transition: all 0.3s ease;
-        font-family: 'Inter', sans-serif;
-    }
-    
-    .btn-modern-secondary:hover {
-        background: #f9fafb;
-        border-color: #d1d5db;
-        transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-    }
-    
-    .section-title {
-        font-weight: 800;
-        color: #1f2937;
-        margin-bottom: 1.5rem;
-        font-size: 1.25rem;
-        display: flex;
-        align-items: center;
-        gap: 0.75rem;
-    }
-    
-    .section-title i {
-        color: #667eea;
-        font-size: 1.5rem;
-    }
-</style>
-{% endblock %}
-
 {% block content %}
-<div class="container-fluid py-4 add-member-container">
-    <!-- Modern Header -->
-    <div class="page-header">
-        <div class="d-flex justify-content-between align-items-center">
-            <div>
-                <h1 class="mb-2" style="font-size: 2.5rem; font-weight: 800;">
-                    <i class="fas fa-user-plus me-3"></i>Agregar Nuevo Miembro
+<div class="container mx-auto px-4 py-6">
+    <!-- Header -->
+    <div class="bg-gradient-to-r from-indigo-500 to-purple-600 rounded-2xl p-8 mb-6 shadow-xl">
+        <div class="flex justify-between items-center">
+            <div class="text-white">
+                <h1 class="text-4xl font-bold mb-2">
+                    <i class="fas fa-user-plus mr-3"></i>Agregar Nuevo Miembro
                 </h1>
-                <p class="mb-0" style="font-size: 1.1rem; opacity: 0.95;">
+                <p class="text-lg opacity-95">
                     Invita a un nuevo miembro a tu equipo y asigna su rol
                 </p>
             </div>
         </div>
     </div>
 
-    <div class="row justify-content-center">
-        <div class="col-lg-8">
-            <div class="form-card">
-                <form method="post" id="teamMemberForm">
-                    {% csrf_token %}
-                    
-                    <div class="info-alert">
-                        <i class="fas fa-info-circle me-2"></i> 
-                        Puedes seleccionar un doctor o empleado existente para autocompletar los campos, o crear un usuario manualmente.
+    <div class="max-w-4xl mx-auto">
+        <div class="bg-white rounded-2xl shadow-lg p-8 border border-gray-100">
+            <form method="post" id="teamMemberForm">
+                {% csrf_token %}
+                
+                <!-- Info Alert -->
+                <div class="bg-blue-50 border-l-4 border-blue-500 rounded-lg p-4 mb-6">
+                    <div class="flex items-center text-blue-800">
+                        <i class="fas fa-info-circle mr-2"></i> 
+                        <span class="font-medium">Puedes seleccionar un doctor o empleado existente para autocompletar los campos, o crear un usuario manualmente.</span>
                     </div>
+                </div>
 
-                    <!-- Selector de Doctor -->
-                    <div class="row mb-4">
-                        <div class="col-md-6">
-                            <label for="doctor_id" class="form-label">
-                                <i class="fas fa-user-md"></i>
-                                <span>Seleccionar Doctor Existente (Opcional)</span>
-                            </label>
-                            <select class="form-select modern-select" id="doctor_id" name="doctor_id">
-                                <option value="">-- Seleccionar doctor --</option>
-                                {% for doctor in doctors %}
-                                <option value="{{ doctor.id }}">
-                                    {{ doctor.full_name }} - {{ doctor.identification }}
-                                </option>
-                                {% endfor %}
-                            </select>
-                            <small class="text-muted ms-2">Autocompletar desde doctores</small>
-                        </div>
-                        <div class="col-md-6">
-                            <label for="employee_id" class="form-label">
-                                <i class="fas fa-users"></i>
-                                <span>Seleccionar Empleado Existente (Opcional)</span>
-                            </label>
-                            <select class="form-select modern-select" id="employee_id" name="employee_id">
-                                <option value="">-- Seleccionar empleado --</option>
-                                {% for employee in employees %}
-                                <option value="{{ employee.id }}">
-                                    {{ employee.full_name }} - {{ employee.identification }} ({{ employee.get_position_display }})
-                                </option>
-                                {% endfor %}
-                            </select>
-                            <small class="text-muted ms-2">Autocompletar desde empleados</small>
-                        </div>
-                    </div>
-
-                    <div class="mb-4">
-                        <label for="email" class="form-label">
-                            <i class="fas fa-envelope"></i>
-                            <span>Email <span class="text-danger">*</span></span>
+                <!-- Selectores de Doctor/Empleado -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                    <div>
+                        <label for="doctor_id" class="block text-sm font-semibold text-gray-700 mb-2 flex items-center">
+                            <i class="fas fa-user-md text-indigo-600 mr-2"></i>
+                            Seleccionar Doctor Existente (Opcional)
                         </label>
-                        <input type="email" 
-                               class="form-control modern-input" 
-                               id="email" 
-                               name="email" 
-                               required
-                               placeholder="usuario@ejemplo.com">
-                        <small class="text-muted ms-2">Correo electrónico para acceder al sistema</small>
+                        <select class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent" 
+                                id="doctor_id" name="doctor_id">
+                            <option value="">-- Seleccionar doctor --</option>
+                            {% for doctor in doctors %}
+                            <option value="{{ doctor.id }}">
+                                {{ doctor.full_name }} - {{ doctor.identification }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                        <small class="text-gray-500 text-xs mt-1 block">Autocompletar desde doctores</small>
                     </div>
+                    <div>
+                        <label for="employee_id" class="block text-sm font-semibold text-gray-700 mb-2 flex items-center">
+                            <i class="fas fa-users text-indigo-600 mr-2"></i>
+                            Seleccionar Empleado Existente (Opcional)
+                        </label>
+                        <select class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent" 
+                                id="employee_id" name="employee_id">
+                            <option value="">-- Seleccionar empleado --</option>
+                            {% for employee in employees %}
+                            <option value="{{ employee.id }}">
+                                {{ employee.full_name }} - {{ employee.identification }} ({{ employee.get_position_display }})
+                            </option>
+                            {% endfor %}
+                        </select>
+                        <small class="text-gray-500 text-xs mt-1 block">Autocompletar desde empleados</small>
+                    </div>
+                </div>
 
-                    <div class="row">
-                        <div class="col-md-6 mb-4">
-                            <label for="first_name" class="form-label">
-                                <i class="fas fa-user"></i>
-                                <span>Nombre</span>
+                <!-- Email -->
+                <div class="mb-6">
+                    <label for="email" class="block text-sm font-semibold text-gray-700 mb-2 flex items-center">
+                        <i class="fas fa-envelope text-indigo-600 mr-2"></i>
+                        Email <span class="text-red-500 ml-1">*</span>
+                    </label>
+                    <input type="email" 
+                           class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent" 
+                           id="email" 
+                           name="email" 
+                           required
+                           placeholder="usuario@ejemplo.com">
+                    <small class="text-gray-500 text-xs mt-1 block">Correo electrónico para acceder al sistema</small>
+                </div>
+
+                <!-- Nombre y Apellido -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                    <div>
+                        <label for="first_name" class="block text-sm font-semibold text-gray-700 mb-2 flex items-center">
+                            <i class="fas fa-user text-indigo-600 mr-2"></i>
+                            Nombre
+                        </label>
+                        <input type="text" 
+                               class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent" 
+                               id="first_name" 
+                               name="first_name"
+                               placeholder="Nombre">
+                    </div>
+                    <div>
+                        <label for="last_name" class="block text-sm font-semibold text-gray-700 mb-2 flex items-center">
+                            <i class="fas fa-user text-indigo-600 mr-2"></i>
+                            Apellido
+                        </label>
+                        <input type="text" 
+                               class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent" 
+                               id="last_name" 
+                               name="last_name"
+                               placeholder="Apellido">
+                    </div>
+                </div>
+
+                <!-- Credenciales de Acceso -->
+                <div class="bg-gradient-to-br from-yellow-50 to-amber-50 border border-amber-300 rounded-xl p-6 mb-6">
+                    <h3 class="text-lg font-bold text-amber-900 mb-4 flex items-center">
+                        <i class="fas fa-key text-amber-600 mr-2"></i>
+                        Credenciales de Acceso
+                    </h3>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                        <div>
+                            <label for="username" class="block text-sm font-semibold text-gray-700 mb-2 flex items-center">
+                                <i class="fas fa-user-circle text-amber-600 mr-2"></i>
+                                Nombre de Usuario
                             </label>
                             <input type="text" 
-                                   class="form-control modern-input" 
-                                   id="first_name" 
-                                   name="first_name"
-                                   placeholder="Nombre">
+                                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent" 
+                                   id="username" 
+                                   name="username"
+                                   placeholder="Opcional - se generará del email">
+                            <small class="text-gray-600 text-xs mt-1 block">Si no se ingresa, se generará automáticamente del email</small>
                         </div>
-                        <div class="col-md-6 mb-4">
-                            <label for="last_name" class="form-label">
-                                <i class="fas fa-user"></i>
-                                <span>Apellido</span>
+                        <div>
+                            <label for="password" class="block text-sm font-semibold text-gray-700 mb-2 flex items-center">
+                                <i class="fas fa-lock text-amber-600 mr-2"></i>
+                                Contraseña
                             </label>
-                            <input type="text" 
-                                   class="form-control modern-input" 
-                                   id="last_name" 
-                                   name="last_name"
-                                   placeholder="Apellido">
+                            <div class="relative">
+                                <input type="password" 
+                                       class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent pr-12" 
+                                       id="password" 
+                                       name="password"
+                                       placeholder="Opcional - se generará aleatoria">
+                                <button type="button" 
+                                        id="togglePassword"
+                                        class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            </div>
+                            <small class="text-gray-600 text-xs mt-1 block">Si no se ingresa, se generará una contraseña aleatoria</small>
                         </div>
                     </div>
-
-                    <!-- Credenciales de Acceso -->
-                    <div class="mb-4 p-4" style="background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); border-radius: 16px; border: 1px solid #fbbf24;">
-                        <div class="section-title mb-3" style="color: #92400e;">
-                            <i class="fas fa-key"></i>
-                            <span>Credenciales de Acceso</span>
-                        </div>
-                        
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label for="username" class="form-label">
-                                    <i class="fas fa-user-circle"></i>
-                                    <span>Nombre de Usuario</span>
-                                </label>
-                                <input type="text" 
-                                       class="form-control modern-input" 
-                                       id="username" 
-                                       name="username"
-                                       placeholder="Opcional - se generará del email si no se ingresa">
-                                <small class="text-muted">Si no se ingresa, se generará automáticamente del email</small>
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label for="password" class="form-label">
-                                    <i class="fas fa-lock"></i>
-                                    <span>Contraseña</span>
-                                </label>
-                                <div class="input-group">
-                                    <input type="password" 
-                                           class="form-control modern-input" 
-                                           id="password" 
-                                           name="password"
-                                           placeholder="Opcional - se generará aleatoria">
-                                    <button class="btn btn-outline-secondary" type="button" id="togglePassword">
-                                        <i class="fas fa-eye"></i>
-                                    </button>
-                                </div>
-                                <small class="text-muted">Si no se ingresa, se generará una contraseña aleatoria</small>
-                            </div>
-                        </div>
-                        
-                        <div class="form-check mt-2">
-                            <input class="form-check-input" type="checkbox" id="send_email" name="send_email" checked>
-                            <label class="form-check-label" for="send_email">
-                                <i class="fas fa-envelope me-1"></i>
+                    
+                    <div class="flex items-center space-y-2">
+                        <div class="flex items-center w-full">
+                            <input type="checkbox" 
+                                   class="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500" 
+                                   id="send_email" 
+                                   name="send_email" 
+                                   checked>
+                            <label class="ml-2 text-sm font-medium text-gray-700 flex items-center" for="send_email">
+                                <i class="fas fa-envelope text-amber-600 mr-1"></i>
                                 Enviar email de invitación con credenciales
                             </label>
                         </div>
-                        <small class="text-muted d-block mt-1">
-                            <i class="fas fa-info-circle me-1"></i>
-                            Si no envías email, las credenciales se mostrarán en pantalla (guárdalas antes de continuar)
-                        </small>
+                        <div class="flex items-center w-full">
+                            <input type="checkbox" 
+                                   class="w-4 h-4 text-green-600 border-gray-300 rounded focus:ring-green-500" 
+                                   id="activate_immediately" 
+                                   name="activate_immediately" 
+                                   checked>
+                            <label class="ml-2 text-sm font-medium text-gray-700 flex items-center" for="activate_immediately">
+                                <i class="fas fa-check-circle text-green-600 mr-1"></i>
+                                Activar usuario inmediatamente (sin confirmación de email)
+                            </label>
+                        </div>
                     </div>
+                    <small class="text-gray-600 text-xs mt-2 block">
+                        <i class="fas fa-info-circle mr-1"></i>
+                        Si no envías email, las credenciales se mostrarán en pantalla (guárdalas antes de continuar)
+                    </small>
+                </div>
 
-                    <div class="mb-4">
-                        <label for="role" class="form-label">
-                            <i class="fas fa-user-tag"></i>
-                            <span>Rol <span class="text-danger">*</span></span>
-                        </label>
-                        <select class="form-select modern-select" id="role" name="role" required>
-                            {% for role_code, role_name in roles %}
-                                {% if role_code != 'owner' %}
-                                <option value="{{ role_code }}" {% if role_code == 'staff' %}selected{% endif %}>
-                                    {{ role_name }}
-                                </option>
-                                {% endif %}
-                            {% endfor %}
-                        </select>
-                    </div>
+                <!-- Rol -->
+                <div class="mb-6">
+                    <label for="role" class="block text-sm font-semibold text-gray-700 mb-2 flex items-center">
+                        <i class="fas fa-user-tag text-indigo-600 mr-2"></i>
+                        Rol <span class="text-red-500 ml-1">*</span>
+                    </label>
+                    <select class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent" 
+                            id="role" name="role" required>
+                        {% for role_code, role_name in roles %}
+                            {% if role_code != 'owner' %}
+                            <option value="{{ role_code }}" {% if role_code == 'staff' %}selected{% endif %}>
+                                {{ role_name }}
+                            </option>
+                            {% endif %}
+                        {% endfor %}
+                    </select>
+                </div>
 
-                    <!-- Role Descriptions -->
-                    <div class="role-descriptions mb-4">
-                        <div class="section-title">
-                            <i class="fas fa-info-circle"></i>
-                            <span>Descripción de Roles</span>
+                <!-- Descripción de Roles -->
+                <div class="bg-gradient-to-br from-gray-50 to-slate-50 border border-gray-200 rounded-xl p-6 mb-6">
+                    <h3 class="text-lg font-bold text-gray-800 mb-4 flex items-center">
+                        <i class="fas fa-info-circle text-indigo-600 mr-2"></i>
+                        Descripción de Roles
+                    </h3>
+                    <div class="space-y-3">
+                        <div class="bg-white rounded-lg p-4 border border-gray-100 hover:border-indigo-300 hover:shadow-md transition-all duration-200">
+                            <strong class="text-indigo-600">Administrador:</strong>
+                            <span class="text-gray-700"> Acceso total a todos los módulos y gestión de equipo</span>
                         </div>
-                        <div class="role-item">
-                            <strong>Administrador:</strong> Acceso total a todos los módulos y gestión de equipo
+                        <div class="bg-white rounded-lg p-4 border border-gray-100 hover:border-indigo-300 hover:shadow-md transition-all duration-200">
+                            <strong class="text-indigo-600">Doctor/Optómetra:</strong>
+                            <span class="text-gray-700"> Acceso a módulos clínicos y gestión de pacientes</span>
                         </div>
-                        <div class="role-item">
-                            <strong>Doctor/Optómetra:</strong> Acceso a módulos clínicos y gestión de pacientes
+                        <div class="bg-white rounded-lg p-4 border border-gray-100 hover:border-indigo-300 hover:shadow-md transition-all duration-200">
+                            <strong class="text-indigo-600">Personal:</strong>
+                            <span class="text-gray-700"> Permisos personalizados según función</span>
                         </div>
-                        <div class="role-item">
-                            <strong>Personal:</strong> Permisos personalizados según función
+                        <div class="bg-white rounded-lg p-4 border border-gray-100 hover:border-indigo-300 hover:shadow-md transition-all duration-200">
+                            <strong class="text-indigo-600">Cajero:</strong>
+                            <span class="text-gray-700"> Acceso a ventas y facturación</span>
                         </div>
-                        <div class="role-item">
-                            <strong>Cajero:</strong> Acceso a ventas y facturación
-                        </div>
-                        <div class="role-item mb-0">
-                            <strong>Visualizador:</strong> Solo lectura, sin permisos de edición
+                        <div class="bg-white rounded-lg p-4 border border-gray-100 hover:border-indigo-300 hover:shadow-md transition-all duration-200">
+                            <strong class="text-indigo-600">Visualizador:</strong>
+                            <span class="text-gray-700"> Solo lectura, sin permisos de edición</span>
                         </div>
                     </div>
+                </div>
 
-                    <div class="d-flex gap-3 justify-content-end">
-                        <a href="{% url 'dashboard:team_list' %}" class="btn btn-modern-secondary text-decoration-none">
-                            <i class="fas fa-times me-2"></i>Cancelar
-                        </a>
-                        <button type="submit" class="btn btn-modern-primary">
-                            <i class="fas fa-user-plus me-2"></i>Agregar Miembro
-                        </button>
-                    </div>
-                </form>
-            </div>
-            </div>
+                <!-- Botones -->
+                <div class="flex justify-end gap-3">
+                    <a href="{% url 'dashboard:team_list' %}" 
+                       class="px-6 py-3 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg font-medium transition-colors duration-200">
+                        <i class="fas fa-times mr-2"></i>Cancelar
+                    </a>
+                    <button type="submit" 
+                            class="px-6 py-3 bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white rounded-lg font-bold shadow-lg hover:shadow-xl transition-all duration-200">
+                        <i class="fas fa-user-plus mr-2"></i>Agregar Miembro
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
 </div>
@@ -372,6 +261,39 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
+    // Función para mostrar notificaciones
+    function showNotification(message, type = 'info') {
+        const notification = document.createElement('div');
+        notification.className = `fixed top-4 right-4 z-50 px-6 py-4 rounded-lg shadow-lg transform transition-all duration-300 ${
+            type === 'success' ? 'bg-green-500' : 
+            type === 'error' ? 'bg-red-500' : 
+            'bg-blue-500'
+        } text-white max-w-md`;
+        
+        notification.innerHTML = `
+            <div class="flex items-center">
+                <i class="fas ${
+                    type === 'success' ? 'fa-check-circle' : 
+                    type === 'error' ? 'fa-exclamation-circle' : 
+                    'fa-info-circle'
+                } mr-3 text-xl"></i>
+                <div class="flex-1">${message}</div>
+                <button onclick="this.parentElement.parentElement.remove()" class="ml-4 text-white hover:text-gray-200">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+        `;
+        
+        document.body.appendChild(notification);
+        
+        // Auto-remove after 5 seconds
+        setTimeout(() => {
+            notification.style.opacity = '0';
+            notification.style.transform = 'translateX(100%)';
+            setTimeout(() => notification.remove(), 300);
+        }, 5000);
+    }
+    
     // Autocompletar desde doctor
     const doctorSelect = document.getElementById('doctor_id');
     const employeeSelect = document.getElementById('employee_id');
@@ -387,18 +309,12 @@ document.addEventListener('DOMContentLoaded', function() {
             // Limpiar selección de empleado
             if (employeeSelect) employeeSelect.value = '';
             
-            // Mostrar loading
-            const loadingMsg = document.createElement('div');
-            loadingMsg.className = 'alert alert-info mt-2';
-            loadingMsg.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Cargando datos del doctor...';
-            this.parentElement.appendChild(loadingMsg);
+            showNotification('Cargando datos del doctor...', 'info');
             
             // Hacer petición AJAX
             fetch(`/dashboard/team/doctor/${doctorId}/data/`)
                 .then(response => response.json())
                 .then(data => {
-                    loadingMsg.remove();
-                    
                     if (data.success) {
                         const doctor = data.doctor;
                         
@@ -417,26 +333,14 @@ document.addEventListener('DOMContentLoaded', function() {
                         const roleSelect = document.getElementById('role');
                         roleSelect.value = 'doctor';
                         
-                        // Mostrar mensaje de éxito
-                        const successMsg = document.createElement('div');
-                        successMsg.className = 'alert alert-success alert-dismissible fade show mt-2';
-                        successMsg.innerHTML = `
-                            <i class="fas fa-check-circle me-2"></i>
-                            Datos del Dr. ${doctor.full_name} cargados correctamente
-                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                        `;
-                        doctorSelect.parentElement.appendChild(successMsg);
-                        
-                        // Remover mensaje después de 3 segundos
-                        setTimeout(() => successMsg.remove(), 3000);
+                        showNotification(`Datos del Dr. ${doctor.full_name} cargados correctamente`, 'success');
                     } else {
-                        alert('Error al cargar datos del doctor: ' + data.error);
+                        showNotification('Error al cargar datos del doctor: ' + data.error, 'error');
                     }
                 })
                 .catch(error => {
-                    loadingMsg.remove();
                     console.error('Error:', error);
-                    alert('Error de conexión al cargar datos del doctor');
+                    showNotification('Error de conexión al cargar datos del doctor', 'error');
                 });
         });
     }
@@ -453,18 +357,12 @@ document.addEventListener('DOMContentLoaded', function() {
             // Limpiar selección de doctor
             if (doctorSelect) doctorSelect.value = '';
             
-            // Mostrar loading
-            const loadingMsg = document.createElement('div');
-            loadingMsg.className = 'alert alert-info mt-2';
-            loadingMsg.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Cargando datos del empleado...';
-            this.parentElement.appendChild(loadingMsg);
+            showNotification('Cargando datos del empleado...', 'info');
             
             // Hacer petición AJAX
             fetch(`/dashboard/team/employee/${employeeId}/data/`)
                 .then(response => response.json())
                 .then(data => {
-                    loadingMsg.remove();
-                    
                     if (data.success) {
                         const employee = data.employee;
                         
@@ -483,26 +381,14 @@ document.addEventListener('DOMContentLoaded', function() {
                         const roleSelect = document.getElementById('role');
                         roleSelect.value = 'staff';
                         
-                        // Mostrar mensaje de éxito
-                        const successMsg = document.createElement('div');
-                        successMsg.className = 'alert alert-success alert-dismissible fade show mt-2';
-                        successMsg.innerHTML = `
-                            <i class="fas fa-check-circle me-2"></i>
-                            Datos de ${employee.full_name} cargados correctamente
-                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                        `;
-                        employeeSelect.parentElement.appendChild(successMsg);
-                        
-                        // Remover mensaje después de 3 segundos
-                        setTimeout(() => successMsg.remove(), 3000);
+                        showNotification(`Datos de ${employee.full_name} cargados correctamente`, 'success');
                     } else {
-                        alert('Error al cargar datos del empleado: ' + data.error);
+                        showNotification('Error al cargar datos del empleado: ' + data.error, 'error');
                     }
                 })
                 .catch(error => {
-                    loadingMsg.remove();
                     console.error('Error:', error);
-                    alert('Error de conexión al cargar datos del empleado');
+                    showNotification('Error de conexión al cargar datos del empleado', 'error');
                 });
         });
     }

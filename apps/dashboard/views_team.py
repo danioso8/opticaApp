@@ -18,17 +18,102 @@ from apps.organizations.models import (
 )
 
 
+def apply_role_based_permissions(member, granted_by=None):
+    """Aplica permisos automáticos según el rol del miembro"""
+    # Definir permisos por rol
+    role_permissions = {
+        'admin': {
+            # Administrador tiene acceso total a casi todo
+            'all': {'view': True, 'create': True, 'edit': True, 'delete': True}
+        },
+        'doctor': {
+            # Doctor tiene acceso a módulos clínicos y pacientes
+            'patients': {'view': True, 'create': True, 'edit': True, 'delete': False},
+            'appointments': {'view': True, 'create': True, 'edit': True, 'delete': False},
+            'clinical': {'view': True, 'create': True, 'edit': True, 'delete': False},
+            'exams': {'view': True, 'create': True, 'edit': True, 'delete': False},
+            'prescriptions': {'view': True, 'create': True, 'edit': True, 'delete': False},
+        },
+        'cashier': {
+            # Cajero tiene acceso a ventas y facturación
+            'sales': {'view': True, 'create': True, 'edit': True, 'delete': False},
+            'billing': {'view': True, 'create': True, 'edit': True, 'delete': False},
+            'products': {'view': True, 'create': False, 'edit': False, 'delete': False},
+            'customers': {'view': True, 'create': True, 'edit': True, 'delete': False},
+        },
+        'vendedor': {
+            # Vendedor similar a cajero pero más enfocado en ventas
+            'sales': {'view': True, 'create': True, 'edit': True, 'delete': False},
+            'products': {'view': True, 'create': False, 'edit': False, 'delete': False},
+            'customers': {'view': True, 'create': True, 'edit': True, 'delete': False},
+            'billing': {'view': True, 'create': False, 'edit': False, 'delete': False},
+        },
+        'staff': {
+            # Personal básico
+            'patients': {'view': True, 'create': False, 'edit': False, 'delete': False},
+            'appointments': {'view': True, 'create': True, 'edit': False, 'delete': False},
+        },
+        'viewer': {
+            # Solo lectura
+            'all': {'view': True, 'create': False, 'edit': False, 'delete': False}
+        }
+    }
+    
+    if member.role not in role_permissions:
+        return
+    
+    role_config = role_permissions[member.role]
+    
+    # Eliminar permisos actuales
+    MemberModulePermission.objects.filter(member=member).delete()
+    
+    # Obtener todos los módulos activos
+    all_modules = ModulePermission.objects.filter(is_active=True)
+    
+    for module in all_modules:
+        # Verificar si hay configuración específica para este módulo
+        perms = None
+        
+        if 'all' in role_config:
+            # Aplicar permisos para todos los módulos
+            perms = role_config['all']
+        else:
+            # Buscar coincidencia en el código del módulo
+            for key in role_config:
+                if key.lower() in module.code.lower():
+                    perms = role_config[key]
+                    break
+        
+        if perms:
+            MemberModulePermission.objects.create(
+                member=member,
+                module=module,
+                can_view=perms.get('view', False),
+                can_create=perms.get('create', False),
+                can_edit=perms.get('edit', False),
+                can_delete=perms.get('delete', False),
+                granted_by=granted_by
+            )
+
+
 def get_user_organization(request):
-    """Obtiene la organización del usuario actual"""
+    """Obtiene la organización del usuario actual desde el middleware"""
+    organization = request.organization
+    
+    if not organization:
+        return None, None
+    
+    # Obtener el membership para verificar permisos
     membership = OrganizationMember.objects.filter(
         user=request.user,
+        organization=organization,
         is_active=True
     ).select_related('organization').first()
     
     if not membership:
         return None, None
     
-    return membership.organization, membership
+    return organization, membership
 
 
 @login_required
@@ -84,6 +169,7 @@ def team_member_add(request):
         password = request.POST.get('password', '').strip()
         role = request.POST.get('role', 'staff')
         send_email_invitation = request.POST.get('send_email') == 'on'
+        activate_immediately = request.POST.get('activate_immediately') == 'on'
         
         if not email:
             messages.error(request, 'El email es obligatorio.')
@@ -128,6 +214,17 @@ def team_member_add(request):
                 password=password
             )
             
+            # Activar usuario si se marcó la opción
+            if activate_immediately:
+                user.is_active = True
+                user.save()
+                
+                # Marcar email como verificado para evitar el middleware de verificación
+                from apps.users.email_verification_models import UserProfile
+                profile, created = UserProfile.objects.get_or_create(user=user)
+                profile.is_email_verified = True
+                profile.save()
+            
             # Guardar la contraseña temporalmente para mostrarla al usuario si no se envía email
             temp_password = password if not send_email_invitation else None
         
@@ -136,8 +233,13 @@ def team_member_add(request):
             organization=organization,
             user=user,
             role=role,
+            is_active=activate_immediately,
             invited_by=request.user
         )
+        
+        # Aplicar permisos automáticos según el rol
+        if role not in ['owner', 'admin']:
+            apply_role_based_permissions(new_member, granted_by=request.user)
         
         # Si se seleccionó un doctor, vincular
         if doctor_id:
@@ -228,15 +330,37 @@ def team_member_edit(request, member_id):
     if request.method == 'POST':
         role = request.POST.get('role')
         is_active = request.POST.get('is_active') == 'on'
+        username = request.POST.get('username', '').strip()
+        password = request.POST.get('password', '').strip()
+        email_verified = request.POST.get('email_verified') == 'on'
         
         # El owner no puede cambiar su propio rol
         if member.role == 'owner' and membership.user == member.user:
             messages.error(request, 'No puedes cambiar tu propio rol de Propietario.')
             return redirect('dashboard:team_list')
         
+        # Actualizar username si se proporciona
+        if username and username != member.user.username:
+            # Verificar que el username no esté en uso
+            if User.objects.filter(username=username).exclude(id=member.user.id).exists():
+                messages.error(request, f'El nombre de usuario "{username}" ya está en uso.')
+                return redirect('dashboard:team_member_edit', member_id=member_id)
+            member.user.username = username
+        
+        # Actualizar contraseña si se proporciona
+        if password:
+            member.user.set_password(password)
+        
+        member.user.save()
         member.role = role
         member.is_active = is_active
         member.save()
+        
+        # Actualizar verificación de email
+        from apps.users.email_verification_models import UserProfile
+        profile, created = UserProfile.objects.get_or_create(user=member.user)
+        profile.is_email_verified = email_verified
+        profile.save()
         
         messages.success(request, f'Miembro {member.user.get_full_name() or member.user.username} actualizado.')
         return redirect('dashboard:team_list')

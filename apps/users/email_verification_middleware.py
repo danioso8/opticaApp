@@ -23,6 +23,7 @@ class EmailVerificationMiddleware:
         '/accounts/logout/',
         '/organizations/logout/',
         '/dashboard/logout/',
+        '/dashboard/login/',  # Permitir acceso al login
         '/static/',
         '/media/',
         '/admin/',  # Admin panel no requiere verificación
