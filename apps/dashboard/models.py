@@ -17,3 +17,6 @@ from .models_ar_tryon import (
     FrameTryOnRecord,
     FaceShapeRecommendation
 )
+
+# Importar modelos de empleados
+from .models_employee import Employee

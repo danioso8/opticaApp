@@ -236,6 +236,14 @@
                 </a>
                 {% endif %}
                 
+                {% if user_perms.all_access %}
+                <a href="{% url 'dashboard:employee_list' %}" class="flex items-center px-4 py-3 hover:bg-indigo-800 {% if 'employees' in request.path %}bg-indigo-800{% endif %} relative">
+                    <i class="fas fa-users mr-3"></i>
+                    <span class="sidebar-text">Empleados</span>
+                    <span class="sidebar-tooltip">Empleados</span>
+                </a>
+                {% endif %}
+                
                 {% if user_perms.all_access or user_perms.exam_orders.can_view %}
                 <a href="{% url 'dashboard:exam_order_list' %}" class="flex items-center px-4 py-3 hover:bg-indigo-800 {% if 'exam' in request.path %}bg-indigo-800{% endif %} relative">
                     <i class="fas fa-microscope mr-3"></i>

@@ -3,6 +3,7 @@ from . import views
 from . import views_exam_orders
 from . import views_clinical_exams
 from . import views_team
+from . import views_employee
 from .views_analytics import (
     analytics_dashboard,
     api_realtime_metrics,
@@ -49,6 +50,14 @@ urlpatterns = [
     path('team/<int:member_id>/delete/', views_team.team_member_delete, name='team_member_delete'),
     path('team/modules/', views_team.team_modules_list, name='team_modules_list'),
     path('team/doctor/<int:doctor_id>/data/', views_team.get_doctor_data, name='get_doctor_data'),
+    path('team/employee/<int:employee_id>/data/', views_team.get_employee_data_for_team, name='get_employee_data_for_team'),
+    
+    # Gestión de Empleados
+    path('employees/', views_employee.employee_list, name='employee_list'),
+    path('employees/create/', views_employee.employee_create, name='employee_create'),
+    path('employees/<int:pk>/update/', views_employee.employee_update, name='employee_update'),
+    path('employees/<int:pk>/delete/', views_employee.employee_delete, name='employee_delete'),
+    path('employees/<int:pk>/data/', views_employee.get_employee_data, name='get_employee_data'),
     
     # Analytics Dashboard
     path('analytics/', analytics_dashboard, name='analytics_dashboard'),

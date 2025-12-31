@@ -183,12 +183,16 @@ def team_member_add(request):
     
     # Obtener lista de doctores para el selector
     from apps.patients.models import Doctor
+    from apps.dashboard.models_employee import Employee
+    
     doctors = Doctor.objects.filter(organization=organization, is_active=True).order_by('full_name')
+    employees = Employee.objects.filter(organization=organization, is_active=True).order_by('first_name', 'last_name')
     
     context = {
         'organization': organization,
         'roles': OrganizationMember.ROLES,
         'doctors': doctors,
+        'employees': employees,
     }
     
     return render(request, 'dashboard/team/team_member_add.html', context)
@@ -428,5 +432,37 @@ def get_doctor_data(request, doctor_id):
         return JsonResponse(data)
     except Doctor.DoesNotExist:
         return JsonResponse({'success': False, 'error': 'Doctor no encontrado'}, status=404)
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
+
+
+@login_required
+def get_employee_data_for_team(request, employee_id):
+    """Obtener datos del empleado para autocompletar formulario (AJAX)"""
+    organization, membership = get_user_organization(request)
+    
+    if not organization:
+        return JsonResponse({'success': False, 'error': 'No tienes organización'}, status=403)
+    
+    try:
+        from apps.dashboard.models_employee import Employee
+        employee = Employee.objects.get(id=employee_id, organization=organization)
+        
+        data = {
+            'success': True,
+            'employee': {
+                'id': employee.id,
+                'full_name': employee.full_name,
+                'first_name': employee.first_name,
+                'last_name': employee.last_name,
+                'email': employee.email or '',
+                'phone': employee.phone or '',
+                'identification': employee.identification or '',
+                'document_type': employee.document_type or 'CC',
+            }
+        }
+        return JsonResponse(data)
+    except Employee.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'Empleado no encontrado'}, status=404)
     except Exception as e:
         return JsonResponse({'success': False, 'error': str(e)}, status=500)

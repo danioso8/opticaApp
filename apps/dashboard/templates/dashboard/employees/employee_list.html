@@ -1,0 +1,563 @@
+{% extends "dashboard/base.html" %}
+{% load static %}
+
+{% block title %}Empleados - {{ block.super }}{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-6">
+    <!-- Header con título y botón -->
+    <div class="flex justify-between items-center mb-6">
+        <div>
+            <h1 class="text-3xl font-bold text-gray-800 flex items-center">
+                <i class="fas fa-users text-indigo-600 mr-3"></i>
+                Empleados
+            </h1>
+            <p class="text-gray-600 mt-1">Gestiona el personal de tu organización</p>
+        </div>
+        <button type="button" 
+                class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-lg shadow-lg transition duration-200 flex items-center" 
+                onclick="openCreateModal()">
+            <i class="fas fa-plus mr-2"></i>
+            Nuevo Empleado
+        </button>
+    </div>
+
+    <!-- Filtros -->
+    <div class="bg-white rounded-xl shadow-lg p-6 mb-6">
+        <h6 class="text-sm font-semibold text-gray-700 mb-4 uppercase tracking-wide">
+            <i class="fas fa-filter mr-2 text-indigo-600"></i>Filtros de Búsqueda
+        </h6>
+        <form method="GET" id="filterForm" class="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">
+                    <i class="fas fa-search text-indigo-500 mr-1"></i>Buscar
+                </label>
+                <input type="text" name="search" value="{{ search }}"
+                       class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                       placeholder="Nombre, identificación, email...">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">
+                    <i class="fas fa-briefcase text-indigo-500 mr-1"></i>Cargo
+                </label>
+                <select name="position" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
+                    <option value="">Todos los cargos</option>
+                    {% for value, label in position_choices %}
+                    <option value="{{ value }}" {% if selected_position == value %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">
+                    <i class="fas fa-toggle-on text-indigo-500 mr-1"></i>Estado
+                </label>
+                <select name="status" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
+                    <option value="">Todos</option>
+                    <option value="active" {% if selected_status == 'active' %}selected{% endif %}>Activos</option>
+                    <option value="inactive" {% if selected_status == 'inactive' %}selected{% endif %}>Inactivos</option>
+                </select>
+            </div>
+            <div class="flex items-end">
+                <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-lg transition duration-200 flex items-center justify-center">
+                    <i class="fas fa-search mr-2"></i>Buscar
+                </button>
+            </div>
+        </form>
+    </div>
+
+    {% if employees %}
+    <!-- Grid de tarjetas de empleados -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {% for employee in employees %}
+        <div class="bg-white rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden border border-gray-100">
+            <!-- Header de la tarjeta con gradiente -->
+            <div class="bg-gradient-to-r from-indigo-500 to-purple-600 h-32 relative">
+                <div class="absolute -bottom-12 left-1/2 transform -translate-x-1/2">
+                    <div class="w-24 h-24 rounded-full border-4 border-white shadow-lg bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center text-white text-2xl font-bold">
+                        {{ employee.first_name.0|upper }}{{ employee.last_name.0|upper }}
+                    </div>
+                </div>
+                <!-- Badge de estado en la esquina -->
+                <div class="absolute top-4 right-4">
+                    {% if employee.is_active %}
+                    <span class="bg-green-500 text-white text-xs font-semibold px-3 py-1 rounded-full shadow-lg">
+                        <i class="fas fa-circle text-xs mr-1"></i>Activo
+                    </span>
+                    {% else %}
+                    <span class="bg-red-500 text-white text-xs font-semibold px-3 py-1 rounded-full shadow-lg">
+                        <i class="fas fa-circle text-xs mr-1"></i>Inactivo
+                    </span>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Contenido de la tarjeta -->
+            <div class="pt-16 pb-6 px-6 text-center">
+                <h3 class="text-xl font-bold text-gray-800 mb-1">{{ employee.full_name }}</h3>
+                
+                <!-- Cargo badge -->
+                <div class="inline-block mb-3">
+                    <span class="bg-indigo-100 text-indigo-800 text-xs font-semibold px-3 py-1 rounded-full">
+                        <i class="fas fa-briefcase mr-1"></i>{{ employee.get_position_display }}
+                    </span>
+                </div>
+
+                <!-- Información de contacto -->
+                <div class="space-y-2 mb-4 text-sm text-gray-600">
+                    <p class="flex items-center justify-center">
+                        <i class="fas fa-id-card text-indigo-500 mr-2 w-4"></i>
+                        <span>{{ employee.get_document_type_display }}: {{ employee.identification }}</span>
+                    </p>
+                    {% if employee.email %}
+                    <p class="flex items-center justify-center">
+                        <i class="fas fa-envelope text-indigo-500 mr-2 w-4"></i>
+                        <span class="truncate">{{ employee.email }}</span>
+                    </p>
+                    {% endif %}
+                    {% if employee.phone %}
+                    <p class="flex items-center justify-center">
+                        <i class="fas fa-mobile-alt text-indigo-500 mr-2 w-4"></i>
+                        <span>{{ employee.phone }}</span>
+                    </p>
+                    {% endif %}
+                    {% if employee.department %}
+                    <p class="flex items-center justify-center">
+                        <i class="fas fa-building text-indigo-500 mr-2 w-4"></i>
+                        <span>{{ employee.department }}</span>
+                    </p>
+                    {% endif %}
+                </div>
+
+                <!-- Fecha de contratación -->
+                <div class="mb-4 px-4 py-2 bg-gray-50 rounded-lg">
+                    <p class="text-xs text-gray-600 font-medium">
+                        <i class="fas fa-calendar-alt mr-1"></i>Desde {{ employee.hire_date|date:"d/m/Y" }}
+                    </p>
+                </div>
+
+                <!-- Botones de acción -->
+                <div class="flex gap-2 pt-4 border-t border-gray-100">
+                    <button type="button" 
+                            onclick="editEmployee({{ employee.id }})"
+                            class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white py-2 px-4 rounded-lg transition duration-200 text-sm font-medium">
+                        <i class="fas fa-edit mr-1"></i>Editar
+                    </button>
+                    <button type="button" 
+                            onclick="deleteEmployee({{ employee.id }}, '{{ employee.full_name }}')"
+                            class="bg-red-600 hover:bg-red-700 text-white py-2 px-4 rounded-lg transition duration-200 text-sm font-medium">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <!-- Estado vacío -->
+    <div class="bg-white rounded-xl shadow-lg p-12 text-center">
+        <div class="max-w-md mx-auto">
+            <div class="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <i class="fas fa-users text-4xl text-gray-400"></i>
+            </div>
+            <h3 class="text-2xl font-bold text-gray-800 mb-2">No se encontraron empleados</h3>
+            <p class="text-gray-600 mb-6">Comienza agregando el primer empleado de tu organización</p>
+            <button type="button" 
+                    class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-lg shadow-lg transition duration-200 inline-flex items-center" 
+                    onclick="openCreateModal()">
+                <i class="fas fa-plus-circle mr-2"></i>Agregar Primer Empleado
+            </button>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Modal para Crear/Editar Empleado -->
+<div id="employeeModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 overflow-y-auto">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-4xl mx-4 my-8 max-h-[90vh] overflow-hidden flex flex-col">
+        <!-- Header del Modal -->
+        <div class="bg-gradient-to-r from-indigo-500 to-purple-600 text-white px-6 py-4 flex justify-between items-center">
+            <h2 class="text-2xl font-bold" id="employeeModalTitle">
+                <i class="fas fa-user-plus mr-2"></i>Nuevo Empleado
+            </h2>
+            <button type="button" onclick="closeEmployeeModal()" class="text-white hover:text-gray-200 transition">
+                <i class="fas fa-times text-2xl"></i>
+            </button>
+        </div>
+
+        <!-- Body del Modal -->
+        <div class="flex-1 overflow-y-auto p-6">
+            <form id="employeeForm">
+                {% csrf_token %}
+                <input type="hidden" id="employeeId" name="employee_id">
+                
+                <!-- Información Personal -->
+                <div class="mb-6">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-4 pb-2 border-b-2 border-indigo-500 flex items-center">
+                        <i class="fas fa-user text-indigo-600 mr-2"></i>Información Personal
+                    </h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                Nombres <span class="text-red-500">*</span>
+                            </label>
+                            <input type="text" id="first_name" name="first_name" required
+                                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                                   placeholder="Nombres">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                Apellidos <span class="text-red-500">*</span>
+                            </label>
+                            <input type="text" id="last_name" name="last_name" required
+                                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                                   placeholder="Apellidos">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Tipo de Documento</label>
+                            <select id="document_type" name="document_type"
+                                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
+                                <option value="CC">Cédula de Ciudadanía</option>
+                                <option value="CE">Cédula de Extranjería</option>
+                                <option value="PA">Pasaporte</option>
+                                <option value="TI">Tarjeta de Identidad</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                Identificación <span class="text-red-500">*</span>
+                            </label>
+                            <input type="text" id="identification" name="identification" required
+                                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                                   placeholder="Número de identificación">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Género</label>
+                            <select id="gender" name="gender"
+                                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
+                                <option value="">Seleccionar...</option>
+                                <option value="M">Masculino</option>
+                                <option value="F">Femenino</option>
+                                <option value="O">Otro</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Fecha de Nacimiento</label>
+                            <input type="date" id="birth_date" name="birth_date"
+                                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Información de Contacto -->
+                <div class="mb-6">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-4 pb-2 border-b-2 border-indigo-500 flex items-center">
+                        <i class="fas fa-address-book text-indigo-600 mr-2"></i>Información de Contacto
+                    </h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Correo Electrónico</label>
+                            <input type="email" id="email" name="email"
+                                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                                   placeholder="ejemplo@correo.com">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Teléfono</label>
+                            <input type="text" id="phone" name="phone"
+                                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                                   placeholder="300 123 4567">
+                        </div>
+                        <div class="md:col-span-2">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Dirección</label>
+                            <textarea id="address" name="address" rows="2"
+                                      class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                                      placeholder="Dirección completa"></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Información Laboral -->
+                <div class="mb-6">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-4 pb-2 border-b-2 border-indigo-500 flex items-center">
+                        <i class="fas fa-briefcase text-indigo-600 mr-2"></i>Información Laboral
+                    </h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                Cargo <span class="text-red-500">*</span>
+                            </label>
+                            <select id="position" name="position" required
+                                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
+                                {% for value, label in position_choices %}
+                                <option value="{{ value }}">{{ label }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Departamento</label>
+                            <input type="text" id="department" name="department"
+                                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                                   placeholder="Ej: Ventas">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                Fecha de Contratación <span class="text-red-500">*</span>
+                            </label>
+                            <input type="date" id="hire_date" name="hire_date" required
+                                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Salario (Opcional)</label>
+                            <input type="number" id="salary" name="salary" step="0.01" min="0"
+                                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                                   placeholder="0.00">
+                        </div>
+                        <div class="md:col-span-2">
+                            <label class="flex items-center cursor-pointer">
+                                <input type="checkbox" id="is_active" name="is_active" checked
+                                       class="w-5 h-5 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500">
+                                <span class="ml-3 text-sm font-medium text-gray-700">
+                                    <i class="fas fa-toggle-on text-green-500 mr-1"></i>Empleado Activo
+                                </span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <!-- Footer del Modal -->
+        <div class="bg-gray-50 px-6 py-4 flex justify-end gap-3 border-t">
+            <button type="button" onclick="closeEmployeeModal()"
+                    class="px-6 py-3 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg font-medium transition-colors duration-200">
+                <i class="fas fa-times mr-2"></i>Cancelar
+            </button>
+            <button type="submit" form="employeeForm" id="saveButton"
+                    class="px-6 py-3 bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white rounded-lg font-medium shadow-lg hover:shadow-xl transition-all duration-200">
+                <i class="fas fa-save mr-2"></i>Guardar Empleado
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+let isEditMode = false;
+let currentEmployeeId = null;
+
+// Funciones para abrir/cerrar el modal
+function openEmployeeModal() {
+    document.getElementById('employeeModal').classList.remove('hidden');
+    document.body.style.overflow = 'hidden'; // Prevenir scroll del body
+}
+
+function closeEmployeeModal() {
+    document.getElementById('employeeModal').classList.add('hidden');
+    document.body.style.overflow = ''; // Restaurar scroll del body
+}
+
+function openCreateModal() {
+    isEditMode = false;
+    currentEmployeeId = null;
+    document.getElementById('employeeModalTitle').innerHTML = '<i class="fas fa-user-plus mr-2"></i>Nuevo Empleado';
+    document.getElementById('employeeForm').reset();
+    document.getElementById('employeeId').value = '';
+    document.getElementById('is_active').checked = true;
+    document.getElementById('saveButton').innerHTML = '<i class="fas fa-save mr-2"></i>Guardar Empleado';
+    openEmployeeModal();
+}
+
+function editEmployee(employeeId) {
+    isEditMode = true;
+    currentEmployeeId = employeeId;
+    document.getElementById('employeeModalTitle').innerHTML = '<i class="fas fa-user-edit mr-2"></i>Editar Empleado';
+    document.getElementById('saveButton').innerHTML = '<i class="fas fa-save mr-2"></i>Actualizar Empleado';
+    
+    openEmployeeModal();
+    
+    // Obtener datos del empleado
+    fetch(`/dashboard/employees/${employeeId}/data/`)
+        .then(response => response.json())
+        .then(result => {
+            if (result.success) {
+                const data = result.data;
+                document.getElementById('employeeId').value = data.id;
+                document.getElementById('first_name').value = data.first_name;
+                document.getElementById('last_name').value = data.last_name;
+                document.getElementById('document_type').value = data.document_type;
+                document.getElementById('identification').value = data.identification;
+                document.getElementById('birth_date').value = data.birth_date;
+                document.getElementById('gender').value = data.gender;
+                document.getElementById('email').value = data.email;
+                document.getElementById('phone').value = data.phone;
+                document.getElementById('address').value = data.address;
+                document.getElementById('position').value = data.position;
+                document.getElementById('department').value = data.department;
+                document.getElementById('hire_date').value = data.hire_date;
+                document.getElementById('salary').value = data.salary;
+                document.getElementById('is_active').checked = data.is_active;
+            } else {
+                showNotification('error', 'Error al cargar datos: ' + result.message);
+                closeEmployeeModal();
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showNotification('error', 'Error al cargar datos del empleado');
+            closeEmployeeModal();
+        });
+}
+
+function deleteEmployee(employeeId, employeeName) {
+    Swal.fire({
+        title: '¿Eliminar empleado?',
+        text: `¿Estás seguro de eliminar a ${employeeName}? Esta acción no se puede deshacer.`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#dc3545',
+        cancelButtonColor: '#6c757d',
+        confirmButtonText: '<i class="fas fa-trash me-2"></i>Sí, eliminar',
+        cancelButtonText: '<i class="fas fa-times me-2"></i>Cancelar',
+        customClass: {
+            confirmButton: 'btn btn-danger btn-lg',
+            cancelButton: 'btn btn-secondary btn-lg'
+        },
+        buttonsStyling: false
+    }).then((result) => {
+        if (result.isConfirmed) {
+            const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+            
+            // Mostrar loading
+            Swal.fire({
+                title: 'Eliminando...',
+                html: 'Por favor espera',
+                allowOutsideClick: false,
+                didOpen: () => {
+                    Swal.showLoading();
+                }
+            });
+            
+            fetch(`/dashboard/employees/${employeeId}/delete/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': csrftoken,
+                }
+            })
+            .then(response => response.json())
+            .then(result => {
+                if (result.success) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: '¡Eliminado!',
+                        text: result.message,
+                        showConfirmButton: false,
+                        timer: 1500
+                    }).then(() => {
+                        location.reload();
+                    });
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: result.message
+                    });
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: 'Error al eliminar empleado'
+                });
+            });
+        }
+    });
+}
+
+function showNotification(type, message) {
+    const icon = type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle';
+    const bgColor = type === 'success' ? '#10b981' : '#ef4444';
+    
+    const notification = document.createElement('div');
+    notification.className = 'position-fixed top-0 end-0 p-3';
+    notification.style.zIndex = '9999';
+    notification.innerHTML = `
+        <div class="alert alert-${type === 'success' ? 'success' : 'danger'} alert-dismissible fade show shadow-lg" role="alert" style="border-radius: 12px; border: none; background: ${bgColor}; color: white;">
+            <i class="fas ${icon} me-2"></i>
+            <strong>${message}</strong>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    `;
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+        notification.remove();
+    }, 5000);
+}
+
+document.getElementById('employeeForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const formData = new FormData(this);
+    formData.set('is_active', document.getElementById('is_active').checked);
+    
+    const url = isEditMode 
+        ? `/dashboard/employees/${currentEmployeeId}/update/`
+        : '/dashboard/employees/create/';
+    
+    const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+    
+    // Deshabilitar botón de guardar
+    const saveButton = document.getElementById('saveButton');
+    saveButton.disabled = true;
+    saveButton.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Guardando...';
+    
+    fetch(url, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': csrftoken,
+        },
+        body: formData
+    })
+    .then(response => response.json())
+    .then(result => {
+        if (result.success) {
+            Swal.fire({
+                icon: 'success',
+                title: '¡Éxito!',
+                text: result.message,
+                showConfirmButton: false,
+                timer: 1500
+            }).then(() => {
+                location.reload();
+            });
+        } else {
+            saveButton.disabled = false;
+            saveButton.innerHTML = isEditMode ? '<i class="fas fa-save me-2"></i>Actualizar Empleado' : '<i class="fas fa-save me-2"></i>Guardar Empleado';
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: result.message
+            });
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        saveButton.disabled = false;
+        saveButton.innerHTML = isEditMode ? '<i class="fas fa-save me-2"></i>Actualizar Empleado' : '<i class="fas fa-save me-2"></i>Guardar Empleado';
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: 'Error al guardar empleado'
+        });
+    });
+});
+
+// Agregar SweetAlert2 si no está incluido
+if (typeof Swal === 'undefined') {
+    const script = document.createElement('script');
+    script.src = 'https://cdn.jsdelivr.net/npm/sweetalert2@11';
+    document.head.appendChild(script);
+}
+</script>
+
+{% endblock %}

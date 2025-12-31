@@ -173,24 +173,41 @@
                     
                     <div class="info-alert">
                         <i class="fas fa-info-circle me-2"></i> 
-                        Puedes seleccionar un doctor existente para autocompletar los campos, o crear un usuario manualmente.
+                        Puedes seleccionar un doctor o empleado existente para autocompletar los campos, o crear un usuario manualmente.
                     </div>
 
                     <!-- Selector de Doctor -->
-                    <div class="mb-4">
-                        <label for="doctor_id" class="form-label">
-                            <i class="fas fa-user-md"></i>
-                            <span>Seleccionar Doctor Existente (Opcional)</span>
-                        </label>
-                        <select class="form-select modern-select" id="doctor_id" name="doctor_id">
-                            <option value="">-- Crear usuario manualmente --</option>
-                            {% for doctor in doctors %}
-                            <option value="{{ doctor.id }}">
-                                {{ doctor.full_name }} - {{ doctor.identification }}
-                            </option>
-                            {% endfor %}
-                        </select>
-                        <small class="text-muted ms-2">Si seleccionas un doctor, se autocompletarán los campos del formulario</small>
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <label for="doctor_id" class="form-label">
+                                <i class="fas fa-user-md"></i>
+                                <span>Seleccionar Doctor Existente (Opcional)</span>
+                            </label>
+                            <select class="form-select modern-select" id="doctor_id" name="doctor_id">
+                                <option value="">-- Seleccionar doctor --</option>
+                                {% for doctor in doctors %}
+                                <option value="{{ doctor.id }}">
+                                    {{ doctor.full_name }} - {{ doctor.identification }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                            <small class="text-muted ms-2">Autocompletar desde doctores</small>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="employee_id" class="form-label">
+                                <i class="fas fa-users"></i>
+                                <span>Seleccionar Empleado Existente (Opcional)</span>
+                            </label>
+                            <select class="form-select modern-select" id="employee_id" name="employee_id">
+                                <option value="">-- Seleccionar empleado --</option>
+                                {% for employee in employees %}
+                                <option value="{{ employee.id }}">
+                                    {{ employee.full_name }} - {{ employee.identification }} ({{ employee.get_position_display }})
+                                </option>
+                                {% endfor %}
+                            </select>
+                            <small class="text-muted ms-2">Autocompletar desde empleados</small>
+                        </div>
                     </div>
 
                     <div class="mb-4">
@@ -357,15 +374,18 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Autocompletar desde doctor
     const doctorSelect = document.getElementById('doctor_id');
+    const employeeSelect = document.getElementById('employee_id');
     
     if (doctorSelect) {
         doctorSelect.addEventListener('change', function() {
             const doctorId = this.value;
             
             if (!doctorId) {
-                // Limpiar campos si se deselecciona
                 return;
             }
+            
+            // Limpiar selección de empleado
+            if (employeeSelect) employeeSelect.value = '';
             
             // Mostrar loading
             const loadingMsg = document.createElement('div');
@@ -417,6 +437,72 @@ document.addEventListener('DOMContentLoaded', function() {
                     loadingMsg.remove();
                     console.error('Error:', error);
                     alert('Error de conexión al cargar datos del doctor');
+                });
+        });
+    }
+    
+    // Autocompletar desde empleado
+    if (employeeSelect) {
+        employeeSelect.addEventListener('change', function() {
+            const employeeId = this.value;
+            
+            if (!employeeId) {
+                return;
+            }
+            
+            // Limpiar selección de doctor
+            if (doctorSelect) doctorSelect.value = '';
+            
+            // Mostrar loading
+            const loadingMsg = document.createElement('div');
+            loadingMsg.className = 'alert alert-info mt-2';
+            loadingMsg.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Cargando datos del empleado...';
+            this.parentElement.appendChild(loadingMsg);
+            
+            // Hacer petición AJAX
+            fetch(`/dashboard/team/employee/${employeeId}/data/`)
+                .then(response => response.json())
+                .then(data => {
+                    loadingMsg.remove();
+                    
+                    if (data.success) {
+                        const employee = data.employee;
+                        
+                        // Autocompletar campos
+                        document.getElementById('email').value = employee.email;
+                        document.getElementById('first_name').value = employee.first_name;
+                        document.getElementById('last_name').value = employee.last_name;
+                        
+                        // Generar username del email si existe
+                        if (employee.email) {
+                            const suggestedUsername = employee.email.split('@')[0];
+                            document.getElementById('username').value = suggestedUsername;
+                        }
+                        
+                        // Cambiar rol a staff
+                        const roleSelect = document.getElementById('role');
+                        roleSelect.value = 'staff';
+                        
+                        // Mostrar mensaje de éxito
+                        const successMsg = document.createElement('div');
+                        successMsg.className = 'alert alert-success alert-dismissible fade show mt-2';
+                        successMsg.innerHTML = `
+                            <i class="fas fa-check-circle me-2"></i>
+                            Datos de ${employee.full_name} cargados correctamente
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        `;
+                        employeeSelect.parentElement.appendChild(successMsg);
+                        
+                        // Remover mensaje después de 3 segundos
+                        setTimeout(() => successMsg.remove(), 3000);
+                    } else {
+                        alert('Error al cargar datos del empleado: ' + data.error);
+                    }
+                })
+                .catch(error => {
+                    loadingMsg.remove();
+                    console.error('Error:', error);
+                    alert('Error de conexión al cargar datos del empleado');
                 });
         });
     }
