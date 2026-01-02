@@ -25,11 +25,20 @@ def require_module_permission(module_code, permission_type='view'):
         @wraps(view_func)
         @login_required
         def wrapped_view(request, *args, **kwargs):
-            # Obtener membership del usuario
-            membership = OrganizationMember.objects.filter(
-                user=request.user,
-                is_active=True
-            ).select_related('organization').first()
+            # Obtener membership del usuario para la organización actual
+            organization = getattr(request, 'organization', None)
+            
+            if organization:
+                membership = OrganizationMember.objects.filter(
+                    user=request.user,
+                    organization=organization,
+                    is_active=True
+                ).select_related('organization').first()
+            else:
+                membership = OrganizationMember.objects.filter(
+                    user=request.user,
+                    is_active=True
+                ).select_related('organization').first()
             
             if not membership:
                 messages.error(request, 'No tienes una organización asignada.')

@@ -10,9 +10,11 @@
             <h1 class="text-2xl font-bold text-gray-800">Gestión de Pacientes</h1>
             <p class="text-gray-600 mt-1">Administra la información de tus pacientes</p>
         </div>
+        {% if user_perms.all_access or user_perms.patients.can_create %}
         <button onclick="openCreatePatientModal()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors inline-block">
             <i class="fas fa-user-plus mr-2"></i>Nuevo Paciente
         </button>
+        {% endif %}
     </div>
 
     <!-- Búsqueda y Controles de Vista -->
@@ -377,6 +379,7 @@
     {% endif %}
 </div>
 
+{% if user_perms.all_access or user_perms.patients.can_create %}
 <!-- Modal Crear Paciente -->
 <div id="createPatientModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
     <div class="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto m-4">
@@ -656,6 +659,7 @@
         </form>
     </div>
 </div>
+{% endif %}
 
 <!-- Modal Editar Paciente -->
 <div id="editPatientModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">

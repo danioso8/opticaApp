@@ -267,9 +267,31 @@ def has_module_access(user, module_code):
     if user.is_superuser:
         return True
     
-    # Obtener suscripción del usuario
+    # Primero verificar la suscripción de la organización (si pertenece a alguna)
     try:
+        from apps.organizations.models import OrganizationMember
         from apps.users.models import UserSubscription
+        
+        # Buscar membresía activa del usuario
+        membership = OrganizationMember.objects.filter(
+            user=user,
+            is_active=True,
+            organization__is_active=True
+        ).select_related('organization').first()
+        
+        if membership and membership.organization:
+            # Si la organización tiene suscripción, usar esa
+            org_subscription = UserSubscription.objects.filter(
+                user=membership.organization.owner,
+                is_active=True
+            ).first()
+            
+            if org_subscription and not org_subscription.needs_payment_after_trial():
+                plan_type = org_subscription.plan.plan_type
+                allowed_modules = get_plan_modules(plan_type)
+                return module_code in allowed_modules
+        
+        # Si no hay suscripción de organización, verificar suscripción personal del usuario
         subscription = UserSubscription.objects.get(user=user)
         
         # Verificar que la suscripción esté activa

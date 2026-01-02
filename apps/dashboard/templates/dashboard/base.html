@@ -246,6 +246,15 @@
                     <span class="sidebar-text">Panel de Ventas</span>
                     <span class="sidebar-tooltip">Panel de Ventas</span>
                 </a>
+                
+                <!-- Facturación -->
+                {% if user_perms.all_access or user_perms.invoices.can_view %}
+                <a href="{% url 'billing:invoice_list' %}" class="flex items-center px-4 py-3 hover:bg-indigo-800 {% if 'billing' in request.path %}bg-indigo-800{% endif %} relative">
+                    <i class="fas fa-file-invoice mr-3"></i>
+                    <span class="sidebar-text">Facturación</span>
+                    <span class="sidebar-tooltip">Facturación</span>
+                </a>
+                {% endif %}
 
                 {% if user_perms.all_access or user_perms.patients.can_view %}
                 <a href="{% url 'dashboard:patients_list' %}" class="flex items-center px-4 py-3 hover:bg-indigo-800 {% if 'patients' in request.path %}bg-indigo-800{% endif %} relative">
@@ -279,8 +288,17 @@
                 </a>
                 {% endif %}
                 
-                <!-- Productos (Plan Básico o superior) - Solo Owner/Admin -->
+                <!-- Productos (Plan Básico o superior) -->
                 {% if is_owner_or_admin %}
+                {% has_module 'products' as can_access_products %}
+                <a href="{% if can_access_products %}{% url 'billing:product_list' %}{% else %}{% url 'organizations:subscription_plans' %}{% endif %}" 
+                   class="flex items-center px-4 py-3 hover:bg-indigo-800 {% if 'product' in request.path %}bg-indigo-800{% endif %} relative">
+                    <i class="fas fa-box mr-3"></i>
+                    <span class="sidebar-text">Productos</span>
+                    <span class="sidebar-tooltip">Productos</span>
+                    {% module_badge 'products' %}
+                </a>
+                {% elif user_perms.products and user_perms.products.can_view %}
                 {% has_module 'products' as can_access_products %}
                 <a href="{% if can_access_products %}{% url 'billing:product_list' %}{% else %}{% url 'organizations:subscription_plans' %}{% endif %}" 
                    class="flex items-center px-4 py-3 hover:bg-indigo-800 {% if 'product' in request.path %}bg-indigo-800{% endif %} relative">
@@ -291,7 +309,7 @@
                 </a>
                 {% endif %}
                 
-                <!-- Proveedores (Plan Básico o superior) - Solo Owner/Admin -->
+                <!-- Proveedores (Plan Básico o superior) -->
                 {% if is_owner_or_admin %}
                 {% has_module 'suppliers' as can_access_suppliers %}
                 <a href="{% if can_access_suppliers %}{% url 'billing:supplier_list' %}{% else %}{% url 'organizations:subscription_plans' %}{% endif %}" 
@@ -301,37 +319,15 @@
                     <span class="sidebar-tooltip">Proveedores</span>
                     {% module_badge 'suppliers' %}
                 </a>
-                {% endif %}
-                
-                <!-- Facturación Electrónica DIAN (Menú Desplegable) -->
-                {% if user_perms.all_access or user_perms.invoices.can_view %}
-                <div class="billing-menu">
-                    <button onclick="toggleSubmenu('billing-submenu')" class="flex items-center justify-between w-full px-4 py-3 hover:bg-indigo-800 {% if 'billing' in request.path %}bg-indigo-800{% endif %} relative">
-                        <div class="flex items-center">
-                            <i class="fas fa-file-invoice mr-3"></i>
-                            <span class="sidebar-text">Facturación </span>
-                        </div>
-                        <i class="fas fa-chevron-down text-sm transition-transform duration-200 submenu-icon" id="billing-submenu-icon"></i>
-                        <span class="sidebar-tooltip">Facturación </span>
-                    </button>
-                    <div id="billing-submenu" class="bg-indigo-950 hidden sidebar-submenu">
-                        <a href="{% url 'billing:invoice_list' %}" class="flex items-center px-8 py-2 hover:bg-indigo-800 text-sm {% if request.resolver_match.url_name == 'invoice_list' %}bg-indigo-800{% endif %} relative">
-                            <i class="fas fa-file-invoice mr-3"></i>
-                            <span class="sidebar-text">Facturas</span>
-                            <span class="sidebar-tooltip">Facturas</span>
-                        </a>
-                        <a href="{% url 'billing:invoice_config' %}" class="flex items-center px-8 py-2 hover:bg-indigo-800 text-sm {% if request.resolver_match.url_name == 'invoice_config' %}bg-indigo-800{% endif %} relative">
-                            <i class="fas fa-cogs mr-3"></i>
-                            <span class="sidebar-text">Configuración</span>
-                            <span class="sidebar-tooltip">Configuración</span>
-                        </a>
-                        <a href="{% url 'billing:dian_config' %}" class="flex items-center px-8 py-2 hover:bg-indigo-800 text-sm {% if request.resolver_match.url_name == 'dian_config' %}bg-indigo-800{% endif %} relative">
-                            <i class="fas fa-building-columns mr-3"></i>
-                            <span class="sidebar-text">Config. DIAN</span>
-                            <span class="sidebar-tooltip">Configuración DIAN</span>
-                        </a>
-                    </div>
-                </div>
+                {% elif user_perms.suppliers and user_perms.suppliers.can_view %}
+                {% has_module 'suppliers' as can_access_suppliers %}
+                <a href="{% if can_access_suppliers %}{% url 'billing:supplier_list' %}{% else %}{% url 'organizations:subscription_plans' %}{% endif %}" 
+                   class="flex items-center px-4 py-3 hover:bg-indigo-800 {% if 'supplier' in request.path %}bg-indigo-800{% endif %} relative">
+                    <i class="fas fa-truck mr-3"></i>
+                    <span class="sidebar-text">Proveedores</span>
+                    <span class="sidebar-tooltip">Proveedores</span>
+                    {% module_badge 'suppliers' %}
+                </a>
                 {% endif %}
                 
                 <!-- Gestión de Citas (Menú Desplegable) -->
@@ -374,6 +370,20 @@
                         <span class="sidebar-tooltip">Configuración</span>
                     </button>
                     <div id="configuration-submenu" class="bg-indigo-950 hidden sidebar-submenu">
+                        <!-- Configuración de Factura -->
+                        <a href="{% url 'billing:invoice_config' %}" class="flex items-center px-8 py-2 hover:bg-indigo-800 text-sm {% if request.resolver_match.url_name == 'invoice_config' %}bg-indigo-800{% endif %} relative">
+                            <i class="fas fa-file-invoice mr-3"></i>
+                            <span class="sidebar-text">Config. Factura</span>
+                            <span class="sidebar-tooltip">Configuración Factura</span>
+                        </a>
+                        
+                        <!-- Configuración DIAN -->
+                        <a href="{% url 'billing:dian_config' %}" class="flex items-center px-8 py-2 hover:bg-indigo-800 text-sm {% if request.resolver_match.url_name == 'dian_config' %}bg-indigo-800{% endif %} relative">
+                            <i class="fas fa-building-columns mr-3"></i>
+                            <span class="sidebar-text">Config. DIAN</span>
+                            <span class="sidebar-tooltip">Configuración DIAN</span>
+                        </a>
+                        
                         <!-- WhatsApp (Plan Profesional o superior) -->
                         {% has_module 'whatsapp' as can_access_whatsapp %}
                         <a href="{% if can_access_whatsapp %}{% url 'dashboard:notification_settings' %}{% else %}{% url 'organizations:subscription_plans' %}{% endif %}" 
@@ -390,7 +400,7 @@
                             <span class="sidebar-tooltip">Parámetros Clínicos</span>
                         </a>
                         
-                        <!-- Configuración DIAN (Plan Profesional o superior) -->
+                        <!-- Configuración DIAN (Plan Profesional o superior) - DUPLICADO LEGACY -->
                         {% has_module 'dian_config' as can_access_dian %}
                         <a href="{% if can_access_dian %}{% url 'billing:dian_configuration' %}{% else %}{% url 'organizations:subscription_plans' %}{% endif %}" 
                            class="flex items-center px-8 py-2 hover:bg-indigo-800 text-sm {% if 'dian-configuration' in request.path %}bg-indigo-800{% endif %} relative">

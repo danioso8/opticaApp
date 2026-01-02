@@ -115,8 +115,20 @@ def login_view(request):
             if next_url and next_url.startswith('/'):
                 return redirect(next_url)
             
-            # Redirigir a la lista de organizaciones para que seleccione una
-            return redirect('organizations:list')
+            # Verificar si el usuario tiene una organización activa
+            from apps.organizations.models import OrganizationMember
+            has_organization = OrganizationMember.objects.filter(
+                user=user,
+                is_active=True,
+                organization__is_active=True
+            ).exists()
+            
+            if has_organization:
+                # Si tiene organización, ir al dashboard (el middleware asignará la org automáticamente)
+                return redirect('dashboard:home')
+            else:
+                # Si no tiene organización, ir a la lista para que seleccione/cree una
+                return redirect('organizations:list')
         else:
             messages.error(request, 'Credenciales inválidas')
     
