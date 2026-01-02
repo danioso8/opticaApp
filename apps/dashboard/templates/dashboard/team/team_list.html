@@ -444,6 +444,9 @@
         </div>
         {% if can_manage %}
         <div class="page-header-actions">
+            <a href="{% url 'dashboard:team_activity_log' %}" class="btn btn-outline-light me-2 d-inline-flex align-items-center">
+                <i class="fas fa-history me-2"></i>Registro de Actividad
+            </a>
             <a href="{% url 'dashboard:team_member_add' %}" class="add-member-btn text-decoration-none d-inline-flex align-items-center">
                 <i class="fas fa-user-plus me-2"></i>Nuevo Miembro
             </a>
@@ -451,53 +454,66 @@
         {% endif %}
     </div>
 
-    <!-- Stats Cards Row -->
-    <div class="stats-row mb-5">
-        <!-- Stats Cards -->
-        <div class="stats-container">
-            <div class="stat-card">
-                <div class="d-flex align-items-center">
-                    <div class="stat-icon me-3">
-                        <i class="fas fa-users text-white" style="font-size: 1.75rem;"></i>
-                    </div>
+    <!-- Stats Cards Row - COMPACTAS -->
+    <div class="row g-3 mb-4">
+        <div class="col-lg-3 col-md-6">
+            <div class="bg-white rounded-lg p-4 shadow-sm border-start border-4 border-primary">
+                <div class="d-flex align-items-center justify-between">
                     <div>
-                        <p class="text-muted mb-1" style="font-size: 0.875rem; font-weight: 600;">Total Miembros</p>
-                        <h2 class="mb-0" style="font-size: 2rem; font-weight: 800;">{{ members.count }}</h2>
+                        <p class="text-muted mb-1 small fw-semibold">Total Miembros</p>
+                        <h3 class="mb-0 fw-bold">{{ members.count }}</h3>
+                    </div>
+                    <div class="text-primary" style="font-size: 2rem;">
+                        <i class="fas fa-users"></i>
                     </div>
                 </div>
             </div>
-            
-            <div class="stat-card">
-                <div class="d-flex align-items-center">
-                    <div class="stat-icon me-3" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%);">
-                        <i class="fas fa-check-circle text-white" style="font-size: 1.75rem;"></i>
-                    </div>
+        </div>
+        
+        <div class="col-lg-3 col-md-6">
+            <div class="bg-white rounded-lg p-4 shadow-sm border-start border-4 border-success">
+                <div class="d-flex align-items-center justify-between">
                     <div>
-                        <p class="text-muted mb-1" style="font-size: 0.875rem; font-weight: 600;">Activos</p>
-                        <h2 class="mb-0" style="font-size: 2rem; font-weight: 800;">{{ members|length }}</h2>
+                        <p class="text-muted mb-1 small fw-semibold">Activos</p>
+                        <h3 class="mb-0 fw-bold">{{ members|length }}</h3>
+                    </div>
+                    <div class="text-success" style="font-size: 2rem;">
+                        <i class="fas fa-check-circle"></i>
                     </div>
                 </div>
             </div>
-            
-            <div class="stat-card">
-                <div class="d-flex align-items-center">
-                    <div class="stat-icon me-3" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);">
-                        <i class="fas fa-crown text-white" style="font-size: 1.75rem;"></i>
-                    </div>
+        </div>
+        
+        <div class="col-lg-3 col-md-6">
+            <div class="bg-white rounded-lg p-4 shadow-sm border-start border-4 border-warning">
+                <div class="d-flex align-items-center justify-between">
                     <div>
-                        <p class="text-muted mb-1" style="font-size: 0.875rem; font-weight: 600;">Administradores</p>
-                        <h2 class="mb-0" style="font-size: 2rem; font-weight: 800;">
+                        <p class="text-muted mb-1 small fw-semibold">Administradores</p>
+                        <h3 class="mb-0 fw-bold">
                             {% with admins=members|dictsort:"role" %}{{ admins|length }}{% endwith %}
-                        </h2>
+                        </h3>
+                    </div>
+                    <div class="text-warning" style="font-size: 2rem;">
+                        <i class="fas fa-crown"></i>
                     </div>
                 </div>
             </div>
-            
-            <div class="stat-card">
-                <div class="d-flex align-items-center">
-                    <div class="stat-icon me-3" style="background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);">
-                        <i class="fas fa-user-md text-white" style="font-size: 1.75rem;"></i>
+        </div>
+        
+        <div class="col-lg-3 col-md-6">
+            <div class="bg-white rounded-lg p-4 shadow-sm border-start border-4 border-info">
+                <div class="d-flex align-items-center justify-between">
+                    <div>
+                        <p class="text-muted mb-1 small fw-semibold">Doctores</p>
+                        <h3 class="mb-0 fw-bold">0</h3>
                     </div>
+                    <div class="text-info" style="font-size: 2rem;">
+                        <i class="fas fa-user-md"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
                     <div>
                         <p class="text-muted mb-1" style="font-size: 0.875rem; font-weight: 600;">Doctores</p>
                         <h2 class="mb-0" style="font-size: 2rem; font-weight: 800;">

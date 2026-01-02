@@ -548,6 +548,19 @@ def invoice_create(request):
                     if not es_factura_electronica:
                         messages.info(request, 'ℹ️ Esta es una factura normal/interna, no consume consecutivo DIAN')
                 
+                # Registrar en auditoría
+                from apps.dashboard.audit_utils import log_action
+                log_action(
+                    user=request.user,
+                    organization=organization,
+                    action='invoice_create',
+                    description=f'Creó la factura {invoice.numero_completo}',
+                    content_type='Invoice',
+                    object_id=invoice.id,
+                    metadata={'numero': invoice.numero_completo, 'total': str(invoice.total)},
+                    request=request
+                )
+                
                 return redirect('billing:invoice_detail', invoice_id=invoice.id)
                 
         except Patient.DoesNotExist:
@@ -1074,6 +1087,19 @@ def product_create(request):
             
             product.save()
             
+            # Registrar en auditoría
+            from apps.dashboard.audit_utils import log_action
+            log_action(
+                user=request.user,
+                organization=organization,
+                action='product_create',
+                description=f'Creó el producto: {product.nombre}',
+                content_type='InvoiceProduct',
+                object_id=product.id,
+                metadata={'nombre': product.nombre, 'codigo': product.codigo},
+                request=request
+            )
+            
             messages.success(request, f'✅ Producto {product.nombre} creado exitosamente')
             return redirect('billing:product_list')
         except Exception as e:
@@ -1139,6 +1165,18 @@ def product_edit(request, product_id):
             
             product.save()
             
+            # Registrar en auditoría
+            from apps.dashboard.audit_utils import log_action
+            log_action(
+                user=request.user,
+                organization=organization,
+                action='product_edit',
+                description=f'Editó el producto: {product.nombre}',
+                content_type='InvoiceProduct',
+                object_id=product.id,
+                request=request
+            )
+            
             messages.success(request, f'✅ Producto {product.nombre} actualizado exitosamente')
             return redirect('billing:product_list')
         except Exception as e:
@@ -1167,7 +1205,21 @@ def product_delete(request, product_id):
     product = get_object_or_404(InvoiceProduct, id=product_id, organization=organization)
     
     nombre = product.nombre
+    product_id = product.id
     product.delete()
+    
+    # Registrar en auditoría
+    from apps.dashboard.audit_utils import log_action
+    log_action(
+        user=request.user,
+        organization=organization,
+        action='product_delete',
+        description=f'Eliminó el producto: {nombre}',
+        content_type='InvoiceProduct',
+        object_id=product_id,
+        request=request
+    )
+    
     messages.success(request, f'✅ Producto {nombre} eliminado exitosamente')
     return redirect('billing:product_list')
 

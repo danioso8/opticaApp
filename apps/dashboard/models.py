@@ -18,5 +18,8 @@ from .models_ar_tryon import (
     FaceShapeRecommendation
 )
 
+# Importar modelos de auditoría
+from .models_audit import AuditLog
+
 # Importar modelos de empleados
 from .models_employee import Employee

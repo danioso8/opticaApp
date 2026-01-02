@@ -121,6 +121,18 @@ def patient_create(request):
                 current_medications=request.POST.get('current_medications', ''),
             )
             
+            # Registrar en auditoría
+            from apps.dashboard.audit_utils import log_action
+            log_action(
+                user=request.user,
+                organization=request.organization,
+                action='patient_create',
+                description=f'Creó el paciente: {patient.full_name}',
+                content_type='Patient',
+                object_id=patient.pk,
+                request=request
+            )
+            
             messages.success(request, f'Paciente {patient.full_name} creado exitosamente')
             return redirect('dashboard:patient_detail', pk=patient.pk)
         
@@ -161,6 +173,18 @@ def patient_edit(request, pk):
             
             patient.save()
             
+            # Registrar en auditoría
+            from apps.dashboard.audit_utils import log_action
+            log_action(
+                user=request.user,
+                organization=request.organization,
+                action='patient_edit',
+                description=f'Editó el paciente: {patient.full_name}',
+                content_type='Patient',
+                object_id=patient.pk,
+                request=request
+            )
+            
             messages.success(request, f'Paciente {patient.full_name} actualizado exitosamente')
             return redirect('dashboard:patient_detail', pk=patient.pk)
         
@@ -185,6 +209,18 @@ def patient_delete(request, pk):
         # Desactivar en lugar de eliminar
         patient.is_active = False
         patient.save()
+        
+        # Registrar en auditoría
+        from apps.dashboard.audit_utils import log_action
+        log_action(
+            user=request.user,
+            organization=request.organization,
+            action='patient_delete',
+            description=f'Desactivó el paciente: {patient.full_name}',
+            content_type='Patient',
+            object_id=patient.pk,
+            request=request
+        )
         
         messages.success(request, f'Paciente {patient.full_name} desactivado')
         return redirect('dashboard:patients_list')

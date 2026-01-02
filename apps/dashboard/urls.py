@@ -49,6 +49,7 @@ urlpatterns = [
     path('team/<int:member_id>/permissions/', views_team.team_member_permissions, name='team_member_permissions'),
     path('team/<int:member_id>/delete/', views_team.team_member_delete, name='team_member_delete'),
     path('team/modules/', views_team.team_modules_list, name='team_modules_list'),
+    path('team/activity/', views_team.team_activity_log, name='team_activity_log'),
     path('team/doctor/<int:doctor_id>/data/', views_team.get_doctor_data, name='get_doctor_data'),
     path('team/employee/<int:employee_id>/data/', views_team.get_employee_data_for_team, name='get_employee_data_for_team'),
     

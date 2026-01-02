@@ -10,6 +10,7 @@ from django.http import JsonResponse
 from django.core.mail import send_mail
 from django.conf import settings
 from django.template.loader import render_to_string
+from django.db.models import Count
 from apps.organizations.models import (
     OrganizationMember, 
     ModulePermission, 
@@ -590,3 +591,109 @@ def get_employee_data_for_team(request, employee_id):
         return JsonResponse({'success': False, 'error': 'Empleado no encontrado'}, status=404)
     except Exception as e:
         return JsonResponse({'success': False, 'error': str(e)}, status=500)
+
+
+@login_required
+def team_activity_log(request):
+    """Ver registro de actividad del equipo"""
+    organization, membership = get_user_organization(request)
+    
+    if not organization:
+        messages.error(request, 'No tienes una organización asignada.')
+        return redirect('dashboard:home')
+    
+    # Solo owner y admin pueden ver el log de actividad
+    if membership.role not in ['owner', 'admin']:
+        messages.error(request, 'No tienes permisos para ver el registro de actividad.')
+        return redirect('dashboard:home')
+    
+    from .models_audit import AuditLog
+    from django.db.models import Q
+    from datetime import timedelta
+    from django.utils import timezone
+    
+    # Filtros
+    member_id = request.GET.get('member')
+    action_type = request.GET.get('action')
+    date_from = request.GET.get('date_from')
+    date_to = request.GET.get('date_to')
+    search = request.GET.get('search', '')
+    
+    # Query base
+    logs = AuditLog.objects.filter(organization=organization).select_related('user')
+    
+    # Aplicar filtros
+    if member_id:
+        logs = logs.filter(user_id=member_id)
+    
+    if action_type:
+        logs = logs.filter(action=action_type)
+    
+    if date_from:
+        from datetime import datetime
+        date_from_obj = datetime.strptime(date_from, '%Y-%m-%d')
+        logs = logs.filter(created_at__gte=date_from_obj)
+    
+    if date_to:
+        from datetime import datetime
+        date_to_obj = datetime.strptime(date_to, '%Y-%m-%d')
+        # Agregar 1 día para incluir todo el día
+        date_to_obj = date_to_obj + timedelta(days=1)
+        logs = logs.filter(created_at__lt=date_to_obj)
+    
+    if search:
+        logs = logs.filter(
+            Q(description__icontains=search) |
+            Q(user__username__icontains=search) |
+            Q(user__first_name__icontains=search) |
+            Q(user__last_name__icontains=search)
+        )
+    
+    # Paginación
+    from django.core.paginator import Paginator
+    paginator = Paginator(logs, 50)  # 50 registros por página
+    page_number = request.GET.get('page', 1)
+    logs_page = paginator.get_page(page_number)
+    
+    # Obtener lista de miembros para el filtro
+    members = OrganizationMember.objects.filter(
+        organization=organization
+    ).select_related('user').order_by('user__first_name', 'user__last_name')
+    
+    # Obtener tipos de acciones únicas
+    action_types = AuditLog.ACTION_CHOICES
+    
+    # Estadísticas rápidas
+    stats = {
+        'total_today': AuditLog.objects.filter(
+            organization=organization,
+            created_at__gte=timezone.now().replace(hour=0, minute=0, second=0)
+        ).count(),
+        'total_week': AuditLog.objects.filter(
+            organization=organization,
+            created_at__gte=timezone.now() - timedelta(days=7)
+        ).count(),
+        'most_active_user': AuditLog.objects.filter(
+            organization=organization,
+            created_at__gte=timezone.now() - timedelta(days=30)
+        ).values('user__username', 'user__first_name', 'user__last_name').annotate(
+            count=Count('id')
+        ).order_by('-count').first()
+    }
+    
+    context = {
+        'logs': logs_page,
+        'organization': organization,
+        'members': members,
+        'action_types': action_types,
+        'stats': stats,
+        'filters': {
+            'member_id': member_id,
+            'action_type': action_type,
+            'date_from': date_from,
+            'date_to': date_to,
+            'search': search,
+        }
+    }
+    
+    return render(request, 'dashboard/team/activity_log.html', context)
