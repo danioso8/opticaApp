@@ -1,5 +1,12 @@
 # ⚡ Resumen Rápido - 30 Dic 2025
 
+## 🎨 Framework CSS
+**⚠️ IMPORTANTE: Este proyecto usa TAILWIND CSS**
+- NO usar Bootstrap
+- NO mezclar frameworks CSS
+- Todas las plantillas deben usar clases Tailwind
+- Ver: `apps/dashboard/templates/dashboard/base.html` para referencia
+
 ## ✅ Estado Actual
 **Sistema funcionando correctamente** - Todos los cambios de empleados fueron revertidos.
 

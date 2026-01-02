@@ -6,6 +6,17 @@
 
 ---
 
+## 🎨 IMPORTANTE: Framework CSS
+
+**⚠️ Este proyecto usa TAILWIND CSS**
+- ✅ Todas las plantillas usan clases Tailwind
+- ❌ NO usar Bootstrap
+- ❌ NO mezclar frameworks CSS
+- 📝 Referencia: `apps/dashboard/templates/dashboard/base.html`
+- 📦 CSS compilado: `static/dashboard/css/output.css`
+
+---
+
 ## 📋 Resumen Ejecutivo
 
 **Objetivos Completados:**

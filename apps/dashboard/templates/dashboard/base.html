@@ -356,7 +356,17 @@
                 </div>
                 {% endif %}
                 
-                
+                <!-- Gestión de Equipo (Plan Premium o superior) - Solo Owner/Admin -->
+                {% if is_owner_or_admin %}
+                {% has_module 'team_management' as can_access_team %}
+                <a href="{% if can_access_team %}{% url 'dashboard:team_list' %}{% else %}{% url 'organizations:subscription_plans' %}{% endif %}" 
+                   class="flex items-center px-4 py-3 hover:bg-indigo-800 {% if '/team/' in request.path %}bg-indigo-800{% endif %} relative">
+                    <i class="fas fa-users-cog mr-3"></i>
+                    <span class="sidebar-text">Gestión de Equipo</span>
+                    <span class="sidebar-tooltip">Gestión de Equipo</span>
+                    {% module_badge 'team_management' %}
+                </a>
+                {% endif %}
                 
                 <!-- Configuración (Menú Desplegable) - Solo Owner/Admin -->
                 {% if is_owner_or_admin %}
@@ -414,16 +424,6 @@
                             <i class="fas fa-paint-brush mr-3"></i>
                             <span class="sidebar-text">Landing Page</span>
                             <span class="sidebar-tooltip">Landing Page</span>
-                        </a>
-                        
-                        <!-- Gestión de Equipo (Plan Premium o superior) -->
-                        {% has_module 'team_management' as can_access_team %}
-                        <a href="{% if can_access_team %}{% url 'dashboard:team_list' %}{% else %}{% url 'organizations:subscription_plans' %}{% endif %}" 
-                           class="flex items-center px-8 py-2 hover:bg-indigo-800 text-sm {% if '/team/' in request.path %}bg-indigo-800{% endif %} relative">
-                            <i class="fas fa-users-cog mr-3"></i>
-                            <span class="sidebar-text">Gestión de Equipo</span>
-                            <span class="sidebar-tooltip">Gestión de Equipo</span>
-                            {% module_badge 'team_management' %}
                         </a>
                     </div>
                 </div>

@@ -80,7 +80,7 @@ class AuditLog(models.Model):
     description = models.TextField()
     
     # Modelo afectado (opcional)
-    content_type = models.CharField(max_length=100, blank=True)
+    content_type = models.CharField(max_length=100, null=True, blank=True)
     object_id = models.PositiveIntegerField(null=True, blank=True)
     
     # Datos adicionales en JSON (opcional)

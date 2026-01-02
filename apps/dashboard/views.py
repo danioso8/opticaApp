@@ -157,23 +157,29 @@ def login_view(request):
 def logout_view(request):
     """Vista de logout"""
     # Registrar logout en auditoría antes de cerrar sesión
-    from apps.organizations.models import OrganizationMember
-    if request.user.is_authenticated:
-        membership = OrganizationMember.objects.filter(
-            user=request.user,
-            is_active=True,
-            organization__is_active=True
-        ).select_related('organization').first()
-        
-        if membership:
-            from apps.dashboard.audit_utils import log_action
-            log_action(
+    try:
+        from apps.organizations.models import OrganizationMember
+        if request.user.is_authenticated:
+            membership = OrganizationMember.objects.filter(
                 user=request.user,
-                organization=membership.organization,
-                action='logout',
-                description=f'Cerró sesión',
-                request=request
-            )
+                is_active=True,
+                organization__is_active=True
+            ).select_related('organization').first()
+            
+            if membership:
+                from apps.dashboard.audit_utils import log_action
+                log_action(
+                    user=request.user,
+                    organization=membership.organization,
+                    action='logout',
+                    description='Cerró sesión',
+                    request=request
+                )
+    except Exception as e:
+        # Si falla el registro de auditoría, no impedir el logout
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.error(f'Error al registrar logout en auditoría: {str(e)}')
     
     logout(request)
     messages.info(request, 'Sesión cerrada')
