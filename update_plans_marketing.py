@@ -77,7 +77,7 @@ Base de conocimiento"""
         
         # Ajustar límites mejorados
         basic_plan.max_users = 3
-        basic_plan.max_organizations = 1
+        basic_plan.max_organizations = 3
         basic_plan.max_appointments_month = 200
         basic_plan.max_patients = 500
         basic_plan.max_storage_mb = 1024  # 1 GB
