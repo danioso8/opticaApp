@@ -43,16 +43,35 @@ def send_verification_email(user, request=None):
             verification_url = f"{base_url}{verification_path}"
         
         # Renderizar email
-        html_message = render_to_string('users/emails/email_verification.html', {
+        html_message = render_to_string('users/emails/verify_email.html', {
             'user': user,
             'verification_url': verification_url,
+            'site_name': 'OpticaApp',
             'expires_hours': 24,
         })
         
+        # Mensaje de texto plano (para clientes que no soportan HTML)
+        plain_message = f'''
+Hola {user.first_name or user.username},
+
+Gracias por registrarte en OpticaApp. Para completar tu registro y acceder a tu cuenta, 
+necesitamos verificar tu correo electrónico.
+
+Por favor haz clic en el siguiente enlace para verificar tu cuenta:
+{verification_url}
+
+Este enlace expirará en 24 horas.
+
+Si no solicitaste esta verificación, puedes ignorar este correo.
+
+Saludos,
+El equipo de OpticaApp
+'''
+        
         # Enviar email
         send_mail(
-            subject='Verifica tu cuenta - OpticaApp',
-            message=f'Por favor verifica tu cuenta haciendo clic en el siguiente enlace: {verification_url}',
+            subject='Verifica tu correo electrónico - OpticaApp',
+            message=plain_message,
             html_message=html_message,
             from_email=settings.DEFAULT_FROM_EMAIL,
             recipient_list=[user.email],
