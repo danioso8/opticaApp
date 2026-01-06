@@ -166,6 +166,8 @@ PLAN_MODULES = {
         'products',
         'inventory',
         'suppliers',
+        # + Gestión de equipo (hasta 3 usuarios)
+        'team_management',
     ],
     'professional': [
         # Todo lo de Basic +
