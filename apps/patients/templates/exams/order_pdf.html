@@ -227,6 +227,53 @@
     </div>
     {% endif %}
 
+    <!-- RX FINAL (Prescripción) -->
+    {% if history.final_rx_od_sphere or history.final_rx_os_sphere %}
+    <div class="info-section">
+        <h3>👓 RX FINAL - Prescripción Óptica</h3>
+        <table style="width: 100%; border-collapse: collapse; margin-top: 10px;">
+            <thead>
+                <tr style="background-color: #007bff; color: white;">
+                    <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">Ojo</th>
+                    <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">Esfera</th>
+                    <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">Cilindro</th>
+                    <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">Eje</th>
+                    <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">ADD</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td style="border: 1px solid #ddd; padding: 8px; font-weight: bold; background-color: #f8f9fa;">OD (Derecho)</td>
+                    <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">{{ history.final_rx_od_sphere|default:"-" }}</td>
+                    <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">{{ history.final_rx_od_cylinder|default:"-" }}</td>
+                    <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">{% if history.final_rx_od_axis %}{{ history.final_rx_od_axis }}°{% else %}-{% endif %}</td>
+                    <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">{{ history.final_rx_od_add|default:"-" }}</td>
+                </tr>
+                <tr>
+                    <td style="border: 1px solid #ddd; padding: 8px; font-weight: bold; background-color: #f8f9fa;">OS (Izquierdo)</td>
+                    <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">{{ history.final_rx_os_sphere|default:"-" }}</td>
+                    <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">{{ history.final_rx_os_cylinder|default:"-" }}</td>
+                    <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">{% if history.final_rx_os_axis %}{{ history.final_rx_os_axis }}°{% else %}-{% endif %}</td>
+                    <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">{{ history.final_rx_os_add|default:"-" }}</td>
+                </tr>
+            </tbody>
+        </table>
+        
+        <!-- Distancia Pupilar -->
+        {% if history.pd_distance or history.pd_near %}
+        <div style="margin-top: 15px; padding: 10px; background-color: #f8f9fa; border-left: 3px solid #007bff;">
+            <strong>Distancia Pupilar:</strong>
+            {% if history.pd_distance %}
+                Lejos: {{ history.pd_distance }} mm
+            {% endif %}
+            {% if history.pd_near %}
+                | Cerca: {{ history.pd_near }} mm
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
+    {% endif %}
+
     <!-- Order Details -->
     <div class="info-section">
         <h3>Detalles de la Orden</h3>

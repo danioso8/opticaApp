@@ -99,6 +99,7 @@ def exam_order_pdf(request, order_id):
     html_string = render_to_string('exams/order_pdf.html', {
         'order': order,
         'patient': order.clinical_history.patient,
+        'history': order.clinical_history,
         'organization': request.user.organization,
         'generated_date': timezone.now(),
     })
