@@ -2428,27 +2428,30 @@ def visual_exam_pdf(request, patient_id, history_id):
         story.append(va_table)
         story.append(Spacer(1, 0.1*inch))
     
-    # FÓRMULA OFTÁLMICA (REFRACCIÓN)
-    if (include_all or 'refraccion' in selected_sections) and (history.refraction_od_sphere or history.refraction_os_sphere):
-        story.append(Paragraph("<b>FÓRMULA OFTÁLMICA - PRESCRIPCIÓN DE LENTES</b>", heading_style))
+    # RX FINAL - PRESCRIPCIÓN DEFINITIVA
+    if (include_all or 'refraccion' in selected_sections) and (history.final_rx_od_sphere or history.final_rx_os_sphere):
+        story.append(Paragraph("<b>RX FINAL - PRESCRIPCIÓN DE LENTES</b>", heading_style))
         story.append(Spacer(1, 0.05*inch))
         
         # Formatear valores con signos apropiados
         def format_sphere(value):
             if value is None or value == '':
-                return ''
-            val = float(value)
-            return f"{val:+.2f}" if val != 0 else '0.00'
+                return '-'
+            try:
+                val = float(value)
+                return f"{val:+.2f}" if val != 0 else '0.00'
+            except:
+                return str(value)  # Para valores como 'N', 'NLP', etc.
         
         def format_cylinder(value):
             if value is None or value == '':
-                return ''
+                return '-'
             val = float(value)
-            return f"{val:+.2f}" if val != 0 else ''
+            return f"{val:+.2f}" if val != 0 else '-'
         
         def format_axis(value):
             if value is None or value == '':
-                return ''
+                return '-'
             return f"{int(value)}°"
         
         def format_av(value):
@@ -2456,7 +2459,7 @@ def visual_exam_pdf(request, patient_id, history_id):
                 return '20/20'
             return str(value)
         
-        # Tabla de fórmula principal - Estilo similar a la imagen
+        # Tabla de fórmula principal - Usando RX FINAL
         formula_data = [
             # Encabezado principal
             ['', 'OJO', 'ESFÉRICO', 'CILÍNDRICO', 'EJE', 'A.V.'],
@@ -2464,22 +2467,26 @@ def visual_exam_pdf(request, patient_id, history_id):
             [Paragraph('<b>LEJOS</b>', normal_style), '', '', '', '', ''],
             # LEJOS - OD
             ['', 'DERECHO', 
-             format_sphere(history.refraction_od_sphere),
-             format_cylinder(history.refraction_od_cylinder),
-             format_axis(history.refraction_od_axis),
+             format_sphere(history.final_rx_od_sphere),
+             format_cylinder(history.final_rx_od_cylinder),
+             format_axis(history.final_rx_od_axis),
              format_av(history.va_od_cc_distance)],
             # LEJOS - OI
             ['', 'IZQUIERDO',
-             format_sphere(history.refraction_os_sphere),
-             format_cylinder(history.refraction_os_cylinder),
-             format_axis(history.refraction_os_axis),
+             format_sphere(history.final_rx_os_sphere),
+             format_cylinder(history.final_rx_os_cylinder),
+             format_axis(history.final_rx_os_axis),
              format_av(history.va_os_cc_distance)],
         ]
         
         # Agregar sección CERCA si hay adición
-        if history.refraction_od_add or history.refraction_os_add:
-            od_sphere_near = float(history.refraction_od_sphere or 0) + float(history.refraction_od_add or 0)
-            os_sphere_near = float(history.refraction_os_sphere or 0) + float(history.refraction_os_add or 0)
+        if history.final_rx_od_add or history.final_rx_os_add:
+            try:
+                od_sphere_near = float(history.final_rx_od_sphere or 0) + float(history.final_rx_od_add or 0)
+                os_sphere_near = float(history.final_rx_os_sphere or 0) + float(history.final_rx_os_add or 0)
+            except:
+                od_sphere_near = 0
+                os_sphere_near = 0
             
             formula_data.extend([
                 # CERCA - Título de sección
@@ -2487,14 +2494,14 @@ def visual_exam_pdf(request, patient_id, history_id):
                 # CERCA - OD
                 ['', 'DERECHO',
                  format_sphere(od_sphere_near),
-                 format_cylinder(history.refraction_od_cylinder),
-                 format_axis(history.refraction_od_axis),
+                 format_cylinder(history.final_rx_od_cylinder),
+                 format_axis(history.final_rx_od_axis),
                  format_av(history.va_od_cc_near)],
                 # CERCA - OI
                 ['', 'IZQUIERDO',
                  format_sphere(os_sphere_near),
-                 format_cylinder(history.refraction_os_cylinder),
-                 format_axis(history.refraction_os_axis),
+                 format_cylinder(history.final_rx_os_cylinder),
+                 format_axis(history.final_rx_os_axis),
                  format_av(history.va_os_cc_near)],
             ])
         

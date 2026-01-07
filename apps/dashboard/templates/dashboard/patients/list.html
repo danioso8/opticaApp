@@ -269,43 +269,48 @@
                             <div class="text-sm text-gray-900">{{ patient.age|default:"-" }}</div>
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm" onclick="event.stopPropagation()">
-                            <div class="flex gap-1.5">
+                            <div class="flex gap-2">
                                 <!-- Historia Clínica -->
                                 <a href="{% url 'dashboard:clinical_history_list' patient.id %}" 
-                                   class="inline-flex items-center px-2.5 py-1.5 bg-purple-600 hover:bg-purple-700 text-white rounded transition text-xs"
+                                   class="inline-flex items-center justify-center px-3 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-all duration-200 text-xs font-medium shadow-sm hover:shadow-md"
                                    title="Historia Clínica">
-                                    <i class="fas fa-file-medical"></i>
+                                    <i class="fas fa-file-medical text-sm"></i>
+                                    <span class="ml-1.5 hidden xl:inline">Historia</span>
                                 </a>
                                 
                                 {% if patient.latest_history %}
                                 <!-- PDF Fórmula -->
                                 <a href="{% url 'dashboard:visual_exam_pdf' patient.id patient.latest_history.id %}" 
                                    target="_blank"
-                                   class="inline-flex items-center px-2.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded transition text-xs"
+                                   class="inline-flex items-center justify-center px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-all duration-200 text-xs font-medium shadow-sm hover:shadow-md"
                                    title="Imprimir Fórmula">
-                                    <i class="fas fa-file-pdf"></i>
+                                    <i class="fas fa-file-pdf text-sm"></i>
+                                    <span class="ml-1.5 hidden xl:inline">PDF</span>
                                 </a>
                                 
                                 <!-- Examen Especial -->
                                 <a href="{% url 'dashboard:exam_order_create' patient.id patient.latest_history.id %}" 
-                                   class="inline-flex items-center px-2.5 py-1.5 bg-teal-600 hover:bg-teal-700 text-white rounded transition text-xs"
+                                   class="inline-flex items-center justify-center px-3 py-2 bg-teal-600 hover:bg-teal-700 text-white rounded-lg transition-all duration-200 text-xs font-medium shadow-sm hover:shadow-md"
                                    title="Ordenar Examen Especial">
-                                    <i class="fas fa-microscope"></i>
+                                    <i class="fas fa-microscope text-sm"></i>
+                                    <span class="ml-1.5 hidden xl:inline">Examen</span>
                                 </a>
                                 {% endif %}
                                 
                                 <!-- Editar -->
                                 <button onclick="openEditPatientModal({{ patient.id }})" 
-                                        class="inline-flex items-center px-2.5 py-1.5 bg-yellow-500 hover:bg-yellow-600 text-white rounded transition text-xs" 
+                                        class="inline-flex items-center justify-center px-3 py-2 bg-yellow-500 hover:bg-yellow-600 text-white rounded-lg transition-all duration-200 text-xs font-medium shadow-sm hover:shadow-md" 
                                         title="Editar">
-                                    <i class="fas fa-edit"></i>
+                                    <i class="fas fa-edit text-sm"></i>
+                                    <span class="ml-1.5 hidden xl:inline">Editar</span>
                                 </button>
                                 
                                 <!-- WhatsApp -->
                                 <a href="https://wa.me/{{ patient.phone_number|cut:'+' }}" target="_blank"
-                                   class="inline-flex items-center px-2.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded transition text-xs"
+                                   class="inline-flex items-center justify-center px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg transition-all duration-200 text-xs font-medium shadow-sm hover:shadow-md"
                                    title="WhatsApp">
-                                    <i class="fab fa-whatsapp"></i>
+                                    <i class="fab fa-whatsapp text-sm"></i>
+                                    <span class="ml-1.5 hidden xl:inline">Chat</span>
                                 </a>
                             </div>
                         </td>
