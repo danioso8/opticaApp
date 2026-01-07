@@ -1,0 +1,83 @@
+{% extends 'dashboard/base.html' %}
+{% load static %}
+
+{% block title %}Eliminar Concepto{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-6">
+    <div class="mb-6">
+        <a href="{% url 'payroll:concept_list' %}" class="text-indigo-600 hover:text-indigo-800 font-medium">
+            <i class="fas fa-arrow-left mr-2"></i>
+            Volver a Conceptos
+        </a>
+    </div>
+
+    <div class="max-w-2xl mx-auto">
+        <div class="bg-white rounded-lg shadow-lg overflow-hidden">
+            <div class="px-6 py-4 border-b border-gray-200 bg-red-50">
+                <h1 class="text-2xl font-bold text-red-800">
+                    <i class="fas fa-exclamation-triangle mr-2"></i>
+                    Confirmar Eliminación
+                </h1>
+            </div>
+
+            <div class="p-6">
+                <div class="bg-yellow-50 border-l-4 border-yellow-500 p-4 mb-6 rounded">
+                    <div class="flex">
+                        <i class="fas fa-exclamation-triangle text-yellow-500 text-xl mt-1 mr-3"></i>
+                        <div>
+                            <h3 class="font-bold text-yellow-800 mb-1">¡Atención!</h3>
+                            <p class="text-sm text-yellow-700">
+                                Esta acción no se puede deshacer. El concepto será eliminado permanentemente.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-gray-50 border border-gray-200 rounded-lg p-6 mb-6">
+                    <h3 class="font-bold text-gray-800 mb-4">
+                        <i class="fas {% if concept_type == 'accrual' %}fa-plus-circle text-green-600{% else %}fa-minus-circle text-red-600{% endif %} mr-2"></i>
+                        Concepto a eliminar:
+                    </h3>
+                    <dl class="space-y-3">
+                        <div>
+                            <dt class="text-sm font-medium text-gray-500">Código:</dt>
+                            <dd class="text-lg font-bold text-gray-800">{{ concept.codigo }}</dd>
+                        </div>
+                        <div>
+                            <dt class="text-sm font-medium text-gray-500">Nombre:</dt>
+                            <dd class="text-gray-800">{{ concept.nombre }}</dd>
+                        </div>
+                        <div>
+                            <dt class="text-sm font-medium text-gray-500">Tipo:</dt>
+                            <dd class="text-gray-800">{{ concept.get_tipo_display }}</dd>
+                        </div>
+                        {% if concept.descripcion %}
+                        <div>
+                            <dt class="text-sm font-medium text-gray-500">Descripción:</dt>
+                            <dd class="text-gray-600 text-sm">{{ concept.descripcion }}</dd>
+                        </div>
+                        {% endif %}
+                    </dl>
+                </div>
+
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="flex items-center justify-end space-x-4">
+                        <a href="{% url 'payroll:concept_list' %}" 
+                           class="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 font-medium transition-colors">
+                            <i class="fas fa-times mr-2"></i>
+                            Cancelar
+                        </a>
+                        <button type="submit" 
+                                class="px-6 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium transition-colors">
+                            <i class="fas fa-trash-alt mr-2"></i>
+                            Sí, Eliminar Concepto
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

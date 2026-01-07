@@ -1,9 +1,10 @@
-from django.urls import path
+from django.urls import path, include
 from . import views
 from . import views_exam_orders
 from . import views_clinical_exams
 from . import views_team
 from . import views_employee
+from . import views_whatsapp_baileys
 from .views_analytics import (
     analytics_dashboard,
     api_realtime_metrics,
@@ -102,6 +103,14 @@ urlpatterns = [
     path('notifications/settings/save/', views.save_notification_settings, name='save_notification_settings'),
     path('notifications/test/', views.test_notification, name='test_notification'),
     
+    # WhatsApp Baileys (Local)
+    path('whatsapp-baileys/', views_whatsapp_baileys.whatsapp_baileys_config, name='whatsapp_baileys_config'),
+    path('whatsapp-baileys/start/', views_whatsapp_baileys.whatsapp_start_session, name='whatsapp_start_session'),
+    path('whatsapp-baileys/qr/', views_whatsapp_baileys.whatsapp_get_qr, name='whatsapp_get_qr'),
+    path('whatsapp-baileys/status/', views_whatsapp_baileys.whatsapp_get_status, name='whatsapp_get_status'),
+    path('whatsapp-baileys/logout/', views_whatsapp_baileys.whatsapp_logout, name='whatsapp_logout'),
+    path('whatsapp-baileys/test/', views_whatsapp_baileys.whatsapp_test_message, name='whatsapp_test_message'),
+    
     # Configuración de Landing Page
     path('configuration/landing-page/', views.landing_page_config, name='landing_page_config'),
     
@@ -178,6 +187,7 @@ urlpatterns = [
     # WhatsApp API
     path('api/whatsapp/status/', views.whatsapp_status_api, name='whatsapp_status'),
     path('api/whatsapp/test-send/', views.whatsapp_test_send, name='whatsapp_test_send'),
+    path('whatsapp/usage-history/', views.whatsapp_usage_history, name='whatsapp_usage_history'),
     
     # Push Notifications API
     path('api/notifications/new-appointments/', views.get_new_appointments, name='api_new_appointments'),
@@ -188,4 +198,7 @@ urlpatterns = [
     
     # Demostración
     path('notifications-demo/', views.notifications_demo, name='notifications_demo'),
+    
+    # Promociones y Campañas de Marketing
+    path('promociones/', include('apps.promotions.urls')),
 ]

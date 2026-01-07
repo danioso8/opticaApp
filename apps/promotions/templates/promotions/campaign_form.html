@@ -1,0 +1,202 @@
+{% extends 'dashboard/base.html' %}
+{% load static %}
+
+{% block title %}Nueva Campaña - {{ block.super }}{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 py-8">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+        
+        <!-- Header -->
+        <div class="mb-8">
+            <div class="flex items-center mb-4">
+                <a href="/dashboard/promociones/campanas/" class="text-indigo-600 hover:text-indigo-800 mr-4">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+                    </svg>
+                </a>
+                <div>
+                    <h1 class="text-3xl font-bold text-gray-900">📢 Nueva Campaña de Marketing</h1>
+                    <p class="mt-2 text-gray-600">Configura el envío masivo de tu promoción por WhatsApp</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Alert Info -->
+        <div class="bg-blue-50 border-l-4 border-blue-500 p-4 mb-6 rounded-lg">
+            <div class="flex">
+                <div class="flex-shrink-0">
+                    <svg class="h-5 w-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                </div>
+                <div class="ml-3">
+                    <p class="text-sm text-blue-700">
+                        <strong>Envío seguro:</strong> Los mensajes se enviarán gradualmente para evitar bloqueos de WhatsApp.
+                        Por defecto: <strong>20 mensajes/día</strong>, con <strong>10 segundos</strong> entre cada uno, solo en <strong>horario laboral</strong>.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Form -->
+        <div class="bg-white rounded-xl shadow-md p-8">
+            <form method="POST" class="space-y-6">
+                {% csrf_token %}
+                
+                <!-- Nombre de la Campaña -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        Nombre de la Campaña <span class="text-red-500">*</span>
+                    </label>
+                    <input type="text" name="name" required
+                           class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                           placeholder="Ej: Campaña Navidad 2026">
+                </div>
+
+                <!-- Seleccionar Promoción -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        Promoción a Enviar <span class="text-red-500">*</span>
+                    </label>
+                    <select name="promotion" id="promotionSelect" required onchange="updateTemplate()"
+                            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent">
+                        <option value="">Seleccione una promoción...</option>
+                        {% for promo in promotions %}
+                        <option value="{{ promo.id }}" 
+                                data-code="{{ promo.code }}"
+                                data-discount="{{ promo.discount_percentage }}"
+                                data-category="{{ promo.get_category_display }}"
+                                data-end="{{ promo.end_date|date:'d/m/Y' }}">
+                            {{ promo.code }} - {{ promo.discount_percentage }}% OFF ({{ promo.get_category_display }})
+                        </option>
+                        {% endfor %}
+                    </select>
+                    {% if not promotions %}
+                    <p class="mt-2 text-sm text-red-600">
+                        ⚠️ No tienes promociones activas. <a href="/dashboard/promociones/crear/" class="underline">Crea una primero</a>.
+                    </p>
+                    {% endif %}
+                </div>
+
+                <!-- Filtro de Destinatarios -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        Destinatarios <span class="text-red-500">*</span>
+                    </label>
+                    <select name="recipient_filter" required
+                            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent">
+                        {% for value, label in filters %}
+                        <option value="{{ value }}">{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Mensaje (Template) -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        Mensaje de WhatsApp <span class="text-red-500">*</span>
+                    </label>
+                    <textarea name="message_template" id="messageTemplate" rows="12" required
+                              class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent font-mono text-sm"
+                              placeholder="Escribe el mensaje...">{{ default_template }}</textarea>
+                    <p class="mt-2 text-sm text-gray-600">
+                        <strong>Variables disponibles:</strong> {name}, {code}, {discount}, {category}, {end_date}, {organization}
+                    </p>
+                </div>
+
+                <!-- Configuración de Envío -->
+                <div class="border-t pt-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4">⚙️ Configuración de Envío</h3>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <!-- Límite Diario -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                Límite Diario de Mensajes
+                            </label>
+                            <input type="number" name="daily_limit" value="20" min="5" max="50" required
+                                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent">
+                            <p class="mt-1 text-sm text-gray-500">Recomendado: 20-30 mensajes/día</p>
+                        </div>
+
+                        <!-- Delay entre Mensajes -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                Delay entre Mensajes (segundos)
+                            </label>
+                            <input type="number" name="delay_seconds" value="10" min="5" max="30" required
+                                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent">
+                            <p class="mt-1 text-sm text-gray-500">Recomendado: 10-15 segundos</p>
+                        </div>
+
+                        <!-- Hora de Inicio -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                Hora de Inicio de Envío
+                            </label>
+                            <select name="send_hour_start" required
+                                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent">
+                                {% for hour in "89ABC"|make_list %}
+                                <option value="{{ forloop.counter|add:7 }}" {% if forloop.counter == 2 %}selected{% endif %}>
+                                    {{ forloop.counter|add:7 }}:00 {% if forloop.counter|add:7 < 12 %}AM{% else %}PM{% endif %}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <!-- Hora de Fin -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                Hora de Fin de Envío
+                            </label>
+                            <select name="send_hour_end" required
+                                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent">
+                                {% for hour in "CDEFGHIJKLMNOPQ"|make_list %}
+                                <option value="{{ forloop.counter|add:16 }}" {% if forloop.counter == 3 %}selected{% endif %}>
+                                    {{ forloop.counter|add:16 }}:00 PM
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Botones -->
+                <div class="flex justify-end space-x-4 pt-6 border-t">
+                    <a href="/dashboard/promociones/campanas/" 
+                       class="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
+                        Cancelar
+                    </a>
+                    <button type="submit" 
+                            class="px-6 py-3 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-lg hover:shadow-lg transform hover:scale-105 transition-all duration-200">
+                        📢 Crear Campaña
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+function updateTemplate() {
+    const select = document.getElementById('promotionSelect');
+    const option = select.options[select.selectedIndex];
+    
+    if (!option.value) return;
+    
+    const code = option.getAttribute('data-code');
+    const discount = option.getAttribute('data-discount');
+    const category = option.getAttribute('data-category');
+    const endDate = option.getAttribute('data-end');
+    
+    const template = document.getElementById('messageTemplate');
+    const currentText = template.value;
+    
+    // Actualizar placeholder values si está usando el template por defecto
+    if (currentText.includes('{code}')) {
+        // No modificar, el usuario puede haber personalizado
+    }
+}
+</script>
+{% endblock %}

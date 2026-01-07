@@ -256,6 +256,15 @@
                 </a>
                 {% endif %}
 
+                <!-- Promociones -->
+                {% if is_owner_or_admin %}
+                <a href="/dashboard/promociones/" class="flex items-center px-4 py-3 hover:bg-indigo-800 {% if 'promociones' in request.path %}bg-indigo-800{% endif %} relative">
+                    <i class="fas fa-tags mr-3"></i>
+                    <span class="sidebar-text">Promociones</span>
+                    <span class="sidebar-tooltip">Promociones</span>
+                </a>
+                {% endif %}
+
                 {% if user_perms.all_access or user_perms.patients.can_view %}
                 <a href="{% url 'dashboard:patients_list' %}" class="flex items-center px-4 py-3 hover:bg-indigo-800 {% if 'patients' in request.path %}bg-indigo-800{% endif %} relative">
                     <i class="fas fa-users mr-3"></i>
@@ -272,12 +281,98 @@
                 </a>
                 {% endif %}
                 
+                <!-- Gestión de Nómina y Empleados (Menú Desplegable) -->
                 {% if is_owner_or_admin %}
-                <a href="{% url 'dashboard:employee_list' %}" class="flex items-center px-4 py-3 hover:bg-indigo-800 {% if 'employees' in request.path %}bg-indigo-800{% endif %} relative">
-                    <i class="fas fa-users mr-3"></i>
-                    <span class="sidebar-text">Empleados</span>
-                    <span class="sidebar-tooltip">Empleados</span>
-                </a>
+                <div class="payroll-menu">
+                    <button onclick="toggleSubmenu('payroll-submenu')" class="flex items-center justify-between w-full px-4 py-3 hover:bg-indigo-800 {% if 'payroll' in request.path or 'employees' in request.path %}bg-indigo-800{% endif %} relative">
+                        <div class="flex items-center">
+                            <i class="fas fa-users-cog mr-3"></i>
+                            <span class="sidebar-text">Nómina y Empleados</span>
+                        </div>
+                        <i class="fas fa-chevron-down text-sm transition-transform duration-200 submenu-icon" id="payroll-submenu-icon"></i>
+                        <span class="sidebar-tooltip">Nómina y Empleados</span>
+                    </button>
+                    <div id="payroll-submenu" class="bg-indigo-950 hidden sidebar-submenu">
+                        <!-- Empleados -->
+                        <a href="{% url 'dashboard:employee_list' %}" class="flex items-center px-8 py-2 hover:bg-indigo-800 text-sm {% if 'employees' in request.path and 'payroll' not in request.path %}bg-indigo-800{% endif %} relative">
+                            <i class="fas fa-users mr-3"></i>
+                            <span class="sidebar-text">Empleados</span>
+                            <span class="sidebar-tooltip">Empleados</span>
+                        </a>
+                        
+                        <!-- Nómina -->
+                        <a href="{% url 'payroll:payroll_dashboard' %}" class="flex items-center px-8 py-2 hover:bg-indigo-800 text-sm {% if 'payroll/payroll_dashboard' in request.path %}bg-indigo-800{% endif %} relative">
+                            <i class="fas fa-money-check-alt mr-3"></i>
+                            <span class="sidebar-text">Nómina Electrónica</span>
+                            <span class="sidebar-tooltip">Nómina Electrónica</span>
+                        </a>
+                        
+                        <a href="{% url 'payroll:employee_list' %}" class="flex items-center px-8 py-2 hover:bg-indigo-800 text-sm {% if 'payroll/empleados' in request.path %}bg-indigo-800{% endif %} relative">
+                            <i class="fas fa-file-invoice-dollar mr-3"></i>
+                            <span class="sidebar-text">Empleados Nómina</span>
+                            <span class="sidebar-tooltip">Empleados Nómina</span>
+                        </a>
+                        
+                        <!-- Workflow -->
+                        <a href="{% url 'payroll:workflow_dashboard' %}" class="flex items-center px-8 py-2 hover:bg-indigo-800 text-sm {% if 'workflow' in request.path %}bg-indigo-800{% endif %} relative">
+                            <i class="fas fa-tasks mr-3"></i>
+                            <span class="sidebar-text">Workflow Nómina</span>
+                            <span class="sidebar-tooltip">Workflow Nómina</span>
+                        </a>
+                        
+                        <!-- NUEVOS: Prestaciones Sociales -->
+                        <div class="border-t border-indigo-800 my-1"></div>
+                        
+                        <a href="{% url 'payroll:contract_list' %}" class="flex items-center px-8 py-2 hover:bg-indigo-800 text-sm {% if 'contratos' in request.path %}bg-indigo-800{% endif %} relative">
+                            <i class="fas fa-file-contract mr-3"></i>
+                            <span class="sidebar-text">Contratos Laborales</span>
+                            <span class="sidebar-tooltip">Contratos Laborales</span>
+                        </a>
+                        
+                        <a href="{% url 'payroll:vacation_list' %}" class="flex items-center px-8 py-2 hover:bg-indigo-800 text-sm {% if 'vacaciones' in request.path %}bg-indigo-800{% endif %} relative">
+                            <i class="fas fa-umbrella-beach mr-3"></i>
+                            <span class="sidebar-text">Vacaciones</span>
+                            <span class="sidebar-tooltip">Vacaciones</span>
+                        </a>
+                        
+                        <a href="{% url 'payroll:loan_list' %}" class="flex items-center px-8 py-2 hover:bg-indigo-800 text-sm {% if 'prestamos' in request.path %}bg-indigo-800{% endif %} relative">
+                            <i class="fas fa-hand-holding-usd mr-3"></i>
+                            <span class="sidebar-text">Préstamos</span>
+                            <span class="sidebar-tooltip">Préstamos Empleados</span>
+                        </a>
+                        
+                        <a href="{% url 'payroll:social_benefits_dashboard' %}" class="flex items-center px-8 py-2 hover:bg-indigo-800 text-sm {% if 'prestaciones' in request.path %}bg-indigo-800{% endif %} relative">
+                            <i class="fas fa-piggy-bank mr-3"></i>
+                            <span class="sidebar-text">Prestaciones Sociales</span>
+                            <span class="sidebar-tooltip">Prestaciones Sociales</span>
+                        </a>
+                        
+                        <a href="{% url 'payroll:provision_list' %}" class="flex items-center px-8 py-2 hover:bg-indigo-800 text-sm {% if 'provisiones' in request.path %}bg-indigo-800{% endif %} relative">
+                            <i class="fas fa-calculator mr-3"></i>
+                            <span class="sidebar-text">Provisiones</span>
+                            <span class="sidebar-tooltip">Provisiones Mensuales</span>
+                        </a>
+                        
+                        <a href="{% url 'payroll:pila_list' %}" class="flex items-center px-8 py-2 hover:bg-indigo-800 text-sm {% if 'pila' in request.path %}bg-indigo-800{% endif %} relative">
+                            <i class="fas fa-file-medical-alt mr-3"></i>
+                            <span class="sidebar-text">PILA</span>
+                            <span class="sidebar-tooltip">Planillas PILA</span>
+                        </a>
+                        
+                        <!-- NUEVO: Incapacidades -->
+                        <a href="{% url 'payroll:incapacity_list' %}" class="flex items-center px-8 py-2 hover:bg-indigo-800 text-sm {% if 'incapacidades' in request.path %}bg-indigo-800{% endif %} relative">
+                            <i class="fas fa-notes-medical mr-3"></i>
+                            <span class="sidebar-text">Incapacidades</span>
+                            <span class="sidebar-tooltip">Incapacidades Médicas</span>
+                        </a>
+                        
+                        <a href="{% url 'payroll:concept_list' %}" class="flex items-center px-8 py-2 hover:bg-indigo-800 text-sm {% if 'conceptos' in request.path %}bg-indigo-800{% endif %} relative">
+                            <i class="fas fa-tags mr-3"></i>
+                            <span class="sidebar-text">Conceptos Nómina</span>
+                            <span class="sidebar-tooltip">Conceptos Devengados y Deducciones</span>
+                        </a>
+                    </div>
+                </div>
                 {% endif %}
                 
                 {% if user_perms.all_access or user_perms.exam_orders.can_view %}
@@ -327,6 +422,15 @@
                     <span class="sidebar-text">Proveedores</span>
                     <span class="sidebar-tooltip">Proveedores</span>
                     {% module_badge 'suppliers' %}
+                </a>
+                {% endif %}
+                
+                <!-- Inventario -->
+                {% if is_owner_or_admin %}
+                <a href="{% url 'inventory:dashboard' %}" class="flex items-center px-4 py-3 hover:bg-indigo-800 {% if 'inventory' in request.path %}bg-indigo-800{% endif %} relative">
+                    <i class="fas fa-boxes mr-3"></i>
+                    <span class="sidebar-text">Inventario</span>
+                    <span class="sidebar-tooltip">Inventario</span>
                 </a>
                 {% endif %}
                 
@@ -399,8 +503,8 @@
                         <a href="{% if can_access_whatsapp %}{% url 'dashboard:notification_settings' %}{% else %}{% url 'organizations:subscription_plans' %}{% endif %}" 
                            class="flex items-center px-8 py-2 hover:bg-indigo-800 text-sm {% if 'notifications' in request.path %}bg-indigo-800{% endif %} relative">
                             <i class="fab fa-whatsapp mr-3"></i>
-                            <span class="sidebar-text">WhatsApp Twilio</span>
-                            <span class="sidebar-tooltip">WhatsApp Twilio</span>
+                            <span class="sidebar-text">WhatsApp </span>
+                            <span class="sidebar-tooltip">WhatsApp </span>
                             {% module_badge 'whatsapp' %}
                         </a>
                         

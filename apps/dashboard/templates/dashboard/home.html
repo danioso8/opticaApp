@@ -357,6 +357,17 @@
 </div>
 </div>
 
+<!-- Sección de Uso de WhatsApp -->
+<div class="mb-6">
+    <h2 class="text-lg font-semibold text-gray-700 mb-4 flex items-center">
+        <i class="fab fa-whatsapp mr-2 text-green-600"></i>
+        Uso de Mensajes WhatsApp
+    </h2>
+    <div class="grid grid-cols-1 gap-4 md:gap-6">
+        {% include 'dashboard/widgets/whatsapp_usage_widget.html' with usage=whatsapp_usage current_month=current_month plan_name=plan_name %}
+    </div>
+</div>
+
 <!-- Sección de Información Adicional -->
 <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6 mb-6">
     <!-- Pagos Recientes -->

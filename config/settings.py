@@ -60,6 +60,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django.contrib.humanize',  # Para formateo de números (intcomma)
     
     # Third party apps
     'channels',
@@ -77,6 +78,9 @@ INSTALLED_APPS = [
     'apps.public',
     'apps.sales',
     'apps.billing',  # Facturación electrónica y pagos
+    'apps.promotions',  # Sistema de promociones y campañas de marketing
+    'apps.payroll',  # Nómina electrónica DIAN
+    'apps.inventory',  # Gestión avanzada de inventario
 ]
 
 MIDDLEWARE = [
@@ -326,3 +330,22 @@ WOMPI_TEST_MODE = config('WOMPI_TEST_MODE', default=False, cast=bool)
 # Tasa de cambio USD a COP (actualizar según necesites)
 USD_TO_COP_RATE = config('USD_TO_COP_RATE', default=4000.00, cast=float)
 CURRENCY_DISPLAY = config('CURRENCY_DISPLAY', default='COP')  # COP, USD, BOTH
+
+# ==================== WHATSAPP BAILEYS SERVER ====================
+WHATSAPP_SERVER_URL = config('WHATSAPP_SERVER_URL', default='http://localhost:3000')
+WHATSAPP_SERVER_API_KEY = config('WHATSAPP_SERVER_API_KEY', default='')
+
+# ==================== NOMINA ELECTRONICA - DIAN ====================
+
+# Certificado Digital (.p12 o .pfx) para firma electrónica
+# Debe estar en un directorio seguro fuera del repositorio
+PAYROLL_CERTIFICATE_PATH = config('PAYROLL_CERTIFICATE_PATH', default='')
+PAYROLL_CERTIFICATE_PASSWORD = config('PAYROLL_CERTIFICATE_PASSWORD', default='')
+
+# Configuración DIAN (Software ID y PIN obtenidos después de registro)
+DIAN_SOFTWARE_ID = config('DIAN_SOFTWARE_ID', default='')
+DIAN_SOFTWARE_PIN = config('DIAN_SOFTWARE_PIN', default='')
+DIAN_TEST_SET_ID = config('DIAN_TEST_SET_ID', default='')  # Para ambiente de pruebas
+
+# Modo de pruebas (True: Habilitación, False: Producción)
+DIAN_TEST_MODE = config('DIAN_TEST_MODE', default=True, cast=bool)

@@ -1,6 +1,7 @@
 """
 Utilidades para registro de auditoría
 """
+import json
 from .models_audit import AuditLog
 
 
@@ -26,6 +27,16 @@ def log_action(user, organization, action, description, content_type=None, objec
         else:
             ip_address = request.META.get('REMOTE_ADDR')
     
+    # Convertir metadata a JSON string si es un dict
+    metadata_str = None
+    if metadata:
+        if isinstance(metadata, dict):
+            metadata_str = json.dumps(metadata)
+        elif isinstance(metadata, str):
+            metadata_str = metadata
+        else:
+            metadata_str = str(metadata)
+    
     return AuditLog.objects.create(
         user=user,
         organization=organization,
@@ -33,6 +44,6 @@ def log_action(user, organization, action, description, content_type=None, objec
         description=description,
         content_type=content_type,
         object_id=object_id,
-        metadata=metadata,
+        metadata=metadata_str,
         ip_address=ip_address
     )

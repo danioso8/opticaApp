@@ -78,7 +78,7 @@
                     </div>
                 </div>
                 <!-- Badge de estado en la esquina -->
-                <div class="absolute top-4 right-4">
+                <div class="absolute top-4 right-4 flex gap-2">
                     {% if employee.is_active %}
                     <span class="bg-green-500 text-white text-xs font-semibold px-3 py-1 rounded-full shadow-lg">
                         <i class="fas fa-circle text-xs mr-1"></i>Activo
@@ -89,6 +89,20 @@
                     </span>
                     {% endif %}
                 </div>
+                <!-- Badge de sincronización con nómina -->
+                {% if payroll_installed %}
+                <div class="absolute bottom-4 right-4">
+                    {% if employee.in_payroll %}
+                    <span class="bg-blue-500 text-white text-xs font-semibold px-2 py-1 rounded-full shadow-lg" title="Sincronizado con Nómina">
+                        <i class="fas fa-sync-alt text-xs"></i>
+                    </span>
+                    {% else %}
+                    <span class="bg-gray-400 text-white text-xs font-semibold px-2 py-1 rounded-full shadow-lg" title="No sincronizado con Nómina">
+                        <i class="fas fa-times text-xs"></i>
+                    </span>
+                    {% endif %}
+                </div>
+                {% endif %}
             </div>
 
             <!-- Contenido de la tarjeta -->
@@ -309,7 +323,20 @@
                             <label class="block text-sm font-medium text-gray-700 mb-2">Salario (Opcional)</label>
                             <input type="number" id="salary" name="salary" step="0.01" min="0"
                                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                                   placeholder="0.00">
+                                   placeholder="1300000">
+                            <p class="text-xs text-gray-500 mt-1">Salario mínimo legal vigente: $1,300,000</p>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Ciudad</label>
+                            <input type="text" id="ciudad" name="ciudad"
+                                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                                   placeholder="Bogotá" value="Bogotá">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Departamento/Estado</label>
+                            <input type="text" id="departamento_ubicacion" name="departamento_ubicacion"
+                                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                                   placeholder="Cundinamarca" value="Cundinamarca">
                         </div>
                         <div class="md:col-span-2">
                             <label class="flex items-center cursor-pointer">
@@ -319,6 +346,18 @@
                                     <i class="fas fa-toggle-on text-green-500 mr-1"></i>Empleado Activo
                                 </span>
                             </label>
+                        </div>
+                        <div class="md:col-span-2">
+                            <label class="flex items-center cursor-pointer bg-blue-50 p-3 rounded-lg border-2 border-blue-200 hover:border-blue-400 transition-colors">
+                                <input type="checkbox" id="incluir_en_nomina" name="incluir_en_nomina"
+                                       class="w-5 h-5 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
+                                <span class="ml-3 text-sm font-medium text-blue-800">
+                                    <i class="fas fa-money-check-alt text-blue-600 mr-1"></i>Incluir en Nómina Electrónica
+                                </span>
+                            </label>
+                            <p class="text-xs text-blue-600 mt-2 ml-8">
+                                <i class="fas fa-info-circle"></i> Si activas esta opción, el empleado aparecerá en el módulo de Nómina Electrónica para procesar sus pagos mensuales
+                            </p>
                         </div>
                     </div>
                 </div>
@@ -361,6 +400,9 @@ function openCreateModal() {
     document.getElementById('employeeForm').reset();
     document.getElementById('employeeId').value = '';
     document.getElementById('is_active').checked = true;
+    document.getElementById('incluir_en_nomina').checked = false;
+    document.getElementById('ciudad').value = 'Bogotá';
+    document.getElementById('departamento_ubicacion').value = 'Cundinamarca';
     document.getElementById('saveButton').innerHTML = '<i class="fas fa-save mr-2"></i>Guardar Empleado';
     openEmployeeModal();
 }
@@ -394,6 +436,9 @@ function editEmployee(employeeId) {
                 document.getElementById('hire_date').value = data.hire_date;
                 document.getElementById('salary').value = data.salary;
                 document.getElementById('is_active').checked = data.is_active;
+                document.getElementById('incluir_en_nomina').checked = data.incluir_en_nomina;
+                document.getElementById('ciudad').value = data.ciudad || 'Bogotá';
+                document.getElementById('departamento_ubicacion').value = data.departamento_ubicacion || 'Cundinamarca';
             } else {
                 showNotification('error', 'Error al cargar datos: ' + result.message);
                 closeEmployeeModal();

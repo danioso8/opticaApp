@@ -181,6 +181,7 @@ PLAN_MODULES = {
         'products',
         'inventory',
         'suppliers',
+        'team_management',
         # + Facturación DIAN
         'invoices_dian',
         'dian_config',

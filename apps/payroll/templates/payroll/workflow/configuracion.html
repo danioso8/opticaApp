@@ -1,0 +1,393 @@
+{% extends "dashboard/base.html" %}
+{% load static %}
+
+{% block title %}Configuración de Automatización{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50 p-6">
+    <div class="max-w-4xl mx-auto">
+        <!-- Breadcrumb -->
+        <nav class="mb-6">
+            <ol class="flex items-center space-x-2 text-sm text-gray-600">
+                <li><a href="{% url 'payroll:workflow_dashboard' %}" class="hover:text-blue-600">Dashboard</a></li>
+                <li>/</li>
+                <li class="text-gray-900 font-medium">Configuración</li>
+            </ol>
+        </nav>
+
+        <div class="bg-white rounded-lg shadow-md p-8">
+            <h1 class="text-2xl font-bold text-gray-900 mb-6">⚙️ Configuración de Automatización</h1>
+            
+            <form method="POST">
+                {% csrf_token %}
+                
+                <!-- Calendario de Pagos -->
+                <div class="mb-8">
+                    <h2 class="text-lg font-bold text-gray-900 mb-4 pb-2 border-b">📅 Calendario de Pagos</h2>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div>
+                            <label for="dia_pago_mensual" class="block text-sm font-medium text-gray-700 mb-2">
+                                Día Pago Mensual
+                            </label>
+                            <input type="number" name="dia_pago_mensual" id="dia_pago_mensual" min="1" max="31"
+                                   value="{{ config.dia_pago_mensual }}"
+                                   class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500">
+                            <p class="text-xs text-gray-500 mt-1">Día del mes (1-31)</p>
+                        </div>
+                        <div>
+                            <label for="dia_pago_quincenal_1" class="block text-sm font-medium text-gray-700 mb-2">
+                                1ra Quincena
+                            </label>
+                            <input type="number" name="dia_pago_quincenal_1" id="dia_pago_quincenal_1" min="1" max="31"
+                                   value="{{ config.dia_pago_quincenal_1 }}"
+                                   class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        <div>
+                            <label for="dia_pago_quincenal_2" class="block text-sm font-medium text-gray-700 mb-2">
+                                2da Quincena
+                            </label>
+                            <input type="number" name="dia_pago_quincenal_2" id="dia_pago_quincenal_2" min="1" max="31"
+                                   value="{{ config.dia_pago_quincenal_2 }}"
+                                   class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Automatización -->
+                <div class="mb-8">
+                    <h2 class="text-lg font-bold text-gray-900 mb-4 pb-2 border-b">🤖 Automatización</h2>
+                    <div class="space-y-4">
+                        <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                            <div>
+                                <p class="font-medium text-gray-900">Auto-generar Borradores</p>
+                                <p class="text-sm text-gray-600">Genera automáticamente borradores en fechas configuradas</p>
+                            </div>
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" name="auto_generar_borradores" class="sr-only peer"
+                                       {% if config.auto_generar_borradores %}checked{% endif %}>
+                                <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                            </label>
+                        </div>
+
+                        <div>
+                            <label for="dias_anticipacion_borrador" class="block text-sm font-medium text-gray-700 mb-2">
+                                Días de Anticipación para Borrador
+                            </label>
+                            <input type="number" name="dias_anticipacion_borrador" id="dias_anticipacion_borrador" min="1" max="15"
+                                   value="{{ config.dias_anticipacion_borrador }}"
+                                   class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500">
+                            <p class="text-xs text-gray-500 mt-1">Días antes de la fecha de pago para generar borrador automático</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Notificaciones -->
+                <div class="mb-8">
+                    <h2 class="text-lg font-bold text-gray-900 mb-4 pb-2 border-b">🔔 Notificaciones</h2>
+                    <div class="space-y-4">
+                        <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                            <div>
+                                <p class="font-medium text-gray-900">Borrador Generado</p>
+                                <p class="text-sm text-gray-600">Notificar cuando se genera un borrador</p>
+                            </div>
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" name="enviar_notificacion_borrador" class="sr-only peer"
+                                       {% if config.enviar_notificacion_borrador %}checked{% endif %}>
+                                <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                            </label>
+                        </div>
+
+                        <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                            <div>
+                                <p class="font-medium text-gray-900">Nómina Aprobada</p>
+                                <p class="text-sm text-gray-600">Notificar cuando se aprueba una nómina</p>
+                            </div>
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" name="enviar_notificacion_aprobacion" class="sr-only peer"
+                                       {% if config.enviar_notificacion_aprobacion %}checked{% endif %}>
+                                <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                            </label>
+                        </div>
+
+                        <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                            <div>
+                                <p class="font-medium text-gray-900">Nómina Procesada</p>
+                                <p class="text-sm text-gray-600">Notificar cuando se procesa una nómina</p>
+                            </div>
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" name="enviar_notificacion_procesado" class="sr-only peer"
+                                       {% if config.enviar_notificacion_procesado %}checked{% endif %}>
+                                <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Validaciones -->
+                <div class="mb-8">
+                    <h2 class="text-lg font-bold text-gray-900 mb-4 pb-2 border-b">✅ Validaciones Automáticas</h2>
+                    <div class="space-y-4">
+                        <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                            <div>
+                                <p class="font-medium text-gray-900">Validar Salario Mínimo</p>
+                                <p class="text-sm text-gray-600">Verificar que salarios cumplan con mínimo legal</p>
+                            </div>
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" name="validar_salario_minimo" class="sr-only peer"
+                                       {% if config.validar_salario_minimo %}checked{% endif %}>
+                                <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                            </label>
+                        </div>
+
+                        <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                            <div>
+                                <p class="font-medium text-gray-900">Validar Seguridad Social</p>
+                                <p class="text-sm text-gray-600">Verificar que deducciones de seguridad social sean correctas</p>
+                            </div>
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" name="validar_seguridad_social" class="sr-only peer"
+                                       {% if config.validar_seguridad_social %}checked{% endif %}>
+                                <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                            </label>
+                        </div>
+
+                        <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                            <div>
+                                <p class="font-medium text-gray-900">Validar Prestaciones</p>
+                                <p class="text-sm text-gray-600">Verificar cálculo de prestaciones sociales</p>
+                            </div>
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" name="validar_prestaciones" class="sr-only peer"
+                                       {% if config.validar_prestaciones %}checked{% endif %}>
+                                <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Cálculos Automáticos -->
+                <div class="mb-8">
+                    <h2 class="text-lg font-bold text-gray-900 mb-4 pb-2 border-b">🧮 Cálculos Automáticos</h2>
+                    <div class="space-y-4">
+                        <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                            <div>
+                                <p class="font-medium text-gray-900">Calcular Horas Extras</p>
+                                <p class="text-sm text-gray-600">Calcular automáticamente recargos por horas extras</p>
+                            </div>
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" name="calcular_horas_extras" class="sr-only peer"
+                                       {% if config.calcular_horas_extras %}checked{% endif %}>
+                                <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                            </label>
+                        </div>
+
+                        <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                            <div>
+                                <p class="font-medium text-gray-900">Calcular Auxilio de Transporte</p>
+                                <p class="text-sm text-gray-600">Aplicar auxilio de transporte según ley (≤ 2 SMLV)</p>
+                            </div>
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" name="calcular_auxilio_transporte" class="sr-only peer"
+                                       {% if config.calcular_auxilio_transporte %}checked{% endif %}>
+                                <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                            </label>
+                        </div>
+
+                        <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                            <div>
+                                <p class="font-medium text-gray-900">Calcular Prestaciones Sociales</p>
+                                <p class="text-sm text-gray-600">Calcular prima, cesantías e intereses automáticamente</p>
+                            </div>
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" name="calcular_prestaciones_sociales" class="sr-only peer"
+                                       {% if config.calcular_prestaciones_sociales %}checked{% endif %}>
+                                <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Porcentajes de Deducciones -->
+                <div class="mb-8">
+                    <h2 class="text-lg font-bold text-gray-900 mb-4 pb-2 border-b">💰 Porcentajes de Deducciones</h2>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label for="porcentaje_salud" class="block text-sm font-medium text-gray-700 mb-2">
+                                Salud (% empleado)
+                            </label>
+                            <div class="flex items-center gap-2">
+                                <input type="number" name="porcentaje_salud" id="porcentaje_salud" 
+                                       step="0.01" min="0" max="100"
+                                       value="{{ config.porcentaje_salud }}"
+                                       class="flex-1 border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500">
+                                <span class="text-gray-600">%</span>
+                            </div>
+                            <p class="text-xs text-gray-500 mt-1">Por defecto: 4%</p>
+                        </div>
+
+                        <div>
+                            <label for="porcentaje_pension" class="block text-sm font-medium text-gray-700 mb-2">
+                                Pensión (% empleado)
+                            </label>
+                            <div class="flex items-center gap-2">
+                                <input type="number" name="porcentaje_pension" id="porcentaje_pension" 
+                                       step="0.01" min="0" max="100"
+                                       value="{{ config.porcentaje_pension }}"
+                                       class="flex-1 border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500">
+                                <span class="text-gray-600">%</span>
+                            </div>
+                            <p class="text-xs text-gray-500 mt-1">Por defecto: 4%</p>
+                        </div>
+                    </div>
+
+                    <div class="mt-4 bg-blue-50 border border-blue-200 rounded-lg p-4">
+                        <p class="text-sm font-medium text-blue-900 mb-2">Fondo de Solidaridad Pensional (FSP)</p>
+                        <div class="grid grid-cols-2 md:grid-cols-3 gap-3 text-xs">
+                            <div>
+                                <label class="block text-gray-700 mb-1">4-16 SMLV</label>
+                                <input type="number" name="porcentaje_fsp_4_a_16" step="0.01" min="0" max="100"
+                                       value="{{ config.porcentaje_fsp_4_a_16 }}"
+                                       class="w-full border rounded px-2 py-1">
+                                <span class="text-gray-500">% (def: 1%)</span>
+                            </div>
+                            <div>
+                                <label class="block text-gray-700 mb-1">16-17 SMLV</label>
+                                <input type="number" name="porcentaje_fsp_16_a_17" step="0.01" min="0" max="100"
+                                       value="{{ config.porcentaje_fsp_16_a_17 }}"
+                                       class="w-full border rounded px-2 py-1">
+                                <span class="text-gray-500">% (def: 1.2%)</span>
+                            </div>
+                            <div>
+                                <label class="block text-gray-700 mb-1">17-18 SMLV</label>
+                                <input type="number" name="porcentaje_fsp_17_a_18" step="0.01" min="0" max="100"
+                                       value="{{ config.porcentaje_fsp_17_a_18 }}"
+                                       class="w-full border rounded px-2 py-1">
+                                <span class="text-gray-500">% (def: 1.4%)</span>
+                            </div>
+                            <div>
+                                <label class="block text-gray-700 mb-1">18-19 SMLV</label>
+                                <input type="number" name="porcentaje_fsp_18_a_19" step="0.01" min="0" max="100"
+                                       value="{{ config.porcentaje_fsp_18_a_19 }}"
+                                       class="w-full border rounded px-2 py-1">
+                                <span class="text-gray-500">% (def: 1.6%)</span>
+                            </div>
+                            <div>
+                                <label class="block text-gray-700 mb-1">19-20 SMLV</label>
+                                <input type="number" name="porcentaje_fsp_19_a_20" step="0.01" min="0" max="100"
+                                       value="{{ config.porcentaje_fsp_19_a_20 }}"
+                                       class="w-full border rounded px-2 py-1">
+                                <span class="text-gray-500">% (def: 1.8%)</span>
+                            </div>
+                            <div>
+                                <label class="block text-gray-700 mb-1">> 20 SMLV</label>
+                                <input type="number" name="porcentaje_fsp_mayor_20" step="0.01" min="0" max="100"
+                                       value="{{ config.porcentaje_fsp_mayor_20 }}"
+                                       class="w-full border rounded px-2 py-1">
+                                <span class="text-gray-500">% (def: 2%)</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Valores Legales Colombia -->
+                <div class="mb-8">
+                    <h2 class="text-lg font-bold text-gray-900 mb-4 pb-2 border-b">🇨🇴 Valores Legales Colombia 2026</h2>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label for="salario_minimo" class="block text-sm font-medium text-gray-700 mb-2">
+                                Salario Mínimo Legal Vigente
+                            </label>
+                            <div class="flex items-center gap-2">
+                                <span class="text-gray-600">$</span>
+                                <input type="number" name="salario_minimo" id="salario_minimo" 
+                                       step="1000" min="0"
+                                       value="{{ config.salario_minimo }}"
+                                       class="flex-1 border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500">
+                            </div>
+                            <p class="text-xs text-gray-500 mt-1">Valor: $1,300,000 (2026)</p>
+                        </div>
+
+                        <div>
+                            <label for="auxilio_transporte" class="block text-sm font-medium text-gray-700 mb-2">
+                                Auxilio de Transporte
+                            </label>
+                            <div class="flex items-center gap-2">
+                                <span class="text-gray-600">$</span>
+                                <input type="number" name="auxilio_transporte" id="auxilio_transporte" 
+                                       step="1000" min="0"
+                                       value="{{ config.auxilio_transporte }}"
+                                       class="flex-1 border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500">
+                            </div>
+                            <p class="text-xs text-gray-500 mt-1">Valor: $162,000 (2026)</p>
+                        </div>
+                    </div>
+
+                    <div class="mt-4 bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                        <div class="flex gap-3">
+                            <svg class="w-5 h-5 text-yellow-600 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
+                            </svg>
+                            <div class="text-sm text-yellow-800">
+                                <p class="font-medium mb-1">⚠️ Importante</p>
+                                <p>Estos valores deben actualizarse anualmente según decreto gubernamental. Los valores actuales corresponden al año 2026.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Cálculos Automáticos (movido después de porcentajes) -->
+                <div class="mb-8 hidden">
+                    <h2 class="text-lg font-bold text-gray-900 mb-4 pb-2 border-b">🧮 Cálculos Automáticos</h2>
+                    <div class="space-y-4">
+                        <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                            <div>
+                                <p class="font-medium text-gray-900">Calcular Horas Extras</p>
+                                <p class="text-sm text-gray-600">Calcular automáticamente recargos por horas extras</p>
+                            </div>
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" name="calcular_horas_extras" class="sr-only peer"
+                                       {% if config.calcular_horas_extras %}checked{% endif %}>
+                                <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                            </label>
+                        </div>
+
+                        <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                            <div>
+                                <p class="font-medium text-gray-900">Calcular Auxilio de Transporte</p>
+                                <p class="text-sm text-gray-600">Aplicar auxilio de transporte según ley (≤ 2 SMLV)</p>
+                            </div>
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" name="calcular_auxilio_transporte" class="sr-only peer"
+                                       {% if config.calcular_auxilio_transporte %}checked{% endif %}>
+                                <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                            </label>
+                        </div>
+
+                        <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                            <div>
+                                <p class="font-medium text-gray-900">Calcular Prestaciones Sociales</p>
+                                <p class="text-sm text-gray-600">Calcular prima, cesantías e intereses automáticamente</p>
+                            </div>
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" name="calcular_prestaciones_sociales" class="sr-only peer"
+                                       {% if config.calcular_prestaciones_sociales %}checked{% endif %}>
+                                <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Botones -->
+                <div class="flex gap-3">
+                    <button type="submit" class="flex-1 bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition font-medium">
+                        Guardar Configuración
+                    </button>
+                    <a href="{% url 'payroll:workflow_dashboard' %}" class="flex-1 bg-gray-200 text-gray-700 px-6 py-3 rounded-lg hover:bg-gray-300 transition font-medium text-center">
+                        Cancelar
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

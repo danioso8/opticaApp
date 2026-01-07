@@ -1,0 +1,577 @@
+{% extends "dashboard/base.html" %}
+{% load static %}
+
+{% block title %}Configuración WhatsApp - {{ organization.name }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    @keyframes pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: .5; }
+    }
+    .pulse-animation {
+        animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-6 max-w-7xl">
+    <!-- Header con gradiente -->
+    <div class="mb-6">
+        <div class="bg-gradient-to-r from-emerald-500 to-emerald-600 text-white rounded-2xl shadow-xl p-6">
+            <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                <div>
+                    <h1 class="text-3xl font-bold mb-2 flex items-center">
+                        <i class="fab fa-whatsapp mr-3"></i>
+                        WhatsApp Business Local
+                    </h1>
+                    <p class="text-emerald-50">Conecta tu número de WhatsApp para enviar notificaciones automáticas</p>
+                </div>
+                <div class="text-left md:text-right">
+                    <span class="inline-block bg-white text-emerald-600 font-bold px-4 py-2 rounded-lg mb-2">
+                        <i class="fas fa-gift mr-2"></i> 100% GRATIS
+                    </span>
+                    <br>
+                    <span id="server-status-badge">
+                        {% if server_active %}
+                            <span class="inline-block bg-white text-emerald-600 px-4 py-1 rounded-full text-sm">
+                                <i class="fas fa-circle pulse-animation mr-1"></i> Servidor Activo
+                            </span>
+                        {% else %}
+                            <span class="inline-block bg-red-500 text-white px-4 py-1 rounded-full text-sm">
+                                <i class="fas fa-circle mr-1"></i> Servidor Offline
+                            </span>
+                        {% endif %}
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Columna izquierda: Estado y QR -->
+        <div class="lg:col-span-2 space-y-6">
+            <div class="card-body">
+            {% if not server_active %}
+            <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded-r-lg shadow-sm mb-6">
+                <div class="flex items-start">
+                    <i class="fas fa-exclamation-triangle text-yellow-600 text-2xl mr-3 mt-1"></i>
+                    <div>
+                        <p class="font-semibold text-yellow-800">Servidor WhatsApp no disponible</p>
+                        <p class="text-sm text-yellow-700">El servidor de WhatsApp no está respondiendo. Contacta al administrador.</p>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Estado de Conexión Principal -->
+            <div class="bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300">
+                <div class="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-gray-200">
+                    <!-- Estado -->
+                    <div class="p-8 text-center">
+                        <div id="connection-status">
+                            {% if whatsapp_status.connected %}
+                                <div class="w-16 h-16 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                                    <i class="fas fa-check-circle text-white text-3xl"></i>
+                                </div>
+                                <h3 class="text-2xl font-bold text-emerald-600 mb-2">¡Conectado!</h3>
+                                <p class="text-gray-600 mb-4">WhatsApp listo para enviar notificaciones</p>
+                                {% if whatsapp_status.phone_number %}
+                                <div class="inline-block bg-emerald-50 text-emerald-700 px-4 py-2 rounded-lg">
+                                    <i class="fas fa-phone mr-2"></i>{{ whatsapp_status.phone_number }}
+                                </div>
+                                {% endif %}
+                            {% elif whatsapp_status.status == 'qr_ready' %}
+                                <div class="w-16 h-16 bg-gradient-to-br from-amber-500 to-amber-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                                    <i class="fas fa-qrcode text-white text-3xl"></i>
+                                </div>
+                                <h3 class="text-2xl font-bold text-amber-600 mb-2">Escanea el QR</h3>
+                                <p class="text-gray-600">Usa tu WhatsApp para escanear el código</p>
+                            {% else %}
+                                <div class="w-16 h-16 bg-gradient-to-br from-gray-400 to-gray-500 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                                    <i class="fas fa-plug text-white text-3xl"></i>
+                                </div>
+                                <h3 class="text-2xl font-bold text-gray-600 mb-2">No conectado</h3>
+                                <p class="text-gray-600">Conecta tu WhatsApp para comenzar</p>
+                            {% endif %}
+                        </div>
+                        
+                        <div id="status-buttons" class="mt-6">
+                            {% if whatsapp_status.connected %}
+                                <button type="button" class="px-6 py-3 bg-red-500 hover:bg-red-600 text-white font-semibold rounded-xl shadow-lg transition-all duration-300 transform hover:scale-105" onclick="logoutWhatsApp()">
+                                    <i class="fas fa-sign-out-alt mr-2"></i> Cerrar Sesión
+                                </button>
+                            {% else %}
+                                <button type="button" class="px-8 py-4 bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white font-bold rounded-xl shadow-xl transition-all duration-300 transform hover:scale-105" onclick="startWhatsAppSession()" {% if not server_active %}disabled{% endif %}>
+                                    <i class="fas fa-qrcode mr-2"></i> Conectar WhatsApp
+                                </button>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- QR Code -->
+                    <div class="p-8">
+                        <div class="bg-gradient-to-br from-emerald-50 to-emerald-100 border-2 border-dashed border-emerald-400 rounded-2xl p-6 text-center h-full flex flex-col justify-center hover:shadow-lg transition-all duration-300">
+                            <h4 class="text-emerald-700 font-semibold mb-4 flex items-center justify-center">
+                                <i class="fas fa-qrcode mr-2"></i>Código QR
+                            </h4>
+                            <div id="qr-container">
+                                {% if whatsapp_status.has_qr and whatsapp_status.qr %}
+                                    <img src="{{ whatsapp_status.qr }}" alt="QR Code" class="max-w-[220px] mx-auto rounded-xl shadow-md">
+                                    <p class="mt-4 text-sm text-emerald-700">
+                                        <i class="fas fa-mobile-alt mr-1"></i> 
+                                        Abre WhatsApp y escanea este código
+                                    </p>
+                                {% else %}
+                                    <div class="text-gray-400 py-8">
+                                        <i class="fas fa-qrcode text-6xl opacity-25 mb-4"></i>
+                                        <p class="mb-1">El código QR aparecerá aquí</p>
+                                        <p class="text-xs">Click en "Conectar WhatsApp"</p>
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Guía de Conexión -->
+            <div class="bg-white rounded-2xl shadow-lg p-6">
+                <h3 class="text-xl font-bold mb-6 flex items-center text-gray-800">
+                    <i class="fas fa-book-open text-blue-500 mr-3"></i>
+                    Guía de Conexión
+                </h3>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="flex items-start space-x-3">
+                        <div class="flex-shrink-0">
+                            <span class="w-8 h-8 bg-blue-500 text-white rounded-full flex items-center justify-center font-bold">1</span>
+                        </div>
+                        <div>
+                            <h4 class="font-semibold text-gray-800 mb-1">Conectar</h4>
+                            <p class="text-sm text-gray-600">Click en el botón "Conectar WhatsApp"</p>
+                        </div>
+                    </div>
+                    <div class="flex items-start space-x-3">
+                        <div class="flex-shrink-0">
+                            <span class="w-8 h-8 bg-blue-500 text-white rounded-full flex items-center justify-center font-bold">2</span>
+                        </div>
+                        <div>
+                            <h4 class="font-semibold text-gray-800 mb-1">Abrir WhatsApp</h4>
+                            <p class="text-sm text-gray-600">Configuración → Dispositivos vinculados</p>
+                        </div>
+                    </div>
+                    <div class="flex items-start space-x-3">
+                        <div class="flex-shrink-0">
+                            <span class="w-8 h-8 bg-emerald-500 text-white rounded-full flex items-center justify-center font-bold">3</span>
+                        </div>
+                        <div>
+                            <h4 class="font-semibold text-gray-800 mb-1">Escanear</h4>
+                            <p class="text-sm text-gray-600">Vincular dispositivo y escanear el QR</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Mensaje de Prueba -->
+            {% if whatsapp_status.connected %}
+            <div class="bg-white rounded-2xl shadow-lg overflow-hidden">
+                <div class="bg-gradient-to-r from-blue-50 to-blue-100 border-b border-blue-200 px-6 py-4">
+                    <h3 class="text-xl font-bold text-gray-800 flex items-center">
+                        <i class="fas fa-paper-plane text-blue-500 mr-3"></i>
+                        Enviar Mensaje de Prueba
+                    </h3>
+                </div>
+                <div class="p-6">
+                    <form id="test-message-form" class="space-y-4">
+                        {% csrf_token %}
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-semibold text-gray-700 mb-2">
+                                    <i class="fas fa-phone mr-1"></i>Número de WhatsApp
+                                </label>
+                                <div class="flex">
+                                    <span class="inline-flex items-center px-4 bg-gray-100 border border-r-0 border-gray-300 rounded-l-lg text-gray-700 font-medium">+57</span>
+                                    <input type="text" name="phone" class="flex-1 px-4 py-3 border border-gray-300 rounded-r-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent" placeholder="3001234567" required>
+                                </div>
+                                <p class="mt-1 text-xs text-gray-500">
+                                    <i class="fas fa-info-circle mr-1"></i>Solo números, sin espacios
+                                </p>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-2">
+                                <i class="fas fa-comment-dots mr-1"></i>Mensaje
+                            </label>
+                            <textarea name="message" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent" rows="4" required>¡Hola! 👋 Este es un mensaje de prueba desde OpticaApp 👓
+
+Tu sistema de notificaciones está funcionando correctamente. ✅</textarea>
+                        </div>
+                        <button type="submit" class="px-6 py-3 bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white font-semibold rounded-xl shadow-lg transition-all duration-300 transform hover:scale-105">
+                            <i class="fas fa-paper-plane mr-2"></i> Enviar Mensaje de Prueba
+                        </button>
+                    </form>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Columna derecha: Información y Características -->
+        <div class="lg:col-span-1 space-y-6">
+            <!-- Características -->
+            <div class="bg-white rounded-2xl shadow-lg overflow-hidden">
+                <div class="bg-gradient-to-r from-amber-50 to-amber-100 border-b border-amber-200 px-6 py-4">
+                    <h3 class="text-lg font-bold text-gray-800 flex items-center">
+                        <i class="fas fa-star text-amber-500 mr-2"></i>
+                        Características
+                    </h3>
+                </div>
+                <div class="p-6">
+                    <ul class="space-y-4">
+                        <li class="flex items-start">
+                            <i class="fas fa-check-circle text-emerald-500 mr-3 mt-1 text-lg"></i>
+                            <div>
+                                <p class="font-semibold text-gray-800">100% Gratis</p>
+                                <p class="text-sm text-gray-600">Sin costos mensuales ni por mensaje</p>
+                            </div>
+                        </li>
+                        <li class="flex items-start">
+                            <i class="fas fa-check-circle text-emerald-500 mr-3 mt-1 text-lg"></i>
+                            <div>
+                                <p class="font-semibold text-gray-800">Tu Propio Número</p>
+                                <p class="text-sm text-gray-600">Usa tu número de WhatsApp Business</p>
+                            </div>
+                        </li>
+                        <li class="flex items-start">
+                            <i class="fas fa-check-circle text-emerald-500 mr-3 mt-1 text-lg"></i>
+                            <div>
+                                <p class="font-semibold text-gray-800">Mensajes Ilimitados</p>
+                                <p class="text-sm text-gray-600">Envía todas las notificaciones que necesites</p>
+                            </div>
+                        </li>
+                        <li class="flex items-start">
+                            <i class="fas fa-check-circle text-emerald-500 mr-3 mt-1 text-lg"></i>
+                            <div>
+                                <p class="font-semibold text-gray-800">Sesión Persistente</p>
+                                <p class="text-sm text-gray-600">La conexión se mantiene activa</p>
+                            </div>
+                        </li>
+                        <li class="flex items-start">
+                            <i class="fas fa-check-circle text-emerald-500 mr-3 mt-1 text-lg"></i>
+                            <div>
+                                <p class="font-semibold text-gray-800">Automático</p>
+                                <p class="text-sm text-gray-600">Notifica cuando se agendan citas</p>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Información Importante -->
+            <div class="bg-gradient-to-br from-blue-50 to-blue-100 rounded-2xl shadow-lg p-6">
+                <h4 class="font-bold text-gray-800 mb-4 flex items-center">
+                    <i class="fas fa-info-circle text-blue-500 mr-2"></i>
+                    Información Importante
+                </h4>
+                <div class="space-y-3 text-sm text-gray-700">
+                    <div class="flex items-start">
+                        <i class="fas fa-shield-alt text-emerald-500 mr-2 mt-0.5"></i>
+                        <p><strong>Seguridad:</strong> Tu sesión se guarda de forma segura en el servidor</p>
+                    </div>
+                    <div class="flex items-start">
+                        <i class="fas fa-clock text-blue-500 mr-2 mt-0.5"></i>
+                        <p><strong>Disponibilidad:</strong> La sesión permanece activa 24/7</p>
+                    </div>
+                    <div class="flex items-start">
+                        <i class="fas fa-mobile-alt text-purple-500 mr-2 mt-0.5"></i>
+                        <p><strong>Dispositivo:</strong> Solo un dispositivo conectado por número</p>
+                    </div>
+                    <div class="flex items-start">
+                        <i class="fas fa-bell text-amber-500 mr-2 mt-0.5"></i>
+                        <p><strong>Notificaciones:</strong> Se envían automáticamente al agendar citas</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Auto-refresh del estado cada 3 segundos
+let statusInterval = null;
+
+function startWhatsAppSession() {
+    fetch("{% url 'dashboard:whatsapp_start_session' %}", {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': '{{ csrf_token }}',
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showNotification('Sesión iniciada. Generando QR...', 'info');
+            startStatusPolling();
+        } else {
+            showNotification(data.error || 'Error iniciando sesión', 'error');
+        }
+    })
+    .catch(error => {
+        showNotification('Error de conexión', 'error');
+        console.error('Error:', error);
+    });
+}
+
+function startStatusPolling() {
+    if (statusInterval) clearInterval(statusInterval);
+    
+    statusInterval = setInterval(() => {
+        checkStatus();
+    }, 3000); // Cada 3 segundos
+}
+
+function checkStatus() {
+    fetch("{% url 'dashboard:whatsapp_get_status' %}")
+    .then(response => response.json())
+    .then(data => {
+        console.log('Status response:', data); // Debug
+        if (data.success) {
+            updateStatus(data);
+            
+            // Si hay QR disponible, mostrarlo
+            if (data.qr && data.status === 'qr_ready') {
+                console.log('Displaying QR from status'); // Debug
+                displayQR(data.qr);
+            }
+            
+            // Si se conectó, recargar página
+            if (data.status === 'connected') {
+                clearInterval(statusInterval);
+                showNotification('¡WhatsApp conectado exitosamente!', 'success');
+                
+                // Habilitar notificaciones automáticamente al conectar WhatsApp
+                enableWhatsAppNotifications();
+                
+                setTimeout(() => location.reload(), 2000);
+            }
+        }
+    })
+    .catch(error => {
+        console.error('Error en checkStatus:', error);
+    });
+}
+
+function getQRCode() {
+    fetch("{% url 'dashboard:whatsapp_get_qr' %}")
+    .then(response => response.json())
+    .then(data => {
+        if (data.success && data.data.qr) {
+            displayQR(data.data.qr);
+        }
+    })
+    .catch(error => console.error('Error:', error));
+}
+
+function displayQR(qrData) {
+    console.log('displayQR called with:', qrData ? qrData.substring(0, 50) + '...' : 'null'); // Debug
+    const container = document.getElementById('qr-container');
+    if (!container) {
+        console.error('qr-container not found!');
+        return;
+    }
+    
+    if (!qrData) {
+        console.error('No QR data provided');
+        return;
+    }
+    
+    container.innerHTML = `
+        <img src="${qrData}" alt="QR Code" class="max-w-[220px] mx-auto rounded-xl shadow-md" onload="console.log('QR image loaded')" onerror="console.error('QR image failed to load')">
+        <p class="mt-4 text-sm text-emerald-700">
+            <i class="fas fa-mobile-alt mr-1"></i> 
+            Abre WhatsApp y escanea este código
+        </p>
+    `;
+}
+
+function updateStatus(statusData) {
+    const statusContainer = document.getElementById('connection-status');
+    let html = '';
+    
+    if (statusData.status === 'connected') {
+        html = `
+            <div class="w-16 h-16 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                <i class="fas fa-check-circle text-white text-3xl"></i>
+            </div>
+            <h3 class="text-2xl font-bold text-emerald-600 mb-2">¡Conectado!</h3>
+            <p class="text-gray-600 mb-4">WhatsApp listo para enviar notificaciones</p>
+            ${statusData.phone_number ? `
+                <div class="inline-block bg-emerald-50 text-emerald-700 px-4 py-2 rounded-lg">
+                    <i class="fas fa-phone mr-2"></i>${statusData.phone_number}
+                </div>
+            ` : ''}
+        `;
+    } else if (statusData.status === 'qr_ready') {
+        html = `
+            <div class="w-16 h-16 bg-gradient-to-br from-amber-500 to-amber-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                <i class="fas fa-qrcode text-white text-3xl"></i>
+            </div>
+            <h3 class="text-2xl font-bold text-amber-600 mb-2">Escanea el QR</h3>
+            <p class="text-gray-600">Usa tu WhatsApp para escanear el código</p>
+        `;
+    } else if (statusData.status === 'connecting') {
+        html = `
+            <div class="w-16 h-16 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                <i class="fas fa-spinner fa-spin text-white text-3xl"></i>
+            </div>
+            <h3 class="text-2xl font-bold text-blue-600 mb-2">Conectando...</h3>
+            <p class="text-gray-600">Estableciendo conexión con WhatsApp</p>
+        `;
+    } else {
+        html = `
+            <div class="w-16 h-16 bg-gradient-to-br from-gray-400 to-gray-500 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                <i class="fas fa-plug text-white text-3xl"></i>
+            </div>
+            <h3 class="text-2xl font-bold text-gray-600 mb-2">No conectado</h3>
+            <p class="text-gray-600">Conecta tu WhatsApp para comenzar</p>
+        `;
+    }
+    
+    statusContainer.innerHTML = html;
+    
+    // Actualizar botones
+    const buttonsContainer = document.getElementById('status-buttons');
+    if (statusData.status === 'connected') {
+        buttonsContainer.innerHTML = `
+            <button type="button" class="px-6 py-3 bg-red-500 hover:bg-red-600 text-white font-semibold rounded-xl shadow-lg transition-all duration-300 transform hover:scale-105" onclick="logoutWhatsApp()">
+                <i class="fas fa-sign-out-alt mr-2"></i> Cerrar Sesión
+            </button>
+        `;
+    } else {
+        buttonsContainer.innerHTML = `
+            <button type="button" class="px-8 py-4 bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white font-bold rounded-xl shadow-xl transition-all duration-300 transform hover:scale-105" onclick="startWhatsAppSession()">
+                <i class="fas fa-qrcode mr-2"></i> Conectar WhatsApp
+            </button>
+        `;
+    }
+}
+
+function logoutWhatsApp() {
+    if (!confirm('¿Estás seguro de cerrar la sesión de WhatsApp?')) return;
+    
+    fetch("{% url 'dashboard:whatsapp_logout' %}", {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': '{{ csrf_token }}'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showNotification('Sesión cerrada correctamente', 'success');
+            setTimeout(() => location.reload(), 1500);
+        } else {
+            showNotification(data.error || 'Error cerrando sesión', 'error');
+        }
+    })
+    .catch(error => {
+        showNotification('Error de conexión', 'error');
+        console.error('Error:', error);
+    });
+}
+
+// Enviar mensaje de prueba
+document.getElementById('test-message-form')?.addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const formData = new FormData(this);
+    
+    fetch("{% url 'dashboard:whatsapp_test_message' %}", {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showNotification('¡Mensaje enviado exitosamente!', 'success');
+            this.reset();
+        } else {
+            showNotification(data.error || 'Error enviando mensaje', 'error');
+        }
+    })
+    .catch(error => {
+        showNotification('Error de conexión', 'error');
+        console.error('Error:', error);
+    });
+});
+
+function showNotification(message, type) {
+    // Crear notificación moderna tipo toast con Tailwind
+    const toast = document.createElement('div');
+    const colors = {
+        success: 'bg-emerald-500',
+        error: 'bg-red-500',
+        info: 'bg-blue-500'
+    };
+    const icons = {
+        success: 'fa-check-circle',
+        error: 'fa-exclamation-circle',
+        info: 'fa-info-circle'
+    };
+    
+    toast.className = `fixed top-5 right-5 z-50 ${colors[type]} text-white px-6 py-4 rounded-xl shadow-2xl transform transition-all duration-300 flex items-center space-x-3 min-w-[320px] max-w-md`;
+    toast.innerHTML = `
+        <i class="fas ${icons[type]} text-2xl"></i>
+        <div class="flex-grow">${message}</div>
+        <button onclick="this.parentElement.remove()" class="text-white hover:text-gray-200 transition-colors">
+            <i class="fas fa-times"></i>
+        </button>
+    `;
+    
+    document.body.appendChild(toast);
+    
+    // Animación de entrada
+    setTimeout(() => toast.classList.add('animate-bounce'), 10);
+    
+    // Auto-remover después de 5 segundos
+    setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateX(100%)';
+        setTimeout(() => toast.remove(), 300);
+    }, 5000);
+}
+
+// Función para habilitar notificaciones de WhatsApp automáticamente
+function enableWhatsAppNotifications() {
+    fetch("{% url 'dashboard:notification_settings_save' %}", {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'X-CSRFToken': '{{ csrf_token }}'
+        },
+        body: new URLSearchParams({
+            'local_whatsapp_enabled': 'on',
+            'email_enabled': 'off',
+            'send_confirmation': 'on',
+            'send_reminder': 'on',
+            'send_cancellation': 'on'
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            console.log('Notificaciones WhatsApp habilitadas automáticamente');
+        }
+    })
+    .catch(error => {
+        console.error('Error habilitando notificaciones:', error);
+    });
+}
+
+// Si ya está conectando o esperando QR, iniciar polling
+{% if whatsapp_status.status == 'connecting' or whatsapp_status.status == 'qr_ready' %}
+startStatusPolling();
+{% endif %}
+</script>
+{% endblock %}

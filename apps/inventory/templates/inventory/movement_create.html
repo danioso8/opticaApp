@@ -1,0 +1,267 @@
+{% extends 'dashboard/base.html' %}
+
+{% block title %}Nuevo Movimiento{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-6 max-w-4xl">
+    <!-- Header -->
+    <div class="mb-6">
+        <h1 class="text-3xl font-bold text-gray-900">Nuevo Movimiento de Inventario</h1>
+        <p class="text-gray-600 mt-1">Registra entradas o salidas de productos</p>
+    </div>
+
+    <div class="bg-white rounded-lg shadow-md p-8">
+        <form method="post" id="movementForm">
+            {% csrf_token %}
+            
+            <!-- Producto -->
+            <div class="mb-6">
+                <label class="block text-sm font-medium text-gray-700 mb-2">
+                    Producto <span class="text-red-500">*</span>
+                </label>
+                <select name="product" id="product" required
+                    class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
+                    <option value="">Seleccionar producto...</option>
+                    {% for product in products %}
+                        <option value="{{ product.id }}" data-stock="{{ product.stock }}" data-cost="{{ product.cost }}">
+                            {{ product.name }} (SKU: {{ product.sku }}) - Stock: {{ product.stock }}
+                        </option>
+                    {% endfor %}
+                </select>
+                <div id="productInfo" class="mt-2 hidden">
+                    <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <p class="text-sm text-gray-600">Stock Actual</p>
+                                <p class="text-lg font-bold text-gray-900" id="currentStock">0</p>
+                            </div>
+                            <div>
+                                <p class="text-sm text-gray-600">Costo Actual</p>
+                                <p class="text-lg font-bold text-gray-900" id="currentCost">$0.00</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tipo de Movimiento -->
+            <div class="mb-6">
+                <label class="block text-sm font-medium text-gray-700 mb-2">
+                    Tipo de Movimiento <span class="text-red-500">*</span>
+                </label>
+                <select name="movement_type" id="movement_type" required
+                    class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
+                    <option value="">Seleccionar tipo...</option>
+                    <optgroup label="Entradas">
+                        <option value="IN_PURCHASE">Entrada por compra</option>
+                        <option value="IN_RETURN">Entrada por devolución</option>
+                        <option value="IN_ADJUSTMENT">Entrada por ajuste</option>
+                        <option value="IN_TRANSFER">Entrada por transferencia</option>
+                    </optgroup>
+                    <optgroup label="Salidas">
+                        <option value="OUT_SALE">Salida por venta</option>
+                        <option value="OUT_LOSS">Salida por pérdida</option>
+                        <option value="OUT_DAMAGE">Salida por daño</option>
+                        <option value="OUT_ADJUSTMENT">Salida por ajuste</option>
+                        <option value="OUT_TRANSFER">Salida por transferencia</option>
+                    </optgroup>
+                </select>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                <!-- Cantidad -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        Cantidad <span class="text-red-500">*</span>
+                    </label>
+                    <input type="number" name="quantity" id="quantity" min="1" required
+                        class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                        placeholder="0">
+                    <p id="stockWarning" class="text-sm text-red-600 mt-1 hidden">
+                        <i class="fas fa-exclamation-triangle"></i> Stock insuficiente
+                    </p>
+                </div>
+
+                <!-- Costo Unitario -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        Costo Unitario <span class="text-red-500">*</span>
+                    </label>
+                    <div class="relative">
+                        <span class="absolute left-3 top-2 text-gray-500">$</span>
+                        <input type="number" name="unit_cost" id="unit_cost" step="0.01" min="0" required
+                            class="w-full border border-gray-300 rounded-lg pl-8 pr-4 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                            placeholder="0.00">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Documento de Referencia -->
+            <div class="mb-6">
+                <label class="block text-sm font-medium text-gray-700 mb-2">
+                    Documento de Referencia
+                </label>
+                <input type="text" name="reference_document" 
+                    class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                    placeholder="Factura, OC, Guía, etc.">
+                <p class="text-sm text-gray-500 mt-1">Opcional: Número de factura, orden de compra, etc.</p>
+            </div>
+
+            <!-- Razón/Motivo -->
+            <div class="mb-6">
+                <label class="block text-sm font-medium text-gray-700 mb-2">
+                    Razón/Motivo
+                </label>
+                <textarea name="reason" rows="3"
+                    class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                    placeholder="Describe el motivo de este movimiento..."></textarea>
+            </div>
+
+            <!-- Lote (Opcional) -->
+            <div class="mb-6" id="lotSection" style="display:none;">
+                <label class="block text-sm font-medium text-gray-700 mb-2">
+                    Lote (Opcional)
+                </label>
+                <select name="lot" id="lot"
+                    class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
+                    <option value="">Sin lote específico</option>
+                </select>
+            </div>
+
+            <!-- Resumen -->
+            <div id="summary" class="mb-6 hidden">
+                <div class="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                    <h3 class="font-semibold text-gray-900 mb-2">Resumen del Movimiento</h3>
+                    <div class="space-y-2 text-sm">
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Costo Total:</span>
+                            <span class="font-semibold text-gray-900" id="totalCost">$0.00</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Stock Resultante:</span>
+                            <span class="font-semibold text-gray-900" id="resultingStock">0</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Botones -->
+            <div class="flex gap-3">
+                <button type="submit" 
+                    class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-lg font-medium transition-colors flex items-center gap-2">
+                    <i class="fas fa-save"></i>
+                    Registrar Movimiento
+                </button>
+                <a href="{% url 'inventory:movement_list' %}" 
+                    class="bg-gray-200 hover:bg-gray-300 text-gray-700 px-6 py-3 rounded-lg font-medium transition-colors flex items-center gap-2">
+                    <i class="fas fa-times"></i>
+                    Cancelar
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const productSelect = document.getElementById('product');
+    const movementTypeSelect = document.getElementById('movement_type');
+    const quantityInput = document.getElementById('quantity');
+    const unitCostInput = document.getElementById('unit_cost');
+    const productInfo = document.getElementById('productInfo');
+    const currentStock = document.getElementById('currentStock');
+    const currentCost = document.getElementById('currentCost');
+    const stockWarning = document.getElementById('stockWarning');
+    const summary = document.getElementById('summary');
+    const totalCost = document.getElementById('totalCost');
+    const resultingStock = document.getElementById('resultingStock');
+    const lotSection = document.getElementById('lotSection');
+    const lotSelect = document.getElementById('lot');
+
+    let selectedProduct = null;
+
+    // Cuando se selecciona un producto
+    productSelect.addEventListener('change', function() {
+        const option = this.options[this.selectedIndex];
+        if (this.value) {
+            selectedProduct = {
+                id: this.value,
+                stock: parseInt(option.dataset.stock) || 0,
+                cost: parseFloat(option.dataset.cost) || 0
+            };
+
+            productInfo.classList.remove('hidden');
+            currentStock.textContent = selectedProduct.stock;
+            currentCost.textContent = '$' + selectedProduct.cost.toFixed(2);
+            unitCostInput.value = selectedProduct.cost.toFixed(2);
+
+            // Cargar lotes del producto
+            loadProductLots(selectedProduct.id);
+            lotSection.style.display = 'block';
+        } else {
+            productInfo.classList.add('hidden');
+            selectedProduct = null;
+            lotSection.style.display = 'none';
+        }
+        updateSummary();
+    });
+
+    // Cuando cambia cualquier campo, actualizar resumen
+    [movementTypeSelect, quantityInput, unitCostInput].forEach(el => {
+        el.addEventListener('input', updateSummary);
+    });
+
+    function updateSummary() {
+        if (!selectedProduct || !movementTypeSelect.value || !quantityInput.value) {
+            summary.classList.add('hidden');
+            return;
+        }
+
+        const quantity = parseInt(quantityInput.value) || 0;
+        const unitCost = parseFloat(unitCostInput.value) || 0;
+        const isIncoming = movementTypeSelect.value.startsWith('IN_');
+
+        // Calcular costo total
+        const total = quantity * unitCost;
+        totalCost.textContent = '$' + total.toFixed(2);
+
+        // Calcular stock resultante
+        let newStock = selectedProduct.stock;
+        if (isIncoming) {
+            newStock += quantity;
+        } else {
+            newStock -= quantity;
+        }
+        resultingStock.textContent = newStock;
+
+        // Advertencia de stock
+        if (!isIncoming && quantity > selectedProduct.stock) {
+            stockWarning.classList.remove('hidden');
+            resultingStock.classList.add('text-red-600');
+        } else {
+            stockWarning.classList.add('hidden');
+            resultingStock.classList.remove('text-red-600');
+        }
+
+        summary.classList.remove('hidden');
+    }
+
+    function loadProductLots(productId) {
+        fetch(`/dashboard/inventory/api/product/${productId}/lots/`)
+            .then(response => response.json())
+            .then(lots => {
+                lotSelect.innerHTML = '<option value="">Sin lote específico</option>';
+                lots.forEach(lot => {
+                    const option = document.createElement('option');
+                    option.value = lot.id;
+                    option.textContent = `${lot.lot_number} - Cantidad: ${lot.quantity}${lot.expiration_date ? ' - Vence: ' + lot.expiration_date : ''}`;
+                    lotSelect.appendChild(option);
+                });
+            })
+            .catch(error => {
+                console.error('Error loading lots:', error);
+            });
+    }
+});
+</script>
+{% endblock %}

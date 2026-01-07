@@ -179,18 +179,18 @@ class ClinicalHistory(TenantModel):
     # ==================== REFRACCIÓN ====================
     
     # Ojo Derecho (OD)
-    refraction_od_sphere = models.CharField(max_length=10, verbose_name='OD Esfera', blank=True, help_text='Ej: +2.50, -1.25, N/A')
+    refraction_od_sphere = models.CharField(max_length=10, verbose_name='OD Esfera', blank=True, null=True, help_text='Ej: +2.50, -1.25, N/A')
     refraction_od_cylinder = models.DecimalField(max_digits=5, decimal_places=2, verbose_name='OD Cilindro', null=True, blank=True)
     refraction_od_axis = models.IntegerField(verbose_name='OD Eje', null=True, blank=True, help_text='0-180°')
     refraction_od_add = models.DecimalField(max_digits=5, decimal_places=2, verbose_name='OD Adición', null=True, blank=True)
-    refraction_od_prism = models.CharField(max_length=20, verbose_name='OD Prisma', blank=True)
+    refraction_od_prism = models.CharField(max_length=20, verbose_name='OD Prisma', blank=True, null=True)
     
     # Ojo Izquierdo (OS)
-    refraction_os_sphere = models.CharField(max_length=10, verbose_name='OS Esfera', blank=True, help_text='Ej: +2.50, -1.25, N/A')
+    refraction_os_sphere = models.CharField(max_length=10, verbose_name='OS Esfera', blank=True, null=True, help_text='Ej: +2.50, -1.25, N/A')
     refraction_os_cylinder = models.DecimalField(max_digits=5, decimal_places=2, verbose_name='OS Cilindro', null=True, blank=True)
     refraction_os_axis = models.IntegerField(verbose_name='OS Eje', null=True, blank=True, help_text='0-180°')
     refraction_os_add = models.DecimalField(max_digits=5, decimal_places=2, verbose_name='OS Adición', null=True, blank=True)
-    refraction_os_prism = models.CharField(max_length=20, verbose_name='OS Prisma', blank=True)
+    refraction_os_prism = models.CharField(max_length=20, verbose_name='OS Prisma', blank=True, null=True)
     
     # DNP en refracción (Distance Nasale-Pupilar)
     refraction_od_dnp = models.DecimalField(max_digits=4, decimal_places=1, verbose_name='OD DNP (mm)', null=True, blank=True, help_text='Distancia Nasal-Pupilar OD')

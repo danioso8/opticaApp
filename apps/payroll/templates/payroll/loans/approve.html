@@ -1,0 +1,151 @@
+{% extends "dashboard/base.html" %}
+{% load humanize %}
+
+{% block title %}Aprobar Préstamo - {{ block.super }}{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-6">
+    <div class="max-w-3xl mx-auto">
+        <!-- Header -->
+        <div class="mb-6">
+            <div class="flex items-center gap-2 text-sm text-gray-600 mb-4">
+                <a href="{% url 'payroll:loan_list' %}" class="hover:text-indigo-600">Préstamos</a>
+                <i class="fas fa-chevron-right text-xs"></i>
+                <span class="text-gray-900 font-medium">Aprobar Préstamo</span>
+            </div>
+            <h1 class="text-3xl font-bold text-gray-800">Aprobar Préstamo</h1>
+        </div>
+
+        <!-- Información del Préstamo -->
+        <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+            <h2 class="text-xl font-bold text-gray-800 mb-4 flex items-center">
+                <i class="fas fa-info-circle text-blue-600 mr-2"></i>
+                Información del Préstamo
+            </h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <p class="text-sm text-gray-600">Empleado</p>
+                    <p class="text-lg font-semibold text-gray-900">{{ loan.employee.get_full_name }}</p>
+                    <p class="text-sm text-gray-500">{{ loan.employee.cargo }} - {{ loan.employee.numero_documento }}</p>
+                </div>
+
+                <div>
+                    <p class="text-sm text-gray-600">Número de Préstamo</p>
+                    <p class="text-lg font-semibold text-gray-900">{{ loan.numero_prestamo }}</p>
+                </div>
+
+                <div>
+                    <p class="text-sm text-gray-600">Monto Solicitado</p>
+                    <p class="text-2xl font-bold text-indigo-600">${{ loan.monto_solicitado|floatformat:0|stringformat:"s"|intcomma }}</p>
+                </div>
+
+                <div>
+                    <p class="text-sm text-gray-600">Número de Cuotas</p>
+                    <p class="text-lg font-semibold text-gray-900">{{ loan.numero_cuotas }} meses</p>
+                </div>
+
+                <div>
+                    <p class="text-sm text-gray-600">Tasa de Interés</p>
+                    <p class="text-lg font-semibold text-gray-900">{{ loan.tasa_interes }}% mensual</p>
+                </div>
+
+                <div>
+                    <p class="text-sm text-gray-600">Fecha de Solicitud</p>
+                    <p class="text-lg font-semibold text-gray-900">{{ loan.fecha_solicitud|date:"d/m/Y" }}</p>
+                </div>
+
+                <div class="md:col-span-2">
+                    <p class="text-sm text-gray-600 mb-2">Motivo</p>
+                    <p class="text-gray-900 p-3 bg-gray-50 rounded-lg">{{ loan.motivo_solicitud }}</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Formulario de Aprobación -->
+        <form method="post" class="bg-white rounded-lg shadow-md">
+            {% csrf_token %}
+            
+            <div class="p-6 border-b border-gray-200">
+                <h2 class="text-xl font-bold text-gray-800 mb-4 flex items-center">
+                    <i class="fas fa-check-circle text-green-600 mr-2"></i>
+                    Aprobación del Préstamo
+                </h2>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        Monto Aprobado <span class="text-red-500">*</span>
+                    </label>
+                    <div class="relative">
+                        <span class="absolute left-3 top-2 text-gray-500">$</span>
+                        <input type="number" name="monto_aprobado" required min="0" step="1000" 
+                               value="{{ loan.monto_solicitado }}" id="montoAprobado"
+                               class="w-full pl-8 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                    </div>
+                    <p class="text-xs text-gray-500 mt-1">Puede aprobar un monto diferente al solicitado</p>
+                </div>
+
+                <!-- Cálculo de cuota -->
+                <div class="mt-6 p-4 bg-green-50 rounded-lg border border-green-200">
+                    <p class="text-sm font-medium text-gray-700 mb-2">
+                        <i class="fas fa-calculator text-green-600"></i> Cálculo de Cuota Mensual
+                    </p>
+                    <p class="text-3xl font-bold text-green-600" id="cuotaMensual">$0</p>
+                    <p class="text-xs text-gray-600 mt-1">
+                        Total a pagar: <span id="totalPagar" class="font-semibold">$0</span>
+                    </p>
+                    <p class="text-xs text-gray-600">
+                        Total intereses: <span id="totalIntereses" class="font-semibold">$0</span>
+                    </p>
+                </div>
+            </div>
+
+            <!-- Botones -->
+            <div class="p-6 bg-gray-50 flex justify-end gap-4">
+                <a href="{% url 'payroll:loan_list' %}" class="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-100 transition-colors font-medium">
+                    <i class="fas fa-times mr-2"></i>Cancelar
+                </a>
+                <button type="submit" class="px-6 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors font-medium shadow-lg">
+                    <i class="fas fa-check mr-2"></i>Aprobar Préstamo
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const montoAprobado = document.getElementById('montoAprobado');
+    const cuotas = {{ loan.numero_cuotas }};
+    const tasaMensual = {{ loan.tasa_interes }} / 100;
+
+    function calcularCuota() {
+        const monto = parseFloat(montoAprobado.value || 0);
+        
+        if (monto > 0) {
+            let cuotaMensual;
+            
+            if (tasaMensual === 0) {
+                cuotaMensual = monto / cuotas;
+            } else {
+                cuotaMensual = monto * (tasaMensual * Math.pow(1 + tasaMensual, cuotas)) / 
+                               (Math.pow(1 + tasaMensual, cuotas) - 1);
+            }
+
+            const totalPagar = cuotaMensual * cuotas;
+            const totalIntereses = totalPagar - monto;
+
+            document.getElementById('cuotaMensual').textContent = 
+                '$' + Math.round(cuotaMensual).toLocaleString('es-CO');
+            document.getElementById('totalPagar').textContent = 
+                '$' + Math.round(totalPagar).toLocaleString('es-CO');
+            document.getElementById('totalIntereses').textContent = 
+                '$' + Math.round(totalIntereses).toLocaleString('es-CO');
+        }
+    }
+
+    montoAprobado.addEventListener('input', calcularCuota);
+    calcularCuota();
+});
+</script>
+{% endblock %}

@@ -1,4 +1,6 @@
-# ⚡ Resumen Rápido - 30 Dic 2025
+# ⚡ Resumen Rápido - 2 Enero 2026
+
+**Desarrollador:** Daniel Osorio
 
 ## 🎨 Framework CSS
 **⚠️ IMPORTANTE: Este proyecto usa TAILWIND CSS**
@@ -7,7 +9,30 @@
 - Todas las plantillas deben usar clases Tailwind
 - Ver: `apps/dashboard/templates/dashboard/base.html` para referencia
 
-## ✅ Estado Actual
+## ✅ Últimos Cambios (2 Enero 2026)
+
+### Fix Crítico - Logout Error
+**Problema:** Error 500 al cerrar sesión
+```
+null value in column "content_type" violates not-null constraint
+```
+
+**Solución:**
+- ✅ Campo `content_type` ahora es nullable (`null=True`)
+- ✅ Migración 0007 aplicada
+- ✅ Error handling en `logout_view`
+
+### Rediseño - Gestión de Equipo
+**Template:** `team_list.html` rehecho con Tailwind CSS
+
+**Mejoras:**
+- ✅ Stats cards en grid horizontal (2 cols móvil, 4 cols desktop)
+- ✅ Member cards con gradientes por rol
+- ✅ Botones: Permisos (70%), Editar (25%), Eliminar (5%)
+- ✅ Gestión de Equipo visible en menú móvil
+- ✅ Animaciones hover y transiciones suaves
+
+## ✅ Estado Actual (30 Dic 2025)
 **Sistema funcionando correctamente** - Todos los cambios de empleados fueron revertidos.
 
 ## 🔄 Lo que pasó

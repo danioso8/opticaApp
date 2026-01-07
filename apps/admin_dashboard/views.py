@@ -10,11 +10,25 @@ from apps.users.models import UserSubscription
 from apps.users.email_verification_models import UserProfile
 from apps.organizations.models import Organization, OrganizationMember, SubscriptionPlan, Subscription
 from django.db import transaction
+from functools import wraps
 
 
 def is_superuser(user):
     """Verificar si el usuario es superusuario"""
-    return user.is_superuser
+    return user.is_authenticated and user.is_superuser
+
+
+def superuser_required(view_func):
+    """Decorador personalizado que requiere superusuario y redirige correctamente"""
+    @wraps(view_func)
+    def wrapper(request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            return redirect('/saas-admin/login/')
+        if not request.user.is_superuser:
+            messages.error(request, 'No tienes permisos para acceder al panel de administración.')
+            return redirect('/dashboard/')
+        return view_func(request, *args, **kwargs)
+    return wrapper
 
 
 def saas_admin_login(request):
@@ -49,8 +63,7 @@ def saas_admin_logout(request):
     return redirect('admin_dashboard:login')
 
 
-@login_required
-@user_passes_test(is_superuser)
+@superuser_required
 def admin_dashboard_home(request):
     """Dashboard principal de administración"""
     # Estadísticas generales

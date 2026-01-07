@@ -1,0 +1,163 @@
+{% extends 'dashboard/base.html' %}
+{% load static %}
+
+{% block title %}Incapacidades{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-6">
+    <!-- Breadcrumb -->
+    <div class="mb-6">
+        <a href="{% url 'payroll:payroll_dashboard' %}" class="text-indigo-600 hover:text-indigo-800 font-medium">
+            <i class="fas fa-arrow-left mr-2"></i>
+            Volver al Dashboard de Nómina
+        </a>
+    </div>
+
+    <div class="mb-6 flex items-center justify-between">
+        <div>
+            <h1 class="text-3xl font-bold text-gray-800">
+                <i class="fas fa-notes-medical text-red-600 mr-2"></i>
+                Gestión de Incapacidades
+            </h1>
+            <p class="text-gray-600 mt-1">Registro y control de incapacidades médicas</p>
+        </div>
+        <a href="{% url 'payroll:incapacity_create' %}" 
+           class="px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-medium transition-colors">
+            <i class="fas fa-plus mr-2"></i>
+            Nueva Incapacidad
+        </a>
+    </div>
+
+    <!-- Filtros -->
+    <div class="bg-white rounded-lg shadow-md p-4 mb-6">
+        <form method="get" class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Estado</label>
+                <select name="estado" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-200">
+                    <option value="">Todos</option>
+                    <option value="PENDIENTE" {% if estado_actual == 'PENDIENTE' %}selected{% endif %}>Pendiente</option>
+                    <option value="APROBADA" {% if estado_actual == 'APROBADA' %}selected{% endif %}>Aprobada</option>
+                    <option value="RECHAZADA" {% if estado_actual == 'RECHAZADA' %}selected{% endif %}>Rechazada</option>
+                    <option value="PROCESADA" {% if estado_actual == 'PROCESADA' %}selected{% endif %}>Procesada</option>
+                </select>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Empleado</label>
+                <select name="employee" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-200">
+                    <option value="">Todos</option>
+                    {% for employee in employees %}
+                    <option value="{{ employee.id }}" {% if employee_actual == employee.id|stringformat:"s" %}selected{% endif %}>
+                        {{ employee.get_full_name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="flex items-end">
+                <button type="submit" class="w-full px-4 py-2 bg-gray-700 hover:bg-gray-800 text-white rounded-lg font-medium transition-colors">
+                    <i class="fas fa-filter mr-2"></i>Filtrar
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Lista de Incapacidades -->
+    <div class="bg-white rounded-lg shadow-md overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Empleado</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tipo</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Periodo</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Días</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estado</th>
+                        <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    {% for incapacity in incapacidades %}
+                    <tr class="hover:bg-gray-50">
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="flex items-center">
+                                <div class="flex-shrink-0 h-10 w-10 bg-gray-200 rounded-full flex items-center justify-center">
+                                    <i class="fas fa-user text-gray-500"></i>
+                                </div>
+                                <div class="ml-4">
+                                    <div class="text-sm font-medium text-gray-900">{{ incapacity.employee.get_full_name }}</div>
+                                    <div class="text-sm text-gray-500">{{ incapacity.employee.numero_documento }}</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="text-sm text-gray-900">{{ incapacity.get_tipo_display }}</span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {{ incapacity.fecha_inicio|date:"d/m/Y" }} - {{ incapacity.fecha_fin|date:"d/m/Y" }}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="text-sm font-medium text-gray-900">{{ incapacity.dias_incapacidad }}</span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="text-sm font-medium text-green-600">${{ incapacity.total_incapacidad|floatformat:0 }}</span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            {% if incapacity.estado == 'PENDIENTE' %}
+                            <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">
+                                Pendiente
+                            </span>
+                            {% elif incapacity.estado == 'APROBADA' %}
+                            <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                                Aprobada
+                            </span>
+                            {% elif incapacity.estado == 'RECHAZADA' %}
+                            <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">
+                                Rechazada
+                            </span>
+                            {% else %}
+                            <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
+                                Procesada
+                            </span>
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                            <div class="flex items-center justify-end space-x-2">
+                                {% if incapacity.estado == 'PENDIENTE' %}
+                                <form method="post" action="{% url 'payroll:incapacity_approve' incapacity.pk %}" class="inline">
+                                    {% csrf_token %}
+                                    <button type="submit" class="text-green-600 hover:text-green-900" title="Aprobar">
+                                        <i class="fas fa-check-circle"></i>
+                                    </button>
+                                </form>
+                                <form method="post" action="{% url 'payroll:incapacity_reject' incapacity.pk %}" class="inline">
+                                    {% csrf_token %}
+                                    <button type="submit" class="text-red-600 hover:text-red-900" title="Rechazar">
+                                        <i class="fas fa-times-circle"></i>
+                                    </button>
+                                </form>
+                                {% endif %}
+                                {% if incapacity.estado != 'PROCESADA' %}
+                                <a href="{% url 'payroll:incapacity_edit' incapacity.pk %}" class="text-blue-600 hover:text-blue-900" title="Editar">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <a href="{% url 'payroll:incapacity_delete' incapacity.pk %}" class="text-red-600 hover:text-red-900" title="Eliminar">
+                                    <i class="fas fa-trash"></i>
+                                </a>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="7" class="px-6 py-12 text-center text-gray-500">
+                            <i class="fas fa-inbox text-4xl mb-3 text-gray-300"></i>
+                            <p>No hay incapacidades registradas</p>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

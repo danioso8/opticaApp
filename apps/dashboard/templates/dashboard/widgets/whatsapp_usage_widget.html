@@ -1,0 +1,122 @@
+{% load static %}
+
+<div class="bg-white rounded-lg shadow-md p-6">
+    <!-- Header -->
+    <div class="flex justify-between items-center mb-4">
+        <h3 class="text-lg font-semibold text-gray-800 flex items-center">
+            <i class="fab fa-whatsapp text-green-600 mr-2"></i>
+            Uso de WhatsApp
+        </h3>
+        <span class="bg-green-100 text-green-800 text-xs font-medium px-2.5 py-0.5 rounded">{{ current_month }}</span>
+    </div>
+    
+    <!-- Contador principal -->
+    <div class="text-center mb-4">
+        <div class="flex items-baseline justify-center">
+            <span class="text-4xl font-bold text-indigo-600">{{ usage.messages_sent }}</span>
+            <span class="text-xl text-gray-500 ml-2">/ {{ usage.messages_included }}</span>
+        </div>
+        <p class="text-sm text-gray-500 mt-1">mensajes este mes</p>
+    </div>
+    
+    <!-- Barra de progreso -->
+    <div class="mb-4">
+        <div class="flex justify-between items-center mb-2">
+            <span class="text-sm text-gray-600">Uso actual</span>
+            <span class="text-sm font-bold {% if usage.get_usage_percentage >= 100 %}text-red-600{% elif usage.get_usage_percentage >= 80 %}text-yellow-600{% else %}text-green-600{% endif %}">
+                {{ usage.get_usage_percentage|floatformat:0 }}%
+            </span>
+        </div>
+        
+        <div class="w-full bg-gray-200 rounded-full h-5">
+            <div class="h-full rounded-full {% if usage.get_usage_percentage >= 100 %}bg-red-600{% elif usage.get_usage_percentage >= 80 %}bg-yellow-500{% else %}bg-green-600{% endif %} transition-all duration-300" 
+                 style="width: {{ usage.get_usage_percentage }}%">
+            </div>
+        </div>
+    </div>
+    
+    <!-- Mensajes restantes o excedentes -->
+    {% if usage.is_over_limit %}
+        <div class="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
+            <div class="flex items-start">
+                <i class="fas fa-exclamation-triangle text-red-600 mr-2 mt-0.5"></i>
+                <div class="flex-1">
+                    <p class="font-semibold text-red-900 text-sm mb-2">¡Límite alcanzado!</p>
+                    <div class="space-y-1 text-sm text-red-800">
+                        <div class="flex justify-between">
+                            <span>Mensajes excedentes:</span>
+                            <strong>{{ usage.messages_overage }}</strong>
+                        </div>
+                        <div class="flex justify-between">
+                            <span>Costo adicional:</span>
+                            <strong class="text-red-600">${{ usage.overage_cost|floatformat:2 }} USD</strong>
+                        </div>
+                    </div>
+                    <div class="mt-2 pt-2 border-t border-red-200">
+                        <p class="text-xs text-red-700">
+                            <i class="fas fa-info-circle mr-1"></i>
+                            Cada mensaje adicional cuesta ${{ usage.cost_per_message|floatformat:3 }} USD
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% else %}
+        <div class="{% if usage.get_remaining_messages <= 20 %}bg-yellow-50 border-yellow-200{% else %}bg-blue-50 border-blue-200{% endif %} border rounded-lg p-3 mb-4">
+            <div class="flex justify-between items-center">
+                <span class="text-sm {% if usage.get_remaining_messages <= 20 %}text-yellow-800{% else %}text-blue-800{% endif %}">
+                    <i class="fas fa-check-circle mr-1"></i>
+                    Mensajes restantes
+                </span>
+                <span class="text-2xl font-bold {% if usage.get_remaining_messages <= 20 %}text-yellow-900{% else %}text-blue-900{% endif %}">
+                    {{ usage.get_remaining_messages }}
+                </span>
+            </div>
+        </div>
+    {% endif %}
+    
+    <!-- Detalles del plan -->
+    <div class="border-t border-gray-200 pt-4 mt-4">
+        <div class="flex justify-between items-center mb-3">
+            <span class="text-sm text-gray-600">Plan actual:</span>
+            <span class="bg-indigo-100 text-indigo-800 text-xs font-medium px-2.5 py-0.5 rounded">{{ plan_name }}</span>
+        </div>
+        
+        {% if usage.is_over_limit %}
+            <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+                <p class="font-semibold text-yellow-900 text-sm mb-1">
+                    <i class="fas fa-lightbulb mr-1"></i>
+                    ¿Necesitas más mensajes?
+                </p>
+                <p class="text-xs text-yellow-800 mb-2">
+                    Actualiza tu plan para obtener más mensajes incluidos y reducir costos.
+                </p>
+                <a href="{% url 'pricing' %}" class="block w-full text-center bg-yellow-500 hover:bg-yellow-600 text-white text-sm font-medium py-2 px-4 rounded transition-colors">
+                    <i class="fas fa-arrow-up mr-1"></i> Ver Planes
+                </a>
+            </div>
+        {% elif usage.get_usage_percentage >= 80 %}
+            <div class="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                <p class="text-xs text-blue-800">
+                    <i class="fas fa-info-circle mr-1"></i>
+                    Estás cerca del límite. Considera actualizar tu plan para evitar cargos adicionales.
+                </p>
+            </div>
+        {% endif %}
+    </div>
+    
+    <!-- Footer con histórico -->
+    <div class="border-t border-gray-200 mt-4 pt-4">
+        <div class="flex justify-between items-center">
+            <span class="text-xs text-gray-500">
+                <i class="fas fa-calendar-alt mr-1"></i>
+                Período: {{ current_month }}
+            </span>
+            <a href="{% url 'dashboard:whatsapp_usage_history' %}" class="text-xs text-indigo-600 hover:text-indigo-800 font-medium transition-colors">
+                <i class="fas fa-history mr-1"></i>
+                Historial
+            </a>
+        </div>
+    </div>
+</div>
+

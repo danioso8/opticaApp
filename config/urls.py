@@ -36,8 +36,14 @@ urlpatterns = [
     # Billing URLs (Facturación Electrónica DIAN)
     path('dashboard/billing/', include('apps.billing.urls')),
     
+    # Payroll URLs (Nómina Electrónica DIAN)
+    path('dashboard/payroll/', include('apps.payroll.urls')),
+    
     # Sales URLs
     path('dashboard/sales/', include('apps.sales.urls')),
+    
+    # Inventory URLs
+    path('dashboard/inventory/', include('apps.inventory.urls')),
     
     # API URLs
     path('api/', include('apps.appointments.urls')),

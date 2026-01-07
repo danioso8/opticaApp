@@ -9,21 +9,28 @@ logger = logging.getLogger(__name__)
 
 
 class WhatsAppNotifier:
-    """Clase para enviar notificaciones por WhatsApp"""
+    """Clase para enviar notificaciones por WhatsApp usando cuenta Twilio centralizada"""
     
-    def __init__(self):
-        """Inicializa el cliente de Twilio"""
+    def __init__(self, organization=None):
+        """Inicializa el cliente de Twilio usando configuración global del sistema
+        
+        Args:
+            organization: Organización (usado solo para verificar si tienen WhatsApp habilitado)
+        """
         try:
+            # CONFIGURACIÓN GLOBAL - Una sola cuenta Twilio para todo el sistema
             self.account_sid = getattr(settings, 'TWILIO_ACCOUNT_SID', None)
             self.auth_token = getattr(settings, 'TWILIO_AUTH_TOKEN', None)
             self.whatsapp_from = getattr(settings, 'TWILIO_WHATSAPP_FROM', None)
+            self.organization = organization
             
             if self.account_sid and self.auth_token:
                 self.client = Client(self.account_sid, self.auth_token)
                 self.enabled = True
+                logger.info("Twilio inicializado correctamente (configuración global)")
             else:
                 self.enabled = False
-                logger.warning("Twilio no está configurado. Las notificaciones por WhatsApp están deshabilitadas.")
+                logger.warning("Twilio no está configurado en settings.py. Las notificaciones por WhatsApp están deshabilitadas.")
         except Exception as e:
             self.enabled = False
             logger.error(f"Error al inicializar Twilio: {e}")

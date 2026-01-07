@@ -1,0 +1,157 @@
+{% extends 'dashboard/base.html' %}
+{% load static %}
+
+{% block title %}Empleados - Nómina{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-6">
+    <!-- Breadcrumb -->
+    <div class="mb-6">
+        <a href="{% url 'payroll:payroll_dashboard' %}" class="text-indigo-600 hover:text-indigo-800 font-medium">
+            <i class="fas fa-arrow-left mr-2"></i>
+            Volver al Dashboard de Nómina
+        </a>
+    </div>
+
+    <!-- Header -->
+    <div class="flex justify-between items-center mb-6">
+        <div>
+            <h1 class="text-3xl font-bold text-gray-800">
+                <i class="fas fa-users text-indigo-600 mr-2"></i>
+                Empleados
+            </h1>
+            <p class="text-gray-600 mt-1">
+                {{ employees|length }} empleado{{ employees|length|pluralize }} 
+                {% if status_filter %}
+                    {{ status_filter }}{{ employees|length|pluralize }}
+                {% endif %}
+                (Total: {{ total_activos }} activos, {{ total_inactivos }} inactivos)
+            </p>
+        </div>
+        <a href="{% url 'payroll:employee_create' %}" class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-lg font-medium transition">
+            <i class="fas fa-plus mr-2"></i>
+            Nuevo Empleado
+        </a>
+    </div>
+
+    <!-- Barra de búsqueda y filtros -->
+    <div class="bg-white rounded-lg shadow-md p-4 mb-6">
+        <form method="get" class="mb-4">
+            <div class="flex items-center space-x-3">
+                <div class="flex-1">
+                    <input type="text" 
+                           name="search" 
+                           value="{{ search|default:'' }}" 
+                           placeholder="Buscar por nombre, documento, email o cargo..."
+                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                </div>
+                <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded-lg font-medium">
+                    <i class="fas fa-search mr-2"></i>Buscar
+                </button>
+                {% if search %}
+                <a href="{% url 'payroll:employee_list' %}" class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg">
+                    <i class="fas fa-times"></i>
+                </a>
+                {% endif %}
+            </div>
+        </form>
+        <div class="flex items-center space-x-4">
+            <a href="{% url 'payroll:employee_list' %}" 
+               class="px-4 py-2 rounded-lg {% if not status_filter %}bg-indigo-600 text-white{% else %}bg-gray-200 text-gray-700 hover:bg-gray-300{% endif %}">
+                <i class="fas fa-users mr-1"></i> Todos ({{ total_activos|add:total_inactivos }})
+            </a>
+            <a href="?status=activo" 
+               class="px-4 py-2 rounded-lg {% if status_filter == 'activo' %}bg-green-600 text-white{% else %}bg-gray-200 text-gray-700 hover:bg-gray-300{% endif %}">
+                <i class="fas fa-check-circle mr-1"></i> Activos ({{ total_activos }})
+            </a>
+            <a href="?status=inactivo" 
+               class="px-4 py-2 rounded-lg {% if status_filter == 'inactivo' %}bg-red-600 text-white{% else %}bg-gray-200 text-gray-700 hover:bg-gray-300{% endif %}">
+                <i class="fas fa-times-circle mr-1"></i> Inactivos ({{ total_inactivos }})
+            </a>
+        </div>
+    </div>
+
+    <!-- Tabla de empleados -->
+    {% if employees %}
+    <div class="bg-white rounded-lg shadow-md overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Empleado</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Documento</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cargo</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Salario</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fecha Ingreso</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estado</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    {% for employee in employees %}
+                    <tr class="hover:bg-gray-50">
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="flex items-center">
+                                <div class="flex-shrink-0 h-10 w-10">
+                                    <div class="h-10 w-10 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-md">
+                                        <span class="text-white font-bold text-sm">{{ employee.nombres.0 }}{{ employee.apellidos.0 }}</span>
+                                    </div>
+                                </div>
+                                <div class="ml-4">
+                                    <div class="text-sm font-medium text-gray-900">{{ employee.get_full_name }}</div>
+                                    <div class="text-sm text-gray-500">{{ employee.email }}</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {{ employee.get_tipo_documento_display }} {{ employee.numero_documento }}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {{ employee.cargo }}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                            ${{ employee.salario_basico|floatformat:0 }}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {{ employee.fecha_ingreso|date:"d/m/Y" }}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            {% if employee.activo %}
+                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                                Activo
+                            </span>
+                            {% else %}
+                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">
+                                Inactivo
+                            </span>
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
+                            <a href="{% url 'payroll:employee_edit' employee.pk %}" 
+                               class="inline-flex items-center px-3 py-1 bg-indigo-100 text-indigo-700 hover:bg-indigo-200 rounded-lg transition">
+                                <i class="fas fa-edit mr-1"></i> Editar
+                            </a>
+                            <a href="{% url 'payroll:employee_delete' employee.pk %}" 
+                               class="inline-flex items-center px-3 py-1 bg-red-100 text-red-700 hover:bg-red-200 rounded-lg transition">
+                                <i class="fas fa-trash mr-1"></i> Eliminar
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% else %}
+    <div class="bg-white rounded-lg shadow-md p-12 text-center">
+        <i class="fas fa-users text-gray-400 text-6xl mb-4"></i>
+        <h3 class="text-xl font-medium text-gray-900 mb-2">No hay empleados registrados</h3>
+        <p class="text-gray-500 mb-6">Comienza agregando tu primer empleado para la nómina</p>
+        <a href="{% url 'payroll:employee_create' %}" class="inline-block bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-lg font-medium">
+            <i class="fas fa-plus mr-2"></i>
+            Crear Primer Empleado
+        </a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

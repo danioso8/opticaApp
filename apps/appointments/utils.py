@@ -34,7 +34,7 @@ def generate_time_slots(start_time, end_time, duration_minutes=30):
     return slots
 
 
-def get_available_slots_for_date(date, organization=None, doctor_id=None):
+def get_available_slots_for_date(date, organization=None, doctor_id=None, only_available=False):
     """
     Obtiene los horarios disponibles para una fecha específica
     
@@ -42,6 +42,7 @@ def get_available_slots_for_date(date, organization=None, doctor_id=None):
         date: Fecha a consultar (date object)
         organization: Organización (opcional)
         doctor_id: ID del doctor (opcional)
+        only_available: Si es True, solo devuelve slots disponibles (default: False)
     
     Returns:
         Lista de diccionarios con información de slots disponibles
@@ -144,6 +145,10 @@ def get_available_slots_for_date(date, organization=None, doctor_id=None):
             continue
         
         is_available = slot not in booked_appointments
+        
+        # Si only_available=True, solo agregar slots disponibles
+        if only_available and not is_available:
+            continue
         
         available_slots.append({
             'time': slot,

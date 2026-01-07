@@ -1,5 +1,41 @@
 # Generated manually on 2025-12-17
-from django.db import migrations, models
+from django.db import migrations, connection
+
+
+def convert_to_varchar(apps, schema_editor):
+    """Solo ejecutar en PostgreSQL - SQLite ya maneja esto correctamente"""
+    if connection.vendor == 'postgresql':
+        with connection.cursor() as cursor:
+            cursor.execute("""
+                ALTER TABLE patients_clinicalhistory 
+                ALTER COLUMN refraction_od_sphere TYPE VARCHAR(10) 
+                USING refraction_od_sphere::text;
+            """)
+            cursor.execute("""
+                ALTER TABLE patients_clinicalhistory 
+                ALTER COLUMN refraction_os_sphere TYPE VARCHAR(10) 
+                USING refraction_os_sphere::text;
+            """)
+
+
+def reverse_convert(apps, schema_editor):
+    """Reversión - solo en PostgreSQL"""
+    if connection.vendor == 'postgresql':
+        with connection.cursor() as cursor:
+            cursor.execute("""
+                ALTER TABLE patients_clinicalhistory 
+                ALTER COLUMN refraction_od_sphere TYPE NUMERIC 
+                USING CASE WHEN refraction_od_sphere ~ '^[-+]?[0-9]*\\.?[0-9]+$' 
+                      THEN refraction_od_sphere::numeric 
+                      ELSE NULL END;
+            """)
+            cursor.execute("""
+                ALTER TABLE patients_clinicalhistory 
+                ALTER COLUMN refraction_os_sphere TYPE NUMERIC 
+                USING CASE WHEN refraction_os_sphere ~ '^[-+]?[0-9]*\\.?[0-9]+$' 
+                      THEN refraction_os_sphere::numeric 
+                      ELSE NULL END;
+            """)
 
 
 class Migration(migrations.Migration):
@@ -9,17 +45,7 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        # Paso 1: Cambiar el tipo con conversión explícita usando SQL raw
-        migrations.RunSQL(
-            # Forward: convertir de numeric a varchar
-            sql=[
-                "ALTER TABLE patients_clinicalhistory ALTER COLUMN refraction_od_sphere TYPE VARCHAR(10) USING refraction_od_sphere::text;",
-                "ALTER TABLE patients_clinicalhistory ALTER COLUMN refraction_os_sphere TYPE VARCHAR(10) USING refraction_os_sphere::text;",
-            ],
-            # Reverse: volver a numeric (opcional)
-            reverse_sql=[
-                "ALTER TABLE patients_clinicalhistory ALTER COLUMN refraction_od_sphere TYPE NUMERIC USING CASE WHEN refraction_od_sphere ~ '^[-+]?[0-9]*\\.?[0-9]+$' THEN refraction_od_sphere::numeric ELSE NULL END;",
-                "ALTER TABLE patients_clinicalhistory ALTER COLUMN refraction_os_sphere TYPE NUMERIC USING CASE WHEN refraction_os_sphere ~ '^[-+]?[0-9]*\\.?[0-9]+$' THEN refraction_os_sphere::numeric ELSE NULL END;",
-            ]
-        ),
+        migrations.RunPython(convert_to_varchar, reverse_convert),
     ]
+
+

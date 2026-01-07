@@ -68,6 +68,12 @@ class Employee(models.Model):
     salary = models.DecimalField('Salario', max_digits=12, decimal_places=2, null=True, blank=True)
     is_active = models.BooleanField('Activo', default=True)
     
+    # Nómina
+    incluir_en_nomina = models.BooleanField('Incluir en Nómina', default=False, 
+                                            help_text='Si está activado, este empleado aparecerá en el módulo de nómina electrónica')
+    ciudad = models.CharField('Ciudad', max_length=100, blank=True, default='Bogotá')
+    departamento_ubicacion = models.CharField('Departamento/Estado', max_length=100, blank=True, default='Cundinamarca')
+    
     # Metadata
     created_at = models.DateTimeField('Fecha de Creación', auto_now_add=True)
     updated_at = models.DateTimeField('Última Actualización', auto_now=True)

@@ -1,0 +1,296 @@
+{% extends "dashboard/base.html" %}
+{% load static %}
+
+{% block title %}Crear Ajuste de Inventario | OpticaApp{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <!-- Header -->
+    <div class="flex items-center justify-between mb-8">
+        <div>
+            <h1 class="text-3xl font-bold text-gray-800">Crear Ajuste de Inventario</h1>
+            <p class="text-gray-600 mt-2">Registre correcciones de inventario con justificación</p>
+        </div>
+        <a href="{% url 'inventory:adjustment_list' %}" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition">
+            <i class="fas fa-arrow-left mr-2"></i>Volver
+        </a>
+    </div>
+
+    <!-- Warning Alert -->
+    <div class="bg-yellow-50 border-l-4 border-yellow-400 p-6 mb-6 rounded-r-lg">
+        <div class="flex items-start">
+            <i class="fas fa-exclamation-triangle text-yellow-600 text-xl mt-1 mr-3"></i>
+            <div>
+                <h3 class="text-lg font-semibold text-yellow-800 mb-2">Importante</h3>
+                <p class="text-yellow-700 text-sm">
+                    Los ajustes de inventario modifican directamente el stock. Asegúrese de verificar la información antes de guardar.
+                    Los ajustes quedarán pendientes de aprobación por un supervisor.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Form -->
+    <form method="post" id="adjustmentForm" class="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
+        {% csrf_token %}
+
+        <!-- Product Selection -->
+        <div class="mb-8">
+            <h3 class="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+                <i class="fas fa-box text-blue-600 mr-2"></i>
+                Información del Producto
+            </h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Producto *</label>
+                    <select name="product" id="productSelect" required
+                            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        <option value="">Seleccione un producto...</option>
+                        {% for product in products %}
+                        <option value="{{ product.id }}" 
+                                data-sku="{{ product.sku }}"
+                                data-unit="{{ product.unit }}"
+                                data-stock="{{ product.stock }}"
+                                data-min-stock="{{ product.min_stock }}">
+                            {{ product.name }} - SKU: {{ product.sku }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div id="productInfo" class="hidden bg-blue-50 rounded-lg p-4 border border-blue-200">
+                    <div class="grid grid-cols-2 gap-3 text-sm">
+                        <div>
+                            <p class="text-gray-600">Stock Actual:</p>
+                            <p class="font-semibold text-blue-600 text-xl" id="currentStock">-</p>
+                        </div>
+                        <div>
+                            <p class="text-gray-600">Stock Mínimo:</p>
+                            <p class="font-semibold text-gray-800" id="minStock">-</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Adjustment Details -->
+        <div class="mb-8">
+            <h3 class="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+                <i class="fas fa-edit text-blue-600 mr-2"></i>
+                Detalles del Ajuste
+            </h3>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Tipo de Ajuste *</label>
+                    <select name="adjustment_type" id="adjustmentType" required
+                            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        <option value="">Seleccione tipo...</option>
+                        <option value="INCREASE">Incremento (+)</option>
+                        <option value="DECREASE">Decremento (-)</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Cantidad *</label>
+                    <input type="number" name="quantity" id="quantity" min="1" step="1" required
+                           placeholder="0"
+                           class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                </div>
+                <div id="resultingStock" class="hidden">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Stock Resultante</label>
+                    <div class="px-4 py-3 bg-gray-100 rounded-lg">
+                        <p class="text-2xl font-bold text-center" id="newStockValue">-</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Reason -->
+        <div class="mb-8">
+            <h3 class="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+                <i class="fas fa-comment-alt text-blue-600 mr-2"></i>
+                Justificación
+            </h3>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Razón del Ajuste *</label>
+                <select name="reason_type" id="reasonType" required
+                        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent mb-4">
+                    <option value="">Seleccione una razón...</option>
+                    <option value="INVENTORY_COUNT">Conteo de Inventario</option>
+                    <option value="DAMAGED">Producto Dañado/Deteriorado</option>
+                    <option value="EXPIRED">Producto Vencido</option>
+                    <option value="LOSS">Pérdida/Robo</option>
+                    <option value="FOUND">Producto Encontrado</option>
+                    <option value="ERROR">Corrección de Error</option>
+                    <option value="OTHER">Otro (especificar)</option>
+                </select>
+                
+                <label class="block text-sm font-medium text-gray-700 mb-2">Descripción Detallada *</label>
+                <textarea name="reason" id="reasonText" rows="4" required
+                          placeholder="Describa detalladamente la razón del ajuste..."
+                          class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"></textarea>
+                <p class="text-xs text-gray-500 mt-1">
+                    Sea lo más específico posible. Esta información será revisada por el supervisor.
+                </p>
+            </div>
+        </div>
+
+        <!-- Warning for Decrease -->
+        <div id="decreaseWarning" class="hidden mb-8">
+            <div class="bg-red-50 border-l-4 border-red-400 p-6 rounded-r-lg">
+                <div class="flex items-start">
+                    <i class="fas fa-exclamation-circle text-red-600 text-xl mt-1 mr-3"></i>
+                    <div>
+                        <h4 class="text-red-800 font-semibold mb-1">Advertencia de Decremento</h4>
+                        <p class="text-red-700 text-sm" id="decreaseWarningText"></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="flex items-center justify-end gap-3 pt-6 border-t border-gray-200">
+            <a href="{% url 'inventory:adjustment_list' %}" class="px-6 py-3 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition">
+                Cancelar
+            </a>
+            <button type="submit" class="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
+                <i class="fas fa-save mr-2"></i>Guardar Ajuste
+            </button>
+        </div>
+    </form>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const productSelect = document.getElementById('productSelect');
+    const productInfo = document.getElementById('productInfo');
+    const currentStock = document.getElementById('currentStock');
+    const minStock = document.getElementById('minStock');
+    const adjustmentType = document.getElementById('adjustmentType');
+    const quantity = document.getElementById('quantity');
+    const resultingStock = document.getElementById('resultingStock');
+    const newStockValue = document.getElementById('newStockValue');
+    const decreaseWarning = document.getElementById('decreaseWarning');
+    const decreaseWarningText = document.getElementById('decreaseWarningText');
+    const reasonType = document.getElementById('reasonType');
+    const reasonText = document.getElementById('reasonText');
+
+    let currentStockValue = 0;
+    let minStockValue = 0;
+
+    // Product selection handler
+    productSelect.addEventListener('change', function() {
+        const selectedOption = this.options[this.selectedIndex];
+        if (this.value) {
+            currentStockValue = parseFloat(selectedOption.dataset.stock);
+            minStockValue = parseFloat(selectedOption.dataset.minStock);
+            const unit = selectedOption.dataset.unit;
+
+            currentStock.textContent = `${currentStockValue} ${unit}`;
+            minStock.textContent = `${minStockValue} ${unit}`;
+            productInfo.classList.remove('hidden');
+            
+            calculateResultingStock();
+        } else {
+            productInfo.classList.add('hidden');
+            resultingStock.classList.add('hidden');
+        }
+    });
+
+    // Calculate resulting stock
+    function calculateResultingStock() {
+        const type = adjustmentType.value;
+        const qty = parseFloat(quantity.value) || 0;
+        
+        if (!productSelect.value || !type || qty === 0) {
+            resultingStock.classList.add('hidden');
+            decreaseWarning.classList.add('hidden');
+            return;
+        }
+
+        let newStock = currentStockValue;
+        if (type === 'INCREASE') {
+            newStock += qty;
+        } else if (type === 'DECREASE') {
+            newStock -= qty;
+        }
+
+        newStockValue.textContent = newStock;
+        resultingStock.classList.remove('hidden');
+
+        // Color coding
+        if (newStock < 0) {
+            newStockValue.className = 'text-2xl font-bold text-center text-red-600';
+            decreaseWarningText.textContent = 'El stock resultante será negativo. Verifique la cantidad.';
+            decreaseWarning.classList.remove('hidden');
+        } else if (newStock < minStockValue) {
+            newStockValue.className = 'text-2xl font-bold text-center text-orange-600';
+            decreaseWarningText.textContent = `El stock resultante estará por debajo del mínimo (${minStockValue}).`;
+            decreaseWarning.classList.remove('hidden');
+        } else {
+            newStockValue.className = 'text-2xl font-bold text-center text-green-600';
+            decreaseWarning.classList.add('hidden');
+        }
+    }
+
+    adjustmentType.addEventListener('change', calculateResultingStock);
+    quantity.addEventListener('input', calculateResultingStock);
+
+    // Auto-fill reason based on type
+    reasonType.addEventListener('change', function() {
+        const type = this.value;
+        let template = '';
+        
+        switch(type) {
+            case 'INVENTORY_COUNT':
+                template = 'Conteo físico realizado el [FECHA]. Diferencia encontrada: ';
+                break;
+            case 'DAMAGED':
+                template = 'Producto encontrado dañado/deteriorado. Detalles: ';
+                break;
+            case 'EXPIRED':
+                template = 'Producto vencido. Fecha de vencimiento: ';
+                break;
+            case 'LOSS':
+                template = 'Pérdida detectada. Circunstancias: ';
+                break;
+            case 'FOUND':
+                template = 'Producto encontrado durante revisión. Ubicación: ';
+                break;
+            case 'ERROR':
+                template = 'Corrección de error en registro anterior. Número de movimiento: ';
+                break;
+        }
+        
+        if (template && !reasonText.value) {
+            reasonText.value = template;
+            reasonText.focus();
+        }
+    });
+
+    // Form validation
+    document.getElementById('adjustmentForm').addEventListener('submit', function(e) {
+        const newStock = parseFloat(newStockValue.textContent);
+        
+        if (newStock < 0) {
+            if (!confirm('El stock resultante será negativo. ¿Está seguro de continuar?')) {
+                e.preventDefault();
+                return false;
+            }
+        }
+
+        if (adjustmentType.value === 'DECREASE' && newStock < minStockValue) {
+            if (!confirm(`El stock quedará por debajo del mínimo (${minStockValue}). ¿Desea continuar?`)) {
+                e.preventDefault();
+                return false;
+            }
+        }
+
+        // Check reason length
+        if (reasonText.value.trim().length < 20) {
+            alert('La descripción de la razón debe tener al menos 20 caracteres.');
+            e.preventDefault();
+            return false;
+        }
+    });
+});
+</script>
+{% endblock %}

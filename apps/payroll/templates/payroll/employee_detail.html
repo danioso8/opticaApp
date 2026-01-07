@@ -1,0 +1,166 @@
+{% extends 'dashboard/base.html' %}
+{% load static %}
+
+{% block title %}Detalle de Empleado{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-6 max-w-5xl">
+    <!-- Breadcrumb -->
+    <div class="flex items-center text-gray-600 text-sm mb-4">
+        <a href="{% url 'payroll:payroll_dashboard' %}" class="hover:text-indigo-600">Nómina</a>
+        <i class="fas fa-chevron-right mx-2 text-xs"></i>
+        <a href="{% url 'payroll:employee_list' %}" class="hover:text-indigo-600">Empleados</a>
+        <i class="fas fa-chevron-right mx-2 text-xs"></i>
+        <span>{{ employee.nombres }} {{ employee.apellidos }}</span>
+    </div>
+
+    <!-- Header -->
+    <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+        <div class="flex items-start justify-between">
+            <div class="flex items-center">
+                <div class="w-20 h-20 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white text-2xl font-bold">
+                    {{ employee.nombres.0 }}{{ employee.apellidos.0 }}
+                </div>
+                <div class="ml-6">
+                    <h1 class="text-3xl font-bold text-gray-800">{{ employee.nombres }} {{ employee.apellidos }}</h1>
+                    <p class="text-gray-600 mt-1">{{ employee.cargo }}</p>
+                    <div class="mt-2">
+                        {% if employee.activo %}
+                        <span class="px-3 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
+                            <i class="fas fa-check-circle mr-1"></i> Activo
+                        </span>
+                        {% else %}
+                        <span class="px-3 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800">
+                            <i class="fas fa-times-circle mr-1"></i> Inactivo
+                        </span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            <div class="flex space-x-2">
+                <a href="{% url 'payroll:employee_edit' employee.pk %}" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg font-medium">
+                    <i class="fas fa-edit mr-2"></i>Editar
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Información Personal -->
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <h2 class="text-xl font-bold text-gray-800 mb-4 border-b pb-2">
+                <i class="fas fa-user text-indigo-600 mr-2"></i>
+                Información Personal
+            </h2>
+            <dl class="space-y-3">
+                <div class="flex justify-between py-2 border-b border-gray-100">
+                    <dt class="text-gray-600 font-medium">Documento:</dt>
+                    <dd class="text-gray-900">{{ employee.get_tipo_documento_display }} {{ employee.numero_documento }}</dd>
+                </div>
+                <div class="flex justify-between py-2 border-b border-gray-100">
+                    <dt class="text-gray-600 font-medium">Email:</dt>
+                    <dd class="text-gray-900">{{ employee.email }}</dd>
+                </div>
+                <div class="flex justify-between py-2 border-b border-gray-100">
+                    <dt class="text-gray-600 font-medium">Teléfono:</dt>
+                    <dd class="text-gray-900">{{ employee.telefono|default:"No registrado" }}</dd>
+                </div>
+                <div class="flex justify-between py-2 border-b border-gray-100">
+                    <dt class="text-gray-600 font-medium">Dirección:</dt>
+                    <dd class="text-gray-900">{{ employee.direccion }}</dd>
+                </div>
+                <div class="flex justify-between py-2">
+                    <dt class="text-gray-600 font-medium">Ciudad:</dt>
+                    <dd class="text-gray-900">{{ employee.ciudad }}, {{ employee.departamento }}</dd>
+                </div>
+            </dl>
+        </div>
+
+        <!-- Información Laboral -->
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <h2 class="text-xl font-bold text-gray-800 mb-4 border-b pb-2">
+                <i class="fas fa-briefcase text-green-600 mr-2"></i>
+                Información Laboral
+            </h2>
+            <dl class="space-y-3">
+                <div class="flex justify-between py-2 border-b border-gray-100">
+                    <dt class="text-gray-600 font-medium">Tipo de Contrato:</dt>
+                    <dd class="text-gray-900">{{ employee.get_tipo_contrato_display }}</dd>
+                </div>
+                <div class="flex justify-between py-2 border-b border-gray-100">
+                    <dt class="text-gray-600 font-medium">Fecha de Ingreso:</dt>
+                    <dd class="text-gray-900">{{ employee.fecha_ingreso|date:"d/m/Y" }}</dd>
+                </div>
+                <div class="flex justify-between py-2 border-b border-gray-100">
+                    <dt class="text-gray-600 font-medium">Cargo:</dt>
+                    <dd class="text-gray-900">{{ employee.cargo }}</dd>
+                </div>
+                <div class="flex justify-between py-2">
+                    <dt class="text-gray-600 font-medium">Salario Básico:</dt>
+                    <dd class="text-gray-900 font-bold text-lg">${{ employee.salario_basico|floatformat:0 }}</dd>
+                </div>
+            </dl>
+        </div>
+
+        <!-- Información Bancaria -->
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <h2 class="text-xl font-bold text-gray-800 mb-4 border-b pb-2">
+                <i class="fas fa-university text-blue-600 mr-2"></i>
+                Información Bancaria
+            </h2>
+            {% if employee.banco %}
+            <dl class="space-y-3">
+                <div class="flex justify-between py-2 border-b border-gray-100">
+                    <dt class="text-gray-600 font-medium">Banco:</dt>
+                    <dd class="text-gray-900">{{ employee.banco }}</dd>
+                </div>
+                <div class="flex justify-between py-2 border-b border-gray-100">
+                    <dt class="text-gray-600 font-medium">Tipo de Cuenta:</dt>
+                    <dd class="text-gray-900">{{ employee.get_tipo_cuenta_display }}</dd>
+                </div>
+                <div class="flex justify-between py-2">
+                    <dt class="text-gray-600 font-medium">Número de Cuenta:</dt>
+                    <dd class="text-gray-900 font-mono">{{ employee.numero_cuenta }}</dd>
+                </div>
+            </dl>
+            {% else %}
+            <p class="text-gray-500 text-center py-4">
+                <i class="fas fa-info-circle mr-2"></i>
+                No se ha registrado información bancaria
+            </p>
+            {% endif %}
+        </div>
+
+        <!-- Historial de Nómina -->
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <h2 class="text-xl font-bold text-gray-800 mb-4 border-b pb-2">
+                <i class="fas fa-history text-purple-600 mr-2"></i>
+                Historial de Pagos
+            </h2>
+            {% if payroll_entries %}
+            <div class="space-y-2">
+                {% for entry in payroll_entries %}
+                <div class="flex justify-between items-center py-3 border-b border-gray-100 hover:bg-gray-50 px-2 rounded">
+                    <div>
+                        <p class="font-medium text-gray-900">{{ entry.payroll_period.nombre }}</p>
+                        <p class="text-xs text-gray-500">{{ entry.payroll_period.fecha_pago|date:"d/m/Y" }}</p>
+                    </div>
+                    <div class="text-right">
+                        <p class="font-bold text-gray-900">${{ entry.neto_pagar|floatformat:0 }}</p>
+                        <span class="text-xs px-2 py-1 rounded-full {% if entry.payroll_period.estado == 'VALIDADO_DIAN' %}bg-green-100 text-green-800{% else %}bg-gray-100 text-gray-800{% endif %}">
+                            {{ entry.payroll_period.get_estado_display }}
+                        </span>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <p class="text-gray-500 text-center py-4">
+                <i class="fas fa-inbox mr-2"></i>
+                No hay pagos registrados
+            </p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

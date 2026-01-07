@@ -7,6 +7,13 @@ from apps.dashboard.models_employee import Employee
 from apps.organizations.models import OrganizationMember
 from datetime import datetime
 
+# Importar modelo de nómina para sincronización
+try:
+    from apps.payroll.models import Employee as PayrollEmployee
+    PAYROLL_INSTALLED = True
+except ImportError:
+    PAYROLL_INSTALLED = False
+
 
 @login_required
 def employee_list(request):
@@ -41,12 +48,29 @@ def employee_list(request):
     elif status == 'inactive':
         employees = employees.filter(is_active=False)
     
+    # Agregar información de sincronización con nómina
+    employees_with_sync = []
+    for emp in employees:
+        emp_data = emp
+        emp_data.in_payroll = False
+        if PAYROLL_INSTALLED:
+            try:
+                payroll_emp = PayrollEmployee.objects.filter(
+                    organization=organization,
+                    numero_documento=emp.identification
+                ).first()
+                emp_data.in_payroll = payroll_emp is not None
+            except:
+                pass
+        employees_with_sync.append(emp_data)
+    
     context = {
-        'employees': employees,
+        'employees': employees_with_sync,
         'position_choices': Employee.POSITION_CHOICES,
         'search': search,
         'selected_position': position,
         'selected_status': status,
+        'payroll_installed': PAYROLL_INSTALLED,
     }
     
     return render(request, 'dashboard/employees/employee_list.html', context)
@@ -90,7 +114,38 @@ def employee_create(request):
                 hire_date=request.POST.get('hire_date'),
                 salary=request.POST.get('salary') or None,
                 is_active=request.POST.get('is_active') == 'true',
+                incluir_en_nomina=request.POST.get('incluir_en_nomina') == 'true',
+                ciudad=request.POST.get('ciudad', 'Bogotá'),
+                departamento_ubicacion=request.POST.get('departamento_ubicacion', 'Cundinamarca'),
             )
+            
+            # Sincronizar con nómina solo si está marcado para incluir en nómina
+            if PAYROLL_INSTALLED and employee.incluir_en_nomina:
+                try:
+                    # Crear o actualizar empleado en nómina
+                    PayrollEmployee.objects.update_or_create(
+                        organization=organization,
+                        numero_documento=identification,
+                        defaults={
+                            'tipo_documento': request.POST.get('document_type', 'CC'),
+                            'primer_nombre': request.POST.get('first_name').split()[0] if request.POST.get('first_name') else '',
+                            'segundo_nombre': ' '.join(request.POST.get('first_name').split()[1:]) if len(request.POST.get('first_name', '').split()) > 1 else '',
+                            'primer_apellido': request.POST.get('last_name').split()[0] if request.POST.get('last_name') else '',
+                            'segundo_apellido': ' '.join(request.POST.get('last_name').split()[1:]) if len(request.POST.get('last_name', '').split()) > 1 else '',
+                            'email': request.POST.get('email', ''),
+                            'telefono': request.POST.get('phone', ''),
+                            'direccion': request.POST.get('address', ''),
+                            'ciudad': 'Bogotá',  # Valor por defecto
+                            'departamento': 'Cundinamarca',  # Valor por defecto
+                            'cargo': request.POST.get('position', 'OTRO'),
+                            'fecha_ingreso': request.POST.get('hire_date'),
+                            'salario_basico': request.POST.get('salary') or 1300000,
+                            'activo': request.POST.get('is_active') == 'true',
+                        }
+                    )
+                except Exception as sync_error:
+                    # Log error pero no fallar la creación del empleado
+                    print(f"Error sincronizando con nómina: {sync_error}")
             
             return JsonResponse({
                 'success': True,
@@ -148,7 +203,37 @@ def employee_update(request, pk):
             employee.hire_date = request.POST.get('hire_date')
             employee.salary = request.POST.get('salary') or None
             employee.is_active = request.POST.get('is_active') == 'true'
+            employee.incluir_en_nomina = request.POST.get('incluir_en_nomina') == 'true'
+            employee.ciudad = request.POST.get('ciudad', 'Bogotá')
+            employee.departamento_ubicacion = request.POST.get('departamento_ubicacion', 'Cundinamarca')
             employee.save()
+            
+            # Sincronizar con nómina solo si está marcado
+            if PAYROLL_INSTALLED and employee.incluir_en_nomina:
+                try:
+                    # Actualizar empleado en nómina
+                    PayrollEmployee.objects.update_or_create(
+                        organization=organization,
+                        numero_documento=identification,
+                        defaults={
+                            'tipo_documento': request.POST.get('document_type', 'CC'),
+                            'primer_nombre': request.POST.get('first_name').split()[0] if request.POST.get('first_name') else '',
+                            'segundo_nombre': ' '.join(request.POST.get('first_name').split()[1:]) if len(request.POST.get('first_name', '').split()) > 1 else '',
+                            'primer_apellido': request.POST.get('last_name').split()[0] if request.POST.get('last_name') else '',
+                            'segundo_apellido': ' '.join(request.POST.get('last_name').split()[1:]) if len(request.POST.get('last_name', '').split()) > 1 else '',
+                            'email': request.POST.get('email', ''),
+                            'telefono': request.POST.get('phone', ''),
+                            'direccion': request.POST.get('address', ''),
+                            'ciudad': 'Bogotá',
+                            'departamento': 'Cundinamarca',
+                            'cargo': request.POST.get('position', 'OTRO'),
+                            'fecha_ingreso': request.POST.get('hire_date'),
+                            'salario_basico': request.POST.get('salary') or 1300000,
+                            'activo': request.POST.get('is_active') == 'true',
+                        }
+                    )
+                except Exception as sync_error:
+                    print(f"Error sincronizando con nómina: {sync_error}")
             
             return JsonResponse({
                 'success': True,
@@ -228,6 +313,9 @@ def get_employee_data(request, pk):
             'hire_date': employee.hire_date.strftime('%Y-%m-%d'),
             'salary': str(employee.salary) if employee.salary else '',
             'is_active': employee.is_active,
+            'incluir_en_nomina': employee.incluir_en_nomina,
+            'ciudad': employee.ciudad or 'Bogotá',
+            'departamento_ubicacion': employee.departamento_ubicacion or 'Cundinamarca',
         }
         
         return JsonResponse({'success': True, 'data': data})

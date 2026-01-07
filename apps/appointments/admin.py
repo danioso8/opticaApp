@@ -133,3 +133,60 @@ class TimeSlotAdmin(admin.ModelAdmin):
     list_display = ['date', 'time', 'is_available', 'manually_blocked']
     list_filter = ['date', 'is_available', 'manually_blocked']
     ordering = ['-date', 'time']
+
+
+# WhatsApp Usage Admin
+from .models_whatsapp_usage import WhatsAppUsage
+
+@admin.register(WhatsAppUsage)
+class WhatsAppUsageAdmin(admin.ModelAdmin):
+    list_display = ['organization', 'year', 'month', 'messages_sent', 'messages_included', 'messages_overage', 'overage_cost', 'get_usage_status']
+    list_filter = ['year', 'month', 'organization']
+    search_fields = ['organization__name']
+    ordering = ['-year', '-month', 'organization__name']
+    readonly_fields = ['messages_overage', 'overage_cost', 'alert_80_sent', 'alert_100_sent', 'created_at', 'updated_at']
+    
+    fieldsets = (
+        ('Organización y Período', {
+            'fields': ('organization', 'year', 'month')
+        }),
+        ('Límites y Contadores', {
+            'fields': ('messages_included', 'messages_sent', 'messages_overage')
+        }),
+        ('Facturación', {
+            'fields': ('cost_per_message', 'overage_cost')
+        }),
+        ('Alertas', {
+            'fields': ('alert_80_sent', 'alert_100_sent')
+        }),
+        ('Auditoría', {
+            'fields': ('created_at', 'updated_at'),
+            'classes': ('collapse',)
+        }),
+    )
+    
+    def get_usage_status(self, obj):
+        percentage = obj.get_usage_percentage()
+        if percentage >= 100:
+            color = 'red'
+            icon = '⚠️'
+            status = 'Límite Excedido'
+        elif percentage >= 80:
+            color = 'orange'
+            icon = '⚡'
+            status = 'Cerca del Límite'
+        else:
+            color = 'green'
+            icon = '✓'
+            status = 'Normal'
+        
+        return format_html(
+            '<span style="color: {};">{} {}  ({:.0f}%)</span>',
+            color, icon, status, percentage
+        )
+    get_usage_status.short_description = 'Estado de Uso'
+    
+    def has_add_permission(self, request):
+        # Los registros se crean automáticamente
+        return False
+

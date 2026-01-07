@@ -1,0 +1,403 @@
+{% extends "dashboard/base.html" %}
+
+{% block title %}Detalle Contrato - {{ block.super }}{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-6">
+    <!-- Header con acciones -->
+    <div class="mb-6">
+        <div class="flex items-center gap-2 text-sm text-gray-600 mb-4">
+            <a href="{% url 'payroll:contract_list' %}" class="hover:text-indigo-600">Contratos</a>
+            <i class="fas fa-chevron-right text-xs"></i>
+            <span class="text-gray-900 font-medium">{{ contract.numero_contrato }}</span>
+        </div>
+        
+        <div class="flex justify-between items-start">
+            <div>
+                <h1 class="text-3xl font-bold text-gray-800">{{ contract.numero_contrato }}</h1>
+                <p class="text-gray-600 mt-1">
+                    {{ contract.employee.get_full_name }} - {{ contract.cargo }}
+                </p>
+            </div>
+            
+            <div class="flex gap-3">
+                {% if contract.estado == 'ACTIVO' %}
+                <button type="button" onclick="terminarContrato()" class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors font-medium shadow-lg">
+                    <i class="fas fa-stop-circle mr-2"></i>Terminar Contrato
+                </button>
+                {% endif %}
+                
+                {% if contract.archivo_contrato %}
+                <a href="{{ contract.archivo_contrato.url }}" target="_blank" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors font-medium shadow-lg">
+                    <i class="fas fa-file-pdf mr-2"></i>Ver PDF
+                </a>
+                {% endif %}
+                
+                <a href="{% url 'payroll:contract_list' %}" class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-100 transition-colors font-medium">
+                    <i class="fas fa-arrow-left mr-2"></i>Volver
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Estado Badge -->
+    <div class="mb-6">
+        {% if contract.estado == 'ACTIVO' %}
+        <span class="inline-flex items-center px-4 py-2 rounded-full text-sm font-semibold bg-green-100 text-green-800">
+            <span class="w-2 h-2 bg-green-500 rounded-full mr-2 animate-pulse"></span>
+            ACTIVO
+        </span>
+        {% elif contract.estado == 'TERMINADO' %}
+        <span class="inline-flex items-center px-4 py-2 rounded-full text-sm font-semibold bg-red-100 text-red-800">
+            <i class="fas fa-stop-circle mr-2"></i>
+            TERMINADO
+        </span>
+        {% elif contract.estado == 'SUSPENDIDO' %}
+        <span class="inline-flex items-center px-4 py-2 rounded-full text-sm font-semibold bg-yellow-100 text-yellow-800">
+            <i class="fas fa-pause-circle mr-2"></i>
+            SUSPENDIDO
+        </span>
+        {% endif %}
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Información Principal -->
+        <div class="lg:col-span-2 space-y-6">
+            <!-- Datos del Contrato -->
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <h2 class="text-xl font-bold text-gray-800 mb-6 flex items-center">
+                    <i class="fas fa-file-contract text-indigo-600 mr-2"></i>
+                    Datos del Contrato
+                </h2>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-600 mb-1">Tipo de Contrato</label>
+                        <p class="text-lg font-semibold text-gray-900">
+                            {% if contract.tipo_contrato == 'INDEFINIDO' %}
+                            <i class="fas fa-infinity text-indigo-600 mr-2"></i>Indefinido
+                            {% elif contract.tipo_contrato == 'FIJO' %}
+                            <i class="fas fa-calendar-check text-blue-600 mr-2"></i>Término Fijo
+                            {% elif contract.tipo_contrato == 'OBRA_LABOR' %}
+                            <i class="fas fa-tasks text-green-600 mr-2"></i>Obra o Labor
+                            {% elif contract.tipo_contrato == 'PRESTACION_SERVICIOS' %}
+                            <i class="fas fa-handshake text-purple-600 mr-2"></i>Prestación de Servicios
+                            {% elif contract.tipo_contrato == 'APRENDIZAJE' %}
+                            <i class="fas fa-graduation-cap text-orange-600 mr-2"></i>Aprendizaje
+                            {% endif %}
+                        </p>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-600 mb-1">Cargo</label>
+                        <p class="text-lg font-semibold text-gray-900">{{ contract.cargo }}</p>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-600 mb-1">Fecha de Inicio</label>
+                        <p class="text-lg font-semibold text-gray-900">
+                            <i class="fas fa-calendar-alt text-green-600 mr-2"></i>
+                            {{ contract.fecha_inicio|date:"d/m/Y" }}
+                        </p>
+                    </div>
+
+                    {% if contract.fecha_fin %}
+                    <div>
+                        <label class="block text-sm font-medium text-gray-600 mb-1">Fecha de Fin</label>
+                        <p class="text-lg font-semibold text-gray-900">
+                            <i class="fas fa-calendar-times text-red-600 mr-2"></i>
+                            {{ contract.fecha_fin|date:"d/m/Y" }}
+                        </p>
+                    </div>
+                    {% endif %}
+
+                    {% if contract.fecha_terminacion %}
+                    <div>
+                        <label class="block text-sm font-medium text-gray-600 mb-1">Fecha de Terminación</label>
+                        <p class="text-lg font-semibold text-red-600">
+                            <i class="fas fa-calendar-minus mr-2"></i>
+                            {{ contract.fecha_terminacion|date:"d/m/Y" }}
+                        </p>
+                    </div>
+                    {% endif %}
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-600 mb-1">Salario Contratado</label>
+                        <p class="text-2xl font-bold text-green-600">
+                            ${{ contract.salario_contratado|floatformat:0|default:"0" }}
+                        </p>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-600 mb-1">Horas Semanales</label>
+                        <p class="text-lg font-semibold text-gray-900">{{ contract.horas_semanales }} horas</p>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-600 mb-1">Auxilio de Transporte</label>
+                        <p class="text-lg font-semibold">
+                            {% if contract.auxilio_transporte %}
+                            <span class="text-green-600"><i class="fas fa-check-circle mr-2"></i>Sí</span>
+                            {% else %}
+                            <span class="text-red-600"><i class="fas fa-times-circle mr-2"></i>No</span>
+                            {% endif %}
+                        </p>
+                    </div>
+
+                    {% if contract.motivo_terminacion %}
+                    <div class="md:col-span-2">
+                        <label class="block text-sm font-medium text-gray-600 mb-1">Motivo de Terminación</label>
+                        <p class="text-gray-900 p-4 bg-red-50 rounded-lg border border-red-200">
+                            {{ contract.motivo_terminacion }}
+                        </p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Liquidación (solo si está terminado o liquidado) -->
+            {% if contract.estado in 'TERMINADO,LIQUIDADO' and contract.fecha_terminacion %}
+            <div class="bg-gradient-to-br from-purple-50 to-pink-50 rounded-lg shadow-md p-6 border-2 border-purple-200">
+                <h2 class="text-xl font-bold text-gray-800 mb-6 flex items-center">
+                    <i class="fas fa-calculator text-purple-600 mr-2"></i>
+                    Liquidación del Contrato
+                </h2>
+
+                <div id="liquidacion-container">
+                    <div class="text-center py-8">
+                        <i class="fas fa-spinner fa-spin text-4xl text-purple-600 mb-4"></i>
+                        <p class="text-gray-600">Calculando liquidación...</p>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Información Adicional -->
+        <div class="space-y-6">
+            <!-- Empleado -->
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <h2 class="text-lg font-bold text-gray-800 mb-4 flex items-center">
+                    <i class="fas fa-user text-blue-600 mr-2"></i>
+                    Empleado
+                </h2>
+                
+                <div class="space-y-3">
+                    <div>
+                        <p class="text-sm text-gray-600">Nombre Completo</p>
+                        <p class="text-base font-semibold text-gray-900">{{ contract.employee.get_full_name }}</p>
+                    </div>
+                    <div>
+                        <p class="text-sm text-gray-600">Documento</p>
+                        <p class="text-base font-semibold text-gray-900">{{ contract.employee.numero_documento }}</p>
+                    </div>
+                    <div>
+                        <p class="text-sm text-gray-600">Email</p>
+                        <p class="text-base font-semibold text-gray-900">{{ contract.employee.user.email }}</p>
+                    </div>
+                    {% if contract.employee.telefono %}
+                    <div>
+                        <p class="text-sm text-gray-600">Teléfono</p>
+                        <p class="text-base font-semibold text-gray-900">{{ contract.employee.telefono }}</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Estadísticas -->
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <h2 class="text-lg font-bold text-gray-800 mb-4 flex items-center">
+                    <i class="fas fa-chart-line text-green-600 mr-2"></i>
+                    Estadísticas
+                </h2>
+                
+                <div class="space-y-4">
+                    <div class="p-4 bg-blue-50 rounded-lg">
+                        <p class="text-sm text-gray-600 mb-1">Días Trabajados</p>
+                        <p class="text-3xl font-bold text-blue-600" id="diasTrabajados">-</p>
+                    </div>
+
+                    <div class="p-4 bg-green-50 rounded-lg">
+                        <p class="text-sm text-gray-600 mb-1">Meses Completos</p>
+                        <p class="text-3xl font-bold text-green-600" id="mesesCompletos">-</p>
+                    </div>
+
+                    {% if contract.estado == 'ACTIVO' %}
+                    <div class="p-4 bg-purple-50 rounded-lg">
+                        <p class="text-sm text-gray-600 mb-1">Antigüedad</p>
+                        <p class="text-2xl font-bold text-purple-600" id="antiguedad">-</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Documentos -->
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <h2 class="text-lg font-bold text-gray-800 mb-4 flex items-center">
+                    <i class="fas fa-folder text-yellow-600 mr-2"></i>
+                    Documentos
+                </h2>
+                
+                {% if contract.archivo_contrato %}
+                <a href="{{ contract.archivo_contrato.url }}" target="_blank" class="flex items-center gap-3 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                    <i class="fas fa-file-pdf text-red-600 text-2xl"></i>
+                    <div class="flex-1">
+                        <p class="font-semibold text-gray-900">Contrato Firmado</p>
+                        <p class="text-xs text-gray-600">Clic para descargar</p>
+                    </div>
+                    <i class="fas fa-download text-gray-400"></i>
+                </a>
+                {% else %}
+                <p class="text-gray-500 text-sm italic">No hay documentos adjuntos</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Terminar Contrato -->
+<div id="modalTerminar" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-lg max-w-2xl w-full p-6">
+        <h3 class="text-2xl font-bold text-gray-800 mb-4">Terminar Contrato</h3>
+        
+        <form method="post" action="{% url 'payroll:contract_terminate' contract.pk %}">
+            {% csrf_token %}
+            
+            <div class="space-y-4 mb-6">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        Fecha de Terminación <span class="text-red-500">*</span>
+                    </label>
+                    <input type="date" name="fecha_terminacion" required max="{{ today|date:'Y-m-d' }}"
+                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500">
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        Motivo de Terminación <span class="text-red-500">*</span>
+                    </label>
+                    <textarea name="motivo_terminacion" required rows="4"
+                              placeholder="Describa el motivo de la terminación del contrato..."
+                              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500"></textarea>
+                </div>
+
+                <div class="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                    <p class="text-sm text-yellow-800">
+                        <i class="fas fa-exclamation-triangle mr-2"></i>
+                        <strong>Nota:</strong> Al terminar el contrato se calculará automáticamente la liquidación de prestaciones sociales.
+                    </p>
+                </div>
+            </div>
+
+            <div class="flex justify-end gap-4">
+                <button type="button" onclick="cerrarModal()" class="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-100">
+                    Cancelar
+                </button>
+                <button type="submit" class="px-6 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium">
+                    <i class="fas fa-stop-circle mr-2"></i>Terminar Contrato
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+const fechaInicio = new Date('{{ contract.fecha_inicio|date:"Y-m-d" }}');
+const fechaFin = {% if contract.fecha_terminacion %} new Date('{{ contract.fecha_terminacion|date:"Y-m-d" }}') {% else %} new Date() {% endif %};
+
+// Calcular días trabajados
+const diffTime = Math.abs(fechaFin - fechaInicio);
+const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+document.getElementById('diasTrabajados').textContent = diffDays.toLocaleString();
+
+// Calcular meses completos
+const diffMonths = (fechaFin.getFullYear() - fechaInicio.getFullYear()) * 12 + (fechaFin.getMonth() - fechaInicio.getMonth());
+document.getElementById('mesesCompletos').textContent = diffMonths;
+
+{% if contract.estado == 'ACTIVO' %}
+// Calcular antigüedad
+const years = Math.floor(diffMonths / 12);
+const months = diffMonths % 12;
+let antiguedadText = '';
+if (years > 0) antiguedadText += years + (years === 1 ? ' año ' : ' años ');
+if (months > 0) antiguedadText += months + (months === 1 ? ' mes' : ' meses');
+document.getElementById('antiguedad').textContent = antiguedadText || '< 1 mes';
+{% endif %}
+
+function terminarContrato() {
+    document.getElementById('modalTerminar').classList.remove('hidden');
+}
+
+function cerrarModal() {
+    document.getElementById('modalTerminar').classList.add('hidden');
+}
+
+{% if contract.estado in 'TERMINADO,LIQUIDADO' and contract.fecha_terminacion %}
+// Cargar liquidación
+fetch('{% url "payroll:contract_liquidation" contract.pk %}')
+    .then(response => response.json())
+    .then(data => {
+        const container = document.getElementById('liquidacion-container');
+        if (data.error) {
+            container.innerHTML = `
+                <div class="text-center py-8">
+                    <i class="fas fa-exclamation-triangle text-4xl text-yellow-600 mb-4"></i>
+                    <p class="text-gray-600">${data.error}</p>
+                </div>
+            `;
+            return;
+        }
+
+        container.innerHTML = `
+            <div class="space-y-4">
+                <div class="grid grid-cols-2 gap-4 mb-4">
+                    <div class="p-3 bg-blue-50 rounded-lg">
+                        <p class="text-xs text-gray-600">Días Trabajados</p>
+                        <p class="text-xl font-bold text-blue-600">${data.dias_trabajados}</p>
+                    </div>
+                    <div class="p-3 bg-green-50 rounded-lg">
+                        <p class="text-xs text-gray-600">Último Salario</p>
+                        <p class="text-xl font-bold text-green-600">$${parseFloat(data.ultimo_salario).toLocaleString()}</p>
+                    </div>
+                </div>
+
+                <div class="space-y-2">
+                    <div class="flex justify-between items-center p-3 bg-white rounded">
+                        <span class="text-gray-700">Cesantías</span>
+                        <span class="font-bold text-gray-900">$${parseFloat(data.cesantias).toLocaleString()}</span>
+                    </div>
+                    <div class="flex justify-between items-center p-3 bg-white rounded">
+                        <span class="text-gray-700">Intereses sobre Cesantías</span>
+                        <span class="font-bold text-gray-900">$${parseFloat(data.intereses_cesantias).toLocaleString()}</span>
+                    </div>
+                    <div class="flex justify-between items-center p-3 bg-white rounded">
+                        <span class="text-gray-700">Prima de Servicios</span>
+                        <span class="font-bold text-gray-900">$${parseFloat(data.prima_servicios).toLocaleString()}</span>
+                    </div>
+                    <div class="flex justify-between items-center p-3 bg-white rounded">
+                        <span class="text-gray-700">Vacaciones</span>
+                        <span class="font-bold text-gray-900">$${parseFloat(data.vacaciones).toLocaleString()}</span>
+                    </div>
+                </div>
+
+                <div class="mt-6 p-4 bg-gradient-to-r from-purple-600 to-pink-600 rounded-lg text-white">
+                    <div class="flex justify-between items-center">
+                        <span class="text-lg font-semibold">TOTAL LIQUIDACIÓN</span>
+                        <span class="text-3xl font-bold">$${parseFloat(data.total).toLocaleString()}</span>
+                    </div>
+                </div>
+            </div>
+        `;
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        document.getElementById('liquidacion-container').innerHTML = `
+            <div class="text-center py-8">
+                <i class="fas fa-times-circle text-4xl text-red-600 mb-4"></i>
+                <p class="text-gray-600">Error al calcular la liquidación</p>
+            </div>
+        `;
+    });
+{% endif %}
+</script>
+{% endblock %}

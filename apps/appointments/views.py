@@ -207,7 +207,10 @@ def available_slots(request):
     # Obtener doctor_id si está presente
     doctor_id = request.query_params.get('doctor_id')
     
-    slots = get_available_slots_for_date(date, organization, doctor_id)
+    # Obtener solo_disponibles si está presente (por defecto True para modales)
+    only_available = request.query_params.get('only_available', 'true').lower() == 'true'
+    
+    slots = get_available_slots_for_date(date, organization, doctor_id, only_available)
     serializer = AvailableSlotsSerializer(slots, many=True)
     
     return Response({
@@ -254,12 +257,8 @@ def book_appointment(request):
             except Exception as e:
                 logger.error(f"Error creando notificación push: {e}")
             
-            # Enviar notificación por WhatsApp/Email (no fallar si hay error)
-            try:
-                from apps.appointments.signals import notify_new_appointment
-                notify_new_appointment(appointment)
-            except Exception as e:
-                logger.error(f"Error enviando notificación: {e}")
+            # Las notificaciones WhatsApp/Email se envían automáticamente por el signal post_save
+            # Ver: apps/appointments/signals_setup.py
             
             return Response({
                 'success': True,

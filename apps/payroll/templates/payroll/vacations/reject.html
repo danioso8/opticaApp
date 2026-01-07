@@ -1,0 +1,134 @@
+{% extends "dashboard/base.html" %}
+
+{% block title %}Rechazar Vacaciones - {{ block.super }}{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-6">
+    <div class="max-w-2xl mx-auto">
+        <!-- Header -->
+        <div class="mb-6">
+            <div class="flex items-center gap-2 text-sm text-gray-600 mb-4">
+                <a href="{% url 'payroll:vacation_list' %}" class="hover:text-indigo-600">Vacaciones</a>
+                <i class="fas fa-chevron-right text-xs"></i>
+                <span class="text-gray-900 font-medium">Rechazar Solicitud</span>
+            </div>
+            <h1 class="text-3xl font-bold text-gray-800">Rechazar Solicitud de Vacaciones</h1>
+        </div>
+
+        <!-- Información de la Solicitud -->
+        <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+            <h2 class="text-xl font-bold text-gray-800 mb-4 flex items-center">
+                <i class="fas fa-info-circle text-blue-600 mr-2"></i>
+                Información de la Solicitud
+            </h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <p class="text-sm text-gray-600">Empleado</p>
+                    <p class="text-lg font-semibold text-gray-900">{{ vacation.employee.get_full_name }}</p>
+                    <p class="text-sm text-gray-500">{{ vacation.employee.cargo }}</p>
+                </div>
+
+                <div>
+                    <p class="text-sm text-gray-600">Fecha de Solicitud</p>
+                    <p class="text-lg font-semibold text-gray-900">{{ vacation.fecha_solicitud|date:"d/m/Y" }}</p>
+                </div>
+
+                <div>
+                    <p class="text-sm text-gray-600">Período</p>
+                    <p class="text-lg font-semibold text-gray-900">
+                        {{ vacation.fecha_inicio|date:"d/m/Y" }} - {{ vacation.fecha_fin|date:"d/m/Y" }}
+                    </p>
+                </div>
+
+                <div>
+                    <p class="text-sm text-gray-600">Días Solicitados</p>
+                    <p class="text-2xl font-bold text-indigo-600">{{ vacation.dias_solicitados }} días</p>
+                    <p class="text-xs text-gray-500">{{ vacation.dias_habiles }} hábiles</p>
+                </div>
+
+                {% if vacation.observaciones %}
+                <div class="md:col-span-2">
+                    <p class="text-sm text-gray-600 mb-2">Observaciones del Empleado</p>
+                    <p class="text-gray-900 p-3 bg-gray-50 rounded-lg">{{ vacation.observaciones }}</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Formulario de Rechazo -->
+        <form method="post" class="bg-white rounded-lg shadow-md">
+            {% csrf_token %}
+            
+            <div class="p-6 border-b border-gray-200">
+                <h2 class="text-xl font-bold text-gray-800 mb-4 flex items-center">
+                    <i class="fas fa-times-circle text-red-600 mr-2"></i>
+                    Motivo del Rechazo
+                </h2>
+                
+                <!-- Motivos predefinidos -->
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        Motivos Comunes (Seleccione uno)
+                    </label>
+                    <div class="space-y-2">
+                        <label class="flex items-center gap-2 p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer">
+                            <input type="radio" name="motivo_radio" value="No hay cobertura de personal para esas fechas" class="text-red-600 focus:ring-red-500">
+                            <span class="text-sm text-gray-700">No hay cobertura de personal para esas fechas</span>
+                        </label>
+                        <label class="flex items-center gap-2 p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer">
+                            <input type="radio" name="motivo_radio" value="Temporada alta, no se pueden aprobar vacaciones" class="text-red-600 focus:ring-red-500">
+                            <span class="text-sm text-gray-700">Temporada alta, no se pueden aprobar vacaciones</span>
+                        </label>
+                        <label class="flex items-center gap-2 p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer">
+                            <input type="radio" name="motivo_radio" value="Saldo insuficiente de vacaciones" class="text-red-600 focus:ring-red-500">
+                            <span class="text-sm text-gray-700">Saldo insuficiente de vacaciones</span>
+                        </label>
+                        <label class="flex items-center gap-2 p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer">
+                            <input type="radio" name="motivo_radio" value="otro" class="text-red-600 focus:ring-red-500">
+                            <span class="text-sm text-gray-700">Otro motivo (especificar abajo)</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        Motivo Detallado <span class="text-red-500">*</span>
+                    </label>
+                    <textarea name="motivo" required rows="4" id="motivoTexto" placeholder="Explique el motivo del rechazo..." 
+                              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500"></textarea>
+                    <p class="text-xs text-gray-500 mt-1">El empleado recibirá este mensaje</p>
+                </div>
+            </div>
+
+            <!-- Botones -->
+            <div class="p-6 bg-gray-50 flex justify-end gap-4">
+                <a href="{% url 'payroll:vacation_list' %}" class="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-100 transition-colors font-medium">
+                    <i class="fas fa-arrow-left mr-2"></i>Volver
+                </a>
+                <button type="submit" class="px-6 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors font-medium shadow-lg">
+                    <i class="fas fa-times mr-2"></i>Rechazar Solicitud
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const radios = document.querySelectorAll('input[name="motivo_radio"]');
+    const motivoTexto = document.getElementById('motivoTexto');
+
+    radios.forEach(radio => {
+        radio.addEventListener('change', function() {
+            if (this.value !== 'otro') {
+                motivoTexto.value = this.value;
+            } else {
+                motivoTexto.value = '';
+                motivoTexto.focus();
+            }
+        });
+    });
+});
+</script>
+{% endblock %}

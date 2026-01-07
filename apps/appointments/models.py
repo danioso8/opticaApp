@@ -2,6 +2,8 @@ from django.db import models
 from django.utils import timezone
 from django.core.validators import RegexValidator
 from django.conf import settings
+from django.db.models import Count
+from datetime import datetime, timedelta
 from apps.organizations.base_models import TenantModel
 from apps.appointments.models_notifications import NotificationSettings, AppointmentNotification
 
@@ -355,4 +357,67 @@ class TimeSlot(TenantModel):
 
     def __str__(self):
         status = "Disponible" if self.is_available else "Ocupado"
+        return f"{self.date} {self.time} - {status}"
+
+
+class WhatsAppMessageLog(TenantModel):
+    """Registro de mensajes WhatsApp enviados para facturación"""
+    MESSAGE_TYPE_CHOICES = [
+        ('appointment_confirmation', 'Confirmación de Cita'),
+        ('appointment_reminder', 'Recordatorio de Cita'),
+        ('appointment_cancelled', 'Cita Cancelada'),
+        ('appointment_rescheduled', 'Cita Reagendada'),
+        ('test_message', 'Mensaje de Prueba'),
+    ]
+    
+    phone_number = models.CharField(max_length=20, verbose_name="Número de teléfono")
+    message_type = models.CharField(
+        max_length=50, 
+        choices=MESSAGE_TYPE_CHOICES,
+        verbose_name="Tipo de mensaje"
+    )
+    sent_at = models.DateTimeField(default=timezone.now, verbose_name="Enviado")
+    success = models.BooleanField(default=True, verbose_name="Exitoso")
+    appointment = models.ForeignKey(
+        'Appointment',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='whatsapp_notifications'
+    )
+    
+    class Meta:
+        ordering = ['-sent_at']
+        verbose_name = "Mensaje WhatsApp"
+        verbose_name_plural = "Mensajes WhatsApp"
+        indexes = [
+            models.Index(fields=['organization', 'sent_at']),
+        ]
+    
+    def __str__(self):
+        return f"{self.organization.name} - {self.phone_number} - {self.get_message_type_display()}"
+    
+    @classmethod
+    def get_monthly_usage(cls, organization):
+        """Obtiene el uso del mes actual"""
+        now = timezone.now()
+        start_of_month = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+        
+        return cls.objects.filter(
+            organization=organization,
+            sent_at__gte=start_of_month,
+            success=True
+        ).count()
+    
+    @classmethod
+    def get_usage_by_type(cls, organization, start_date=None):
+        """Obtiene estadísticas de uso por tipo"""
+        queryset = cls.objects.filter(organization=organization, success=True)
+        
+        if start_date:
+            queryset = queryset.filter(sent_at__gte=start_date)
+        
+        return queryset.values('message_type').annotate(
+            count=Count('id')
+        ).order_by('-count')
         return f"{self.date} {self.time} - {status}"

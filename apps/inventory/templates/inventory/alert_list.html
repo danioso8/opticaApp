@@ -1,0 +1,315 @@
+{% extends "dashboard/base.html" %}
+{% load static %}
+
+{% block title %}Alertas de Inventario | OpticaApp{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <!-- Header -->
+    <div class="flex items-center justify-between mb-8">
+        <div>
+            <h1 class="text-3xl font-bold text-gray-800">Alertas de Inventario</h1>
+            <p class="text-gray-600 mt-2">Gestión de alertas de stock bajo y vencimientos</p>
+        </div>
+        <div class="flex gap-3">
+            <a href="{% url 'inventory:dashboard' %}" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition">
+                <i class="fas fa-arrow-left mr-2"></i>Volver
+            </a>
+            <button onclick="checkAllProducts()" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
+                <i class="fas fa-sync mr-2"></i>Verificar Todo
+            </button>
+        </div>
+    </div>
+
+    <!-- Summary Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+        <div class="bg-gradient-to-br from-red-500 to-red-600 rounded-xl shadow-sm p-6 text-white">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-red-100 text-sm mb-1">Críticas</p>
+                    <p class="text-3xl font-bold">{{ stats.critical_count }}</p>
+                </div>
+                <div class="bg-white bg-opacity-20 rounded-lg p-3">
+                    <i class="fas fa-exclamation-circle text-2xl"></i>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl shadow-sm p-6 text-white">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-orange-100 text-sm mb-1">Altas</p>
+                    <p class="text-3xl font-bold">{{ stats.high_count }}</p>
+                </div>
+                <div class="bg-white bg-opacity-20 rounded-lg p-3">
+                    <i class="fas fa-exclamation-triangle text-2xl"></i>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-gradient-to-br from-yellow-500 to-yellow-600 rounded-xl shadow-sm p-6 text-white">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-yellow-100 text-sm mb-1">Medias</p>
+                    <p class="text-3xl font-bold">{{ stats.medium_count }}</p>
+                </div>
+                <div class="bg-white bg-opacity-20 rounded-lg p-3">
+                    <i class="fas fa-info-circle text-2xl"></i>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-gradient-to-br from-green-500 to-green-600 rounded-xl shadow-sm p-6 text-white">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-green-100 text-sm mb-1">Resueltas</p>
+                    <p class="text-3xl font-bold">{{ stats.resolved_count }}</p>
+                </div>
+                <div class="bg-white bg-opacity-20 rounded-lg p-3">
+                    <i class="fas fa-check-circle text-2xl"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
+        <form method="get" class="grid grid-cols-1 md:grid-cols-5 gap-4">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Tipo</label>
+                <select name="alert_type" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                    <option value="">Todas</option>
+                    <option value="LOW_STOCK" {% if request.GET.alert_type == 'LOW_STOCK' %}selected{% endif %}>Stock Bajo</option>
+                    <option value="OUT_OF_STOCK" {% if request.GET.alert_type == 'OUT_OF_STOCK' %}selected{% endif %}>Sin Stock</option>
+                    <option value="NEAR_EXPIRY" {% if request.GET.alert_type == 'NEAR_EXPIRY' %}selected{% endif %}>Próximo Vencimiento</option>
+                    <option value="EXPIRED" {% if request.GET.alert_type == 'EXPIRED' %}selected{% endif %}>Vencido</option>
+                </select>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Prioridad</label>
+                <select name="priority" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                    <option value="">Todas</option>
+                    <option value="CRITICAL" {% if request.GET.priority == 'CRITICAL' %}selected{% endif %}>Crítica</option>
+                    <option value="HIGH" {% if request.GET.priority == 'HIGH' %}selected{% endif %}>Alta</option>
+                    <option value="MEDIUM" {% if request.GET.priority == 'MEDIUM' %}selected{% endif %}>Media</option>
+                    <option value="LOW" {% if request.GET.priority == 'LOW' %}selected{% endif %}>Baja</option>
+                </select>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Estado</label>
+                <select name="is_active" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                    <option value="">Todas</option>
+                    <option value="true" {% if request.GET.is_active == 'true' %}selected{% endif %}>Activas</option>
+                    <option value="false" {% if request.GET.is_active == 'false' %}selected{% endif %}>Resueltas</option>
+                </select>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Producto</label>
+                <input type="text" name="product" value="{{ request.GET.product }}" placeholder="Buscar producto..."
+                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+            </div>
+            <div class="flex items-end gap-2">
+                <button type="submit" class="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
+                    <i class="fas fa-filter mr-2"></i>Filtrar
+                </button>
+                <a href="{% url 'inventory:alert_list' %}" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition">
+                    <i class="fas fa-times"></i>
+                </a>
+            </div>
+        </form>
+    </div>
+
+    <!-- Alerts List -->
+    <div class="space-y-4">
+        {% for alert in alerts %}
+        <div class="bg-white rounded-xl shadow-sm border-l-4 
+                    {% if alert.priority == 'CRITICAL' %}border-red-500
+                    {% elif alert.priority == 'HIGH' %}border-orange-500
+                    {% elif alert.priority == 'MEDIUM' %}border-yellow-500
+                    {% else %}border-blue-500{% endif %}
+                    overflow-hidden">
+            <div class="p-6">
+                <div class="flex items-start justify-between">
+                    <div class="flex-1">
+                        <div class="flex items-center gap-3 mb-2">
+                            <!-- Priority Badge -->
+                            <span class="px-3 py-1 rounded-full text-xs font-semibold
+                                        {% if alert.priority == 'CRITICAL' %}bg-red-100 text-red-800
+                                        {% elif alert.priority == 'HIGH' %}bg-orange-100 text-orange-800
+                                        {% elif alert.priority == 'MEDIUM' %}bg-yellow-100 text-yellow-800
+                                        {% else %}bg-blue-100 text-blue-800{% endif %}">
+                                {{ alert.get_priority_display }}
+                            </span>
+
+                            <!-- Alert Type Badge -->
+                            <span class="px-3 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                                {{ alert.get_alert_type_display }}
+                            </span>
+
+                            <!-- Status Badge -->
+                            {% if alert.is_active %}
+                            <span class="px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                <i class="fas fa-circle text-xs mr-1"></i>Activa
+                            </span>
+                            {% else %}
+                            <span class="px-3 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                                Resuelta
+                            </span>
+                            {% endif %}
+                        </div>
+
+                        <!-- Product Info -->
+                        <h3 class="text-lg font-semibold text-gray-800 mb-2">
+                            {{ alert.product.name }}
+                        </h3>
+                        <p class="text-sm text-gray-600 mb-3">
+                            SKU: {{ alert.product.sku }} | Stock actual: 
+                            <span class="font-semibold {% if alert.product.stock == 0 %}text-red-600{% elif alert.product.stock < alert.product.min_stock %}text-orange-600{% else %}text-gray-800{% endif %}">
+                                {{ alert.product.stock }} {{ alert.product.unit }}
+                            </span>
+                        </p>
+
+                        <!-- Alert Message -->
+                        <div class="bg-gray-50 rounded-lg p-4 mb-3">
+                            <p class="text-sm text-gray-800">{{ alert.message }}</p>
+                        </div>
+
+                        <!-- Additional Info -->
+                        <div class="flex items-center gap-6 text-xs text-gray-500">
+                            <div class="flex items-center">
+                                <i class="far fa-clock mr-1"></i>
+                                Creada: {{ alert.created_at|date:"d/m/Y H:i" }}
+                            </div>
+                            {% if alert.lot %}
+                            <div class="flex items-center">
+                                <i class="fas fa-barcode mr-1"></i>
+                                Lote: {{ alert.lot.lot_number }}
+                            </div>
+                            {% endif %}
+                            {% if not alert.is_active %}
+                            <div class="flex items-center text-green-600">
+                                <i class="fas fa-check mr-1"></i>
+                                Resuelta: {{ alert.resolved_at|date:"d/m/Y H:i" }}
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Actions -->
+                    <div class="flex flex-col gap-2 ml-6">
+                        {% if alert.is_active %}
+                        <button onclick="resolveAlert({{ alert.id }})" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition text-sm">
+                            <i class="fas fa-check mr-2"></i>Resolver
+                        </button>
+                        {% endif %}
+                        <a href="{% url 'inventory:kardex' alert.product.id %}" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition text-sm text-center">
+                            <i class="fas fa-list mr-2"></i>Kardex
+                        </a>
+                        <a href="{% url 'inventory:movement_create' %}?product={{ alert.product.id }}" class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition text-sm text-center">
+                            <i class="fas fa-plus mr-2"></i>Movimiento
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-12 text-center">
+            <div class="text-gray-400">
+                <i class="fas fa-bell-slash text-6xl mb-4"></i>
+                <p class="text-xl font-semibold mb-2">No hay alertas</p>
+                <p class="text-gray-500">¡Todo el inventario está en buen estado!</p>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Pagination -->
+    {% if is_paginated %}
+    <div class="mt-6 flex items-center justify-between">
+        <div class="text-sm text-gray-700">
+            Mostrando <span class="font-semibold">{{ page_obj.start_index }}</span> a 
+            <span class="font-semibold">{{ page_obj.end_index }}</span> de 
+            <span class="font-semibold">{{ page_obj.paginator.count }}</span> alertas
+        </div>
+        <div class="flex gap-2">
+            {% if page_obj.has_previous %}
+            <a href="?page={{ page_obj.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" 
+               class="px-4 py-2 bg-white border border-gray-300 rounded-lg text-sm text-gray-700 hover:bg-gray-50">
+                Anterior
+            </a>
+            {% endif %}
+            {% if page_obj.has_next %}
+            <a href="?page={{ page_obj.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" 
+               class="px-4 py-2 bg-white border border-gray-300 rounded-lg text-sm text-gray-700 hover:bg-gray-50">
+                Siguiente
+            </a>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+function resolveAlert(alertId) {
+    if (!confirm('¿Está seguro de marcar esta alerta como resuelta?')) {
+        return;
+    }
+
+    fetch(`/dashboard/inventory/api/alerts/${alertId}/resolve/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': '{{ csrf_token }}',
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            location.reload();
+        } else {
+            alert('Error al resolver la alerta: ' + (data.error || 'Error desconocido'));
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error al procesar la solicitud');
+    });
+}
+
+function checkAllProducts() {
+    if (!confirm('¿Desea verificar todos los productos y generar nuevas alertas si es necesario?')) {
+        return;
+    }
+
+    const btn = event.target.closest('button');
+    const originalText = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Verificando...';
+
+    fetch('/dashboard/inventory/api/alerts/check-all/', {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': '{{ csrf_token }}',
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert(`Verificación completa. Alertas creadas: ${data.alerts_created}`);
+            location.reload();
+        } else {
+            alert('Error al verificar productos: ' + (data.error || 'Error desconocido'));
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error al procesar la solicitud');
+    })
+    .finally(() => {
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+    });
+}
+</script>
+{% endblock %}

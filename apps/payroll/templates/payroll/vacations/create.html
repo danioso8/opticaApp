@@ -1,0 +1,301 @@
+{% extends "dashboard/base.html" %}
+
+{% block title %}Nueva Solicitud de Vacaciones - {{ block.super }}{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-6">
+    <!-- Header -->
+    <div class="mb-6">
+        <div class="flex items-center gap-2 text-sm text-gray-600 mb-4">
+            <a href="{% url 'payroll:vacation_list' %}" class="hover:text-indigo-600">Vacaciones</a>
+            <i class="fas fa-chevron-right text-xs"></i>
+            <span class="text-gray-900 font-medium">Nueva Solicitud</span>
+        </div>
+        <h1 class="text-3xl font-bold text-gray-800">Nueva Solicitud de Vacaciones</h1>
+        <p class="text-gray-600 mt-1">Crear solicitud de vacaciones para un empleado</p>
+    </div>
+
+    <div class="max-w-4xl">
+        <form method="post" class="bg-white rounded-lg shadow-md" id="vacationForm">
+            {% csrf_token %}
+            
+            <!-- Información del Empleado -->
+            <div class="p-6 border-b border-gray-200">
+                <h2 class="text-xl font-bold text-gray-800 mb-4 flex items-center">
+                    <i class="fas fa-user text-indigo-600 mr-2"></i>
+                    Información del Empleado
+                </h2>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        Empleado <span class="text-red-500">*</span>
+                    </label>
+                    <select name="employee" required id="employeeSelect" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                        <option value="">Seleccionar empleado...</option>
+                        {% for emp in employees %}
+                        <option value="{{ emp.id }}" data-salario="{{ emp.salario_basico }}">
+                            {{ emp.get_full_name }} - {{ emp.cargo }} - {{ emp.numero_documento }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+
+            <!-- Fechas de Vacaciones -->
+            <div class="p-6 border-b border-gray-200">
+                <h2 class="text-xl font-bold text-gray-800 mb-4 flex items-center">
+                    <i class="fas fa-calendar-alt text-indigo-600 mr-2"></i>
+                    Fechas de Vacaciones
+                </h2>
+                
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            Fecha de Inicio <span class="text-red-500">*</span>
+                        </label>
+                        <input type="date" name="fecha_inicio" required id="fechaInicio" 
+                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            Fecha de Finalización <span class="text-red-500">*</span>
+                        </label>
+                        <input type="date" name="fecha_fin" required id="fechaFin" 
+                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            Fecha de Reintegro <span class="text-red-500">*</span>
+                        </label>
+                        <input type="date" name="fecha_reintegro" required id="fechaReintegro" 
+                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                    </div>
+                </div>
+
+                <!-- Info calculada -->
+                <div class="mt-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-center">
+                        <div>
+                            <p class="text-sm text-gray-600">Días Totales</p>
+                            <p class="text-2xl font-bold text-blue-600" id="diasTotales">0</p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-600">Días Hábiles</p>
+                            <p class="text-2xl font-bold text-green-600" id="diasHabiles">0</p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-600">Días Calendario</p>
+                            <p class="text-2xl font-bold text-purple-600" id="diasCalendario">0</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Hidden inputs -->
+                <input type="hidden" name="dias_solicitados" id="diasSolicitados" value="0">
+                <input type="hidden" name="dias_habiles" id="diasHabilesInput" value="0">
+                <input type="hidden" name="dias_calendario" id="diasCalendarioInput" value="0">
+            </div>
+
+            <!-- Período que Causan -->
+            <div class="p-6 border-b border-gray-200">
+                <h2 class="text-xl font-bold text-gray-800 mb-4 flex items-center">
+                    <i class="fas fa-history text-indigo-600 mr-2"></i>
+                    Período que Causan las Vacaciones
+                </h2>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            Período Inicio
+                        </label>
+                        <input type="date" name="periodo_inicio" 
+                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                        <p class="text-xs text-gray-500 mt-1">Desde cuándo comenzó a acumular estas vacaciones</p>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            Período Fin
+                        </label>
+                        <input type="date" name="periodo_fin" 
+                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                        <p class="text-xs text-gray-500 mt-1">Hasta cuándo acumuló estas vacaciones</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Pago Anticipado -->
+            <div class="p-6 border-b border-gray-200">
+                <h2 class="text-xl font-bold text-gray-800 mb-4 flex items-center">
+                    <i class="fas fa-dollar-sign text-indigo-600 mr-2"></i>
+                    Pago de Vacaciones
+                </h2>
+                
+                <div class="space-y-4">
+                    <div>
+                        <label class="flex items-center gap-3 cursor-pointer p-4 border-2 border-gray-200 rounded-lg hover:border-indigo-300 transition-colors" id="pagoAnticipadoLabel">
+                            <input type="checkbox" name="pago_anticipado" id="pagoAnticipado" class="w-5 h-5 text-indigo-600 border-gray-300 rounded focus:ring-2 focus:ring-indigo-500">
+                            <div>
+                                <span class="text-sm font-medium text-gray-700 block">Pago Anticipado</span>
+                                <span class="text-xs text-gray-500">Pagar las vacaciones antes de que el empleado salga</span>
+                            </div>
+                        </label>
+                    </div>
+
+                    <div id="pagoSection" class="hidden">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            Valor del Pago <span class="text-red-500">*</span>
+                        </label>
+                        <div class="relative">
+                            <span class="absolute left-3 top-2 text-gray-500">$</span>
+                            <input type="number" name="valor_pago" id="valorPago" min="0" step="1000" placeholder="0" 
+                                   class="w-full pl-8 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                        </div>
+                        <p class="text-xs text-gray-500 mt-1" id="calculoVacaciones">
+                            Fórmula: (Salario × Días vacaciones) / 30
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Observaciones -->
+            <div class="p-6 border-b border-gray-200">
+                <h2 class="text-xl font-bold text-gray-800 mb-4 flex items-center">
+                    <i class="fas fa-comment text-indigo-600 mr-2"></i>
+                    Observaciones
+                </h2>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        Observaciones Adicionales
+                    </label>
+                    <textarea name="observaciones" rows="4" placeholder="Ej: Vacaciones acumuladas del año anterior..." 
+                              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"></textarea>
+                </div>
+            </div>
+
+            <!-- Botones -->
+            <div class="p-6 bg-gray-50 flex justify-end gap-4">
+                <a href="{% url 'payroll:vacation_list' %}" class="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-100 transition-colors font-medium">
+                    <i class="fas fa-times mr-2"></i>Cancelar
+                </a>
+                <button type="submit" class="px-6 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition-colors font-medium shadow-lg">
+                    <i class="fas fa-paper-plane mr-2"></i>Solicitar Vacaciones
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const fechaInicio = document.getElementById('fechaInicio');
+    const fechaFin = document.getElementById('fechaFin');
+    const fechaReintegro = document.getElementById('fechaReintegro');
+    const pagoAnticipado = document.getElementById('pagoAnticipado');
+    const pagoSection = document.getElementById('pagoSection');
+    const valorPago = document.getElementById('valorPago');
+    const employeeSelect = document.getElementById('employeeSelect');
+
+    // Calcular días cuando cambian las fechas
+    function calcularDias() {
+        if (fechaInicio.value && fechaFin.value) {
+            const inicio = new Date(fechaInicio.value);
+            const fin = new Date(fechaFin.value);
+            
+            if (fin >= inicio) {
+                const diffTime = Math.abs(fin - inicio);
+                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+                
+                // Calcular días hábiles (aproximado: 5/7 de los días totales)
+                const diasHabiles = Math.round(diffDays * 5 / 7);
+                
+                document.getElementById('diasTotales').textContent = diffDays;
+                document.getElementById('diasHabiles').textContent = diasHabiles;
+                document.getElementById('diasCalendario').textContent = diffDays;
+                
+                document.getElementById('diasSolicitados').value = diffDays;
+                document.getElementById('diasHabilesInput').value = diasHabiles;
+                document.getElementById('diasCalendarioInput').value = diffDays;
+                
+                // Auto-calcular fecha de reintegro (día siguiente al fin)
+                const reintegro = new Date(fin);
+                reintegro.setDate(reintegro.getDate() + 1);
+                fechaReintegro.value = reintegro.toISOString().split('T')[0];
+                
+                // Calcular valor de pago si está marcado
+                if (pagoAnticipado.checked) {
+                    calcularValorPago(diffDays);
+                }
+            }
+        }
+    }
+
+    function calcularValorPago(dias) {
+        const selectedOption = employeeSelect.options[employeeSelect.selectedIndex];
+        const salario = parseFloat(selectedOption.dataset.salario || 0);
+        
+        if (salario > 0 && dias > 0) {
+            const valor = (salario * dias) / 30;
+            valorPago.value = Math.round(valor);
+            document.getElementById('calculoVacaciones').textContent = 
+                `Cálculo: ($${salario.toLocaleString()} × ${dias} días) / 30 = $${Math.round(valor).toLocaleString()}`;
+        }
+    }
+
+    // Toggle pago anticipado
+    pagoAnticipado.addEventListener('change', function() {
+        if (this.checked) {
+            pagoSection.classList.remove('hidden');
+            valorPago.required = true;
+            document.getElementById('pagoAnticipadoLabel').classList.add('border-indigo-500', 'bg-indigo-50');
+            
+            const dias = parseInt(document.getElementById('diasSolicitados').value || 0);
+            if (dias > 0) {
+                calcularValorPago(dias);
+            }
+        } else {
+            pagoSection.classList.add('hidden');
+            valorPago.required = false;
+            valorPago.value = '';
+            document.getElementById('pagoAnticipadoLabel').classList.remove('border-indigo-500', 'bg-indigo-50');
+        }
+    });
+
+    // Calcular cuando cambian las fechas
+    fechaInicio.addEventListener('change', calcularDias);
+    fechaFin.addEventListener('change', calcularDias);
+    
+    // Recalcular pago cuando cambia el empleado
+    employeeSelect.addEventListener('change', function() {
+        if (pagoAnticipado.checked) {
+            const dias = parseInt(document.getElementById('diasSolicitados').value || 0);
+            if (dias > 0) {
+                calcularValorPago(dias);
+            }
+        }
+    });
+
+    // Validación de fechas
+    document.getElementById('vacationForm').addEventListener('submit', function(e) {
+        const inicio = new Date(fechaInicio.value);
+        const fin = new Date(fechaFin.value);
+        
+        if (fin < inicio) {
+            e.preventDefault();
+            alert('La fecha de finalización debe ser posterior a la fecha de inicio');
+            return false;
+        }
+        
+        const dias = parseInt(document.getElementById('diasSolicitados').value || 0);
+        if (dias <= 0) {
+            e.preventDefault();
+            alert('Debe seleccionar al menos un día de vacaciones');
+            return false;
+        }
+    });
+});
+</script>
+{% endblock %}

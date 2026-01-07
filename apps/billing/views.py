@@ -1520,15 +1520,14 @@ def send_invoice_to_dian(request, invoice_id):
 
 @login_required
 def invoice_pdf(request, invoice_id):
-    """Generar PDF de la factura estilo DIAN profesional"""
+    """Generar PDF de la factura estilo profesional y moderno"""
     from django.http import HttpResponse
     from reportlab.lib.pagesizes import letter
     from reportlab.lib import colors
-    from reportlab.lib.units import inch
-    from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, Image, KeepTogether
+    from reportlab.lib.units import inch, cm
+    from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, Image
     from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
     from reportlab.lib.enums import TA_CENTER, TA_RIGHT, TA_LEFT, TA_JUSTIFY
-    from reportlab.pdfgen import canvas
     import io
     import base64
     
@@ -1543,260 +1542,232 @@ def invoice_pdf(request, invoice_id):
     # Crear buffer
     buffer = io.BytesIO()
     
-    # Crear PDF con márgenes
+    # Crear PDF con márgenes reducidos
     doc = SimpleDocTemplate(
         buffer, 
         pagesize=letter,
-        rightMargin=0.5*inch,
-        leftMargin=0.5*inch,
-        topMargin=0.5*inch,
-        bottomMargin=0.5*inch
+        rightMargin=1*cm,
+        leftMargin=1*cm,
+        topMargin=1*cm,
+        bottomMargin=1*cm
     )
     elements = []
     
     styles = getSampleStyleSheet()
     
-    # ===== LOGO DE LA ORGANIZACIÓN =====
-    if hasattr(organization, 'logo') and organization.logo:
-        try:
-            from django.conf import settings
-            import os
-            logo_path = os.path.join(settings.MEDIA_ROOT, str(organization.logo))
-            if os.path.exists(logo_path):
-                logo = Image(logo_path, width=1.5*inch, height=1.5*inch, kind='proportional')
-                logo.hAlign = 'CENTER'
-                elements.append(logo)
-                elements.append(Spacer(1, 0.2*inch))
-        except Exception as e:
-            # Si hay error al cargar el logo, continuar sin él
-            pass
-    
-    # ===== ENCABEZADO =====
-    # Título principal
+    # ===== ESTILOS PERSONALIZADOS =====
     title_style = ParagraphStyle(
         'CustomTitle',
         parent=styles['Heading1'],
         fontSize=20,
-        textColor=colors.HexColor('#1E3A8A'),
-        spaceAfter=5,
+        textColor=colors.HexColor('#1a202c'),
+        spaceAfter=8,
         alignment=TA_CENTER,
         fontName='Helvetica-Bold'
     )
-    elements.append(Paragraph("FACTURA ELECTRÓNICA DE VENTA", title_style))
     
-    subtitle_style = ParagraphStyle(
-        'Subtitle',
+    info_style = ParagraphStyle(
+        'InfoText',
         parent=styles['Normal'],
-        fontSize=10,
-        textColor=colors.HexColor('#6B7280'),
-        spaceAfter=15,
-        alignment=TA_CENTER
+        fontSize=9,
+        textColor=colors.HexColor('#2d3748'),
+        leading=12
     )
-    elements.append(Paragraph(f"No. {invoice.numero_completo}", subtitle_style))
     
-    # ===== INFORMACIÓN DEL EMISOR Y FACTURA EN DOS COLUMNAS =====
-    emisor_data = [
-        [Paragraph("<b>INFORMACIÓN DEL EMISOR</b>", ParagraphStyle('BoldHeader', parent=styles['Normal'], fontSize=11, textColor=colors.HexColor('#1E3A8A'), fontName='Helvetica-Bold'))],
-        [Paragraph(f"<b>{organization.name}</b>", styles['Normal'])],
-        [Paragraph(f"NIT: {getattr(organization, 'nit', 'N/A')}", styles['Normal'])],
-        [Paragraph(f"Dirección: {getattr(organization, 'direccion', 'N/A')}", styles['Normal'])],
-        [Paragraph(f"Teléfono: {getattr(organization, 'telefono', 'N/A')}", styles['Normal'])],
-        [Paragraph(f"Email: {getattr(organization, 'email', 'N/A')}", styles['Normal'])],
-    ]
-    
-    factura_data = [
-        [Paragraph("<b>DATOS DE LA FACTURA</b>", ParagraphStyle('BoldHeader', parent=styles['Normal'], fontSize=11, textColor=colors.HexColor('#1E3A8A'), fontName='Helvetica-Bold'))],
-        [Paragraph(f"<b>Fecha de Emisión:</b><br/>{invoice.fecha_emision.strftime('%d/%m/%Y %H:%M')}", styles['Normal'])],
-        [Paragraph(f"<b>Estado DIAN:</b><br/>{invoice.get_estado_dian_display()}", styles['Normal'])],
-        [Paragraph(f"<b>Forma de Pago:</b><br/>{'Contado' if invoice.forma_pago == '1' else 'Crédito'}", styles['Normal'])],
-        [Paragraph(f"<b>Medio de Pago:</b><br/>{invoice.get_medio_pago_display()}", styles['Normal'])],
-    ]
-    
-    header_table = Table(
-        [[Table(emisor_data, colWidths=[3.5*inch]), Table(factura_data, colWidths=[3.5*inch])]],
-        colWidths=[3.5*inch, 3.5*inch]
+    bold_style = ParagraphStyle(
+        'BoldText',
+        parent=styles['Normal'],
+        fontSize=9,
+        fontName='Helvetica-Bold',
+        textColor=colors.HexColor('#1a202c')
     )
+    
+    # ===== TÍTULO =====
+    elements.append(Paragraph("Factura de Venta", title_style))
+    elements.append(Spacer(1, 0.3*cm))
+    
+    # ===== HEADER: Empresa + Cliente + Factura en tres secciones =====
+    # Obtener tax_id correctamente
+    tax_id = organization.tax_id if hasattr(organization, 'tax_id') else 'N/A'
+    tax_type = organization.get_tax_id_type_display() if hasattr(organization, 'tax_id_type') and organization.tax_id_type else 'NIT'
+    
+    empresa_info = f"""<b>{organization.name}</b><br/>
+{tax_type}: {tax_id}<br/>
+{organization.email if hasattr(organization, 'email') else ''}"""
+    
+    factura_info = f"""Factura No: <b>{invoice.numero_completo}</b><br/>
+Fecha: <b>{invoice.fecha_emision.strftime('%d/%m/%Y')}</b><br/>
+Estado: <b>{invoice.get_estado_dian_display()}</b>"""
+    
+    cliente_info = f"""<b>Cliente:</b> {invoice.cliente_nombre}<br/>
+<b>{invoice.cliente_tipo_documento}:</b> {invoice.cliente_numero_documento}<br/>
+{f'<b>Tel:</b> {invoice.cliente_telefono}' if invoice.cliente_telefono else ''}"""
+    
+    header_data = [[
+        Paragraph(empresa_info, info_style),
+        Paragraph(factura_info, info_style),
+        Paragraph(cliente_info, info_style)
+    ]]
+    
+    header_table = Table(header_data, colWidths=[6.5*cm, 6*cm, 6.5*cm])
     header_table.setStyle(TableStyle([
         ('VALIGN', (0, 0), (-1, -1), 'TOP'),
-        ('BOX', (0, 0), (0, 0), 1, colors.HexColor('#D1D5DB')),
-        ('BOX', (1, 0), (1, 0), 1, colors.HexColor('#D1D5DB')),
-        ('BACKGROUND', (0, 0), (0, 0), colors.HexColor('#F3F4F6')),
-        ('BACKGROUND', (1, 0), (1, 0), colors.HexColor('#F3F4F6')),
-        ('LEFTPADDING', (0, 0), (-1, -1), 10),
-        ('RIGHTPADDING', (0, 0), (-1, -1), 10),
-        ('TOPPADDING', (0, 0), (-1, -1), 10),
-        ('BOTTOMPADDING', (0, 0), (-1, -1), 10),
+        ('ALIGN', (0, 0), (0, 0), 'LEFT'),
+        ('ALIGN', (1, 0), (1, 0), 'CENTER'),
+        ('ALIGN', (2, 0), (2, 0), 'RIGHT'),
     ]))
     elements.append(header_table)
-    elements.append(Spacer(1, 0.3*inch))
+    elements.append(Spacer(1, 0.5*cm))
     
-    # ===== INFORMACIÓN DEL CLIENTE =====
-    cliente_header = Paragraph(
-        "<b>INFORMACIÓN DEL ADQUIRIENTE</b>",
-        ParagraphStyle('ClienteHeader', parent=styles['Normal'], fontSize=11, textColor=colors.HexColor('#1E3A8A'), fontName='Helvetica-Bold', spaceAfter=5)
-    )
-    elements.append(cliente_header)
-    
-    client_info = f"""
-    <b>Nombre/Razón Social:</b> {invoice.cliente_nombre}<br/>
-    <b>Tipo y Número de Documento:</b> {invoice.cliente_tipo_documento} {invoice.cliente_numero_documento}<br/>
-    """
-    if invoice.cliente_email:
-        client_info += f"<b>Email:</b> {invoice.cliente_email}<br/>"
-    if invoice.cliente_telefono:
-        client_info += f"<b>Teléfono:</b> {invoice.cliente_telefono}<br/>"
-    
-    client_table = Table([[Paragraph(client_info, styles['Normal'])]], colWidths=[7*inch])
-    client_table.setStyle(TableStyle([
-        ('BOX', (0, 0), (-1, -1), 1, colors.HexColor('#D1D5DB')),
-        ('BACKGROUND', (0, 0), (-1, -1), colors.HexColor('#F9FAFB')),
-        ('LEFTPADDING', (0, 0), (-1, -1), 10),
-        ('RIGHTPADDING', (0, 0), (-1, -1), 10),
-        ('TOPPADDING', (0, 0), (-1, -1), 8),
-        ('BOTTOMPADDING', (0, 0), (-1, -1), 8),
-    ]))
-    elements.append(client_table)
-    elements.append(Spacer(1, 0.3*inch))
-    
-    # ===== DETALLE DE ITEMS =====
-    items_header = Paragraph(
-        "<b>DETALLE DE PRODUCTOS/SERVICIOS</b>",
-        ParagraphStyle('ItemsHeader', parent=styles['Normal'], fontSize=11, textColor=colors.HexColor('#1E3A8A'), fontName='Helvetica-Bold', spaceAfter=5)
-    )
-    elements.append(items_header)
-    
+    # ===== TABLA DE ITEMS =====
     items_data = [[
-        Paragraph('<b>#</b>', ParagraphStyle('TableHeader', parent=styles['Normal'], fontSize=9, textColor=colors.white, alignment=TA_CENTER)),
-        Paragraph('<b>Descripción</b>', ParagraphStyle('TableHeader', parent=styles['Normal'], fontSize=9, textColor=colors.white)),
-        Paragraph('<b>Cant.</b>', ParagraphStyle('TableHeader', parent=styles['Normal'], fontSize=9, textColor=colors.white, alignment=TA_CENTER)),
-        Paragraph('<b>Valor Unit.</b>', ParagraphStyle('TableHeader', parent=styles['Normal'], fontSize=9, textColor=colors.white, alignment=TA_RIGHT)),
-        Paragraph('<b>Desc.</b>', ParagraphStyle('TableHeader', parent=styles['Normal'], fontSize=9, textColor=colors.white, alignment=TA_CENTER)),
-        Paragraph('<b>IVA</b>', ParagraphStyle('TableHeader', parent=styles['Normal'], fontSize=9, textColor=colors.white, alignment=TA_CENTER)),
-        Paragraph('<b>Total</b>', ParagraphStyle('TableHeader', parent=styles['Normal'], fontSize=9, textColor=colors.white, alignment=TA_RIGHT)),
+        Paragraph('<b>Ítem</b>', bold_style),
+        Paragraph('<b>Descripción</b>', bold_style),
+        Paragraph('<b>Cant.</b>', bold_style),
+        Paragraph('<b>V. Unitario</b>', bold_style),
+        Paragraph('<b>Desc.</b>', bold_style),
+        Paragraph('<b>IVA</b>', bold_style),
+        Paragraph('<b>Total</b>', bold_style)
     ]]
     
     for idx, item in enumerate(invoice.items.all(), 1):
         items_data.append([
-            Paragraph(str(idx), ParagraphStyle('TableCell', parent=styles['Normal'], fontSize=8, alignment=TA_CENTER)),
-            Paragraph(item.descripcion[:50], ParagraphStyle('TableCell', parent=styles['Normal'], fontSize=8)),
-            Paragraph(f"{item.cantidad:.0f}", ParagraphStyle('TableCell', parent=styles['Normal'], fontSize=8, alignment=TA_CENTER)),
-            Paragraph(f"${item.valor_unitario:,.0f}", ParagraphStyle('TableCell', parent=styles['Normal'], fontSize=8, alignment=TA_RIGHT)),
-            Paragraph(f"{item.descuento_porcentaje:.1f}%", ParagraphStyle('TableCell', parent=styles['Normal'], fontSize=8, alignment=TA_CENTER)),
-            Paragraph(f"{item.iva_porcentaje:.0f}%", ParagraphStyle('TableCell', parent=styles['Normal'], fontSize=8, alignment=TA_CENTER)),
-            Paragraph(f"${item.total_linea:,.0f}", ParagraphStyle('TableCell', parent=styles['Normal'], fontSize=8, alignment=TA_RIGHT)),
+            Paragraph(str(idx), info_style),
+            Paragraph(item.descripcion[:45], info_style),
+            Paragraph(f"{item.cantidad:.0f}", info_style),
+            Paragraph(f"${item.valor_unitario:,.0f}", info_style),
+            Paragraph(f"{item.descuento_porcentaje:.0f}%" if item.descuento_porcentaje > 0 else "-", info_style),
+            Paragraph(f"{item.iva_porcentaje:.0f}%", info_style),
+            Paragraph(f"${item.total_linea:,.0f}", info_style)
         ])
     
-    items_table = Table(items_data, colWidths=[0.3*inch, 2.8*inch, 0.6*inch, 1*inch, 0.6*inch, 0.6*inch, 1.1*inch])
+    items_table = Table(items_data, colWidths=[1*cm, 7*cm, 1.5*cm, 2.5*cm, 1.5*cm, 1.5*cm, 3*cm])
     items_table.setStyle(TableStyle([
-        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#1E3A8A')),
-        ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
-        ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+        # Header
+        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#d0d0d0')),
         ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
         ('FONTSIZE', (0, 0), (-1, 0), 9),
-        ('BOTTOMPADDING', (0, 0), (-1, 0), 8),
-        ('TOPPADDING', (0, 0), (-1, 0), 8),
-        ('BACKGROUND', (0, 1), (-1, -1), colors.white),
-        ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#D1D5DB')),
-        ('FONTSIZE', (0, 1), (-1, -1), 8),
-        ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#F9FAFB')]),
+        ('ALIGN', (0, 0), (0, 0), 'CENTER'),
+        ('ALIGN', (1, 0), (1, 0), 'LEFT'),
+        ('ALIGN', (2, 0), (-1, 0), 'CENTER'),
+        
+        # Contenido
+        ('FONTSIZE', (0, 1), (-1, -1), 9),
+        ('ALIGN', (0, 1), (0, -1), 'CENTER'),
+        ('ALIGN', (1, 1), (1, -1), 'LEFT'),
+        ('ALIGN', (2, 1), (-1, -1), 'RIGHT'),
+        ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#f9fafb')]),
+        
+        # Bordes y padding
+        ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#a0a0a0')),
         ('LEFTPADDING', (0, 0), (-1, -1), 5),
         ('RIGHTPADDING', (0, 0), (-1, -1), 5),
-        ('TOPPADDING', (0, 1), (-1, -1), 6),
-        ('BOTTOMPADDING', (0, 1), (-1, -1), 6),
+        ('TOPPADDING', (0, 0), (-1, -1), 4),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 4),
     ]))
     elements.append(items_table)
-    elements.append(Spacer(1, 0.3*inch))
+    elements.append(Spacer(1, 0.4*cm))
     
-    # ===== RESUMEN DE TOTALES =====
-    totals_data = [
-        ['Subtotal:', f"${invoice.subtotal:,.2f}"],
-    ]
+    # ===== TOTALES =====
+    totals_data = []
     
     if invoice.descuento > 0:
-        totals_data.append(['Descuento:', f"${invoice.descuento:,.2f}"])
+        totals_data.append(['Subtotal:', f"$ {invoice.subtotal:,.2f}"])
+        totals_data.append(['Descuento:', f"$ {invoice.descuento:,.2f}"])
+        totals_data.append(['Base Imponible:', f"$ {invoice.base_imponible:,.2f}"])
+    else:
+        totals_data.append(['Subtotal:', f"$ {invoice.subtotal:,.2f}"])
     
-    totals_data.extend([
-        ['Base Imponible:', f"${invoice.base_imponible:,.2f}"],
-        ['IVA:', f"${invoice.total_iva:,.2f}"],
-    ])
-    
-    # Separador visual
-    totals_data.append(['', ''])
-    
-    totals_data.extend([
-        [Paragraph('<b>TOTAL A PAGAR:</b>', ParagraphStyle('TotalLabel', parent=styles['Normal'], fontSize=14, fontName='Helvetica-Bold')), 
-         Paragraph(f'<b>${invoice.total:,.2f}</b>', ParagraphStyle('TotalValue', parent=styles['Normal'], fontSize=14, fontName='Helvetica-Bold', textColor=colors.HexColor('#1E3A8A')))],
+    totals_data.append(['IVA:', f"$ {invoice.total_iva:,.2f}"])
+    totals_data.append([
+        Paragraph('<b>TOTAL A PAGAR:</b>', bold_style),
+        Paragraph(f"<b>$ {invoice.total:,.2f}</b>", bold_style)
     ])
     
     if invoice.total_pagado > 0:
-        totals_data.extend([
-            ['Pagado:', f"${invoice.total_pagado:,.2f}"],
-            [Paragraph('<b>Saldo Pendiente:</b>', styles['Normal']), 
-             Paragraph(f'<b>${invoice.saldo_pendiente:,.2f}</b>', ParagraphStyle('Saldo', parent=styles['Normal'], textColor=colors.HexColor('#DC2626') if invoice.saldo_pendiente > 0 else colors.HexColor('#059669')))]
+        totals_data.append(['Total Pagado:', f"$ {invoice.total_pagado:,.2f}"])
+        totals_data.append([
+            Paragraph('<b>Saldo Pendiente:</b>', bold_style),
+            Paragraph(f"<b>$ {invoice.saldo_pendiente:,.2f}</b>", 
+                     ParagraphStyle('Saldo', parent=bold_style, 
+                                   textColor=colors.HexColor('#DC2626') if invoice.saldo_pendiente > 0 else colors.HexColor('#059669')))
         ])
     
-    totals_table = Table(totals_data, colWidths=[5*inch, 2*inch])
+    totals_table = Table(totals_data, colWidths=[12*cm, 7*cm])
     totals_table.setStyle(TableStyle([
         ('ALIGN', (0, 0), (-1, -1), 'RIGHT'),
-        ('FONTNAME', (0, 0), (0, -1), 'Helvetica'),
         ('FONTSIZE', (0, 0), (-1, -1), 10),
-        ('TOPPADDING', (0, 0), (-1, -1), 4),
-        ('BOTTOMPADDING', (0, 0), (-1, -1), 4),
-        ('LINEABOVE', (0, -1 if invoice.total_pagado > 0 else -1), (-1, -1 if invoice.total_pagado > 0 else -1), 1, colors.HexColor('#1E3A8A')),
+        ('TOPPADDING', (0, 0), (-1, -1), 3),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 3),
+        ('LINEABOVE', (0, -2 if invoice.total_pagado > 0 else -1), (-1, -2 if invoice.total_pagado > 0 else -1), 1, colors.HexColor('#666666')),
     ]))
     elements.append(totals_table)
-    elements.append(Spacer(1, 0.3*inch))
+    elements.append(Spacer(1, 0.5*cm))
+    
+    # ===== INFORMACIÓN DE PAGO =====
+    pago_info_parts = []
+    pago_info_parts.append(f"<b>Forma de Pago:</b> {'Contado' if invoice.forma_pago == '1' else 'Crédito'}")
+    pago_info_parts.append(f"<b>Medio de Pago:</b> {invoice.get_medio_pago_display()}")
+    
+    pago_text = " | ".join(pago_info_parts)
+    pago_para = Paragraph(pago_text, info_style)
+    
+    pago_table = Table([[pago_para]], colWidths=[19*cm])
+    pago_table.setStyle(TableStyle([
+        ('BOX', (0, 0), (-1, -1), 0.5, colors.HexColor('#a0a0a0')),
+        ('BACKGROUND', (0, 0), (-1, -1), colors.HexColor('#f0f0f0')),
+        ('LEFTPADDING', (0, 0), (-1, -1), 8),
+        ('RIGHTPADDING', (0, 0), (-1, -1), 8),
+        ('TOPPADDING', (0, 0), (-1, -1), 6),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
+    ]))
+    elements.append(pago_table)
     
     # ===== CUFE SI EXISTE =====
     if invoice.cufe:
-        cufe_text = f"<b>CUFE (Código Único de Factura Electrónica):</b><br/><font size=7>{invoice.cufe}</font>"
-        cufe_para = Paragraph(cufe_text, ParagraphStyle('CUFE', parent=styles['Normal'], fontSize=8, textColor=colors.HexColor('#6B7280')))
-        cufe_table = Table([[cufe_para]], colWidths=[7*inch])
+        elements.append(Spacer(1, 0.3*cm))
+        cufe_text = f"<b>CUFE:</b> <font size=7>{invoice.cufe}</font>"
+        cufe_para = Paragraph(cufe_text, ParagraphStyle('CUFE', parent=info_style, fontSize=7, textColor=colors.HexColor('#6B7280')))
+        
+        cufe_table = Table([[cufe_para]], colWidths=[19*cm])
         cufe_table.setStyle(TableStyle([
-            ('BOX', (0, 0), (-1, -1), 1, colors.HexColor('#D1D5DB')),
-            ('BACKGROUND', (0, 0), (-1, -1), colors.HexColor('#F9FAFB')),
-            ('LEFTPADDING', (0, 0), (-1, -1), 10),
-            ('RIGHTPADDING', (0, 0), (-1, -1), 10),
-            ('TOPPADDING', (0, 0), (-1, -1), 8),
-            ('BOTTOMPADDING', (0, 0), (-1, -1), 8),
+            ('BOX', (0, 0), (-1, -1), 0.5, colors.HexColor('#a0a0a0')),
+            ('BACKGROUND', (0, 0), (-1, -1), colors.HexColor('#f9fafb')),
+            ('LEFTPADDING', (0, 0), (-1, -1), 8),
+            ('RIGHTPADDING', (0, 0), (-1, -1), 8),
+            ('TOPPADDING', (0, 0), (-1, -1), 5),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 5),
         ]))
         elements.append(cufe_table)
-        elements.append(Spacer(1, 0.2*inch))
     
-    # ===== CÓDIGO QR Y PIE DE PÁGINA =====
-    footer_data = []
-    
+    # ===== QR CODE Y FOOTER =====
     if invoice.qr_code_base64:
         try:
+            elements.append(Spacer(1, 0.3*cm))
             qr_image_data = base64.b64decode(invoice.qr_code_base64)
             qr_buffer = io.BytesIO(qr_image_data)
-            img = Image(qr_buffer, width=1.5*inch, height=1.5*inch)
+            img = Image(qr_buffer, width=3*cm, height=3*cm)
             
             qr_info = Paragraph(
-                """<b>CÓDIGO QR DE VALIDACIÓN</b><br/>
-                <font size=8>Escanee este código QR para validar<br/>
-                la autenticidad de esta factura<br/>
-                electrónica en el sistema DIAN</font>""",
-                ParagraphStyle('QRInfo', parent=styles['Normal'], fontSize=9, alignment=TA_CENTER)
+                "<b>Código QR de Validación</b><br/><font size=7>Escanee para validar autenticidad</font>",
+                ParagraphStyle('QRInfo', parent=info_style, fontSize=8, alignment=TA_CENTER)
             )
             
-            footer_data.append([img, qr_info])
+            qr_table = Table([[img, qr_info]], colWidths=[4*cm, 15*cm])
+            qr_table.setStyle(TableStyle([
+                ('ALIGN', (0, 0), (0, 0), 'CENTER'),
+                ('ALIGN', (1, 0), (1, 0), 'LEFT'),
+                ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+            ]))
+            elements.append(qr_table)
         except:
             pass
     
-    if footer_data:
-        footer_table = Table(footer_data, colWidths=[2*inch, 5*inch])
-        footer_table.setStyle(TableStyle([
-            ('ALIGN', (0, 0), (0, 0), 'CENTER'),
-            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-        ]))
-        elements.append(footer_table)
-    
-    # Nota legal
-    legal_text = """<font size=7><i>Esta factura electrónica ha sido generada de acuerdo con la normatividad vigente de la DIAN.
-    Para consultas o reclamaciones, contacte al emisor usando los datos de contacto proporcionados.</i></font>"""
-    elements.append(Spacer(1, 0.2*inch))
-    elements.append(Paragraph(legal_text, ParagraphStyle('Legal', parent=styles['Normal'], fontSize=7, textColor=colors.HexColor('#6B7280'), alignment=TA_JUSTIFY)))
+    # Footer legal
+    elements.append(Spacer(1, 0.4*cm))
+    legal_text = f"""<font size=7><i>Este documento fue generado por {organization.name}. 
+Para consultas o aclaraciones, contacte usando la información de contacto proporcionada.</i></font>"""
+    elements.append(Paragraph(legal_text, ParagraphStyle('Legal', parent=info_style, fontSize=7, textColor=colors.HexColor('#6B7280'), alignment=TA_CENTER)))
     
     # Construir PDF
     doc.build(elements)

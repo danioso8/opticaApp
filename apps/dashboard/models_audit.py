@@ -83,8 +83,8 @@ class AuditLog(models.Model):
     content_type = models.CharField(max_length=100, null=True, blank=True)
     object_id = models.PositiveIntegerField(null=True, blank=True)
     
-    # Datos adicionales en JSON (opcional)
-    metadata = models.JSONField(null=True, blank=True)
+    # Datos adicionales en JSON (opcional) - TextField para compatibilidad con SQLite antiguo
+    metadata = models.TextField(null=True, blank=True)
     
     # IP del usuario
     ip_address = models.GenericIPAddressField(null=True, blank=True)

@@ -1,7 +1,7 @@
-# Documentación de Cambios - 30 Diciembre 2025
+# Documentación de Cambios - Actualizaciones Recientes
 
 **Desarrollador:** Daniel Osorio  
-**Fecha:** 30 de Diciembre de 2025  
+**Última Actualización:** 3 de Enero de 2026 (Tarde)  
 **Proyecto:** OpticaApp - Sistema de Gestión Óptica
 
 ---
@@ -19,7 +19,14 @@
 
 ## 📋 Resumen Ejecutivo
 
-**Objetivos Completados:**
+**Cambios Recientes - 2 Enero 2026:**
+1. ✅ **Fix crítico:** Error de logout por campo content_type NOT NULL
+2. ✅ **Rediseño completo:** Interfaz de Gestión de Equipo con Tailwind CSS
+3. ✅ **Mejora UI:** Stats cards en grid horizontal responsive
+4. ✅ **Mejora UX:** Gestión de Equipo visible en menú móvil
+5. ✅ **Documentación:** Agregada nota sobre uso de Tailwind CSS
+
+**Cambios Anteriores - 30 Diciembre 2025:**
 1. ✅ Re-implementación exitosa del módulo de empleados como dashboard integrado
 2. ✅ Corrección de filtrado por organización en vistas de empleados y equipo
 3. ✅ Implementación de activación inmediata de usuarios sin verificación de email
@@ -27,13 +34,162 @@
 5. ✅ Verificación manual de email en edición de miembros
 6. ✅ Selector de organizaciones en menú de usuario
 7. ✅ Actualización de planes de suscripción con nuevos precios
-8. ⏳ **EN PROGRESO:** Filtrado de menús por rol (owner/admin vs empleados)
 
-**Estado General:** 🟡 **EN DESARROLLO** - Sistema funcional con mejoras pendientes de validación
+**Estado General:** 🟢 **FUNCIONAL** - Sistema estable con UI modernizada
 
 ---
 
-## 🔄 Cambios Implementados (REVERTIDOS)
+## 🆕 Cambios del 2 de Enero de 2026
+
+### 1. Fix Error de Logout - AuditLog
+**Problema:** Error 500 al cerrar sesión
+```
+null value in column "content_type" violates not-null constraint
+```
+
+**Archivos Modificados:**
+- `apps/dashboard/models_audit.py`
+- `apps/dashboard/migrations/0007_alter_auditlog_content_type.py` (nueva)
+- `apps/dashboard/views.py`
+
+**Solución Implementada:**
+
+**1.1. Modelo AuditLog**
+```python
+# Cambio en content_type
+content_type = models.CharField(max_length=100, null=True, blank=True)  # Agregado null=True
+```
+
+**1.2. Migración 0007**
+```python
+operations = [
+    migrations.AlterField(
+        model_name='auditlog',
+        name='content_type',
+        field=models.CharField(blank=True, max_length=100, null=True),
+    ),
+]
+```
+
+**1.3. Vista de Logout con Error Handling**
+```python
+def logout_view(request):
+    try:
+        log_action(
+            user=request.user,
+            organization=request.organization,
+            action='logout',
+            description='Cerró sesión',
+            ip_address=get_client_ip(request)
+        )
+    except Exception as e:
+        logger = logging.getLogger(__name__)
+        logger.error(f"Error al registrar logout en auditoría: {e}")
+    
+    django_logout(request)
+    return redirect('dashboard:login')
+```
+
+### 2. Rediseño UI - Gestión de Equipo
+**Archivo:** `apps/dashboard/templates/dashboard/team/team_list.html`
+
+**Cambios Implementados:**
+
+**2.1. Framework CSS**
+- ❌ Eliminado: Clases Bootstrap (col-6, col-lg-3, etc.)
+- ✅ Implementado: Tailwind CSS puro
+- ✅ Grid System: `grid grid-cols-2 lg:grid-cols-4`
+
+**2.2. Stats Cards - Grid Horizontal**
+```html
+<div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+    <!-- 2 columnas en móvil, 4 en desktop -->
+```
+
+Características:
+- Border izquierdo de color por tipo
+- Hover effect: `hover:-translate-y-1`
+- Sombras suaves: `shadow-md hover:shadow-xl`
+- Iconos grandes: `text-4xl`
+
+**2.3. Member Cards**
+```html
+<div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+```
+
+Características nuevas:
+- Gradientes por rol (owner, admin, doctor, cashier, staff)
+- Avatares circulares con degradado
+- Indicador de estado online (punto verde)
+- Badges con gradientes de color
+- Animación hover: `hover:-translate-y-2`
+
+**2.4. Botones de Acción - Distribución Personalizada**
+```html
+<div class="flex gap-2">
+    <!-- Permisos: 70% ancho -->
+    <a style="flex: 0 0 70%;" class="bg-green-600">
+        <i class="fas fa-key mr-1"></i>Permisos
+    </a>
+    
+    <!-- Editar: 25% ancho -->
+    <a style="flex: 0 0 25%;" class="bg-indigo-600">
+        <i class="fas fa-edit"></i>
+    </a>
+    
+    <!-- Eliminar: 5% ancho -->
+    <button style="flex: 0 0 5%;" class="bg-red-600">
+        <i class="fas fa-trash"></i>
+    </button>
+</div>
+```
+
+**2.5. Sección de Roles y Permisos**
+```html
+<div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+```
+
+6 roles documentados:
+- Propietario (owner)
+- Administrador (admin)
+- Doctor (doctor)
+- Cajero (cashier)
+- Personal (staff)
+- Visualizador (viewer)
+
+### 3. Mejora Navegación Móvil
+**Archivo:** `apps/dashboard/templates/dashboard/base.html`
+
+**Cambio:** Gestión de Equipo movido de submenú a menú principal
+
+**Antes:**
+```django
+<!-- Dentro de Configuración (submenu) -->
+<div id="configuration-submenu">
+    ...
+    <a>Gestión de Equipo</a>
+</div>
+```
+
+**Después:**
+```django
+<!-- Item principal (visible en móvil) -->
+{% if is_owner_or_admin %}
+<a href="{% url 'dashboard:team_list' %}" class="flex items-center px-4 py-3">
+    <i class="fas fa-users-cog mr-3"></i>
+    <span class="sidebar-text">Gestión de Equipo</span>
+</a>
+{% endif %}
+```
+
+**Beneficios:**
+- ✅ Visible en menú móvil sin necesidad de expandir submenú
+- ✅ Acceso directo desde cualquier dispositivo
+- ✅ Mejor UX para administradores
+
+---
+
+## 🔄 Cambios Implementados Previamente (30 Dic 2025) - REVERTIDOS
 
 ### 1. Modelo de Empleados
 **Archivo:** `apps/dashboard/models_employee.py` - ❌ **ELIMINADO**

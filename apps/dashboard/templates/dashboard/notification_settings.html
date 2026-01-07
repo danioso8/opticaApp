@@ -11,7 +11,7 @@
             <div>
                 <h1 class="text-3xl font-bold text-gray-900 flex items-center">
                     <i class="fab fa-whatsapp text-green-500 mr-3"></i>
-                    WhatsApp Twilio
+                    WhatsApp 
                 </h1>
                 <p class="mt-2 text-gray-600">Configura y sincroniza tu cuenta de WhatsApp para enviar notificaciones</p>
             </div>
@@ -45,209 +45,75 @@
     <form method="post" action="{% url 'dashboard:save_notification_settings' %}" id="settingsForm">
         {% csrf_token %}
         
-        <!-- WhatsApp con Twilio -->
-        <div class="bg-white rounded-xl shadow-sm border border-gray-200 mb-6 overflow-hidden">
-            <div class="bg-gradient-to-r from-green-500 to-green-600 px-6 py-4 flex items-center justify-between">
-                <div class="flex items-center space-x-3">
-                    <div class="w-10 h-10 bg-white bg-opacity-20 rounded-lg flex items-center justify-center">
-                        <i class="fab fa-whatsapp text-white text-xl"></i>
-                    </div>
-                    <div>
-                        <h3 class="text-white font-semibold text-lg">WhatsApp Twilio</h3>
-                        <p class="text-green-100 text-sm">Producción • Recomendado</p>
-                    </div>
-                </div>
-                <span class="px-3 py-1 bg-white text-green-600 rounded-full text-xs font-semibold">
-                    $0.005/mensaje
-                </span>
-            </div>
-            <div class="p-6">
-                <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
-                    <div class="flex">
-                        <i class="fas fa-info-circle text-blue-500 mt-1 mr-3"></i>
-                        <div class="text-sm text-blue-800">
-                            <strong>Sobre Twilio:</strong> Servicio profesional para enviar WhatsApp en producción. 
-                            Incluye <strong>$15 de crédito gratis</strong> al registrarte.
-                            <a href="https://www.twilio.com/try-twilio" target="_blank" class="underline font-semibold hover:text-blue-900">
-                                Regístrate aquí →
-                            </a>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Toggle Switch -->
-                <label class="flex items-center justify-between p-4 bg-gray-50 rounded-lg cursor-pointer hover:bg-gray-100 transition mb-6">
-                    <div class="flex items-center space-x-3">
-                        <div class="relative inline-block w-12 h-6 transition duration-200 ease-in-out">
-                            <input type="checkbox" id="twilio_enabled" name="twilio_enabled" 
-                                   class="hidden peer"
-                                   {% if settings.twilio_enabled %}checked{% endif %}
-                                   onchange="toggleTwilioFields()">
-                            <div class="w-12 h-6 bg-gray-300 peer-checked:bg-green-500 rounded-full shadow-inner transition-colors"></div>
-                            <div class="absolute left-1 top-1 w-4 h-4 bg-white rounded-full shadow peer-checked:translate-x-6 transition-transform"></div>
-                        </div>
-                        <span class="font-semibold text-gray-900">Habilitar WhatsApp con Twilio</span>
-                    </div>
-                    <span id="twilioStatusBadge" class="px-3 py-1 rounded-full text-xs font-semibold {% if settings.twilio_enabled %}bg-green-100 text-green-700{% else %}bg-gray-200 text-gray-600{% endif %}">
-                        {% if settings.twilio_enabled %}Activo{% else %}Inactivo{% endif %}
-                    </span>
-                </label>
-
-                <div id="twilioFields" class="space-y-6 {% if not settings.twilio_enabled %}hidden{% endif %}">
-                    <!-- Account SID -->
-                    <div>
-                        <label for="twilio_account_sid" class="block text-sm font-semibold text-gray-700 mb-2">
-                            <i class="fas fa-key text-gray-400 mr-2"></i>Account SID *
-                        </label>
-                        <input type="text" 
-                               class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition" 
-                               id="twilio_account_sid" 
-                               name="twilio_account_sid" 
-                               value="{{ settings.twilio_account_sid }}" 
-                               placeholder="ACxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
-                               pattern="AC[a-f0-9]{32}"
-                               title="Debe comenzar con AC seguido de 32 caracteres">
-                        <p class="mt-2 text-sm text-gray-500">
-                            <i class="fas fa-info-circle mr-1 text-blue-500"></i>
-                            Debe comenzar con <strong class="text-gray-700">AC</strong> (no CE, US, etc.)
-                        </p>
-                        <p class="mt-1 text-sm text-gray-500">
-                            <i class="fas fa-external-link-alt mr-1"></i>
-                            Encuéntralo en tu <a href="https://console.twilio.com/" target="_blank" class="text-green-600 hover:text-green-700 font-semibold">Consola de Twilio</a>
-                        </p>
-                    </div>
-
-                    <!-- Auth Token -->
-                    <div>
-                        <label for="twilio_auth_token" class="block text-sm font-semibold text-gray-700 mb-2">
-                            <i class="fas fa-lock text-gray-400 mr-2"></i>Auth Token *
-                        </label>
-                        <div class="relative">
-                            <input type="password" 
-                                   class="w-full px-4 py-3 pr-12 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition" 
-                                   id="twilio_auth_token" 
-                                   name="twilio_auth_token" 
-                                   value="{{ settings.twilio_auth_token }}" 
-                                   placeholder="••••••••••••••••••••••••••••••">
-                            <button type="button" onclick="togglePasswordVisibility('twilio_auth_token')" 
-                                    class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600">
-                                <i class="fas fa-eye"></i>
-                            </button>
-                        </div>
-                        <p class="mt-2 text-sm text-gray-500">Token de autenticación de tu cuenta Twilio</p>
-                    </div>
-
-                    <!-- WhatsApp Number -->
-                    <div>
-                        <label for="twilio_whatsapp_from" class="block text-sm font-semibold text-gray-700 mb-2">
-                            <i class="fab fa-whatsapp text-gray-400 mr-2"></i>Número WhatsApp de Twilio *
-                        </label>
-                        <input type="text" 
-                               class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition" 
-                               id="twilio_whatsapp_from" 
-                               name="twilio_whatsapp_from" 
-                               value="{{ settings.twilio_whatsapp_from }}" 
-                               placeholder="whatsapp:+14155238886">
-                        <p class="mt-2 text-sm text-gray-500">
-                            Formato: <code class="bg-gray-100 px-2 py-1 rounded">whatsapp:+14155238886</code> (Sandbox) o tu número verificado
-                        </p>
-                    </div>
-
-                    <!-- Action Buttons -->
-                    <div class="flex flex-wrap gap-3 pt-4 border-t border-gray-200">
-                        <button type="button" onclick="syncWhatsApp()" 
-                                class="flex-1 md:flex-none px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition flex items-center justify-center space-x-2">
-                            <i class="fas fa-sync-alt"></i>
-                            <span>Sincronizar WhatsApp</span>
-                        </button>
-                        <button type="button" onclick="testNotification('twilio')" 
-                                class="flex-1 md:flex-none px-6 py-3 border border-green-600 text-green-600 rounded-lg hover:bg-green-50 transition flex items-center justify-center space-x-2">
-                            <i class="fab fa-whatsapp"></i>
-                            <span>Enviar Prueba</span>
-                        </button>
-                        <button type="button" onclick="showQRCode()" 
-                                class="flex-1 md:flex-none px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition flex items-center justify-center space-x-2">
-                            <i class="fas fa-qrcode"></i>
-                            <span>Ver QR Code</span>
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-
         <!-- WhatsApp Local (Baileys) -->
         <div class="bg-white rounded-xl shadow-sm border border-gray-200 mb-6 overflow-hidden">
-            <div class="bg-gradient-to-r from-blue-500 to-blue-600 px-6 py-4 flex items-center justify-between">
+            <div class="bg-gradient-to-r from-emerald-500 to-emerald-600 px-6 py-4 flex items-center justify-between">
                 <div class="flex items-center space-x-3">
                     <div class="w-10 h-10 bg-white bg-opacity-20 rounded-lg flex items-center justify-center">
                         <i class="fab fa-whatsapp text-white text-xl"></i>
                     </div>
                     <div>
                         <h3 class="text-white font-semibold text-lg">WhatsApp Local (Baileys)</h3>
-                        <p class="text-blue-100 text-sm">Desarrollo • Gratis</p>
+                        <p class="text-emerald-100 text-sm">Tu propio número de WhatsApp • Sin límites</p>
                     </div>
                 </div>
-                <span class="px-3 py-1 bg-white text-blue-600 rounded-full text-xs font-semibold">
-                    GRATIS
+                <span class="px-3 py-1 bg-white text-emerald-600 rounded-full text-xs font-semibold">
+                    100% GRATIS
                 </span>
             </div>
             <div class="p-6">
-                <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
-                    <div class="flex">
-                        <i class="fas fa-exclamation-triangle text-yellow-500 mt-1 mr-3"></i>
-                        <div class="text-sm text-yellow-800">
-                            <strong>Solo para desarrollo:</strong> Este método requiere tener el bot corriendo localmente. 
-                            No funciona en Render/producción.
-                        </div>
+                <div id="baileys-status-container">
+                    <!-- Estado dinámico se carga aquí -->
+                    <div class="flex items-center justify-center py-8">
+                        <i class="fas fa-spinner fa-spin text-gray-400 text-2xl"></i>
                     </div>
                 </div>
                 
-                <!-- Toggle Switch -->
                 <label class="flex items-center justify-between p-4 bg-gray-50 rounded-lg cursor-pointer hover:bg-gray-100 transition mb-6">
                     <div class="flex items-center space-x-3">
                         <div class="relative inline-block w-12 h-6 transition duration-200 ease-in-out">
                             <input type="checkbox" id="local_whatsapp_enabled" name="local_whatsapp_enabled" 
                                    class="hidden peer"
                                    {% if settings.local_whatsapp_enabled %}checked{% endif %}
-                                   onchange="toggleLocalWhatsAppFields()">
-                            <div class="w-12 h-6 bg-gray-300 peer-checked:bg-blue-500 rounded-full shadow-inner transition-colors"></div>
+                                   onchange="toggleWhatsAppBadge()">
+                            <div class="w-12 h-6 bg-gray-300 peer-checked:bg-emerald-500 rounded-full shadow-inner transition-colors"></div>
                             <div class="absolute left-1 top-1 w-4 h-4 bg-white rounded-full shadow peer-checked:translate-x-6 transition-transform"></div>
                         </div>
-                        <span class="font-semibold text-gray-900">Habilitar WhatsApp Local</span>
+                        <span class="font-semibold text-gray-900">Habilitar Notificaciones por WhatsApp</span>
                     </div>
-                    <span id="localWhatsAppStatusBadge" class="px-3 py-1 rounded-full text-xs font-semibold {% if settings.local_whatsapp_enabled %}bg-blue-100 text-blue-700{% else %}bg-gray-200 text-gray-600{% endif %}">
+                    <span id="whatsappStatusBadge" class="px-3 py-1 rounded-full text-xs font-semibold {% if settings.local_whatsapp_enabled %}bg-emerald-100 text-emerald-700{% else %}bg-gray-200 text-gray-600{% endif %}">
                         {% if settings.local_whatsapp_enabled %}Activo{% else %}Inactivo{% endif %}
                     </span>
                 </label>
-
-                <div id="localWhatsappFields" class="space-y-6 {% if not settings.local_whatsapp_enabled %}hidden{% endif %}">
-                    <div>
-                        <label for="local_whatsapp_url" class="block text-sm font-semibold text-gray-700 mb-2">
-                            <i class="fas fa-server text-gray-400 mr-2"></i>URL del Bot Local
-                        </label>
-                        <input type="url" 
-                               class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition" 
-                               id="local_whatsapp_url" 
-                               name="local_whatsapp_url" 
-                               value="{{ settings.local_whatsapp_url }}" 
-                               placeholder="http://localhost:3000">
-                        <p class="mt-2 text-sm text-gray-500">
-                            Ejecuta: <code class="bg-gray-100 px-2 py-1 rounded">cd whatsapp-bot && node server.js</code>
-                        </p>
+                
+                <div class="bg-emerald-50 border border-emerald-200 rounded-lg p-4 mb-6">
+                    <div class="flex">
+                        <i class="fas fa-star text-emerald-500 mt-1 mr-3"></i>
+                        <div class="text-sm text-emerald-800">
+                            <strong>¡Nuevo! WhatsApp Gratis:</strong> Conecta tu número de WhatsApp personal o de empresa.
+                            <br><br>
+                            <strong>✨ Ventajas:</strong>
+                            <ul class="list-disc ml-5 mt-2 space-y-1">
+                                <li>100% gratis - sin costo por mensaje</li>
+                                <li>Usa tu propio número de WhatsApp</li>
+                                <li>Ideal para empezar o negocios pequeños</li>
+                                <li>No requiere cuenta de Twilio ni pago</li>
+                            </ul>
+                        </div>
                     </div>
+                </div>
 
-                    <div class="flex flex-wrap gap-3 pt-4 border-t border-gray-200">
-                        <button type="button" onclick="testNotification('local_whatsapp')" 
-                                class="flex-1 md:flex-none px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition flex items-center justify-center space-x-2">
-                            <i class="fab fa-whatsapp"></i>
-                            <span>Enviar Prueba</span>
-                        </button>
-                        <a href="{{ settings.local_whatsapp_url }}/qr" target="_blank"
-                           class="flex-1 md:flex-none px-6 py-3 border border-blue-600 text-blue-600 rounded-lg hover:bg-blue-50 transition flex items-center justify-center space-x-2">
-                            <i class="fas fa-qrcode"></i>
-                            <span>Ver Código QR</span>
-                        </a>
-                    </div>
+                <div class="flex flex-wrap gap-3 pt-4 border-t border-gray-200">
+                    <a href="{% url 'dashboard:whatsapp_baileys_config' %}" 
+                       class="flex-1 md:flex-none px-6 py-3 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition flex items-center justify-center space-x-2">
+                        <i class="fas fa-qrcode"></i>
+                        <span>Configurar WhatsApp</span>
+                    </a>
+                    <button type="button" onclick="checkBaileysStatus()" 
+                            class="flex-1 md:flex-none px-6 py-3 border border-emerald-600 text-emerald-600 rounded-lg hover:bg-emerald-50 transition flex items-center justify-center space-x-2">
+                        <i class="fas fa-sync-alt"></i>
+                        <span>Verificar Estado</span>
+                    </button>
                 </div>
             </div>
         </div>
@@ -390,36 +256,178 @@
             </div>
         </div>
 
-        <!-- Método Activo -->
+        <!-- Personalización de Mensajes WhatsApp -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 mb-6 overflow-hidden">
+            <div class="bg-gradient-to-r from-purple-500 to-pink-600 px-6 py-4 flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 bg-white bg-opacity-20 rounded-lg flex items-center justify-center">
+                        <i class="fas fa-edit text-white text-xl"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-white font-semibold text-lg">Personalizar Mensajes de WhatsApp</h3>
+                        <p class="text-purple-100 text-sm">Edita los mensajes que reciben tus pacientes</p>
+                    </div>
+                </div>
+            </div>
+            <div class="p-6">
+                <!-- Configuración de tiempos -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                    <div>
+                        <label for="reminder_hours_before" class="block text-sm font-semibold text-gray-700 mb-2">
+                            <i class="fas fa-clock text-purple-500 mr-2"></i>Recordatorio (horas antes)
+                        </label>
+                        <input type="number" id="reminder_hours_before" name="reminder_hours_before" 
+                               value="{{ settings.reminder_hours_before|default:'24' }}"
+                               min="1" max="168"
+                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent">
+                        <p class="text-xs text-gray-500 mt-1">Ej: 24 = 1 día antes, 48 = 2 días antes</p>
+                    </div>
+                    <div>
+                        <label for="arrival_minutes_before" class="block text-sm font-semibold text-gray-700 mb-2">
+                            <i class="fas fa-walking text-purple-500 mr-2"></i>Minutos de anticipación
+                        </label>
+                        <input type="number" id="arrival_minutes_before" name="arrival_minutes_before" 
+                               value="{{ settings.arrival_minutes_before|default:'10' }}"
+                               min="5" max="60"
+                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent">
+                        <p class="text-xs text-gray-500 mt-1">Cuántos minutos antes debe llegar el paciente</p>
+                    </div>
+                </div>
+
+                <!-- Tabs para diferentes mensajes -->
+                <div class="border-b border-gray-200 mb-6">
+                    <ul class="flex flex-wrap -mb-px text-sm font-medium text-center">
+                        <li class="mr-2">
+                            <button type="button" onclick="switchMessageTab('confirmation')" 
+                                    class="message-tab inline-flex items-center justify-center p-4 border-b-2 border-transparent rounded-t-lg hover:text-gray-600 hover:border-gray-300 group active"
+                                    data-tab="confirmation">
+                                <i class="fas fa-check-circle mr-2"></i>
+                                Confirmación
+                            </button>
+                        </li>
+                        <li class="mr-2">
+                            <button type="button" onclick="switchMessageTab('reminder')" 
+                                    class="message-tab inline-flex items-center justify-center p-4 border-b-2 border-transparent rounded-t-lg hover:text-gray-600 hover:border-gray-300 group"
+                                    data-tab="reminder">
+                                <i class="fas fa-bell mr-2"></i>
+                                Recordatorio
+                            </button>
+                        </li>
+                        <li class="mr-2">
+                            <button type="button" onclick="switchMessageTab('cancellation')" 
+                                    class="message-tab inline-flex items-center justify-center p-4 border-b-2 border-transparent rounded-t-lg hover:text-gray-600 hover:border-gray-300 group"
+                                    data-tab="cancellation">
+                                <i class="fas fa-times-circle mr-2"></i>
+                                Cancelación
+                            </button>
+                        </li>
+                        <li class="mr-2">
+                            <button type="button" onclick="switchMessageTab('rescheduled')" 
+                                    class="message-tab inline-flex items-center justify-center p-4 border-b-2 border-transparent rounded-t-lg hover:text-gray-600 hover:border-gray-300 group"
+                                    data-tab="rescheduled">
+                                <i class="fas fa-calendar-alt mr-2"></i>
+                                Reagendamiento
+                            </button>
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- Mensaje de Confirmación -->
+                <div class="message-content" data-content="confirmation">
+                    <div class="bg-purple-50 border border-purple-200 rounded-lg p-4 mb-4">
+                        <p class="text-sm text-purple-800">
+                            <strong>Variables disponibles:</strong> {organization}, {patient_name}, {date}, {time}, {doctor}, {arrival_minutes}
+                        </p>
+                    </div>
+                    <textarea id="confirmation_message_template" name="confirmation_message_template" rows="10"
+                              class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent font-mono text-sm"
+                              placeholder="Escribe el mensaje de confirmación...">{{ settings.confirmation_message_template }}</textarea>
+                </div>
+
+                <!-- Mensaje de Recordatorio -->
+                <div class="message-content hidden" data-content="reminder">
+                    <div class="bg-purple-50 border border-purple-200 rounded-lg p-4 mb-4">
+                        <p class="text-sm text-purple-800">
+                            <strong>Variables disponibles:</strong> {organization}, {patient_name}, {date}, {time}, {doctor}, {arrival_minutes}
+                        </p>
+                    </div>
+                    <textarea id="reminder_message_template" name="reminder_message_template" rows="10"
+                              class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent font-mono text-sm"
+                              placeholder="Escribe el mensaje de recordatorio...">{{ settings.reminder_message_template }}</textarea>
+                </div>
+
+                <!-- Mensaje de Cancelación -->
+                <div class="message-content hidden" data-content="cancellation">
+                    <div class="bg-purple-50 border border-purple-200 rounded-lg p-4 mb-4">
+                        <p class="text-sm text-purple-800">
+                            <strong>Variables disponibles:</strong> {organization}, {patient_name}, {date}, {time}
+                        </p>
+                    </div>
+                    <textarea id="cancellation_message_template" name="cancellation_message_template" rows="10"
+                              class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent font-mono text-sm"
+                              placeholder="Escribe el mensaje de cancelación...">{{ settings.cancellation_message_template }}</textarea>
+                </div>
+
+                <!-- Mensaje de Reagendamiento -->
+                <div class="message-content hidden" data-content="rescheduled">
+                    <div class="bg-purple-50 border border-purple-200 rounded-lg p-4 mb-4">
+                        <p class="text-sm text-purple-800">
+                            <strong>Variables disponibles:</strong> {organization}, {patient_name}, {date}, {time}, {doctor}, {arrival_minutes}
+                        </p>
+                    </div>
+                    <textarea id="rescheduled_message_template" name="rescheduled_message_template" rows="10"
+                              class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent font-mono text-sm"
+                              placeholder="Escribe el mensaje de reagendamiento...">{{ settings.rescheduled_message_template }}</textarea>
+                </div>
+
+                <div class="flex items-center justify-between mt-4 pt-4 border-t border-gray-200">
+                    <button type="button" onclick="resetMessageTemplates()" 
+                            class="px-4 py-2 text-gray-600 hover:text-gray-800 border border-gray-300 rounded-lg hover:bg-gray-50 transition">
+                        <i class="fas fa-undo mr-2"></i>Restaurar mensajes por defecto
+                    </button>
+                    <div class="text-sm text-gray-500">
+                        <i class="fas fa-info-circle mr-1"></i>Los cambios se aplican al guardar
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Métodos Activos -->
         <div class="bg-gradient-to-r from-indigo-500 to-purple-600 rounded-xl shadow-lg p-6 mb-6 text-white">
             <div class="flex items-center justify-between">
-                <div>
-                    <h3 class="text-lg font-semibold mb-2 flex items-center">
-                        <i class="fas fa-info-circle mr-2"></i>
-                        Método de Notificación Activo
+                <div class="flex-1">
+                    <h3 class="text-lg font-semibold mb-3 flex items-center">
+                        <i class="fas fa-bell mr-2"></i>
+                        Métodos de Notificación Activos
                     </h3>
-                    <div class="flex items-center space-x-3">
-                        <span class="text-indigo-100">Actual:</span>
-                        {% if settings.get_active_method == 'twilio' %}
-                            <span class="px-4 py-2 bg-white text-green-600 rounded-full text-sm font-bold flex items-center">
-                                <i class="fab fa-whatsapp mr-2"></i>WhatsApp (Twilio)
+                    <div class="flex flex-wrap gap-3 items-center">
+                        {% if settings.local_whatsapp_enabled %}
+                            <span class="px-4 py-2 bg-white text-emerald-600 rounded-full text-sm font-bold flex items-center">
+                                <i class="fab fa-whatsapp mr-2"></i>WhatsApp
                             </span>
-                        {% elif settings.get_active_method == 'local_whatsapp' %}
-                            <span class="px-4 py-2 bg-white text-blue-600 rounded-full text-sm font-bold flex items-center">
-                                <i class="fab fa-whatsapp mr-2"></i>WhatsApp Local
-                            </span>
-                        {% elif settings.get_active_method == 'email' %}
+                        {% endif %}
+                        {% if settings.email_enabled %}
                             <span class="px-4 py-2 bg-white text-cyan-600 rounded-full text-sm font-bold flex items-center">
                                 <i class="fas fa-envelope mr-2"></i>Email
                             </span>
-                        {% else %}
+                        {% endif %}
+                        {% if not settings.local_whatsapp_enabled and not settings.email_enabled %}
                             <span class="px-4 py-2 bg-white text-red-600 rounded-full text-sm font-bold flex items-center">
                                 <i class="fas fa-exclamation-triangle mr-2"></i>Ninguno configurado
                             </span>
                         {% endif %}
                     </div>
-                    <p class="text-indigo-200 text-sm mt-2">
-                        Prioridad: Twilio > WhatsApp Local > Email
+                    <p class="text-indigo-200 text-sm mt-3">
+                        <i class="fas fa-info-circle mr-1"></i>
+                        {% if settings.local_whatsapp_enabled and settings.email_enabled %}
+                            Se enviarán notificaciones por WhatsApp y Email (ambos)
+                        {% elif settings.local_whatsapp_enabled %}
+                            Solo se enviarán notificaciones por WhatsApp
+                        {% elif settings.email_enabled %}
+                            Solo se enviarán notificaciones por Email
+                        {% else %}
+                            Activa al menos un método para enviar notificaciones
+                        {% endif %}
                     </p>
                 </div>
                 <div class="hidden md:block">
@@ -535,25 +543,9 @@
 </div>
 
 <script>
-let currentTestMethod = 'twilio';
+let currentTestMethod = 'whatsapp';
 
 // Toggle fields visibility
-function toggleTwilioFields() {
-    const checkbox = document.getElementById('twilio_enabled');
-    const fields = document.getElementById('twilioFields');
-    const badge = document.getElementById('twilioStatusBadge');
-    
-    if (checkbox.checked) {
-        fields.classList.remove('hidden');
-        badge.textContent = 'Activo';
-        badge.className = 'px-3 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-700';
-    } else {
-        fields.classList.add('hidden');
-        badge.textContent = 'Inactivo';
-        badge.className = 'px-3 py-1 rounded-full text-xs font-semibold bg-gray-200 text-gray-600';
-    }
-}
-
 function toggleLocalWhatsAppFields() {
     const checkbox = document.getElementById('local_whatsapp_enabled');
     const fields = document.getElementById('localWhatsappFields');
@@ -565,6 +557,19 @@ function toggleLocalWhatsAppFields() {
         badge.className = 'px-3 py-1 rounded-full text-xs font-semibold bg-blue-100 text-blue-700';
     } else {
         fields.classList.add('hidden');
+        badge.textContent = 'Inactivo';
+        badge.className = 'px-3 py-1 rounded-full text-xs font-semibold bg-gray-200 text-gray-600';
+    }
+}
+
+function toggleWhatsAppBadge() {
+    const checkbox = document.getElementById('local_whatsapp_enabled');
+    const badge = document.getElementById('whatsappStatusBadge');
+    
+    if (checkbox.checked) {
+        badge.textContent = 'Activo';
+        badge.className = 'px-3 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-700';
+    } else {
         badge.textContent = 'Inactivo';
         badge.className = 'px-3 py-1 rounded-full text-xs font-semibold bg-gray-200 text-gray-600';
     }
@@ -613,15 +618,15 @@ function checkConnection() {
     
     // Simulate connection check
     setTimeout(() => {
-        const twilioEnabled = document.getElementById('twilio_enabled').checked;
+        const whatsappEnabled = document.getElementById('whatsapp_enabled').checked;
         const localEnabled = document.getElementById('local_whatsapp_enabled').checked;
         const emailEnabled = document.getElementById('email_enabled').checked;
         
-        if (twilioEnabled) {
+        if (whatsappEnabled) {
             indicator.innerHTML = '<i class="fas fa-check text-green-500 text-2xl"></i>';
             indicator.className = 'w-16 h-16 rounded-full bg-green-100 flex items-center justify-center animate-pulse';
-            text.textContent = 'WhatsApp Twilio conectado';
-            details.textContent = 'Listo para enviar notificaciones';
+            text.textContent = 'WhatsApp conectado';
+            details.textContent = 'Listo para enviar notificaciones vía Twilio';
         } else if (localEnabled) {
             indicator.innerHTML = '<i class="fab fa-whatsapp text-blue-500 text-2xl"></i>';
             indicator.className = 'w-16 h-16 rounded-full bg-blue-100 flex items-center justify-center';
@@ -639,27 +644,6 @@ function checkConnection() {
             details.textContent = 'Activa al menos un método';
         }
     }, 1500);
-}
-
-// Sync WhatsApp
-function syncWhatsApp() {
-    const accountSid = document.getElementById('twilio_account_sid').value;
-    const authToken = document.getElementById('twilio_auth_token').value;
-    const whatsappFrom = document.getElementById('twilio_whatsapp_from').value;
-    
-    if (!accountSid || !authToken || !whatsappFrom) {
-        Toast.warning('Por favor completa todos los campos de Twilio antes de sincronizar');
-        return;
-    }
-    
-    // Show loading toast
-    showToast('Sincronizando con Twilio...', 'info');
-    
-    // Simulate sync
-    setTimeout(() => {
-        showToast('✓ WhatsApp sincronizado correctamente', 'success');
-        checkConnection();
-    }, 2000);
 }
 
 // Show QR Code
@@ -768,9 +752,232 @@ function showToast(message, type = 'info') {
     }, 3000);
 }
 
+// Check Baileys WhatsApp status
+function checkBaileysStatus() {
+    const container = document.getElementById('baileys-status-container');
+    
+    // Show loading
+    container.innerHTML = `
+        <div class="flex items-center justify-center py-4">
+            <i class="fas fa-spinner fa-spin text-emerald-500 text-2xl mr-3"></i>
+            <span class="text-gray-600">Verificando estado...</span>
+        </div>
+    `;
+    
+    fetch('{% url "dashboard:whatsapp_get_status" %}')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const status = data.status;
+                let statusHTML = '';
+                
+                if (status === 'connected') {
+                    // Auto-activar el toggle de WhatsApp si está conectado
+                    const whatsappCheckbox = document.getElementById('local_whatsapp_enabled');
+                    if (whatsappCheckbox && !whatsappCheckbox.checked) {
+                        whatsappCheckbox.checked = true;
+                        toggleWhatsAppBadge();
+                    }
+                    
+                    statusHTML = `
+                        <div class="bg-emerald-50 border-l-4 border-emerald-500 p-4 rounded-r-lg">
+                            <div class="flex items-center mb-2">
+                                <i class="fas fa-check-circle text-emerald-500 text-2xl mr-3"></i>
+                                <div>
+                                    <p class="text-emerald-800 font-semibold">WhatsApp Conectado</p>
+                                    <p class="text-emerald-600 text-sm">Tu WhatsApp está listo para enviar notificaciones</p>
+                                </div>
+                            </div>
+                            ${data.phone_number ? `
+                                <div class="mt-2 text-sm text-emerald-700">
+                                    <i class="fas fa-phone mr-2"></i>Número: ${data.phone_number}
+                                </div>
+                            ` : ''}
+                        </div>
+                    `;
+                } else if (status === 'qr_ready') {
+                    statusHTML = `
+                        <div class="bg-yellow-50 border-l-4 border-yellow-500 p-4 rounded-r-lg">
+                            <div class="flex items-center mb-2">
+                                <i class="fas fa-qrcode text-yellow-500 text-2xl mr-3"></i>
+                                <div>
+                                    <p class="text-yellow-800 font-semibold">QR Listo para Escanear</p>
+                                    <p class="text-yellow-600 text-sm">Escanea el código QR para conectar WhatsApp</p>
+                                </div>
+                            </div>
+                            <a href="{% url 'dashboard:whatsapp_baileys_config' %}" 
+                               class="inline-block mt-3 bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded-lg text-sm transition-colors">
+                                <i class="fas fa-qrcode mr-2"></i>Ver QR Code
+                            </a>
+                        </div>
+                    `;
+                } else if (status === 'connecting') {
+                    statusHTML = `
+                        <div class="bg-blue-50 border-l-4 border-blue-500 p-4 rounded-r-lg">
+                            <div class="flex items-center">
+                                <i class="fas fa-spinner fa-spin text-blue-500 text-2xl mr-3"></i>
+                                <div>
+                                    <p class="text-blue-800 font-semibold">Conectando...</p>
+                                    <p class="text-blue-600 text-sm">Estableciendo conexión con WhatsApp</p>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    // not_started or disconnected
+                    statusHTML = `
+                        <div class="bg-gray-50 border-l-4 border-gray-400 p-4 rounded-r-lg">
+                            <div class="flex items-center mb-2">
+                                <i class="fas fa-times-circle text-gray-500 text-2xl mr-3"></i>
+                                <div>
+                                    <p class="text-gray-800 font-semibold">WhatsApp No Conectado</p>
+                                    <p class="text-gray-600 text-sm">Configura WhatsApp para empezar a enviar notificaciones</p>
+                                </div>
+                            </div>
+                            <a href="{% url 'dashboard:whatsapp_baileys_config' %}" 
+                               class="inline-block mt-3 bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2 rounded-lg text-sm transition-colors">
+                                <i class="fas fa-plug mr-2"></i>Conectar Ahora
+                            </a>
+                        </div>
+                    `;
+                }
+                
+                container.innerHTML = statusHTML;
+            } else {
+                container.innerHTML = `
+                    <div class="bg-red-50 border-l-4 border-red-500 p-4 rounded-r-lg">
+                        <div class="flex items-center">
+                            <i class="fas fa-exclamation-triangle text-red-500 text-2xl mr-3"></i>
+                            <div>
+                                <p class="text-red-800 font-semibold">Error al verificar estado</p>
+                                <p class="text-red-600 text-sm">${data.message || 'No se pudo conectar con el servidor'}</p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+        })
+        .catch(error => {
+            container.innerHTML = `
+                <div class="bg-red-50 border-l-4 border-red-500 p-4 rounded-r-lg">
+                    <div class="flex items-center">
+                        <i class="fas fa-exclamation-triangle text-red-500 text-2xl mr-3"></i>
+                        <div>
+                            <p class="text-red-800 font-semibold">Servidor no disponible</p>
+                            <p class="text-red-600 text-sm">El servidor de WhatsApp no está respondiendo</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+}
+
 // Check connection on load
 document.addEventListener('DOMContentLoaded', function() {
     checkConnection();
+    // Auto-check Baileys status on page load
+    checkBaileysStatus();
 });
+
+// Message templates tab switching
+function switchMessageTab(tabName) {
+    // Remove active class from all tabs
+    document.querySelectorAll('.message-tab').forEach(tab => {
+        tab.classList.remove('active', 'text-purple-600', 'border-purple-600');
+        tab.classList.add('text-gray-500');
+    });
+    
+    // Hide all content
+    document.querySelectorAll('.message-content').forEach(content => {
+        content.classList.add('hidden');
+    });
+    
+    // Activate clicked tab
+    const activeTab = document.querySelector(`.message-tab[data-tab="${tabName}"]`);
+    activeTab.classList.add('active', 'text-purple-600', 'border-purple-600');
+    activeTab.classList.remove('text-gray-500');
+    
+    // Show corresponding content
+    const activeContent = document.querySelector(`.message-content[data-content="${tabName}"]`);
+    activeContent.classList.remove('hidden');
+}
+
+// Reset message templates to default
+function resetMessageTemplates() {
+    if (!confirm('¿Estás seguro de restaurar todos los mensajes a los valores por defecto? Se perderán tus personalizaciones.')) {
+        return;
+    }
+    
+    const defaults = {
+        confirmation_message_template: `✅ CITA CONFIRMADA - {organization}
+
+Hola {patient_name},
+
+Tu cita ha sido agendada exitosamente:
+
+📅 Fecha: {date}
+🕒 Hora: {time}
+👤 Doctor: {doctor}
+
+Llega {arrival_minutes} minutos antes de tu cita.
+
+Si necesitas cancelar o reagendar, contáctanos con anticipación.
+
+¡Te esperamos! 👓`,
+        
+        reminder_message_template: `⏰ RECORDATORIO DE CITA - {organization}
+
+Hola {patient_name},
+
+Te recordamos tu cita:
+
+📅 Fecha: {date}
+🕒 Hora: {time}
+👤 Doctor: {doctor}
+
+Llega {arrival_minutes} minutos antes de tu cita.
+
+Si no puedes asistir, contáctanos lo antes posible.
+
+¡Nos vemos pronto! 👓`,
+        
+        cancellation_message_template: `❌ CITA CANCELADA - {organization}
+
+Hola {patient_name},
+
+Tu cita ha sido cancelada:
+
+📅 Fecha: {date}
+🕒 Hora: {time}
+
+Si deseas reagendar, contáctanos.
+
+Gracias por tu comprensión. 👓`,
+        
+        rescheduled_message_template: `🔄 CITA REAGENDADA - {organization}
+
+Hola {patient_name},
+
+Tu cita ha sido reagendada:
+
+📅 Nueva Fecha: {date}
+🕒 Nueva Hora: {time}
+👤 Doctor: {doctor}
+
+Llega {arrival_minutes} minutos antes de tu cita.
+
+¡Te esperamos! 👓`
+    };
+    
+    // Set default values
+    Object.keys(defaults).forEach(key => {
+        const textarea = document.getElementById(key);
+        if (textarea) {
+            textarea.value = defaults[key];
+        }
+    });
+    
+    showToast('Mensajes restaurados a valores por defecto', 'success');
+}
 </script>
 {% endblock %}

@@ -43,25 +43,19 @@ def get_notifier(organization=None):
     # Usar configuración de la base de datos
     active_method = notification_settings.get_active_method()
     
-    if active_method == 'twilio':
+    if active_method in ['whatsapp', 'twilio']:
         logger.info("Usando notificaciones por Twilio WhatsApp")
         from apps.appointments.whatsapp import WhatsAppNotifier
-        # Crear instancia con credenciales de la BD
-        notifier = WhatsAppNotifier()
-        notifier.account_sid = notification_settings.twilio_account_sid
-        notifier.auth_token = notification_settings.twilio_auth_token
-        notifier.whatsapp_from = notification_settings.twilio_whatsapp_from
-        from twilio.rest import Client
-        notifier.client = Client(notifier.account_sid, notifier.auth_token)
-        notifier.enabled = True
+        # Usar configuración centralizada de settings
+        notifier = WhatsAppNotifier(organization)
         return notifier
     elif active_method == 'local_whatsapp':
-        logger.info("Usando notificaciones por WhatsApp Local")
+        logger.info("Usando notificaciones por WhatsApp Baileys (Local)")
         try:
-            from apps.appointments.whatsapp_local import whatsapp_notifier
-            return whatsapp_notifier
-        except ImportError:
-            logger.warning("WhatsApp local no disponible, usando Email")
+            from apps.appointments.whatsapp_baileys_notifier import WhatsAppBaileysNotifier
+            return WhatsAppBaileysNotifier(organization)
+        except ImportError as e:
+            logger.warning(f"WhatsApp Baileys no disponible: {e}, usando Email")
             from apps.appointments.email_notifier import email_notifier
             return email_notifier
     elif active_method == 'email':
@@ -75,109 +69,161 @@ def get_notifier(organization=None):
 
 
 # Instancia global del notificador
-notifier = get_notifier()
+# notifier = get_notifier()  # Comentado para evitar import circular
 
 
 def notify_new_appointment(appointment):
     """
-    Envía notificación de nueva cita
-    Usa WhatsApp en local, Email en producción
+    Envía notificación de nueva cita por TODOS los métodos habilitados
+    (WhatsApp Y Email si ambos están activos)
     """
-    try:
-        return notifier.send_appointment_confirmation(appointment)
-    except Exception as e:
-        logger.error(f"Error al enviar notificación de nueva cita: {e}")
+    from apps.appointments.models_notifications import NotificationSettings
+    
+    settings = NotificationSettings.get_settings(appointment.organization)
+    if not settings:
+        logger.warning("No hay configuración de notificaciones")
         return False
+    
+    results = []
+    
+    # Enviar por WhatsApp Local si está habilitado
+    if settings.local_whatsapp_enabled:
+        try:
+            from apps.appointments.whatsapp_baileys_notifier import WhatsAppBaileysNotifier
+            notifier = WhatsAppBaileysNotifier(appointment.organization)
+            success = notifier.send_appointment_confirmation(appointment)
+            results.append(('WhatsApp', success))
+            logger.info(f"WhatsApp notificación: {'✓' if success else '✗'}")
+        except Exception as e:
+            logger.error(f"Error enviando WhatsApp: {e}")
+            results.append(('WhatsApp', False))
+    
+    # Enviar por Email si está habilitado
+    if settings.email_enabled and appointment.email:
+        try:
+            from apps.appointments.email_notifier import email_notifier
+            success = email_notifier.send_appointment_confirmation(appointment)
+            results.append(('Email', success))
+            logger.info(f"Email notificación: {'✓' if success else '✗'}")
+        except Exception as e:
+            logger.error(f"Error enviando Email: {e}")
+            results.append(('Email', False))
+    
+    # Retornar True si al menos uno fue exitoso
+    return any(success for _, success in results) if results else False
 
 
 def notify_appointment_reminder(appointment):
     """
-    Envía recordatorio de cita (1 día antes)
-    Usa WhatsApp en local, Email en producción
+    Envía recordatorio de cita por TODOS los métodos habilitados
     """
-    try:
-        return notifier.send_appointment_reminder(appointment)
-    except Exception as e:
-        logger.error(f"Error al enviar recordatorio: {e}")
+    from apps.appointments.models_notifications import NotificationSettings
+    
+    settings = NotificationSettings.get_settings(appointment.organization)
+    if not settings:
         return False
+    
+    results = []
+    
+    # WhatsApp Local
+    if settings.local_whatsapp_enabled:
+        try:
+            from apps.appointments.whatsapp_baileys_notifier import WhatsAppBaileysNotifier
+            notifier = WhatsAppBaileysNotifier(appointment.organization)
+            success = notifier.send_appointment_reminder(appointment)
+            results.append(('WhatsApp', success))
+        except Exception as e:
+            logger.error(f"Error enviando recordatorio WhatsApp: {e}")
+            results.append(('WhatsApp', False))
+    
+    # Email
+    if settings.email_enabled and appointment.email:
+        try:
+            from apps.appointments.email_notifier import email_notifier
+            success = email_notifier.send_appointment_reminder(appointment)
+            results.append(('Email', success))
+        except Exception as e:
+            logger.error(f"Error enviando recordatorio Email: {e}")
+            results.append(('Email', False))
+    
+    return any(success for _, success in results) if results else False
 
 
 def notify_appointment_cancelled(appointment):
     """
-    Notifica que una cita fue cancelada
-    Usa WhatsApp en local, Email en producción
+    Notifica cancelación de cita por TODOS los métodos habilitados
     """
-    try:
-        return notifier.send_appointment_cancelled(appointment)
-    except Exception as e:
-        logger.error(f"Error al enviar notificación de cancelación: {e}")
+    from apps.appointments.models_notifications import NotificationSettings
+    
+    settings = NotificationSettings.get_settings(appointment.organization)
+    if not settings:
         return False
+    
+    results = []
+    
+    # WhatsApp Local
+    if settings.local_whatsapp_enabled:
+        try:
+            from apps.appointments.whatsapp_baileys_notifier import WhatsAppBaileysNotifier
+            notifier = WhatsAppBaileysNotifier(appointment.organization)
+            success = notifier.send_appointment_cancelled(appointment)
+            results.append(('WhatsApp', success))
+        except Exception as e:
+            logger.error(f"Error enviando cancelación WhatsApp: {e}")
+            results.append(('WhatsApp', False))
+    
+    # Email
+    if settings.email_enabled and appointment.email:
+        try:
+            from apps.appointments.email_notifier import email_notifier
+            success = email_notifier.send_appointment_cancelled(appointment)
+            results.append(('Email', success))
+        except Exception as e:
+            logger.error(f"Error enviando cancelación Email: {e}")
+            results.append(('Email', False))
+    
+    return any(success for _, success in results) if results else False
 
 
 def notify_appointment_rescheduled(appointment, old_date, old_time):
     """
-    Notifica que una cita fue reagendada
-    Usa WhatsApp en local, Email en producción
+    Notifica reagendamiento de cita por TODOS los métodos habilitados
     
     Args:
         appointment: Objeto Appointment con los nuevos datos
         old_date: Fecha anterior de la cita
         old_time: Hora anterior de la cita
     """
-    try:
-        # Obtener el notificador apropiado
-        notifier_instance = get_notifier(appointment.organization)
-        
-        # Formatear fechas y horas
-        old_date_str = old_date.strftime('%d/%m/%Y')
-        old_time_str = old_time.strftime('%H:%M')
-        new_date_str = appointment.appointment_date.strftime('%d/%m/%Y')
-        new_time_str = appointment.appointment_time.strftime('%H:%M')
-        
-        # Preparar mensaje
-        message = f"""
-📅 CITA REAGENDADA - {appointment.organization.name if appointment.organization else 'OCEANO OPTICO'}
-
-Hola {appointment.full_name},
-
-Su cita ha sido REAGENDADA:
-
-❌ Cita Anterior:
-   📆 {old_date_str}
-   🕒 {old_time_str}
-
-✅ Nueva Cita:
-   📆 {new_date_str}
-   🕒 {new_time_str}
-
-Por favor, confirme su asistencia en el nuevo horario.
-
-Si tiene alguna duda, contáctenos.
-        """.strip()
-        
-        # Intentar enviar por WhatsApp o Email según configuración
-        if hasattr(notifier_instance, 'send_message'):
-            # Es un notificador de WhatsApp
-            phone = appointment.phone_number
-            if not phone.startswith('+'):
-                phone = '+' + phone
-            return notifier_instance.send_message(phone, message)
-        elif hasattr(notifier_instance, 'send_email'):
-            # Es un notificador de Email
-            if appointment.email:
-                subject = 'Cita Reagendada - ' + (appointment.organization.name if appointment.organization else 'OCEANO OPTICO')
-                return notifier_instance.send_email(
-                    appointment.email,
-                    subject,
-                    message
-                )
-        
-        logger.warning(f"No se pudo enviar notificación de reagendamiento para cita {appointment.id}")
+    from apps.appointments.models_notifications import NotificationSettings
+    
+    settings = NotificationSettings.get_settings(appointment.organization)
+    if not settings:
         return False
-        
-    except Exception as e:
-        logger.error(f"Error al enviar notificación de reagendamiento: {e}")
-        return False
+    
+    results = []
+    
+    # WhatsApp Local
+    if settings.local_whatsapp_enabled:
+        try:
+            from apps.appointments.whatsapp_baileys_notifier import WhatsAppBaileysNotifier
+            notifier = WhatsAppBaileysNotifier(appointment.organization)
+            success = notifier.send_appointment_rescheduled(appointment, old_date, old_time)
+            results.append(('WhatsApp', success))
+        except Exception as e:
+            logger.error(f"Error enviando reagendamiento WhatsApp: {e}")
+            results.append(('WhatsApp', False))
+    
+    # Email
+    if settings.email_enabled and appointment.email:
+        try:
+            from apps.appointments.email_notifier import email_notifier
+            success = email_notifier.send_appointment_rescheduled(appointment, old_date, old_time)
+            results.append(('Email', success))
+        except Exception as e:
+            logger.error(f"Error enviando reagendamiento Email: {e}")
+            results.append(('Email', False))
+    
+    return any(success for _, success in results) if results else False
 
 
 def send_test_notification(phone_or_email, method='auto'):

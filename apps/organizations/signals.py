@@ -9,7 +9,7 @@ def create_owner_membership(sender, instance, created, **kwargs):
     """
     Cuando se crea una organización, automáticamente agregar al owner como miembro
     """
-    if created:
+    if created and instance.owner_id:
         OrganizationMember.objects.create(
             organization=instance,
             user=instance.owner,

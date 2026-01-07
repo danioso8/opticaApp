@@ -44,12 +44,13 @@ def notify_new_appointment(appointment):
             notifier = get_notifier(appointment.organization)
             
             # Enviar notificación según el método activo
-            if notification_settings.get_active_method() in ['twilio', 'local_whatsapp']:
+            active_method = notification_settings.get_active_method()
+            if active_method in ['whatsapp', 'twilio', 'local_whatsapp']:
                 notifier.send_appointment_confirmation(appointment)
-            elif notification_settings.get_active_method() == 'email' and appointment.email:
+            elif active_method == 'email' and appointment.email:
                 notifier.send_appointment_confirmation(appointment)
             
-            logger.info(f"Notificación de confirmación enviada para cita #{appointment.id}")
+            logger.info(f"Notificación de confirmación enviada para cita #{appointment.id} vía {active_method}")
         else:
             logger.info(f"Notificaciones de confirmación deshabilitadas para cita #{appointment.id}")
     except Exception as e:

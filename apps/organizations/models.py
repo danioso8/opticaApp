@@ -71,6 +71,20 @@ class SubscriptionPlan(models.Model):
     max_patients = models.IntegerField(default=100, verbose_name='Máximo de Pacientes')
     max_storage_mb = models.IntegerField(default=100, verbose_name='Almacenamiento (MB)')
     
+    # Límites de WhatsApp (NUEVO)
+    whatsapp_messages_included = models.IntegerField(
+        default=100,
+        verbose_name='Mensajes WhatsApp Incluidos/Mes',
+        help_text='Mensajes WhatsApp incluidos en el plan. 0 = ilimitado (Enterprise)'
+    )
+    whatsapp_overage_price = models.DecimalField(
+        max_digits=6,
+        decimal_places=3,
+        default=0.020,
+        verbose_name='Precio por Mensaje Adicional',
+        help_text='Precio en USD por cada mensaje WhatsApp que exceda el límite incluido'
+    )
+    
     # Límites de Facturación Electrónica DIAN
     allow_electronic_invoicing = models.BooleanField(
         default=False,
@@ -299,7 +313,7 @@ class Organization(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
     
     # Owner de la organización
-    owner = models.ForeignKey(User, on_delete=models.CASCADE, related_name='owned_organizations')
+    owner = models.ForeignKey(User, on_delete=models.CASCADE, related_name='owned_organizations', null=True, blank=True)
     
     class Meta:
         verbose_name = 'Organización'

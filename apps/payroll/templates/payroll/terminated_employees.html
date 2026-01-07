@@ -1,0 +1,226 @@
+{% extends 'dashboard/base.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}Empleados Liquidados - {{ period.nombre }}{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-6">
+    <div class="mb-6">
+        <a href="{% url 'payroll:period_detail' period.pk %}" class="text-indigo-600 hover:text-indigo-800 font-medium">
+            <i class="fas fa-arrow-left mr-2"></i>
+            Volver al Periodo
+        </a>
+    </div>
+
+    <div class="mb-6">
+        <h1 class="text-3xl font-bold text-gray-800">
+            <i class="fas fa-users text-indigo-600 mr-2"></i>
+            Empleados del Periodo
+        </h1>
+        <p class="text-gray-600 mt-1">Periodo: {{ period.nombre }} ({{ period.fecha_inicio|date:"d/m/Y" }} - {{ period.fecha_fin|date:"d/m/Y" }}) - {{ dias_periodo }} días</p>
+    </div>
+
+    <!-- Resumen General -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        <div class="bg-green-50 rounded-lg p-4 border-l-4 border-green-500">
+            <p class="text-green-600 text-sm font-medium">Empleados Activos</p>
+            <p class="text-2xl font-bold text-green-900">{{ active_employees|length }}</p>
+            <p class="text-xs text-green-700 mt-1">Total: ${{ total_pago_activos|floatformat:0|intcomma }}</p>
+        </div>
+        <div class="bg-orange-50 rounded-lg p-4 border-l-4 border-orange-500">
+            <p class="text-orange-600 text-sm font-medium">Empleados Liquidados</p>
+            <p class="text-2xl font-bold text-orange-900">{{ terminated_employees|length }}</p>
+            <p class="text-xs text-orange-700 mt-1">Total: ${{ total_pago_liquidados|floatformat:0|intcomma }}</p>
+        </div>
+        <div class="bg-indigo-50 rounded-lg p-4 border-l-4 border-indigo-500">
+            <p class="text-indigo-600 text-sm font-medium">Total General</p>
+            <p class="text-2xl font-bold text-indigo-900">{{ active_employees|length|add:terminated_employees|length }}</p>
+            <p class="text-xs text-indigo-700 mt-1">Total: ${{ total_pago_general|floatformat:0|intcomma }}</p>
+        </div>
+    </div>
+
+    <!-- EMPLEADOS ACTIVOS -->
+    <div class="bg-white rounded-lg shadow-md overflow-hidden mb-6">
+        <div class="bg-green-600 px-6 py-3">
+            <h2 class="text-white font-bold text-lg">
+                <i class="fas fa-user-check mr-2"></i>
+                Empleados Activos ({{ active_employees|length }})
+            </h2>
+        </div>
+        {% if active_employees %}
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Empleado</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cargo</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fecha Ingreso</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Días Trabajados</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Salario Mensual</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    {% for item in active_employees %}
+                    <tr class="hover:bg-green-50">
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="flex items-center">
+                                <div class="flex-shrink-0 h-10 w-10 bg-green-100 rounded-full flex items-center justify-center">
+                                    <i class="fas fa-user text-green-600"></i>
+                                </div>
+                                <div class="ml-4">
+                                    <div class="text-sm font-medium text-gray-900">{{ item.employee.get_full_name }}</div>
+                                    <div class="text-sm text-gray-500">{{ item.employee.numero_documento }}</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="text-sm text-gray-900">{{ item.employee.cargo }}</div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="text-sm text-gray-900">{{ item.employee.fecha_ingreso|date:"d/m/Y" }}</div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="px-3 py-1 inline-flex text-sm leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                                <i class="fas fa-calendar-check mr-1"></i> {{ item.dias_trabajados }} días
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="text-sm font-bold text-green-600">${{ item.salario_total|floatformat:0|intcomma }}</div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+                <tfoot class="bg-green-50">
+                    <tr>
+                        <td colspan="4" class="px-6 py-4 text-right text-sm font-medium text-gray-900">
+                            Subtotal Empleados Activos:
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="text-lg font-bold text-green-600">
+                                ${{ total_pago_activos|floatformat:0|intcomma }}
+                            </div>
+                        </td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+        {% else %}
+        <div class="p-8 text-center text-gray-500">
+            <p class="text-sm">No hay empleados activos en este periodo</p>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- EMPLEADOS LIQUIDADOS -->
+    <div class="bg-white rounded-lg shadow-md overflow-hidden mb-6">
+        <div class="bg-orange-600 px-6 py-3">
+            <h2 class="text-white font-bold text-lg">
+                <i class="fas fa-user-times mr-2"></i>
+                Empleados Liquidados ({{ terminated_employees|length }})
+            </h2>
+        </div>
+        {% if terminated_employees %}
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Empleado</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cargo</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fecha Retiro</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Días Trabajados</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Salario Base</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Salario Proporcional</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    {% for item in terminated_employees %}
+                    <tr class="hover:bg-orange-50">
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="flex items-center">
+                                <div class="flex-shrink-0 h-10 w-10 bg-orange-100 rounded-full flex items-center justify-center">
+                                    <i class="fas fa-user-slash text-orange-600"></i>
+                                </div>
+                                <div class="ml-4">
+                                    <div class="text-sm font-medium text-gray-900">{{ item.employee.get_full_name }}</div>
+                                    <div class="text-sm text-gray-500">{{ item.employee.numero_documento }}</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="text-sm text-gray-900">{{ item.employee.cargo }}</div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="text-sm font-medium text-orange-600">{{ item.employee.fecha_retiro|date:"d/m/Y" }}</div>
+                            <div class="text-xs text-gray-500">{{ item.employee.fecha_retiro|timesince }} atrás</div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="px-3 py-1 inline-flex text-sm leading-5 font-semibold rounded-full bg-orange-100 text-orange-800">
+                                <i class="fas fa-calendar-times mr-1"></i> {{ item.dias_trabajados }} días
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="text-sm text-gray-900">${{ item.employee.salario_basico|intcomma }}</div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="text-sm font-bold text-orange-600">${{ item.salario_total|floatformat:0|intcomma }}</div>
+                            <div class="text-xs text-gray-500">Proporcional</div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+                <tfoot class="bg-orange-50">
+                    <tr>
+                        <td colspan="5" class="px-6 py-4 text-right text-sm font-medium text-gray-900">
+                            Subtotal Empleados Liquidados:
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="text-lg font-bold text-orange-600">
+                                ${{ total_pago_liquidados|floatformat:0|intcomma }}
+                            </div>
+                        </td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+        {% else %}
+        <div class="p-8 text-center text-gray-500">
+            <i class="fas fa-check-circle text-4xl mb-3 text-green-300"></i>
+            <p class="text-sm font-medium">No hay empleados liquidados en este periodo</p>
+            <p class="text-xs mt-1">Todos los empleados estuvieron activos durante todo el periodo de nómina.</p>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- TOTAL GENERAL -->
+    <div class="bg-gradient-to-r from-indigo-600 to-purple-600 rounded-lg shadow-lg p-6 text-white">
+        <div class="flex justify-between items-center">
+            <div>
+                <p class="text-indigo-100 text-sm mb-1">TOTAL GENERAL A PAGAR</p>
+                <p class="text-xs text-indigo-200">{{ active_employees|length|add:terminated_employees|length }} empleados en total</p>
+            </div>
+            <div class="text-right">
+                <p class="text-4xl font-bold">${{ total_pago_general|floatformat:0|intcomma }}</p>
+                <p class="text-sm text-indigo-200 mt-1">
+                    Activos: ${{ total_pago_activos|floatformat:0|intcomma }} + 
+                    Liquidados: ${{ total_pago_liquidados|floatformat:0|intcomma }}
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Nota adicional -->
+    <div class="mt-6 bg-blue-50 border-l-4 border-blue-500 p-4 rounded-lg">
+        <div class="flex">
+            <i class="fas fa-calculator text-blue-500 mt-1 mr-3 text-xl"></i>
+            <div>
+                <h3 class="font-bold text-blue-800 mb-1">Cálculo del Pago Proporcional</h3>
+                <p class="text-sm text-blue-700">
+                    El salario proporcional se calcula dividiendo el salario mensual entre 30 días y multiplicando por los días trabajados.
+                    <br>Fórmula: (Salario Mensual / 30) × Días Trabajados
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

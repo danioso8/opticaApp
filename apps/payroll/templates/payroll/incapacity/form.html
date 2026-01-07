@@ -1,0 +1,173 @@
+{% extends 'dashboard/base.html' %}
+{% load static %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-6">
+    <div class="mb-6">
+        <a href="{% url 'payroll:incapacity_list' %}" class="text-indigo-600 hover:text-indigo-800 font-medium">
+            <i class="fas fa-arrow-left mr-2"></i>
+            Volver a Incapacidades
+        </a>
+    </div>
+
+    <div class="max-w-4xl mx-auto">
+        <div class="bg-white rounded-lg shadow-lg overflow-hidden">
+            <div class="px-6 py-4 border-b border-gray-200 bg-indigo-50">
+                <h1 class="text-2xl font-bold text-indigo-800">
+                    <i class="fas fa-notes-medical mr-2"></i>
+                    {{ title }}
+                </h1>
+            </div>
+
+            <form method="post" enctype="multipart/form-data" class="p-6">
+                {% csrf_token %}
+
+                {% if form.non_field_errors %}
+                <div class="mb-4 bg-red-50 border-l-4 border-red-500 p-4 rounded">
+                    <div class="flex">
+                        <i class="fas fa-exclamation-circle text-red-500 mt-1 mr-3"></i>
+                        <div class="text-sm text-red-700">
+                            {{ form.non_field_errors }}
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Empleado -->
+                    <div class="md:col-span-2">
+                        <label for="{{ form.employee.id_for_label }}" class="block text-sm font-medium text-gray-700">
+                            {{ form.employee.label }}
+                            <span class="text-red-500">*</span>
+                        </label>
+                        {{ form.employee }}
+                        {% if form.employee.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.employee.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+
+                    <!-- Tipo -->
+                    <div class="md:col-span-2">
+                        <label for="{{ form.tipo.id_for_label }}" class="block text-sm font-medium text-gray-700">
+                            {{ form.tipo.label }}
+                            <span class="text-red-500">*</span>
+                        </label>
+                        {{ form.tipo }}
+                        {% if form.tipo.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.tipo.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+
+                    <!-- Fecha Inicio -->
+                    <div>
+                        <label for="{{ form.fecha_inicio.id_for_label }}" class="block text-sm font-medium text-gray-700">
+                            {{ form.fecha_inicio.label }}
+                            <span class="text-red-500">*</span>
+                        </label>
+                        {{ form.fecha_inicio }}
+                        {% if form.fecha_inicio.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.fecha_inicio.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+
+                    <!-- Fecha Fin -->
+                    <div>
+                        <label for="{{ form.fecha_fin.id_for_label }}" class="block text-sm font-medium text-gray-700">
+                            {{ form.fecha_fin.label }}
+                            <span class="text-red-500">*</span>
+                        </label>
+                        {{ form.fecha_fin }}
+                        {% if form.fecha_fin.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.fecha_fin.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+
+                    <!-- Número de Incapacidad -->
+                    <div>
+                        <label for="{{ form.numero_incapacidad.id_for_label }}" class="block text-sm font-medium text-gray-700">
+                            {{ form.numero_incapacidad.label }}
+                        </label>
+                        {{ form.numero_incapacidad }}
+                        {% if form.numero_incapacidad.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.numero_incapacidad.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+
+                    <!-- Porcentaje de Pago -->
+                    <div>
+                        <label for="{{ form.porcentaje_pago.id_for_label }}" class="block text-sm font-medium text-gray-700">
+                            {{ form.porcentaje_pago.label }}
+                        </label>
+                        {{ form.porcentaje_pago }}
+                        {% if form.porcentaje_pago.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.porcentaje_pago.errors.0 }}</p>
+                        {% endif %}
+                        <p class="mt-1 text-xs text-gray-500">Para enfermedad común: 66.67%, Laboral/Profesional: 100%</p>
+                    </div>
+
+                    <!-- Diagnóstico -->
+                    <div class="md:col-span-2">
+                        <label for="{{ form.diagnostico.id_for_label }}" class="block text-sm font-medium text-gray-700">
+                            {{ form.diagnostico.label }}
+                        </label>
+                        {{ form.diagnostico }}
+                        {% if form.diagnostico.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.diagnostico.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+
+                    <!-- Documento Soporte -->
+                    <div class="md:col-span-2">
+                        <label for="{{ form.documento_soporte.id_for_label }}" class="block text-sm font-medium text-gray-700">
+                            {{ form.documento_soporte.label }}
+                        </label>
+                        {{ form.documento_soporte }}
+                        {% if form.documento_soporte.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.documento_soporte.errors.0 }}</p>
+                        {% endif %}
+                        <p class="mt-1 text-xs text-gray-500">PDF, imagen o documento médico escaneado</p>
+                    </div>
+
+                    <!-- Observaciones -->
+                    <div class="md:col-span-2">
+                        <label for="{{ form.observaciones.id_for_label }}" class="block text-sm font-medium text-gray-700">
+                            {{ form.observaciones.label }}
+                        </label>
+                        {{ form.observaciones }}
+                        {% if form.observaciones.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.observaciones.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Nota informativa -->
+                <div class="mt-6 bg-blue-50 border-l-4 border-blue-500 p-4 rounded">
+                    <div class="flex">
+                        <i class="fas fa-info-circle text-blue-500 mt-1 mr-3"></i>
+                        <div class="text-sm text-blue-700">
+                            <p class="font-medium mb-1">Cálculo Automático</p>
+                            <p>Los días de incapacidad y el valor total se calcularán automáticamente según las fechas y el salario del empleado.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Botones -->
+                <div class="mt-8 flex items-center justify-end space-x-4">
+                    <a href="{% url 'payroll:incapacity_list' %}" 
+                       class="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 font-medium transition-colors">
+                        <i class="fas fa-times mr-2"></i>
+                        Cancelar
+                    </a>
+                    <button type="submit" 
+                            class="px-6 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-medium transition-colors">
+                        <i class="fas fa-save mr-2"></i>
+                        {% if incapacity %}Actualizar{% else %}Registrar{% endif %} Incapacidad
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

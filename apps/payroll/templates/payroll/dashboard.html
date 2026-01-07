@@ -1,0 +1,223 @@
+{% extends 'dashboard/base.html' %}
+{% load static %}
+
+{% block title %}Nómina Electrónica{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-6">
+    <!-- Header -->
+    <div class="mb-6 flex justify-between items-center">
+        <div>
+            <h1 class="text-3xl font-bold text-gray-800 flex items-center">
+                <i class="fas fa-money-check-alt text-indigo-600 mr-3"></i>
+                Nómina Electrónica
+            </h1>
+            <p class="text-gray-600 mt-2">Sistema de gestión de nómina y documentos electrónicos DIAN</p>
+        </div>
+        <a href="{% url 'payroll:workflow_dashboard' %}" class="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-6 py-3 rounded-lg hover:from-blue-700 hover:to-indigo-700 transition flex items-center gap-2 shadow-lg">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+            </svg>
+            <span class="font-bold">Sistema Automatizado</span>
+        </a>
+    </div>
+
+    <!-- Tarjetas de estadísticas -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+        <!-- Total Empleados -->
+        <div class="bg-white rounded-lg shadow-md p-6 border-l-4 border-blue-500 hover:shadow-lg transition-shadow duration-300">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-gray-600 text-sm font-medium">Empleados Activos</p>
+                    <p class="text-3xl font-bold text-gray-800 mt-2">{{ total_empleados }}</p>
+                </div>
+                <div class="bg-gradient-to-br from-blue-500 to-blue-600 rounded-full p-4 shadow-lg">
+                    <i class="fas fa-users text-white text-2xl"></i>
+                </div>
+            </div>
+            <a href="{% url 'payroll:employee_list' %}" class="text-blue-600 hover:text-blue-800 text-sm mt-4 inline-flex items-center group">
+                Ver empleados 
+                <i class="fas fa-arrow-right ml-1 group-hover:ml-2 transition-all"></i>
+            </a>
+        </div>
+
+        <!-- Períodos Activos -->
+        <div class="bg-white rounded-lg shadow-md p-6 border-l-4 border-green-500 hover:shadow-lg transition-shadow duration-300">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-gray-600 text-sm font-medium">Períodos Activos</p>
+                    <p class="text-3xl font-bold text-gray-800 mt-2">{{ periodos_activos }}</p>
+                </div>
+                <div class="bg-gradient-to-br from-green-500 to-green-600 rounded-full p-4 shadow-lg">
+                    <i class="fas fa-calendar-check text-white text-2xl"></i>
+                </div>
+            </div>
+            <a href="{% url 'payroll:period_list' %}" class="text-green-600 hover:text-green-800 text-sm mt-4 inline-flex items-center group">
+                Ver períodos 
+                <i class="fas fa-arrow-right ml-1 group-hover:ml-2 transition-all"></i>
+            </a>
+        </div>
+
+        <!-- Conceptos -->
+        <div class="bg-white rounded-lg shadow-md p-6 border-l-4 border-purple-500 hover:shadow-lg transition-shadow duration-300">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-gray-600 text-sm font-medium">Conceptos</p>
+                    <p class="text-3xl font-bold text-gray-800 mt-2">Config</p>
+                </div>
+                <div class="bg-gradient-to-br from-purple-500 to-purple-600 rounded-full p-4 shadow-lg">
+                    <i class="fas fa-cog text-white text-2xl"></i>
+                </div>
+            </div>
+            <a href="{% url 'payroll:concept_list' %}" class="text-purple-600 hover:text-purple-800 text-sm mt-4 inline-flex items-center group">
+                Configurar conceptos 
+                <i class="fas fa-arrow-right ml-1 group-hover:ml-2 transition-all"></i>
+            </a>
+        </div>
+    </div>
+
+    <!-- Acciones Rápidas -->
+    <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+        <h2 class="text-xl font-bold text-gray-800 mb-4">
+            <i class="fas fa-bolt text-yellow-500 mr-2"></i>
+            Acciones Rápidas
+        </h2>
+        <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
+            <a href="{% url 'payroll:workflow_dashboard' %}" class="bg-gradient-to-br from-indigo-500 to-indigo-600 hover:from-indigo-600 hover:to-indigo-700 text-white rounded-lg p-6 text-center transition-all duration-300 transform hover:scale-105 shadow-lg">
+                <i class="fas fa-rocket text-3xl mb-3"></i>
+                <p class="font-medium">Dashboard Automatizado</p>
+            </a>
+            <a href="{% url 'payroll:employee_create' %}" class="bg-gradient-to-br from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white rounded-lg p-6 text-center transition-all duration-300 transform hover:scale-105 shadow-lg">
+                <i class="fas fa-user-plus text-3xl mb-3"></i>
+                <p class="font-medium">Nuevo Empleado</p>
+            </a>
+            <a href="{% url 'payroll:period_create' %}" class="bg-gradient-to-br from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white rounded-lg p-6 text-center transition-all duration-300 transform hover:scale-105 shadow-lg">
+                <i class="fas fa-calendar-plus text-3xl mb-3"></i>
+                <p class="font-medium">Nuevo Período</p>
+            </a>
+            <a href="{% url 'payroll:employee_list' %}" class="bg-gradient-to-br from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white rounded-lg p-6 text-center transition-all duration-300 transform hover:scale-105 shadow-lg">
+                <i class="fas fa-list text-3xl mb-3"></i>
+                <p class="font-medium">Lista Empleados</p>
+            </a>
+            <a href="{% url 'payroll:concept_list' %}" class="bg-gradient-to-br from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white rounded-lg p-6 text-center transition-all duration-300 transform hover:scale-105 shadow-lg">
+                <i class="fas fa-tags text-3xl mb-3"></i>
+                <p class="font-medium">Conceptos</p>
+            </a>
+        </div>
+    </div>
+
+    <!-- NUEVO: Prestaciones Sociales -->
+    <div class="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg shadow-md p-6 mb-6 border border-indigo-200">
+        <h2 class="text-xl font-bold text-gray-800 mb-4 flex items-center">
+            <i class="fas fa-piggy-bank text-indigo-600 mr-2"></i>
+            Prestaciones Sociales
+            <span class="ml-2 text-xs bg-green-500 text-white px-2 py-1 rounded-full">NUEVO</span>
+        </h2>
+        <div class="grid grid-cols-2 md:grid-cols-6 gap-4">
+            <a href="{% url 'payroll:contract_list' %}" class="bg-white hover:bg-gray-50 rounded-lg p-4 text-center transition-all duration-300 transform hover:scale-105 shadow border border-gray-200">
+                <i class="fas fa-file-contract text-blue-600 text-2xl mb-2"></i>
+                <p class="text-sm font-medium text-gray-700">Contratos</p>
+            </a>
+            <a href="{% url 'payroll:vacation_list' %}" class="bg-white hover:bg-gray-50 rounded-lg p-4 text-center transition-all duration-300 transform hover:scale-105 shadow border border-gray-200">
+                <i class="fas fa-umbrella-beach text-green-600 text-2xl mb-2"></i>
+                <p class="text-sm font-medium text-gray-700">Vacaciones</p>
+            </a>
+            <a href="{% url 'payroll:loan_list' %}" class="bg-white hover:bg-gray-50 rounded-lg p-4 text-center transition-all duration-300 transform hover:scale-105 shadow border border-gray-200">
+                <i class="fas fa-hand-holding-usd text-purple-600 text-2xl mb-2"></i>
+                <p class="text-sm font-medium text-gray-700">Préstamos</p>
+            </a>
+            <a href="{% url 'payroll:social_benefits_dashboard' %}" class="bg-white hover:bg-gray-50 rounded-lg p-4 text-center transition-all duration-300 transform hover:scale-105 shadow border border-gray-200">
+                <i class="fas fa-piggy-bank text-pink-600 text-2xl mb-2"></i>
+                <p class="text-sm font-medium text-gray-700">Prestaciones</p>
+            </a>
+            <a href="{% url 'payroll:provision_list' %}" class="bg-white hover:bg-gray-50 rounded-lg p-4 text-center transition-all duration-300 transform hover:scale-105 shadow border border-gray-200">
+                <i class="fas fa-calculator text-orange-600 text-2xl mb-2"></i>
+                <p class="text-sm font-medium text-gray-700">Provisiones</p>
+            </a>
+            <a href="{% url 'payroll:pila_list' %}" class="bg-white hover:bg-gray-50 rounded-lg p-4 text-center transition-all duration-300 transform hover:scale-105 shadow border border-gray-200">
+                <i class="fas fa-file-medical-alt text-red-600 text-2xl mb-2"></i>
+                <p class="text-sm font-medium text-gray-700">PILA</p>
+            </a>
+        </div>
+    </div>
+
+    <!-- Últimos Períodos -->
+    <div class="bg-white rounded-lg shadow-md p-6">
+        <h2 class="text-xl font-bold text-gray-800 mb-4">
+            <i class="fas fa-history text-gray-600 mr-2"></i>
+            Períodos Recientes
+        </h2>
+        
+        {% if recent_periods %}
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nombre</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Período</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fecha Pago</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estado</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    {% for period in recent_periods %}
+                    <tr class="hover:bg-gray-50">
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="font-medium text-gray-900">{{ period.nombre }}</div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {{ period.fecha_inicio|date:"d/m/Y" }} - {{ period.fecha_fin|date:"d/m/Y" }}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {{ period.fecha_pago|date:"d/m/Y" }}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            {% if period.estado == 'BORRADOR' %}
+                            <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800">
+                                Borrador
+                            </span>
+                            {% elif period.estado == 'CALCULADO' %}
+                            <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
+                                Calculado
+                            </span>
+                            {% elif period.estado == 'APROBADO' %}
+                            <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                                Aprobado
+                            </span>
+                            {% elif period.estado == 'VALIDADO_DIAN' %}
+                            <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-purple-100 text-purple-800">
+                                Validado DIAN
+                            </span>
+                            {% else %}
+                            <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">
+                                {{ period.get_estado_display }}
+                            </span>
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                            ${{ period.total_neto|floatformat:0 }}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                            <a href="{% url 'payroll:period_detail' period.pk %}" class="text-indigo-600 hover:text-indigo-900">
+                                Ver detalle <i class="fas fa-arrow-right ml-1"></i>
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="text-center py-12">
+            <i class="fas fa-inbox text-gray-400 text-5xl mb-4"></i>
+            <p class="text-gray-500">No hay períodos de nómina registrados</p>
+            <a href="{% url 'payroll:period_create' %}" class="inline-block mt-4 bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded-lg">
+                Crear primer período
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

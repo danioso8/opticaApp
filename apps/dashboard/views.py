@@ -96,6 +96,12 @@ def login_view(request):
     """Vista de login"""
     if request.user.is_authenticated:
         next_url = request.GET.get('next', 'dashboard:home')
+        
+        # Si intenta acceder a /saas-admin/ pero no es superusuario, redirigir al dashboard normal
+        if next_url and '/saas-admin' in next_url and not request.user.is_superuser:
+            messages.warning(request, 'No tienes permisos para acceder al panel de administración.')
+            return redirect('dashboard:home')
+        
         if next_url.startswith('/'):
             return redirect(next_url)
         return redirect('dashboard:home')
@@ -437,6 +443,15 @@ def dashboard_home(request):
         'total_por_cobrar': total_por_cobrar,
     }
     
+    # ===== USO DE WHATSAPP =====
+    from apps.appointments.models_whatsapp_usage import WhatsAppUsage
+    import calendar
+    from datetime import datetime
+    
+    whatsapp_usage = WhatsAppUsage.get_current_usage(request.organization)
+    current_month_name = calendar.month_name[datetime.now().month] + ' ' + str(datetime.now().year)
+    plan_name = request.organization.subscription.plan.name if hasattr(request.organization, 'subscription') else 'Sin Plan'
+    
     context = {
         'stats': stats,
         'upcoming_appointments': upcoming_appointments,
@@ -445,6 +460,9 @@ def dashboard_home(request):
         'billing_stats': billing_stats,
         'invoices_unpaid': invoices_unpaid,
         'recent_payments': recent_payments,
+        'whatsapp_usage': whatsapp_usage,
+        'current_month': current_month_name,
+        'plan_name': plan_name,
     }
     
     return render(request, 'dashboard/home.html', context)
@@ -1660,17 +1678,11 @@ def save_notification_settings(request):
         org = request.organization if hasattr(request, 'organization') and request.organization else None
         settings = NotificationSettings.get_settings(org)
         
-        # Twilio WhatsApp
-        settings.twilio_enabled = request.POST.get('twilio_enabled') == 'on'
-        settings.twilio_account_sid = request.POST.get('twilio_account_sid', '').strip()
-        settings.twilio_auth_token = request.POST.get('twilio_auth_token', '').strip()
-        settings.twilio_whatsapp_from = request.POST.get('twilio_whatsapp_from', 'whatsapp:+14155238886').strip()
-        
         # Email
         settings.email_enabled = request.POST.get('email_enabled') == 'on'
         settings.email_from = request.POST.get('email_from', '').strip()
         
-        # WhatsApp Local
+        # WhatsApp Local (Baileys)
         settings.local_whatsapp_enabled = request.POST.get('local_whatsapp_enabled') == 'on'
         settings.local_whatsapp_url = request.POST.get('local_whatsapp_url', 'http://localhost:3000').strip()
         
@@ -1678,6 +1690,16 @@ def save_notification_settings(request):
         settings.send_confirmation = request.POST.get('send_confirmation') == 'on'
         settings.send_reminder = request.POST.get('send_reminder') == 'on'
         settings.send_cancellation = request.POST.get('send_cancellation') == 'on'
+        
+        # Configuración de tiempos
+        settings.reminder_hours_before = int(request.POST.get('reminder_hours_before', 24))
+        settings.arrival_minutes_before = int(request.POST.get('arrival_minutes_before', 10))
+        
+        # Plantillas de mensajes
+        settings.confirmation_message_template = request.POST.get('confirmation_message_template', '').strip()
+        settings.reminder_message_template = request.POST.get('reminder_message_template', '').strip()
+        settings.cancellation_message_template = request.POST.get('cancellation_message_template', '').strip()
+        settings.rescheduled_message_template = request.POST.get('rescheduled_message_template', '').strip()
         
         settings.save()
         
@@ -1708,7 +1730,28 @@ def test_notification(request):
             org = request.organization if hasattr(request, 'organization') and request.organization else None
             settings = NotificationSettings.get_settings(org)
             
-            # Determinar método a usar
+            # Detectar si es email o teléfono
+            is_email = '@' in phone_or_email
+            
+            # Determinar método a usar (si no se especifica, auto-detectar)
+            if method == 'auto':
+                if is_email:
+                    method = 'email'
+                else:
+                    # Para teléfono, usar WhatsApp local si está habilitado, sino Twilio
+                    if settings.local_whatsapp_enabled:
+                        method = 'local_whatsapp'
+                    elif settings.twilio_enabled:
+                        method = 'twilio'
+                    elif settings.email_enabled:
+                        method = 'email'
+                    else:
+                        return JsonResponse({
+                            'success': False,
+                            'message': 'Ningún método de notificación está habilitado'
+                        }, status=400)
+            
+            # Enviar según el método determinado
             if method == 'twilio' and settings.twilio_enabled:
                 # Enviar por Twilio
                 from twilio.rest import Client
@@ -2540,3 +2583,48 @@ def treatment_protocols(request):
     }
     
     return render(request, 'dashboard/treatment_protocols.html', context)
+
+
+@login_required
+def whatsapp_usage_history(request):
+    """Vista de historial de uso de WhatsApp"""
+    from apps.appointments.models_whatsapp_usage import WhatsAppUsage
+    import calendar
+    
+    org = request.organization if hasattr(request, 'organization') and request.organization else None
+    if not org:
+        messages.error(request, 'Debes seleccionar una organización primero')
+        return redirect('organizations:list')
+    
+    # Obtener historial de los últimos 12 meses
+    usage_history = WhatsAppUsage.objects.filter(organization=org).order_by('-year', '-month')[:12]
+    
+    # Agregar nombres de mes
+    for usage in usage_history:
+        usage.month_name = calendar.month_name[usage.month]
+    
+    # Calcular totales
+    total_sent = sum(u.messages_sent for u in usage_history)
+    total_overage = sum(u.messages_overage for u in usage_history)
+    total_cost = sum(u.overage_cost for u in usage_history)
+    
+    # Uso actual
+    current_usage = WhatsAppUsage.get_current_usage(org)
+    current_month_name = calendar.month_name[current_usage.month] + ' ' + str(current_usage.year)
+    
+    plan_name = org.subscription.plan.name if hasattr(org, 'subscription') else 'Sin Plan'
+    
+    context = {
+        'usage_history': usage_history,
+        'current_usage': current_usage,
+        'current_month': current_month_name,
+        'plan_name': plan_name,
+        'total_sent': total_sent,
+        'total_overage': total_overage,
+        'total_cost': total_cost,
+        'page_title': 'Historial de Uso WhatsApp',
+        'page_subtitle': 'Consumo mensual de mensajes WhatsApp',
+    }
+    
+    return render(request, 'dashboard/whatsapp_usage_history.html', context)
+
