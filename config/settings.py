@@ -28,25 +28,25 @@ DEBUG = config('DEBUG', default=True, cast=bool)
 
 ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='localhost,127.0.0.1').split(',')
 
-# Configuraciones de seguridad para producción
+# Configuraciones de seguridad para producción (Contabo)
 if not DEBUG:
-    # Render maneja SSL, no redirigir desde Django
+    # Configuración de proxy SSL si se usa un proxy reverso (nginx, etc.)
     SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
     SECURE_BROWSER_XSS_FILTER = True
     SECURE_CONTENT_TYPE_NOSNIFF = True
     X_FRAME_OPTIONS = 'DENY'
-    # No usar SECURE_SSL_REDIRECT en Render
+    # Descomentar cuando se configure SSL en Contabo
     # SECURE_SSL_REDIRECT = True
     SECURE_HSTS_SECONDS = 31536000
     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
     SECURE_HSTS_PRELOAD = True
     
-    # CSRF trusted origins para Render
+    # CSRF trusted origins - Actualizar cuando se configure dominio
     CSRF_TRUSTED_ORIGINS = [
-        'https://*.onrender.com',
-        'https://opticaapp-4e16.onrender.com',
+        'https://opticaapp.com',
+        'https://www.opticaapp.com',
     ]
 
 
