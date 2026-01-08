@@ -452,6 +452,71 @@ def dashboard_home(request):
     current_month_name = calendar.month_name[datetime.now().month] + ' ' + str(datetime.now().year)
     plan_name = request.organization.subscription.plan.name if hasattr(request.organization, 'subscription') else 'Sin Plan'
     
+    # ===== ESTADÍSTICAS DE CAJA =====
+    from apps.cash_register.models import CashRegister, CashMovement, CashClosure
+    
+    # Cajas abiertas
+    open_registers = CashRegister.objects.filter(
+        is_active=True,
+        status='open',
+        **org_filter
+    )
+    
+    # Movimientos de hoy
+    today_movements = CashMovement.objects.filter(
+        movement_date=today,
+        **org_filter
+    )
+    
+    cash_inflows = today_movements.filter(movement_type='in').aggregate(Sum('amount'))['amount__sum'] or Decimal('0')
+    cash_outflows = today_movements.filter(movement_type='out').aggregate(Sum('amount'))['amount__sum'] or Decimal('0')
+    
+    # Saldo total en cajas abiertas
+    total_cash_balance = sum(reg.current_balance for reg in open_registers)
+    
+    cash_stats = {
+        'open_registers': open_registers.count(),
+        'today_movements': today_movements.count(),
+        'cash_inflows': cash_inflows,
+        'cash_outflows': cash_outflows,
+        'total_balance': total_cash_balance,
+    }
+    
+    # ===== ESTADÍSTICAS DE INVENTARIO =====
+    from apps.inventory.models import Product as InventoryProduct
+    
+    inventory_products = InventoryProduct.objects.filter(**org_filter)
+    low_stock = inventory_products.filter(quantity__lte=F('min_stock'))
+    out_of_stock = inventory_products.filter(quantity=0)
+    
+    # Valor total del inventario
+    inventory_value = sum(
+        (p.quantity or 0) * (p.cost_price or 0)
+        for p in inventory_products
+    )
+    
+    inventory_stats = {
+        'total_products': inventory_products.count(),
+        'low_stock': low_stock.count(),
+        'out_of_stock': out_of_stock.count(),
+        'inventory_value': inventory_value,
+    }
+    
+    # ===== PROMOCIONES ACTIVAS =====
+    from apps.promotions.models import Campaign
+    
+    active_campaigns = Campaign.objects.filter(
+        is_active=True,
+        start_date__lte=today,
+        end_date__gte=today,
+        **org_filter
+    )
+    
+    promotions_stats = {
+        'active_campaigns': active_campaigns.count(),
+        'total_campaigns': Campaign.objects.filter(**org_filter).count(),
+    }
+    
     context = {
         'stats': stats,
         'upcoming_appointments': upcoming_appointments,
@@ -463,6 +528,11 @@ def dashboard_home(request):
         'whatsapp_usage': whatsapp_usage,
         'current_month': current_month_name,
         'plan_name': plan_name,
+        'cash_stats': cash_stats,
+        'inventory_stats': inventory_stats,
+        'promotions_stats': promotions_stats,
+        'open_registers': open_registers[:3],  # Mostrar solo las primeras 3
+        'low_stock_products': low_stock[:5],  # Mostrar solo los primeros 5
     }
     
     return render(request, 'dashboard/home.html', context)
