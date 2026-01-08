@@ -464,7 +464,7 @@ def dashboard_home(request):
     
     # Movimientos de hoy
     today_movements = CashMovement.objects.filter(
-        movement_date=today,
+        created_at__date=today,
         **org_filter
     )
     
@@ -483,9 +483,9 @@ def dashboard_home(request):
     }
     
     # ===== ESTADÍSTICAS DE INVENTARIO =====
-    from apps.inventory.models import Product as InventoryProduct
+    from apps.sales.models import Product
     
-    inventory_products = InventoryProduct.objects.filter(**org_filter)
+    inventory_products = Product.objects.filter(**org_filter)
     low_stock = inventory_products.filter(quantity__lte=F('min_stock'))
     out_of_stock = inventory_products.filter(quantity=0)
     
