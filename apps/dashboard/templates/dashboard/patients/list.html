@@ -96,8 +96,60 @@
     <!-- Lista de Pacientes - Vista Cards -->
     <div id="cardsView" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {% for patient in patients %}
-        <div class="bg-white rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden border border-gray-100 cursor-pointer"
+        <div class="bg-white rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden border border-gray-100 cursor-pointer relative"
              onclick="window.location.href='{% url 'dashboard:patient_detail' patient.id %}'">
+            
+            {% if patient.latest_history %}
+            <!-- Ícono de Certificado en esquina superior derecha -->
+            <div class="absolute top-2 right-2 z-10" onclick="event.stopPropagation()">
+                <a href="{% url 'dashboard:visual_exam_certificate' patient.id patient.latest_history.id %}" 
+                   target="_blank"
+                   title="Generar Certificado de Examen Visual"
+                   class="block transform hover:scale-110 transition-transform duration-200">
+                    <!-- SVG del certificado inline -->
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 140" class="w-20 h-auto drop-shadow-lg">
+                        <defs>
+                            <radialGradient id="certGradient" cx="50%" cy="50%" r="50%">
+                                <stop offset="0%" style="stop-color:#3b82f6;stop-opacity:1" />
+                                <stop offset="100%" style="stop-color:#1e40af;stop-opacity:1" />
+                            </radialGradient>
+                        </defs>
+                        
+                        <!-- Borde ondulado exterior -->
+                        <circle cx="50" cy="25" r="22" fill="#1e40af" stroke="#ffffff" stroke-width="2"/>
+                        <circle cx="50" cy="25" r="21" fill="none" stroke="#ffffff" stroke-width="1" opacity="0.3" 
+                                stroke-dasharray="2,2"/>
+                        
+                        <!-- Círculo principal con gradiente -->
+                        <circle cx="50" cy="25" r="19" fill="url(#certGradient)"/>
+                        
+                        <!-- Anillo blanco interno -->
+                        <circle cx="50" cy="25" r="16" fill="none" stroke="#ffffff" stroke-width="1.5" opacity="0.4"/>
+                        
+                        <!-- Check mark blanco -->
+                        <path d="M 42 25 L 47 30 L 58 19" 
+                            fill="none" 
+                            stroke="#ffffff" 
+                            stroke-width="3" 
+                            stroke-linecap="round" 
+                            stroke-linejoin="round"/>
+                        
+                        <!-- Ribbon izquierdo -->
+                        <path d="M 45 42 L 42 42 L 38 100 L 42 95 L 45 100 Z" 
+                            fill="#1e40af" 
+                            stroke="#0c2d6b" 
+                            stroke-width="0.5"/>
+                        
+                        <!-- Ribbon derecho -->
+                        <path d="M 55 42 L 58 42 L 62 100 L 58 95 L 55 100 Z" 
+                            fill="#1e40af" 
+                            stroke="#0c2d6b" 
+                            stroke-width="0.5"/>
+                    </svg>
+                </a>
+            </div>
+            {% endif %}
+            
             <!-- Header de la tarjeta con foto -->
             <div class="bg-gradient-to-r from-blue-500 to-cyan-600 h-32 relative">
                 <div class="absolute -bottom-12 left-1/2 transform -translate-x-1/2">
@@ -160,25 +212,32 @@
 
                 <!-- Botones de acción -->
                 <div class="space-y-2" onclick="event.stopPropagation()">
-                    <!-- Botón principal de historia -->
-                    <a href="{% url 'dashboard:clinical_history_list' patient.id %}" 
-                       class="block w-full bg-purple-600 hover:bg-purple-700 text-white py-2.5 px-4 rounded-lg transition duration-200 text-sm font-medium text-center shadow-md"
-                       title="Ver Historia Clínica Completa">
-                        <i class="fas fa-file-medical mr-2"></i>Historia Clínica
-                    </a>
-                    
                     {% if patient.latest_history %}
-                    <!-- Botones en una fila: Fórmula PDF (50%), Editar (25%), WhatsApp (25%) -->
-                    <div class="grid grid-cols-4 gap-1.5">
-                        <!-- Fórmula PDF - 50% -->
-                        <a href="{% url 'dashboard:visual_exam_pdf' patient.id patient.latest_history.id %}" 
-                           target="_blank"
-                           class="col-span-2 bg-blue-600 hover:bg-blue-700 text-white py-2.5 px-3 rounded-lg transition duration-200 text-xs font-medium text-center"
-                           title="Imprimir Fórmula de Lentes">
-                            <i class="fas fa-file-pdf mr-1"></i>Fórmula PDF
+                    <!-- Primera fila: Historia Clínica y Fórmula PDF -->
+                    <div class="grid grid-cols-2 gap-2">
+                        <a href="{% url 'dashboard:clinical_history_list' patient.id %}" 
+                           class="bg-purple-600 hover:bg-purple-700 text-white py-2.5 px-3 rounded-lg transition duration-200 text-xs font-medium text-center shadow-md"
+                           title="Ver Historia Clínica Completa">
+                            <i class="fas fa-file-medical mr-1"></i>Historia
                         </a>
                         
-                        <!-- Editar - 25% -->
+                        <a href="{% url 'dashboard:visual_exam_pdf' patient.id patient.latest_history.id %}" 
+                           target="_blank"
+                           class="bg-blue-600 hover:bg-blue-700 text-white py-2.5 px-3 rounded-lg transition duration-200 text-xs font-medium text-center shadow-md"
+                           title="Imprimir Fórmula de Lentes">
+                            <i class="fas fa-file-pdf mr-1"></i>Fórmula
+                        </a>
+                    </div>
+                    
+                    <!-- Segunda fila: Examen Especial, Editar y WhatsApp -->
+                    <div class="grid grid-cols-3 gap-1.5">
+                        <a href="{% url 'dashboard:exam_order_create' patient.id patient.latest_history.id %}" 
+                           class="bg-teal-600 hover:bg-teal-700 text-white py-2.5 px-2 rounded-lg transition duration-200 text-xs font-medium text-center"
+                           title="Ordenar Examen Especial">
+                            <i class="fas fa-microscope block mb-0.5"></i>
+                            <span class="text-[10px]">Examen</span>
+                        </a>
+                        
                         <button onclick="openEditPatientModal({{ patient.id }})" 
                                 class="bg-yellow-500 hover:bg-yellow-600 text-white py-2.5 px-2 rounded-lg transition duration-200 text-xs font-medium" 
                                 title="Editar Paciente">
@@ -186,27 +245,29 @@
                             <span class="text-[10px]">Editar</span>
                         </button>
                         
-                        <!-- WhatsApp - 25% -->
                         <a href="https://wa.me/{{ patient.phone_number|cut:'+' }}" 
                            target="_blank"
                            class="bg-emerald-600 hover:bg-emerald-700 text-white py-2.5 px-2 rounded-lg transition duration-200 text-xs font-medium text-center"
                            title="Contactar por WhatsApp">
                             <i class="fab fa-whatsapp block mb-0.5"></i>
-                            <span class="text-[10px]">WhatsApp</span>
+                            <span class="text-[10px]">Chat</span>
                         </a>
                     </div>
-                    
-                    <!-- Examen Especial -->
-                    <a href="{% url 'dashboard:exam_order_create' patient.id patient.latest_history.id %}" 
-                       class="block w-full bg-teal-600 hover:bg-teal-700 text-white py-2.5 px-4 rounded-lg transition duration-200 text-xs font-medium text-center"
-                       title="Ordenar Examen Especial">
-                        <i class="fas fa-microscope mr-1"></i>Examen Especial
-                    </a>
                     {% else %}
-                    <!-- Si no tiene historia, mostrar mensaje -->
-                    <span class="block w-full bg-gray-100 text-gray-500 py-2 px-3 rounded-lg text-xs text-center">
-                        <i class="fas fa-info-circle mr-1"></i>Sin historia clínica
-                    </span>
+                    <!-- Si no tiene historia, mostrar solo Historia Clínica y Editar -->
+                    <div class="grid grid-cols-2 gap-2">
+                        <a href="{% url 'dashboard:clinical_history_list' patient.id %}" 
+                           class="bg-purple-600 hover:bg-purple-700 text-white py-2.5 px-3 rounded-lg transition duration-200 text-xs font-medium text-center shadow-md"
+                           title="Ver Historia Clínica Completa">
+                            <i class="fas fa-file-medical mr-1"></i>Historia
+                        </a>
+                        
+                        <button onclick="openEditPatientModal({{ patient.id }})" 
+                                class="bg-yellow-500 hover:bg-yellow-600 text-white py-2.5 px-3 rounded-lg transition duration-200 text-xs font-medium" 
+                                title="Editar Paciente">
+                            <i class="fas fa-edit mr-1"></i>Editar
+                        </button>
+                    </div>
                     {% endif %}
                 </div>
             </div>

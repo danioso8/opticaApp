@@ -5,6 +5,7 @@ from . import views_clinical_exams
 from . import views_team
 from . import views_employee
 from . import views_whatsapp_baileys
+from . import views_certificates
 from .views_analytics import (
     analytics_dashboard,
     api_realtime_metrics,
@@ -158,6 +159,10 @@ urlpatterns = [
     path('patients/<int:patient_id>/visual-exam/<int:history_id>/', views.visual_exam_detail, name='visual_exam_detail'),
     path('patients/<int:patient_id>/visual-exam/<int:history_id>/pdf/', views.visual_exam_pdf, name='visual_exam_pdf'),
     path('patients/<int:patient_id>/visual-exam/<int:history_id>/delete/', views.visual_exam_delete, name='visual_exam_delete'),
+    
+    # Certificados
+    path('patients/<int:patient_id>/visual-exam/<int:history_id>/certificate/', views_certificates.visual_exam_certificate_pdf, name='visual_exam_certificate'),
+    path('patients/<int:patient_id>/visual-exam/<int:history_id>/medical-certificate/', views_certificates.medical_certificate_pdf, name='medical_certificate'),
     
     # Órdenes de Exámenes Especiales
     path('patients/<int:patient_id>/history/<int:history_id>/exam-order/create/', views_exam_orders.exam_order_create, name='exam_order_create'),

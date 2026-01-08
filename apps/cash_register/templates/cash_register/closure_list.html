@@ -1,0 +1,47 @@
+{% extends 'dashboard/base.html' %}
+{% load cash_filters %}
+
+{% block title %}Cierres de Caja{% endblock %}
+
+{% block content %}
+<div class="mb-6">
+    <h1 class="text-3xl font-bold">Cierres de Caja</h1>
+</div>
+
+<div class="bg-white rounded-xl shadow-lg p-6">
+    <table class="min-w-full">
+        <thead class="bg-gray-50">
+            <tr>
+                <th class="px-4 py-3 text-left text-xs text-gray-500 uppercase">Fecha</th>
+                <th class="px-4 py-3 text-left text-xs text-gray-500 uppercase">Caja</th>
+                <th class="px-4 py-3 text-right text-xs text-gray-500 uppercase">Esperado</th>
+                <th class="px-4 py-3 text-right text-xs text-gray-500 uppercase">Contado</th>
+                <th class="px-4 py-3 text-right text-xs text-gray-500 uppercase">Diferencia</th>
+                <th class="px-4 py-3 text-left text-xs text-gray-500 uppercase">Estado</th>
+                <th class="px-4 py-3 text-left text-xs text-gray-500 uppercase">Acciones</th>
+            </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-200">
+            {% for closure in closures %}
+            <tr class="hover:bg-gray-50">
+                <td class="px-4 py-3 text-sm">{{ closure.closure_date|date:"d/m/Y" }}</td>
+                <td class="px-4 py-3 text-sm">{{ closure.cash_register.name }}</td>
+                <td class="px-4 py-3 text-sm text-right">${{ closure.expected_amount|currency }}</td>
+                <td class="px-4 py-3 text-sm text-right">${{ closure.total_counted|currency }}</td>
+                <td class="px-4 py-3 text-sm text-right font-semibold {% if closure.difference > 0 %}text-green-600{% elif closure.difference < 0 %}text-red-600{% endif %}">
+                    {% if closure.difference > 0 %}+{% endif %}${{ closure.difference|currency }}
+                </td>
+                <td class="px-4 py-3">
+                    <span class="px-2 py-1 bg-{{ closure.status|lower }}-100 text-xs rounded">{{ closure.get_status_display }}</span>
+                </td>
+                <td class="px-4 py-3">
+                    <a href="{% url 'cash_register:closure_detail' closure.pk %}" class="text-blue-600 hover:text-blue-700 text-sm">
+                        Ver Detalle
+                    </a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

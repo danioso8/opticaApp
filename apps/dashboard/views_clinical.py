@@ -2212,7 +2212,8 @@ def visual_exam_pdf(request, patient_id, history_id):
     
     # Obtener secciones seleccionadas del GET
     selected_sections = request.GET.getlist('sections')
-    include_all = 'all' in selected_sections
+    # Si no se especifican secciones, incluir todas por defecto
+    include_all = 'all' in selected_sections or not selected_sections
     
     # Crear buffer para el PDF
     buffer = BytesIO()
@@ -2430,8 +2431,34 @@ def visual_exam_pdf(request, patient_id, history_id):
     
     # RX FINAL - PRESCRIPCIÓN DEFINITIVA
     if (include_all or 'refraccion' in selected_sections) and (history.final_rx_od_sphere or history.final_rx_os_sphere):
-        story.append(Paragraph("<b>RX FINAL - PRESCRIPCIÓN DE LENTES</b>", heading_style))
-        story.append(Spacer(1, 0.05*inch))
+        # Título de sección con estilo destacado
+        section_title = ParagraphStyle(
+            'SectionTitle',
+            parent=styles['Heading2'],
+            fontSize=10,
+            textColor=colors.white,
+            backColor=colors.Color(0.0, 0.2, 0.5),
+            spaceAfter=6,
+            fontName='Helvetica-Bold',
+            alignment=TA_CENTER,
+            leftIndent=0,
+            rightIndent=0,
+            leading=14
+        )
+        
+        title_table = Table([['FÓRMULA DE LENTES - RX FINAL']], colWidths=[7*inch])
+        title_table.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, -1), colors.Color(0.0, 0.2, 0.5)),
+            ('TEXTCOLOR', (0, 0), (-1, -1), colors.white),
+            ('FONTNAME', (0, 0), (-1, -1), 'Helvetica-Bold'),
+            ('FONTSIZE', (0, 0), (-1, -1), 10),
+            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+            ('TOPPADDING', (0, 0), (-1, -1), 4),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 4),
+        ]))
+        story.append(title_table)
+        story.append(Spacer(1, 0.08*inch))
         
         # Formatear valores con signos apropiados
         def format_sphere(value):
@@ -2446,183 +2473,107 @@ def visual_exam_pdf(request, patient_id, history_id):
         def format_cylinder(value):
             if value is None or value == '':
                 return '-'
-            val = float(value)
-            return f"{val:+.2f}" if val != 0 else '-'
+            try:
+                val = float(value)
+                return f"{val:+.2f}" if val != 0 else '-'
+            except:
+                return str(value)
         
         def format_axis(value):
             if value is None or value == '':
                 return '-'
-            return f"{int(value)}°"
+            try:
+                return f"{int(value)}°"
+            except:
+                return str(value)
         
-        def format_av(value):
+        def format_add(value):
             if value is None or value == '':
-                return '20/20'
-            return str(value)
+                return '-'
+            try:
+                val = float(value)
+                return f"+{val:.2f}"
+            except:
+                return str(value)
         
-        # Tabla de fórmula principal - Usando RX FINAL
+        # Tabla de fórmula principal con diseño profesional
         formula_data = [
-            # Encabezado principal
-            ['', 'OJO', 'ESFÉRICO', 'CILÍNDRICO', 'EJE', 'A.V.'],
-            # LEJOS - Título de sección
-            [Paragraph('<b>LEJOS</b>', normal_style), '', '', '', '', ''],
-            # LEJOS - OD
-            ['', 'DERECHO', 
+            # Encabezado con fondo azul
+            ['', 'ESFERA', 'CILINDRO', 'EJE', 'ADD'],
+            # OJO DERECHO
+            ['OD', 
              format_sphere(history.final_rx_od_sphere),
              format_cylinder(history.final_rx_od_cylinder),
              format_axis(history.final_rx_od_axis),
-             format_av(history.va_od_cc_distance)],
-            # LEJOS - OI
-            ['', 'IZQUIERDO',
+             format_add(history.final_rx_od_add)],
+            # OJO IZQUIERDO
+            ['OI',
              format_sphere(history.final_rx_os_sphere),
              format_cylinder(history.final_rx_os_cylinder),
              format_axis(history.final_rx_os_axis),
-             format_av(history.va_os_cc_distance)],
+             format_add(history.final_rx_os_add)],
         ]
         
-        # Agregar sección CERCA si hay adición
-        if history.final_rx_od_add or history.final_rx_os_add:
-            try:
-                od_sphere_near = float(history.final_rx_od_sphere or 0) + float(history.final_rx_od_add or 0)
-                os_sphere_near = float(history.final_rx_os_sphere or 0) + float(history.final_rx_os_add or 0)
-            except:
-                od_sphere_near = 0
-                os_sphere_near = 0
-            
-            formula_data.extend([
-                # CERCA - Título de sección
-                [Paragraph('<b>CERCA</b>', normal_style), '', '', '', '', ''],
-                # CERCA - OD
-                ['', 'DERECHO',
-                 format_sphere(od_sphere_near),
-                 format_cylinder(history.final_rx_od_cylinder),
-                 format_axis(history.final_rx_od_axis),
-                 format_av(history.va_od_cc_near)],
-                # CERCA - OI
-                ['', 'IZQUIERDO',
-                 format_sphere(os_sphere_near),
-                 format_cylinder(history.final_rx_os_cylinder),
-                 format_axis(history.final_rx_os_axis),
-                 format_av(history.va_os_cc_near)],
-            ])
+        formula_table = Table(formula_data, colWidths=[0.8*inch, 1.4*inch, 1.4*inch, 1.0*inch, 0.8*inch])
         
-        formula_table = Table(formula_data, colWidths=[0.6*inch, 1.2*inch, 1.2*inch, 1.2*inch, 1.0*inch, 1.0*inch])
-        
-        table_style = [
-            # Encabezado principal - fondo gris oscuro
-            ('BACKGROUND', (0, 0), (-1, 0), colors.Color(0.5, 0.5, 0.5)),
-            ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+        formula_table.setStyle(TableStyle([
+            # Encabezado - fondo azul
+            ('BACKGROUND', (0, 0), (-1, 0), colors.Color(0.0, 0.2, 0.5)),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
             ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
             ('FONTSIZE', (0, 0), (-1, 0), 9),
-            ('ALIGN', (0, 0), (-1, 0), 'CENTER'),
+            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
             
-            # Títulos de sección LEJOS/CERCA - fondo gris claro
-            ('BACKGROUND', (0, 1), (0, 1), colors.Color(0.85, 0.85, 0.85)),
-            ('FONTNAME', (0, 1), (0, 1), 'Helvetica-Bold'),
-            ('FONTSIZE', (0, 1), (0, 1), 8),
-            ('SPAN', (0, 1), (-1, 1)),  # LEJOS ocupa toda la fila
-            
-            # Datos de LEJOS
-            ('FONTSIZE', (0, 2), (-1, 3), 9),
-            ('ALIGN', (1, 2), (1, -1), 'LEFT'),  # Columna OJO alineada a la izquierda
-            ('ALIGN', (2, 2), (-1, -1), 'CENTER'),  # Datos numéricos centrados
+            # Filas de datos
+            ('FONTSIZE', (0, 1), (-1, -1), 9),
+            ('FONTNAME', (0, 1), (0, -1), 'Helvetica-Bold'),  # OD/OI en negrita
             
             # Bordes
-            ('GRID', (0, 0), (-1, -1), 1, colors.black),
-            ('LINEABOVE', (0, 0), (-1, 0), 2, colors.black),
-            ('LINEBELOW', (0, 0), (-1, 0), 2, colors.black),
+            ('GRID', (0, 0), (-1, -1), 1, colors.grey),
+            ('BOX', (0, 0), (-1, -1), 2, colors.Color(0.0, 0.2, 0.5)),
             
             # Padding
-            ('TOPPADDING', (0, 0), (-1, -1), 5),
-            ('BOTTOMPADDING', (0, 0), (-1, -1), 5),
-            ('LEFTPADDING', (0, 0), (-1, -1), 5),
-            ('RIGHTPADDING', (0, 0), (-1, -1), 5),
-            
-            # Valign
-            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-        ]
-        
-        # Si hay sección CERCA, aplicar estilos adicionales
-        if history.refraction_od_add or history.refraction_os_add:
-            table_style.extend([
-                ('BACKGROUND', (0, 4), (0, 4), colors.Color(0.85, 0.85, 0.85)),
-                ('FONTNAME', (0, 4), (0, 4), 'Helvetica-Bold'),
-                ('FONTSIZE', (0, 4), (0, 4), 8),
-                ('SPAN', (0, 4), (-1, 4)),  # CERCA ocupa toda la fila
-                ('FONTSIZE', (0, 5), (-1, 6), 9),
-            ])
-        
-        formula_table.setStyle(TableStyle(table_style))
+            ('TOPPADDING', (0, 0), (-1, -1), 6),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
+            ('LEFTPADDING', (0, 0), (-1, -1), 8),
+            ('RIGHTPADDING', (0, 0), (-1, -1), 8),
+        ]))
         
         story.append(formula_table)
         story.append(Spacer(1, 0.15*inch))
     
-    # Detalles adicionales de lentes - Formato similar a la imagen
+    # Observaciones
+    if (include_all or 'refraccion' in selected_sections) and hasattr(history, 'notes') and history.notes:
+        obs_title = Table([['OBSERVACIONES:']], colWidths=[7*inch])
+        obs_title.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, -1), colors.Color(0.9, 0.9, 0.9)),
+            ('FONTNAME', (0, 0), (-1, -1), 'Helvetica-Bold'),
+            ('FONTSIZE', (0, 0), (-1, -1), 9),
+            ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+            ('TOPPADDING', (0, 0), (-1, -1), 4),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 4),
+            ('LEFTPADDING', (0, 0), (-1, -1), 8),
+            ('BOX', (0, 0), (-1, -1), 1, colors.grey),
+        ]))
+        story.append(obs_title)
+        
+        obs_content = Table([[history.notes[:200] or '']], colWidths=[7*inch])
+        obs_content.setStyle(TableStyle([
+            ('FONTSIZE', (0, 0), (-1, -1), 8),
+            ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+            ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+            ('TOPPADDING', (0, 0), (-1, -1), 8),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 8),
+            ('LEFTPADDING', (0, 0), (-1, -1), 8),
+            ('RIGHTPADDING', (0, 0), (-1, -1), 8),
+            ('BOX', (0, 0), (-1, -1), 1, colors.grey),
+        ]))
+        story.append(obs_content)
+        story.append(Spacer(1, 0.15*inch))
+    
+    # Refracción (código antiguo mantenido para compatibilidad)
     if (include_all or 'refraccion' in selected_sections):
-        # Calcular fecha de próximo control (1 año desde la fecha del examen)
-        from datetime import timedelta
-        control_date = (history.date + timedelta(days=365)).strftime('%d de %B de %Y') if history.date else ''
-        vigencia_date = (history.date + timedelta(days=365)).strftime('%d de %B de %Y') if history.date else ''
-        
-        # Primera fila: Próx. Control y Vigencia
-        info_row1 = [
-            ['PRÓX. CONTROL:', f"1 año - Martes {control_date}", '', 'VIGENCIA:', f"1 mes - Miércoles {vigencia_date}"]
-        ]
-        
-        info_table1 = Table(info_row1, colWidths=[1.2*inch, 2.3*inch, 0.3*inch, 1.0*inch, 2.2*inch])
-        info_table1.setStyle(TableStyle([
-            ('FONTSIZE', (0, 0), (-1, -1), 8),
-            ('FONTNAME', (0, 0), (0, 0), 'Helvetica-Bold'),
-            ('FONTNAME', (3, 0), (3, 0), 'Helvetica-Bold'),
-            ('GRID', (0, 0), (1, 0), 1, colors.black),
-            ('GRID', (3, 0), (4, 0), 1, colors.black),
-            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-            ('TOPPADDING', (0, 0), (-1, -1), 5),
-            ('BOTTOMPADDING', (0, 0), (-1, -1), 5),
-            ('LEFTPADDING', (0, 0), (-1, -1), 5),
-        ]))
-        
-        story.append(info_table1)
-        story.append(Spacer(1, 0.1*inch))
-        
-        # Segunda fila: Distancia Pupilar
-        dp_value = f"{history.pd_distance or 64} mm" if history.pd_distance else "64 mm"
-        info_row2 = [
-            ['DISTANCIA PUPILAR:', dp_value]
-        ]
-        
-        info_table2 = Table(info_row2, colWidths=[1.5*inch, 5.5*inch])
-        info_table2.setStyle(TableStyle([
-            ('FONTSIZE', (0, 0), (-1, -1), 8),
-            ('FONTNAME', (0, 0), (0, 0), 'Helvetica-Bold'),
-            ('GRID', (0, 0), (-1, -1), 1, colors.black),
-            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-            ('TOPPADDING', (0, 0), (-1, -1), 5),
-            ('BOTTOMPADDING', (0, 0), (-1, -1), 5),
-            ('LEFTPADDING', (0, 0), (-1, -1), 5),
-        ]))
-        
-        story.append(info_table2)
-        story.append(Spacer(1, 0.1*inch))
-        
-        # Tercera fila: Tipo de Lente
-        lens_type_value = history.lens_type or "MONOFOCALES"
-        info_row3 = [
-            ['TIPO DE LENTE:', lens_type_value]
-        ]
-        
-        info_table3 = Table(info_row3, colWidths=[1.5*inch, 5.5*inch])
-        info_table3.setStyle(TableStyle([
-            ('FONTSIZE', (0, 0), (-1, -1), 8),
-            ('FONTNAME', (0, 0), (0, 0), 'Helvetica-Bold'),
-            ('GRID', (0, 0), (-1, -1), 1, colors.black),
-            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-            ('TOPPADDING', (0, 0), (-1, -1), 5),
-            ('BOTTOMPADDING', (0, 0), (-1, -1), 5),
-            ('LEFTPADDING', (0, 0), (-1, -1), 5),
-        ]))
-        
-        story.append(info_table3)
-        story.append(Spacer(1, 0.1*inch))
         
         # Cuarta fila: Clase de Filtro
         filter_value = history.lens_coating or "TRANSITIONS IG + ANTIRREFLEJO CRIZAL SAPPHIRE"

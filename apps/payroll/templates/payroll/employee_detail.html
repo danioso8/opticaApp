@@ -1,5 +1,6 @@
 {% extends 'dashboard/base.html' %}
 {% load static %}
+{% load payroll_filters %}
 
 {% block title %}Detalle de Empleado{% endblock %}
 
@@ -97,7 +98,7 @@
                 </div>
                 <div class="flex justify-between py-2">
                     <dt class="text-gray-600 font-medium">Salario Básico:</dt>
-                    <dd class="text-gray-900 font-bold text-lg">${{ employee.salario_basico|floatformat:0 }}</dd>
+                    <dd class="text-gray-900 font-bold text-lg">${{ employee.salario_basico|currency_int }}</dd>
                 </div>
             </dl>
         </div>
@@ -146,7 +147,7 @@
                         <p class="text-xs text-gray-500">{{ entry.payroll_period.fecha_pago|date:"d/m/Y" }}</p>
                     </div>
                     <div class="text-right">
-                        <p class="font-bold text-gray-900">${{ entry.neto_pagar|floatformat:0 }}</p>
+                        <p class="font-bold text-gray-900">${{ entry.neto_pagar|currency_int }}</p>
                         <span class="text-xs px-2 py-1 rounded-full {% if entry.payroll_period.estado == 'VALIDADO_DIAN' %}bg-green-100 text-green-800{% else %}bg-gray-100 text-gray-800{% endif %}">
                             {{ entry.payroll_period.get_estado_display }}
                         </span>

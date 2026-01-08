@@ -1,0 +1,68 @@
+{% extends 'dashboard/base.html' %}
+{% load cash_filters %}
+
+{% block title %}Reportes de Caja{% endblock %}
+
+{% block content %}
+<div class="mb-6">
+    <h1 class="text-3xl font-bold">Reportes de Caja</h1>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <div class="bg-white rounded-xl shadow-lg p-6">
+        <h2 class="text-xl font-bold mb-4">Flujo de Efectivo (30 días)</h2>
+        <div class="space-y-3">
+            <div class="flex justify-between">
+                <span class="text-gray-600">Total Ingresos:</span>
+                <span class="font-semibold text-green-600">${{ cash_flow.totals.income|currency }}</span>
+            </div>
+            <div class="flex justify-between">
+                <span class="text-gray-600">Total Egresos:</span>
+                <span class="font-semibold text-red-600">${{ cash_flow.totals.expense|currency }}</span>
+            </div>
+            <div class="flex justify-between border-t pt-3">
+                <span class="font-bold">Flujo Neto:</span>
+                <span class="font-bold">${{ cash_flow.totals.net|currency }}</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="bg-white rounded-xl shadow-lg p-6">
+        <h2 class="text-xl font-bold mb-4">Promedios Diarios</h2>
+        <div class="space-y-3">
+            <div class="flex justify-between">
+                <span class="text-gray-600">Ingresos:</span>
+                <span class="font-semibold">${{ cash_flow.averages.daily_income|currency }}</span>
+            </div>
+            <div class="flex justify-between">
+                <span class="text-gray-600">Egresos:</span>
+                <span class="font-semibold">${{ cash_flow.averages.daily_expense|currency }}</span>
+            </div>
+            <div class="flex justify-between border-t pt-3">
+                <span class="font-bold">Neto:</span>
+                <span class="font-bold">${{ cash_flow.averages.daily_net|currency }}</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="bg-white rounded-xl shadow-lg p-6">
+        <h2 class="text-xl font-bold mb-4">Cierres de Caja</h2>
+        <div class="space-y-3">
+            <div class="flex justify-between">
+                <span class="text-gray-600">Total Cierres:</span>
+                <span class="font-semibold">{{ closure_report.total_closures }}</span>
+            </div>
+            <div class="flex justify-between">
+                <span class="text-gray-600">Diferencia Total:</span>
+                <span class="font-semibold {% if closure_report.total_difference > 0 %}text-green-600{% elif closure_report.total_difference < 0 %}text-red-600{% endif %}">
+                    {% if closure_report.total_difference > 0 %}+{% endif %}${{ closure_report.total_difference|currency }}
+                </span>
+            </div>
+            <div class="flex justify-between">
+                <span class="text-gray-600">Promedio:</span>
+                <span class="font-semibold">${{ closure_report.avg_difference|currency }}</span>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

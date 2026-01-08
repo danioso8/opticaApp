@@ -1,0 +1,66 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 280" width="200" height="280">
+  <!-- Definir gradiente -->
+  <defs>
+    <radialGradient id="blueGradient" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" style="stop-color:#2563eb;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#1e40af;stop-opacity:1" />
+    </radialGradient>
+  </defs>
+  
+  <!-- Borde ondulado exterior -->
+  <path d="M 100 10 
+    C 105 10, 108 12, 110 10
+    C 112 8, 115 10, 117 8
+    C 120 6, 123 8, 126 6
+    C 129 4, 132 6, 135 5
+    C 138 4, 141 6, 144 5
+    C 147 4, 150 6, 153 6
+    C 156 6, 159 8, 162 9
+    C 165 10, 168 12, 170 14
+    C 172 16, 174 19, 176 22
+    C 178 25, 179 28, 180 32
+    C 181 36, 181 40, 181 44
+    C 181 48, 180 52, 179 56
+    C 178 60, 176 64, 174 68
+    C 172 72, 169 76, 166 79
+    C 163 82, 159 85, 155 87
+    C 151 89, 147 90, 143 91
+    C 139 92, 135 92, 131 92
+    C 127 92, 123 91, 119 90
+    C 115 89, 111 87, 107 85
+    C 103 83, 99 80, 96 77
+    C 93 74, 90 70, 88 66
+    C 86 62, 84 58, 83 54
+    C 82 50, 81 46, 81 42
+    C 81 38, 82 34, 83 30
+    C 84 26, 86 22, 88 19
+    C 90 16, 93 13, 96 11
+    C 98 9, 100 10, 100 10 Z" 
+    fill="#1e40af" stroke="#ffffff" stroke-width="3"/>
+  
+  <!-- Círculo principal -->
+  <circle cx="100" cy="50" r="40" fill="url(#blueGradient)" stroke="#ffffff" stroke-width="4"/>
+  
+  <!-- Anillo blanco interno -->
+  <circle cx="100" cy="50" r="35" fill="none" stroke="#ffffff" stroke-width="2" opacity="0.4"/>
+  
+  <!-- Check mark blanco -->
+  <path d="M 85 50 L 95 60 L 115 40" 
+    fill="none" 
+    stroke="#ffffff" 
+    stroke-width="6" 
+    stroke-linecap="round" 
+    stroke-linejoin="round"/>
+  
+  <!-- Ribbon izquierdo -->
+  <path d="M 90 85 L 85 85 L 80 200 L 85 190 L 90 200 Z" 
+    fill="#1e40af" 
+    stroke="#0c2d6b" 
+    stroke-width="1"/>
+  
+  <!-- Ribbon derecho -->
+  <path d="M 110 85 L 115 85 L 120 200 L 115 190 L 110 200 Z" 
+    fill="#1e40af" 
+    stroke="#0c2d6b" 
+    stroke-width="1"/>
+</svg>

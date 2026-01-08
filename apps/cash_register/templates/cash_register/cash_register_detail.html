@@ -1,0 +1,163 @@
+{% extends 'dashboard/base.html' %}
+{% load cash_filters %}
+
+{% block title %}{{ cash_register.name }}{% endblock %}
+
+{% block content %}
+<div class="mb-6">
+    <a href="{% url 'cash_register:register_list' %}" class="text-blue-600 hover:text-blue-700 mb-4 inline-block">
+        <i class="fas fa-arrow-left mr-2"></i>Volver a Cajas
+    </a>
+    <div class="flex justify-between items-start">
+        <div>
+            <h1 class="text-3xl font-bold">{{ cash_register.name }}</h1>
+            <p class="text-gray-600">{{ cash_register.location }}</p>
+            <div class="mt-2">
+                {% if cash_register.status == 'OPEN' %}
+                <span class="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-medium">
+                    <i class="fas fa-unlock mr-1"></i>Caja Abierta
+                </span>
+                {% else %}
+                <span class="px-3 py-1 bg-gray-100 text-gray-800 rounded-full text-sm font-medium">
+                    <i class="fas fa-lock mr-1"></i>Caja Cerrada
+                </span>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Botones de Acción Rápida -->
+        <div class="flex space-x-3">
+            {% if cash_register.status == 'CLOSED' %}
+            <a href="{% url 'cash_register:open' cash_register.pk %}" class="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition font-medium shadow-lg">
+                <i class="fas fa-unlock-alt mr-2"></i>Abrir Caja
+            </a>
+            {% else %}
+            <a href="{% url 'cash_register:movement_create' %}?cash_register={{ cash_register.pk }}&type=income" class="px-4 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition font-medium">
+                <i class="fas fa-arrow-down mr-2"></i>Ingreso
+            </a>
+            <a href="{% url 'cash_register:movement_create' %}?cash_register={{ cash_register.pk }}&type=expense" class="px-4 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition font-medium">
+                <i class="fas fa-arrow-up mr-2"></i>Egreso
+            </a>
+            <a href="{% url 'cash_register:close' cash_register.pk %}" class="px-4 py-3 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition font-medium">
+                <i class="fas fa-lock mr-2"></i>Cerrar Caja
+            </a>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+    <div class="bg-white rounded-lg shadow p-4">
+        <p class="text-sm text-gray-600">Saldo Actual</p>
+        <p class="text-2xl font-bold text-blue-600">${{ cash_register.current_balance|currency }}</p>
+    </div>
+    <div class="bg-white rounded-lg shadow p-4">
+        <p class="text-sm text-gray-600">Apertura</p>
+        <p class="text-2xl font-bold">${{ summary.opening_amount|currency }}</p>
+    </div>
+    <div class="bg-white rounded-lg shadow p-4">
+        <p class="text-sm text-gray-600">Ingresos Hoy</p>
+        <p class="text-2xl font-bold text-green-600">+${{ summary.income_total|currency }}</p>
+    </div>
+    <div class="bg-white rounded-lg shadow p-4">
+        <p class="text-sm text-gray-600">Egresos Hoy</p>
+        <p class="text-2xl font-bold text-red-600">-${{ summary.expense_total|currency }}</p>
+    </div>
+</div>
+
+<!-- Accesos Rápidos -->
+{% if cash_register.status == 'OPEN' %}
+<div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+    <a href="{% url 'cash_register:movement_create' %}?cash_register={{ cash_register.pk }}&type=income&category=SALE" 
+       class="bg-gradient-to-br from-green-500 to-green-600 text-white rounded-xl p-4 hover:shadow-lg transition transform hover:scale-105">
+        <div class="flex items-center justify-between mb-2">
+            <i class="fas fa-shopping-cart text-2xl"></i>
+            <i class="fas fa-plus text-sm"></i>
+        </div>
+        <p class="font-semibold">Registrar Venta</p>
+        <p class="text-xs text-green-100">Ingreso por venta</p>
+    </a>
+    
+    <a href="{% url 'cash_register:movement_create' %}?cash_register={{ cash_register.pk }}&type=expense&category=EXPENSE" 
+       class="bg-gradient-to-br from-red-500 to-red-600 text-white rounded-xl p-4 hover:shadow-lg transition transform hover:scale-105">
+        <div class="flex items-center justify-between mb-2">
+            <i class="fas fa-receipt text-2xl"></i>
+            <i class="fas fa-minus text-sm"></i>
+        </div>
+        <p class="font-semibold">Registrar Gasto</p>
+        <p class="text-xs text-red-100">Egreso operativo</p>
+    </a>
+    
+    <a href="{% url 'cash_register:movement_create' %}?cash_register={{ cash_register.pk }}&type=expense&category=WITHDRAWAL" 
+       class="bg-gradient-to-br from-orange-500 to-orange-600 text-white rounded-xl p-4 hover:shadow-lg transition transform hover:scale-105">
+        <div class="flex items-center justify-between mb-2">
+            <i class="fas fa-hand-holding-usd text-2xl"></i>
+            <i class="fas fa-arrow-right text-sm"></i>
+        </div>
+        <p class="font-semibold">Retiro de Efectivo</p>
+        <p class="text-xs text-orange-100">Sacar dinero</p>
+    </a>
+    
+    <a href="{% url 'cash_register:movement_list' %}?cash_register={{ cash_register.pk }}" 
+       class="bg-gradient-to-br from-blue-500 to-blue-600 text-white rounded-xl p-4 hover:shadow-lg transition transform hover:scale-105">
+        <div class="flex items-center justify-between mb-2">
+            <i class="fas fa-list text-2xl"></i>
+            <i class="fas fa-eye text-sm"></i>
+        </div>
+        <p class="font-semibold">Ver Movimientos</p>
+        <p class="text-xs text-blue-100">Historial completo</p>
+    </a>
+</div>
+{% endif %}
+
+<div class="bg-white rounded-xl shadow-lg p-6">
+    <div class="flex justify-between items-center mb-4">
+        <h2 class="text-xl font-bold">Movimientos del Día</h2>
+        {% if cash_register.status == 'OPEN' %}
+        <a href="{% url 'cash_register:movement_create' %}?cash_register={{ cash_register.pk }}" class="text-blue-600 hover:text-blue-700 text-sm font-medium">
+            <i class="fas fa-plus mr-1"></i>Nuevo Movimiento
+        </a>
+        {% endif %}
+    </div>
+    <table class="min-w-full">
+        <thead>
+            <tr>
+                <th class="text-left text-xs text-gray-500 uppercase">Hora</th>
+                <th class="text-left text-xs text-gray-500 uppercase">Tipo</th>
+                <th class="text-left text-xs text-gray-500 uppercase">Descripción</th>
+                <th class="text-right text-xs text-gray-500 uppercase">Monto</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for movement in movements %}
+            <tr class="hover:bg-gray-50">
+                <td class="py-2">{{ movement.created_at|date:"H:i" }}</td>
+                <td>
+                    {% if movement.movement_type == 'INCOME' %}
+                    <span class="px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full">Ingreso</span>
+                    {% else %}
+                    <span class="px-2 py-1 bg-red-100 text-red-800 text-xs rounded-full">Egreso</span>
+                    {% endif %}
+                </td>
+                <td>{{ movement.description|truncatewords:8 }}</td>
+                <td class="text-right font-semibold {% if movement.movement_type == 'INCOME' %}text-green-600{% else %}text-red-600{% endif %}">
+                    {% if movement.movement_type == 'INCOME' %}+{% else %}-{% endif %}${{ movement.amount|currency }}
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="4" class="text-center py-8 text-gray-500">
+                    <i class="fas fa-inbox text-3xl mb-2 block"></i>
+                    <p>No hay movimientos registrados hoy</p>
+                    {% if cash_register.status == 'OPEN' %}
+                    <a href="{% url 'cash_register:movement_create' %}?cash_register={{ cash_register.pk }}" class="text-blue-600 hover:text-blue-700 text-sm mt-2 inline-block">
+                        <i class="fas fa-plus mr-1"></i>Registrar primer movimiento
+                    </a>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

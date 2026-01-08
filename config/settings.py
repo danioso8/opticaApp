@@ -81,6 +81,7 @@ INSTALLED_APPS = [
     'apps.promotions',  # Sistema de promociones y campañas de marketing
     'apps.payroll',  # Nómina electrónica DIAN
     'apps.inventory',  # Gestión avanzada de inventario
+    'apps.cash_register',  # Gestión de Caja y Tesorería
 ]
 
 MIDDLEWARE = [

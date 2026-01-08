@@ -434,6 +434,56 @@
                 </a>
                 {% endif %}
                 
+                <!-- Gestión de Caja/Tesorería (Menú Desplegable) -->
+                {% if is_owner_or_admin %}
+                <div class="cash-menu">
+                    <button onclick="toggleSubmenu('cash-submenu')" class="flex items-center justify-between w-full px-4 py-3 hover:bg-indigo-800 {% if 'cash' in request.path %}bg-indigo-800{% endif %} relative">
+                        <div class="flex items-center">
+                            <i class="fas fa-cash-register mr-3"></i>
+                            <span class="sidebar-text">Caja y Tesorería</span>
+                        </div>
+                        <i class="fas fa-chevron-down text-sm transition-transform duration-200 submenu-icon" id="cash-submenu-icon"></i>
+                        <span class="sidebar-tooltip">Caja y Tesorería</span>
+                    </button>
+                    <div id="cash-submenu" class="bg-indigo-950 hidden sidebar-submenu">
+                        <!-- Dashboard de Caja -->
+                        <a href="{% url 'cash_register:dashboard' %}" class="flex items-center px-8 py-2 hover:bg-indigo-800 text-sm {% if request.resolver_match.url_name == 'dashboard' and 'cash' in request.path %}bg-indigo-800{% endif %} relative">
+                            <i class="fas fa-tachometer-alt mr-3"></i>
+                            <span class="sidebar-text">Dashboard</span>
+                            <span class="sidebar-tooltip">Dashboard de Caja</span>
+                        </a>
+                        
+                        <!-- Cajas Registradoras -->
+                        <a href="{% url 'cash_register:register_list' %}" class="flex items-center px-8 py-2 hover:bg-indigo-800 text-sm {% if 'registers' in request.path %}bg-indigo-800{% endif %} relative">
+                            <i class="fas fa-cash-register mr-3"></i>
+                            <span class="sidebar-text">Cajas Registradoras</span>
+                            <span class="sidebar-tooltip">Cajas Registradoras</span>
+                        </a>
+                        
+                        <!-- Movimientos -->
+                        <a href="{% url 'cash_register:movement_list' %}" class="flex items-center px-8 py-2 hover:bg-indigo-800 text-sm {% if 'movements' in request.path %}bg-indigo-800{% endif %} relative">
+                            <i class="fas fa-exchange-alt mr-3"></i>
+                            <span class="sidebar-text">Movimientos</span>
+                            <span class="sidebar-tooltip">Movimientos de Caja</span>
+                        </a>
+                        
+                        <!-- Cierres de Caja -->
+                        <a href="{% url 'cash_register:closure_list' %}" class="flex items-center px-8 py-2 hover:bg-indigo-800 text-sm {% if 'closures' in request.path %}bg-indigo-800{% endif %} relative">
+                            <i class="fas fa-clipboard-check mr-3"></i>
+                            <span class="sidebar-text">Cierres de Caja</span>
+                            <span class="sidebar-tooltip">Cierres de Caja</span>
+                        </a>
+                        
+                        <!-- Reportes -->
+                        <a href="{% url 'cash_register:reports' %}" class="flex items-center px-8 py-2 hover:bg-indigo-800 text-sm {% if 'reports' in request.path and 'cash' in request.path %}bg-indigo-800{% endif %} relative">
+                            <i class="fas fa-chart-bar mr-3"></i>
+                            <span class="sidebar-text">Reportes</span>
+                            <span class="sidebar-tooltip">Reportes Financieros</span>
+                        </a>
+                    </div>
+                </div>
+                {% endif %}
+                
                 <!-- Gestión de Citas (Menú Desplegable) -->
                 {% if user_perms.all_access or user_perms.appointments.can_view %}
                 <div class="appointments-menu">

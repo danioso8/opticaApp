@@ -1,5 +1,6 @@
 {% extends 'dashboard/base.html' %}
 {% load static %}
+{% load payroll_filters %}
 
 {% block title %}Empleados - Nómina{% endblock %}
 
@@ -110,7 +111,7 @@
                             {{ employee.cargo }}
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                            ${{ employee.salario_basico|floatformat:0 }}
+                            ${{ employee.salario_basico|currency_int }}
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                             {{ employee.fecha_ingreso|date:"d/m/Y" }}

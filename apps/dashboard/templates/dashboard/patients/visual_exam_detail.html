@@ -60,8 +60,16 @@
             <!-- Botones de Acción -->
             <div class="flex flex-col gap-2 ml-4">
                 <button onclick="showPdfModal()" class="px-4 py-2 bg-white text-purple-600 hover:bg-gray-100 rounded-lg transition-colors font-medium shadow-lg">
-                    <i class="fas fa-file-pdf mr-2"></i>Generar PDF
+                    <i class="fas fa-file-pdf mr-2"></i>Fórmula PDF
                 </button>
+                <a href="{% url 'dashboard:visual_exam_certificate' patient.id history.id %}" target="_blank"
+                   class="px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg transition-colors font-medium text-center shadow-lg">
+                    <i class="fas fa-certificate mr-2"></i>Cert. Examen
+                </a>
+                <a href="{% url 'dashboard:medical_certificate' patient.id history.id %}" target="_blank"
+                   class="px-4 py-2 bg-teal-500 hover:bg-teal-600 text-white rounded-lg transition-colors font-medium text-center shadow-lg">
+                    <i class="fas fa-file-medical mr-2"></i>Cert. Médico
+                </a>
                 <a href="{% url 'dashboard:visual_exam_edit' patient.id history.id %}"
                    class="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors font-medium text-center">
                     <i class="fas fa-edit mr-2"></i>Editar

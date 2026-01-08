@@ -102,10 +102,10 @@ class DianConfiguration(TenantModel):
     )
     
     # ===== RESPONSABILIDAD FISCAL =====
-    responsabilidades_fiscales = models.JSONField(
-        default=list,
+    responsabilidades_fiscales = models.TextField(
+        default='[]',
         verbose_name="Responsabilidades Fiscales",
-        help_text="Ej: ['O-13', 'O-15', 'R-99-PN']"
+        help_text="Ej: ['O-13', 'O-15', 'R-99-PN'] - JSON string"
     )
     tipo_regimen = models.CharField(
         max_length=2,
@@ -641,9 +641,10 @@ class Invoice(TenantModel):
     )
     
     # ===== RESPUESTA DIAN =====
-    dian_response = models.JSONField(
+    dian_response = models.TextField(
         null=True,
         blank=True,
+        default='{}',
         verbose_name="Respuesta DIAN",
         help_text="JSON completo de la respuesta de la DIAN"
     )
@@ -1189,10 +1190,10 @@ class InvoiceConfiguration(TenantModel):
     )
     
     # Métodos de Pago
-    metodos_pago_disponibles = models.JSONField(
-        default=list,
+    metodos_pago_disponibles = models.TextField(
+        default='[]',
         verbose_name="Métodos de Pago Disponibles",
-        help_text="Lista de métodos de pago aceptados"
+        help_text="Lista de métodos de pago aceptados - JSON string"
     )
     permitir_pagos_parciales = models.BooleanField(
         default=True,
@@ -1719,8 +1720,8 @@ class InvoiceProduct(TenantModel):
     )
     
     # Especificaciones Técnicas (JSON flexible)
-    especificaciones = models.JSONField(
-        default=dict,
+    especificaciones = models.TextField(
+        default='{}',
         blank=True,
         verbose_name="Especificaciones Técnicas",
         help_text="Datos adicionales en formato JSON"

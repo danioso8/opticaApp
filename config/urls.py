@@ -45,6 +45,9 @@ urlpatterns = [
     # Inventory URLs
     path('dashboard/inventory/', include('apps.inventory.urls')),
     
+    # Cash Register URLs (Caja/Tesorería)
+    path('dashboard/cash/', include('apps.cash_register.urls')),
+    
     # API URLs
     path('api/', include('apps.appointments.urls')),
     

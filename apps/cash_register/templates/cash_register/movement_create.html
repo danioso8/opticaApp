@@ -1,0 +1,450 @@
+{% extends 'dashboard/base.html' %}
+{% load static %}
+{% load cash_filters %}
+
+{% block title %}Crear Movimiento de Caja{% endblock %}
+
+{% block content %}
+<div class="mb-6">
+    <a href="{% url 'cash_register:movement_list' %}" class="text-blue-600 hover:text-blue-700 mb-4 inline-block">
+        <i class="fas fa-arrow-left mr-2"></i>Volver
+    </a>
+    <h1 class="text-3xl font-bold text-gray-900">Registrar Movimiento de Caja</h1>
+    <p class="text-gray-600 mt-1">Ingrese o egrese dinero de la caja</p>
+</div>
+
+<div class="max-w-3xl">
+    <div class="bg-white rounded-xl shadow-lg p-6">
+        <form method="post" id="movementForm">
+            {% csrf_token %}
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                <!-- Caja Registradora -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        <i class="fas fa-cash-register mr-2 text-blue-600"></i>Caja Registradora *
+                    </label>
+                    <select name="cash_register" id="cash_register" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" required>
+                        <option value="">Seleccione una caja...</option>
+                        {% for register in cash_registers %}
+                        <option value="{{ register.pk }}">{{ register.name }} - ${{ register.current_balance|currency }}</option>
+                        {% endfor %}
+                    </select>
+                    {% if not cash_registers %}
+                    <p class="text-sm text-red-600 mt-2">No hay cajas abiertas disponibles</p>
+                    {% endif %}
+                </div>
+
+                <!-- Tipo de Movimiento -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        <i class="fas fa-exchange-alt mr-2 text-blue-600"></i>Tipo de Movimiento *
+                    </label>
+                    <select name="movement_type" id="movement_type" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" required>
+                        <option value="">Seleccione tipo...</option>
+                        <option value="INCOME">Ingreso</option>
+                        <option value="EXPENSE">Egreso</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                <!-- Categoría -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        <i class="fas fa-tag mr-2 text-blue-600"></i>Categoría *
+                    </label>
+                    <div class="flex gap-2">
+                        <select name="category" id="category" class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" required>
+                            <option value="">Seleccione tipo primero...</option>
+                        </select>
+                        <button type="button" id="btnAddCategory" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition" title="Agregar nueva categoría">
+                            <i class="fas fa-plus"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Método de Pago -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        <i class="fas fa-credit-card mr-2 text-blue-600"></i>Método de Pago *
+                    </label>
+                    <select name="payment_method" id="payment_method" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" required>
+                        <option value="CASH">Efectivo</option>
+                        <option value="CARD">Tarjeta</option>
+                        <option value="TRANSFER">Transferencia</option>
+                        <option value="CHECK">Cheque</option>
+                        <option value="OTHER">Otro</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="mb-6">
+                <label class="block text-sm font-medium text-gray-700 mb-2">
+                    <i class="fas fa-dollar-sign mr-2 text-green-600"></i>Monto *
+                </label>
+                <div class="relative">
+                    <span class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">$</span>
+                    <input 
+                        type="number" 
+                        step="0.01" 
+                        name="amount" 
+                        id="amount"
+                        class="w-full pl-8 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                        placeholder="0.00"
+                        required
+                        min="0.01"
+                    >
+                </div>
+            </div>
+
+            <div class="mb-6">
+                <label class="block text-sm font-medium text-gray-700 mb-2">
+                    <i class="fas fa-file-alt mr-2 text-blue-600"></i>Descripción *
+                </label>
+                <textarea 
+                    name="description" 
+                    id="description"
+                    rows="3"
+                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                    placeholder="Describa el motivo del movimiento..."
+                    required
+                ></textarea>
+            </div>
+
+            <div class="mb-6">
+                <label class="block text-sm font-medium text-gray-700 mb-2">
+                    <i class="fas fa-hashtag mr-2 text-blue-600"></i>Referencia/Nº Documento
+                </label>
+                <input 
+                    type="text" 
+                    name="reference" 
+                    id="reference"
+                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                    placeholder="Ej: Factura #123, Recibo #456..."
+                >
+            </div>
+
+            <div id="balanceInfo" class="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6 hidden">
+                <h3 class="font-semibold text-yellow-900 mb-2">
+                    <i class="fas fa-exclamation-triangle mr-2"></i>Advertencia
+                </h3>
+                <p id="balanceMessage" class="text-sm text-yellow-800"></p>
+            </div>
+
+            <div class="flex space-x-3">
+                <button 
+                    type="submit" 
+                    class="flex-1 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium"
+                    {% if not cash_registers %}disabled{% endif %}
+                >
+                    <i class="fas fa-save mr-2"></i>Registrar Movimiento
+                </button>
+                <a 
+                    href="{% url 'cash_register:movement_list' %}" 
+                    class="flex-1 px-6 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition font-medium text-center"
+                >
+                    <i class="fas fa-times mr-2"></i>Cancelar
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Modal para agregar categoría -->
+<div id="categoryModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center">
+    <div class="bg-white rounded-xl shadow-2xl max-w-md w-full mx-4">
+        <div class="bg-gradient-to-r from-green-600 to-green-700 text-white px-6 py-4 rounded-t-xl">
+            <div class="flex justify-between items-center">
+                <h3 class="text-xl font-bold">
+                    <i class="fas fa-plus-circle mr-2"></i>Nueva Categoría
+                </h3>
+                <button type="button" id="btnCloseModal" class="text-white hover:text-gray-200">
+                    <i class="fas fa-times text-2xl"></i>
+                </button>
+            </div>
+        </div>
+        
+        <form id="categoryForm" class="p-6">
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 mb-2">
+                    Tipo de Categoría *
+                </label>
+                <select id="newCategoryType" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500" required>
+                    <option value="">Seleccione tipo...</option>
+                    <option value="INCOME">Ingreso</option>
+                    <option value="EXPENSE">Egreso</option>
+                </select>
+            </div>
+            
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 mb-2">
+                    Nombre de la Categoría *
+                </label>
+                <input 
+                    type="text" 
+                    id="newCategoryName" 
+                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                    placeholder="Ej: Venta de Lentes, Pago de Arriendo..."
+                    required
+                >
+            </div>
+            
+            <div class="mb-6">
+                <label class="block text-sm font-medium text-gray-700 mb-2">
+                    Descripción (opcional)
+                </label>
+                <textarea 
+                    id="newCategoryDescription" 
+                    rows="2"
+                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                    placeholder="Descripción adicional..."
+                ></textarea>
+            </div>
+            
+            <div class="flex space-x-3">
+                <button 
+                    type="submit" 
+                    class="flex-1 px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition font-medium"
+                >
+                    <i class="fas fa-check mr-2"></i>Crear Categoría
+                </button>
+                <button 
+                    type="button" 
+                    id="btnCancelModal"
+                    class="flex-1 px-6 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition font-medium"
+                >
+                    <i class="fas fa-times mr-2"></i>Cancelar
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+// Categorías por tipo de movimiento (predeterminadas)
+const categories = {
+    'INCOME': [
+        {value: 'SALE', text: 'Venta de Producto'},
+        {value: 'SALE_GLASSES', text: 'Venta de Lentes'},
+        {value: 'SALE_FRAMES', text: 'Venta de Monturas'},
+        {value: 'SALE_CONTACTS', text: 'Venta de Lentes de Contacto'},
+        {value: 'SALE_ACCESSORIES', text: 'Venta de Accesorios'},
+        {value: 'EXAM_PAYMENT', text: 'Pago de Examen Visual'},
+        {value: 'PAYMENT_RECEIVED', text: 'Cobro a Cliente'},
+        {value: 'ADVANCE_PAYMENT', text: 'Anticipo de Cliente'},
+        {value: 'REFUND', text: 'Devolución de Proveedor'},
+        {value: 'OTHER_INCOME', text: 'Otro Ingreso'}
+    ],
+    'EXPENSE': [
+        {value: 'PURCHASE', text: 'Compra de Mercancía'},
+        {value: 'PURCHASE_FRAMES', text: 'Compra de Monturas'},
+        {value: 'PURCHASE_LENSES', text: 'Compra de Lentes'},
+        {value: 'PURCHASE_CONTACTS', text: 'Compra de Lentes de Contacto'},
+        {value: 'PAYMENT_MADE', text: 'Pago a Proveedor'},
+        {value: 'SALARY', text: 'Pago de Nómina'},
+        {value: 'RENT', text: 'Pago de Arriendo'},
+        {value: 'UTILITIES', text: 'Servicios Públicos'},
+        {value: 'MAINTENANCE', text: 'Mantenimiento de Equipos'},
+        {value: 'MARKETING', text: 'Publicidad y Marketing'},
+        {value: 'OFFICE_SUPPLIES', text: 'Útiles de Oficina'},
+        {value: 'CLEANING', text: 'Artículos de Limpieza'},
+        {value: 'TRANSPORT', text: 'Transporte y Envíos'},
+        {value: 'TAXES', text: 'Impuestos'},
+        {value: 'BANK_FEES', text: 'Comisiones Bancarias'},
+        {value: 'EXPENSE', text: 'Gasto Operativo'},
+        {value: 'REFUND_CUSTOMER', text: 'Devolución a Cliente'},
+        {value: 'WITHDRAWAL', text: 'Retiro de Efectivo'},
+        {value: 'OTHER_EXPENSE', text: 'Otro Egreso'}
+    ]
+};
+
+// Cargar categorías personalizadas desde el servidor
+let customCategories = {
+    'INCOME': [],
+    'EXPENSE': []
+};
+
+async function loadCustomCategories() {
+    try {
+        const response = await fetch('{% url "cash_register:get_categories_ajax" %}');
+        const data = await response.json();
+        
+        customCategories = {
+            'INCOME': [],
+            'EXPENSE': []
+        };
+        
+        data.categories.forEach(cat => {
+            customCategories[cat.type].push({
+                value: cat.id,
+                text: cat.name,
+                custom: true
+            });
+        });
+    } catch (error) {
+        console.error('Error loading categories:', error);
+    }
+}
+
+// Cargar categorías al inicio
+loadCustomCategories();
+
+// Cambiar categorías cuando cambia el tipo
+document.getElementById('movement_type').addEventListener('change', function() {
+    updateCategorySelect();
+});
+
+function updateCategorySelect() {
+    const categorySelect = document.getElementById('category');
+    const type = document.getElementById('movement_type').value;
+    
+    categorySelect.innerHTML = '<option value="">Seleccione categoría...</option>';
+    
+    if (type) {
+        // Agregar categorías predeterminadas
+        if (categories[type]) {
+            const optgroup = document.createElement('optgroup');
+            optgroup.label = 'Categorías Predeterminadas';
+            categories[type].forEach(cat => {
+                const option = document.createElement('option');
+                option.value = cat.value;
+                option.textContent = cat.text;
+                optgroup.appendChild(option);
+            });
+            categorySelect.appendChild(optgroup);
+        }
+        
+        // Agregar categorías personalizadas
+        if (customCategories[type] && customCategories[type].length > 0) {
+            const optgroup = document.createElement('optgroup');
+            optgroup.label = 'Categorías Personalizadas';
+            customCategories[type].forEach(cat => {
+                const option = document.createElement('option');
+                option.value = 'custom_' + cat.value;
+                option.textContent = '⭐ ' + cat.text;
+                optgroup.appendChild(option);
+            });
+            categorySelect.appendChild(optgroup);
+        }
+    }
+}
+
+// Modal de categoría
+const modal = document.getElementById('categoryModal');
+const btnAddCategory = document.getElementById('btnAddCategory');
+const btnCloseModal = document.getElementById('btnCloseModal');
+const btnCancelModal = document.getElementById('btnCancelModal');
+const categoryForm = document.getElementById('categoryForm');
+
+btnAddCategory.addEventListener('click', function() {
+    const movementType = document.getElementById('movement_type').value;
+    if (!movementType) {
+        alert('Por favor seleccione primero el tipo de movimiento');
+        return;
+    }
+    
+    document.getElementById('newCategoryType').value = movementType;
+    document.getElementById('newCategoryType').disabled = true;
+    modal.classList.remove('hidden');
+});
+
+btnCloseModal.addEventListener('click', closeModal);
+btnCancelModal.addEventListener('click', closeModal);
+
+function closeModal() {
+    modal.classList.add('hidden');
+    categoryForm.reset();
+    document.getElementById('newCategoryType').disabled = false;
+}
+
+// Crear categoría
+categoryForm.addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    const formData = new FormData();
+    formData.append('name', document.getElementById('newCategoryName').value);
+    formData.append('category_type', document.getElementById('newCategoryType').value);
+    formData.append('description', document.getElementById('newCategoryDescription').value);
+    formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
+    
+    try {
+        const response = await fetch('{% url "cash_register:create_category_ajax" %}', {
+            method: 'POST',
+            body: formData
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            // Recargar categorías
+            await loadCustomCategories();
+            updateCategorySelect();
+            
+            // Seleccionar la nueva categoría
+            const categorySelect = document.getElementById('category');
+            categorySelect.value = 'custom_' + data.category.id;
+            
+            closeModal();
+            
+            // Mostrar mensaje de éxito
+            const successDiv = document.createElement('div');
+            successDiv.className = 'fixed top-4 right-4 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-lg shadow-lg z-50';
+            successDiv.innerHTML = `
+                <div class="flex items-center">
+                    <i class="fas fa-check-circle mr-2"></i>
+                    <span>Categoría "${data.category.name}" creada exitosamente</span>
+                </div>
+            `;
+            document.body.appendChild(successDiv);
+            setTimeout(() => successDiv.remove(), 3000);
+        } else {
+            alert('Error: ' + data.error);
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('Error al crear la categoría');
+    }
+});
+
+// Cerrar modal al hacer clic fuera
+modal.addEventListener('click', function(e) {
+    if (e.target === modal) {
+        closeModal();
+    }
+});
+
+// Validar saldo al cambiar caja o monto
+document.getElementById('cash_register').addEventListener('change', validateBalance);
+document.getElementById('amount').addEventListener('input', validateBalance);
+document.getElementById('movement_type').addEventListener('change', validateBalance);
+
+function validateBalance() {
+    const registerSelect = document.getElementById('cash_register');
+    const amountInput = document.getElementById('amount');
+    const typeSelect = document.getElementById('movement_type');
+    const balanceInfo = document.getElementById('balanceInfo');
+    const balanceMessage = document.getElementById('balanceMessage');
+    
+    if (registerSelect.value && amountInput.value && typeSelect.value === 'EXPENSE') {
+        const selectedOption = registerSelect.options[registerSelect.selectedIndex];
+        const text = selectedOption.text;
+        const balanceMatch = text.match(/\$([0-9,.]+)/);
+        
+        if (balanceMatch) {
+            const balance = parseFloat(balanceMatch[1].replace(',', ''));
+            const amount = parseFloat(amountInput.value);
+            
+            if (amount > balance) {
+                balanceInfo.classList.remove('hidden');
+                balanceMessage.textContent = `El monto ($${amount.toFixed(2)}) excede el saldo disponible ($${balance.toFixed(2)})`;
+            } else {
+                balanceInfo.classList.add('hidden');
+            }
+        }
+    } else {
+        balanceInfo.classList.add('hidden');
+    }
+}
+</script>
+{% endblock %}
