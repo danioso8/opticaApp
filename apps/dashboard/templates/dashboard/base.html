@@ -247,32 +247,60 @@
                     <span class="sidebar-tooltip">Panel de Ventas</span>
                 </a>
                 
-                <!-- Facturación -->
-                {% if user_perms.all_access or user_perms.invoices.can_view %}
-                <a href="{% url 'billing:invoice_list' %}" class="flex items-center px-4 py-3 hover:bg-indigo-800 {% if 'billing' in request.path %}bg-indigo-800{% endif %} relative">
-                    <i class="fas fa-file-invoice mr-3"></i>
-                    <span class="sidebar-text">Facturación</span>
-                    <span class="sidebar-tooltip">Facturación</span>
-                </a>
-                {% endif %}
+                <!-- Facturación y Finanzas -->
+                <div class="sales-menu">
+                    <button type="button" onclick="toggleSubmenu('sales-submenu')" class="flex items-center justify-between w-full px-4 py-3 hover:bg-indigo-800 {% if 'billing' in request.path or 'invoices' in request.path or 'cash' in request.path %}bg-indigo-800{% endif %} relative">
+                        <div class="flex items-center">
+                            <i class="fas fa-file-invoice-dollar mr-3"></i>
+                            <span class="sidebar-text">Facturación y Finanzas</span>
+                        </div>
+                        <i class="fas fa-chevron-down text-sm transition-transform duration-200 submenu-icon" id="sales-submenu-icon"></i>
+                        <span class="sidebar-tooltip">Facturación y Finanzas</span>
+                    </button>
+                    <div id="sales-submenu" class="bg-indigo-950 hidden sidebar-submenu">
+                        {% if user_perms.all_access or user_perms.invoices.can_view %}
+                        <a href="{% url 'billing:invoice_list' %}" class="flex items-center px-8 py-2 hover:bg-indigo-800 text-sm relative">
+                            <i class="fas fa-file-invoice mr-3"></i>
+                            <span class="sidebar-text">Facturas Electrónicas</span>
+                        </a>
+                        {% endif %}
+                        
+                        <!-- Finanzas / Caja (submenú anidado) -->
+                        {% if is_owner_or_admin %}
+                        <div class="border-t border-indigo-800 my-1"></div>
+                        <button type="button" onclick="toggleSubmenu('finance-nested-submenu')" class="flex items-center justify-between w-full px-8 py-2 hover:bg-indigo-800 text-sm relative">
+                            <div class="flex items-center">
+                                <i class="fas fa-cash-register mr-3 text-emerald-300"></i>
+                                <span class="sidebar-text">Caja y Tesorería</span>
+                            </div>
+                            <i class="fas fa-chevron-down text-xs transition-transform duration-200" id="finance-nested-submenu-icon"></i>
+                        </button>
+                        <div id="finance-nested-submenu" class="bg-indigo-900 hidden">
+                            <a href="{% url 'cash_register:dashboard' %}" class="flex items-center px-12 py-2 hover:bg-indigo-800 text-sm relative">
+                                <i class="fas fa-tachometer-alt mr-2 text-xs"></i>
+                                <span class="sidebar-text">Dashboard</span>
+                            </a>
+                            <a href="{% url 'cash_register:register_list' %}" class="flex items-center px-12 py-2 hover:bg-indigo-800 text-sm relative">
+                                <i class="fas fa-cash-register mr-2 text-xs"></i>
+                                <span class="sidebar-text">Cajas</span>
+                            </a>
+                            <a href="{% url 'cash_register:movement_list' %}" class="flex items-center px-12 py-2 hover:bg-indigo-800 text-sm relative">
+                                <i class="fas fa-exchange-alt mr-2 text-xs"></i>
+                                <span class="sidebar-text">Movimientos</span>
+                            </a>
+                            <a href="{% url 'cash_register:closure_list' %}" class="flex items-center px-12 py-2 hover:bg-indigo-800 text-sm relative">
+                                <i class="fas fa-clipboard-check mr-2 text-xs"></i>
+                                <span class="sidebar-text">Cierres</span>
+                            </a>
+                            <a href="{% url 'cash_register:reports' %}" class="flex items-center px-12 py-2 hover:bg-indigo-800 text-sm relative">
+                                <i class="fas fa-chart-bar mr-2 text-xs"></i>
+                                <span class="sidebar-text">Reportes</span>
+                            </a>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
 
-                <!-- Promociones -->
-                {% if is_owner_or_admin %}
-                <a href="/dashboard/promociones/" class="flex items-center px-4 py-3 hover:bg-indigo-800 {% if 'promociones' in request.path %}bg-indigo-800{% endif %} relative">
-                    <i class="fas fa-tags mr-3"></i>
-                    <span class="sidebar-text">Promociones</span>
-                    <span class="sidebar-tooltip">Promociones</span>
-                </a>
-                {% endif %}
-
-                {% if user_perms.all_access or user_perms.patients.can_view %}
-                <a href="{% url 'dashboard:patients_list' %}" class="flex items-center px-4 py-3 hover:bg-indigo-800 {% if 'patients' in request.path %}bg-indigo-800{% endif %} relative">
-                    <i class="fas fa-users mr-3"></i>
-                    <span class="sidebar-text">Pacientes</span>
-                    <span class="sidebar-tooltip">Pacientes</span>
-                </a>
-                {% endif %}
-                
                 {% if user_perms.all_access or user_perms.doctors.can_view %}
                 <a href="{% url 'dashboard:doctors_list' %}" class="flex items-center px-4 py-3 hover:bg-indigo-800 {% if 'doctors' in request.path %}bg-indigo-800{% endif %} relative">
                     <i class="fas fa-user-md mr-3"></i>
@@ -284,7 +312,7 @@
                 <!-- Gestión de Nómina y Empleados (Menú Desplegable) -->
                 {% if is_owner_or_admin %}
                 <div class="payroll-menu">
-                    <button onclick="toggleSubmenu('payroll-submenu')" class="flex items-center justify-between w-full px-4 py-3 hover:bg-indigo-800 {% if 'payroll' in request.path or 'employees' in request.path %}bg-indigo-800{% endif %} relative">
+                    <button type="button" onclick="toggleSubmenu('payroll-submenu')" class="flex items-center justify-between w-full px-4 py-3 hover:bg-indigo-800 {% if 'payroll' in request.path or 'employees' in request.path %}bg-indigo-800{% endif %} relative">
                         <div class="flex items-center">
                             <i class="fas fa-users-cog mr-3"></i>
                             <span class="sidebar-text">Nómina y Empleados</span>
@@ -375,127 +403,81 @@
                 </div>
                 {% endif %}
                 
-                {% if user_perms.all_access or user_perms.exam_orders.can_view %}
-                <a href="{% url 'dashboard:exam_order_list' %}" class="flex items-center px-4 py-3 hover:bg-indigo-800 {% if 'exam' in request.path %}bg-indigo-800{% endif %} relative">
-                    <i class="fas fa-microscope mr-3"></i>
-                    <span class="sidebar-text">Exámenes Especiales</span>
-                    <span class="sidebar-tooltip">Exámenes Especiales</span>
-                </a>
-                {% endif %}
-                
-                <!-- Productos (Plan Básico o superior) -->
+                <!-- Inventario y Productos (Menú Desplegable) -->
                 {% if is_owner_or_admin %}
-                {% has_module 'products' as can_access_products %}
-                <a href="{% if can_access_products %}{% url 'billing:product_list' %}{% else %}{% url 'organizations:subscription_plans' %}{% endif %}" 
-                   class="flex items-center px-4 py-3 hover:bg-indigo-800 {% if 'product' in request.path %}bg-indigo-800{% endif %} relative">
-                    <i class="fas fa-box mr-3"></i>
-                    <span class="sidebar-text">Productos</span>
-                    <span class="sidebar-tooltip">Productos</span>
-                    {% module_badge 'products' %}
-                </a>
-                {% elif user_perms.products and user_perms.products.can_view %}
-                {% has_module 'products' as can_access_products %}
-                <a href="{% if can_access_products %}{% url 'billing:product_list' %}{% else %}{% url 'organizations:subscription_plans' %}{% endif %}" 
-                   class="flex items-center px-4 py-3 hover:bg-indigo-800 {% if 'product' in request.path %}bg-indigo-800{% endif %} relative">
-                    <i class="fas fa-box mr-3"></i>
-                    <span class="sidebar-text">Productos</span>
-                    <span class="sidebar-tooltip">Productos</span>
-                    {% module_badge 'products' %}
-                </a>
-                {% endif %}
-                
-                <!-- Proveedores (Plan Básico o superior) -->
-                {% if is_owner_or_admin %}
-                {% has_module 'suppliers' as can_access_suppliers %}
-                <a href="{% if can_access_suppliers %}{% url 'billing:supplier_list' %}{% else %}{% url 'organizations:subscription_plans' %}{% endif %}" 
-                   class="flex items-center px-4 py-3 hover:bg-indigo-800 {% if 'supplier' in request.path %}bg-indigo-800{% endif %} relative">
-                    <i class="fas fa-truck mr-3"></i>
-                    <span class="sidebar-text">Proveedores</span>
-                    <span class="sidebar-tooltip">Proveedores</span>
-                    {% module_badge 'suppliers' %}
-                </a>
-                {% elif user_perms.suppliers and user_perms.suppliers.can_view %}
-                {% has_module 'suppliers' as can_access_suppliers %}
-                <a href="{% if can_access_suppliers %}{% url 'billing:supplier_list' %}{% else %}{% url 'organizations:subscription_plans' %}{% endif %}" 
-                   class="flex items-center px-4 py-3 hover:bg-indigo-800 {% if 'supplier' in request.path %}bg-indigo-800{% endif %} relative">
-                    <i class="fas fa-truck mr-3"></i>
-                    <span class="sidebar-text">Proveedores</span>
-                    <span class="sidebar-tooltip">Proveedores</span>
-                    {% module_badge 'suppliers' %}
-                </a>
-                {% endif %}
-                
-                <!-- Inventario -->
-                {% if is_owner_or_admin %}
-                <a href="{% url 'inventory:dashboard' %}" class="flex items-center px-4 py-3 hover:bg-indigo-800 {% if 'inventory' in request.path %}bg-indigo-800{% endif %} relative">
-                    <i class="fas fa-boxes mr-3"></i>
-                    <span class="sidebar-text">Inventario</span>
-                    <span class="sidebar-tooltip">Inventario</span>
-                </a>
-                {% endif %}
-                
-                <!-- Gestión de Caja/Tesorería (Menú Desplegable) -->
-                {% if is_owner_or_admin %}
-                <div class="cash-menu">
-                    <button onclick="toggleSubmenu('cash-submenu')" class="flex items-center justify-between w-full px-4 py-3 hover:bg-indigo-800 {% if 'cash' in request.path %}bg-indigo-800{% endif %} relative">
+                <div class="inventory-menu">
+                    <button type="button" onclick="toggleSubmenu('inventory-submenu')" class="flex items-center justify-between w-full px-4 py-3 hover:bg-indigo-800 {% if 'inventory' in request.path or 'product' in request.path or 'supplier' in request.path %}bg-indigo-800{% endif %} relative">
                         <div class="flex items-center">
-                            <i class="fas fa-cash-register mr-3"></i>
-                            <span class="sidebar-text">Caja y Tesorería</span>
+                            <i class="fas fa-warehouse mr-3"></i>
+                            <span class="sidebar-text">Inventario y Productos</span>
                         </div>
-                        <i class="fas fa-chevron-down text-sm transition-transform duration-200 submenu-icon" id="cash-submenu-icon"></i>
-                        <span class="sidebar-tooltip">Caja y Tesorería</span>
+                        <i class="fas fa-chevron-down text-sm transition-transform duration-200 submenu-icon" id="inventory-submenu-icon"></i>
+                        <span class="sidebar-tooltip">Inventario y Productos</span>
                     </button>
-                    <div id="cash-submenu" class="bg-indigo-950 hidden sidebar-submenu">
-                        <!-- Dashboard de Caja -->
-                        <a href="{% url 'cash_register:dashboard' %}" class="flex items-center px-8 py-2 hover:bg-indigo-800 text-sm {% if request.resolver_match.url_name == 'dashboard' and 'cash' in request.path %}bg-indigo-800{% endif %} relative">
-                            <i class="fas fa-tachometer-alt mr-3"></i>
-                            <span class="sidebar-text">Dashboard</span>
-                            <span class="sidebar-tooltip">Dashboard de Caja</span>
+                    <div id="inventory-submenu" class="bg-indigo-950 hidden sidebar-submenu">
+                        <!-- Inventario -->
+                        <a href="{% url 'inventory:dashboard' %}" class="flex items-center px-8 py-2 hover:bg-indigo-800 text-sm {% if 'inventory' in request.path %}bg-indigo-800{% endif %} relative">
+                            <i class="fas fa-boxes mr-3"></i>
+                            <span class="sidebar-text">Inventario</span>
+                            <span class="sidebar-tooltip">Inventario</span>
                         </a>
                         
-                        <!-- Cajas Registradoras -->
-                        <a href="{% url 'cash_register:register_list' %}" class="flex items-center px-8 py-2 hover:bg-indigo-800 text-sm {% if 'registers' in request.path %}bg-indigo-800{% endif %} relative">
-                            <i class="fas fa-cash-register mr-3"></i>
-                            <span class="sidebar-text">Cajas Registradoras</span>
-                            <span class="sidebar-tooltip">Cajas Registradoras</span>
+                        <div class="border-t border-indigo-800 my-1"></div>
+                        
+                        <!-- Productos (Plan Básico o superior) -->
+                        {% has_module 'products' as can_access_products %}
+                        <a href="{% if can_access_products %}{% url 'billing:product_list' %}{% else %}{% url 'organizations:subscription_plans' %}{% endif %}" 
+                           class="flex items-center px-8 py-2 hover:bg-indigo-800 text-sm {% if 'product' in request.path %}bg-indigo-800{% endif %} relative">
+                            <i class="fas fa-box mr-3"></i>
+                            <span class="sidebar-text">Productos</span>
+                            <span class="sidebar-tooltip">Productos</span>
+                            {% module_badge 'products' %}
                         </a>
                         
-                        <!-- Movimientos -->
-                        <a href="{% url 'cash_register:movement_list' %}" class="flex items-center px-8 py-2 hover:bg-indigo-800 text-sm {% if 'movements' in request.path %}bg-indigo-800{% endif %} relative">
-                            <i class="fas fa-exchange-alt mr-3"></i>
-                            <span class="sidebar-text">Movimientos</span>
-                            <span class="sidebar-tooltip">Movimientos de Caja</span>
-                        </a>
-                        
-                        <!-- Cierres de Caja -->
-                        <a href="{% url 'cash_register:closure_list' %}" class="flex items-center px-8 py-2 hover:bg-indigo-800 text-sm {% if 'closures' in request.path %}bg-indigo-800{% endif %} relative">
-                            <i class="fas fa-clipboard-check mr-3"></i>
-                            <span class="sidebar-text">Cierres de Caja</span>
-                            <span class="sidebar-tooltip">Cierres de Caja</span>
-                        </a>
-                        
-                        <!-- Reportes -->
-                        <a href="{% url 'cash_register:reports' %}" class="flex items-center px-8 py-2 hover:bg-indigo-800 text-sm {% if 'reports' in request.path and 'cash' in request.path %}bg-indigo-800{% endif %} relative">
-                            <i class="fas fa-chart-bar mr-3"></i>
-                            <span class="sidebar-text">Reportes</span>
-                            <span class="sidebar-tooltip">Reportes Financieros</span>
+                        <!-- Proveedores (Plan Básico o superior) -->
+                        {% has_module 'suppliers' as can_access_suppliers %}
+                        <a href="{% if can_access_suppliers %}{% url 'billing:supplier_list' %}{% else %}{% url 'organizations:subscription_plans' %}{% endif %}" 
+                           class="flex items-center px-8 py-2 hover:bg-indigo-800 text-sm {% if 'supplier' in request.path %}bg-indigo-800{% endif %} relative">
+                            <i class="fas fa-truck mr-3"></i>
+                            <span class="sidebar-text">Proveedores</span>
+                            <span class="sidebar-tooltip">Proveedores</span>
+                            {% module_badge 'suppliers' %}
                         </a>
                     </div>
                 </div>
                 {% endif %}
                 
-                <!-- Gestión de Citas (Menú Desplegable) -->
-                {% if user_perms.all_access or user_perms.appointments.can_view %}
+                <!-- Pacientes y Citas (Menú Desplegable) -->
+                {% if user_perms.all_access or user_perms.appointments.can_view or user_perms.patients.can_view %}
                 <div class="appointments-menu">
-                    <button onclick="toggleSubmenu('appointments-submenu')" class="flex items-center justify-between w-full px-4 py-3 hover:bg-indigo-800 {% if 'appointments' in request.path or 'configuration' in request.path %}bg-indigo-800{% endif %} relative">
+                    <button type="button" onclick="toggleSubmenu('appointments-submenu')" class="flex items-center justify-between w-full px-4 py-3 hover:bg-indigo-800 {% if 'appointments' in request.path or 'patients' in request.path or 'configuration' in request.path or 'exam' in request.path %}bg-indigo-800{% endif %} relative">
                         <div class="flex items-center">
                             <i class="fas fa-calendar-check mr-3"></i>
-                            <span class="sidebar-text">Gestión de Citas</span>
+                            <span class="sidebar-text">Pacientes y Citas</span>
                         </div>
                         <i class="fas fa-chevron-down text-sm transition-transform duration-200 submenu-icon" id="appointments-submenu-icon"></i>
-                        <span class="sidebar-tooltip">Gestión de Citas</span>
+                        <span class="sidebar-tooltip">Pacientes y Citas</span>
                     </button>
                     <div id="appointments-submenu" class="bg-indigo-950 hidden sidebar-submenu">
+                        {% if user_perms.all_access or user_perms.patients.can_view %}
+                        <a href="{% url 'dashboard:patients_list' %}" class="flex items-center px-8 py-2 hover:bg-indigo-800 text-sm {% if 'patients' in request.path %}bg-indigo-800{% endif %} relative">
+                            <i class="fas fa-users mr-3"></i>
+                            <span class="sidebar-text">Pacientes</span>
+                            <span class="sidebar-tooltip">Pacientes</span>
+                        </a>
+                        {% endif %}
+                        
+                        {% if user_perms.all_access or user_perms.exam_orders.can_view %}
+                        <a href="{% url 'dashboard:exam_order_list' %}" class="flex items-center px-8 py-2 hover:bg-indigo-800 text-sm {% if 'exam' in request.path %}bg-indigo-800{% endif %} relative">
+                            <i class="fas fa-microscope mr-3"></i>
+                            <span class="sidebar-text">Exámenes Especiales</span>
+                            <span class="sidebar-tooltip">Exámenes Especiales</span>
+                        </a>
+                        {% endif %}
+                        
+                        {% if user_perms.all_access or user_perms.appointments.can_view %}
+                        <div class="border-t border-indigo-800 my-1"></div>
+                        
                         <a href="{% url 'dashboard:appointments_list' %}" class="flex items-center px-8 py-2 hover:bg-indigo-800 text-sm {% if 'appointments' in request.path %}bg-indigo-800{% endif %} relative">
                             <i class="fas fa-list mr-3"></i>
                             <span class="sidebar-text">Lista de Citas</span>
@@ -506,26 +488,72 @@
                             <span class="sidebar-text">Agendamiento de Citas</span>
                             <span class="sidebar-tooltip">Agendamiento de Citas</span>
                         </a>
+                        {% endif %}
                     </div>
                 </div>
                 {% endif %}
                 
-                <!-- Gestión de Equipo (Plan Premium o superior) - Solo Owner/Admin -->
+                <!-- Marketing y Comunicación (Menú Desplegable) - Plan Profesional o superior -->
                 {% if is_owner_or_admin %}
-                {% has_module 'team_management' as can_access_team %}
-                <a href="{% if can_access_team %}{% url 'dashboard:team_list' %}{% else %}{% url 'organizations:subscription_plans' %}{% endif %}" 
-                   class="flex items-center px-4 py-3 hover:bg-indigo-800 {% if '/team/' in request.path %}bg-indigo-800{% endif %} relative">
-                    <i class="fas fa-users-cog mr-3"></i>
-                    <span class="sidebar-text">Gestión de Equipo</span>
-                    <span class="sidebar-tooltip">Gestión de Equipo</span>
-                    {% module_badge 'team_management' %}
-                </a>
+                <div class="marketing-menu">
+                    <button type="button" onclick="toggleSubmenu('marketing-submenu')" class="flex items-center justify-between w-full px-4 py-3 hover:bg-indigo-800 {% if 'landing-page' in request.path or 'notifications' in request.path or 'promociones' in request.path %}bg-indigo-800{% endif %} relative">
+                        <div class="flex items-center">
+                            <i class="fas fa-bullhorn mr-3"></i>
+                            <span class="sidebar-text">Marketing</span>
+                        </div>
+                        <i class="fas fa-chevron-down text-sm transition-transform duration-200 submenu-icon" id="marketing-submenu-icon"></i>
+                        <span class="sidebar-tooltip">Marketing</span>
+                    </button>
+                    <div id="marketing-submenu" class="bg-indigo-950 hidden sidebar-submenu">
+                        <!-- Landing Page -->
+                        <a href="{% url 'dashboard:landing_page_config' %}" class="flex items-center px-8 py-2 hover:bg-indigo-800 text-sm {% if 'landing-page' in request.path %}bg-indigo-800{% endif %} relative">
+                            <i class="fas fa-paint-brush mr-3"></i>
+                            <span class="sidebar-text">Landing Page</span>
+                            <span class="sidebar-tooltip">Landing Page</span>
+                        </a>
+                        
+                        <!-- Promociones -->
+                        <a href="/dashboard/promociones/" class="flex items-center px-8 py-2 hover:bg-indigo-800 text-sm {% if 'promociones' in request.path %}bg-indigo-800{% endif %} relative">
+                            <i class="fas fa-tags mr-3"></i>
+                            <span class="sidebar-text">Promociones</span>
+                            <span class="sidebar-tooltip">Promociones</span>
+                        </a>
+                        
+                        <div class="border-t border-indigo-800 my-1"></div>
+                        
+                        <!-- WhatsApp (Plan Profesional o superior) -->
+                        {% has_module 'whatsapp' as can_access_whatsapp %}
+                        <a href="{% if can_access_whatsapp %}{% url 'dashboard:notification_settings' %}{% else %}{% url 'organizations:subscription_plans' %}{% endif %}" 
+                           class="flex items-center px-8 py-2 hover:bg-indigo-800 text-sm {% if 'notifications' in request.path %}bg-indigo-800{% endif %} relative">
+                            <i class="fab fa-whatsapp mr-3"></i>
+                            <span class="sidebar-text">WhatsApp</span>
+                            <span class="sidebar-tooltip">WhatsApp</span>
+                            {% module_badge 'whatsapp' %}
+                        </a>
+                        
+                        <!-- Email Marketing (Placeholder para futuro módulo) -->
+                        <div class="flex items-center px-8 py-2 text-sm opacity-50 cursor-not-allowed relative" title="Próximamente">
+                            <i class="fas fa-envelope mr-3"></i>
+                            <span class="sidebar-text">Email Marketing</span>
+                            <span class="sidebar-tooltip">Próximamente</span>
+                            <span class="ml-auto text-xs bg-yellow-600 text-white px-2 py-0.5 rounded">Pronto</span>
+                        </div>
+                        
+                        <!-- Campañas (Placeholder para futuro módulo) -->
+                        <div class="flex items-center px-8 py-2 text-sm opacity-50 cursor-not-allowed relative" title="Próximamente">
+                            <i class="fas fa-megaphone mr-3"></i>
+                            <span class="sidebar-text">Campañas</span>
+                            <span class="sidebar-tooltip">Próximamente</span>
+                            <span class="ml-auto text-xs bg-yellow-600 text-white px-2 py-0.5 rounded">Pronto</span>
+                        </div>
+                    </div>
+                </div>
                 {% endif %}
                 
                 <!-- Configuración (Menú Desplegable) - Solo Owner/Admin -->
                 {% if is_owner_or_admin %}
                 <div class="configuration-menu">
-                    <button onclick="toggleSubmenu('configuration-submenu')" class="flex items-center justify-between w-full px-4 py-3 hover:bg-indigo-800 {% if 'notifications' in request.path or 'landing-page' in request.path or 'clinical-parameters' in request.path %}bg-indigo-800{% endif %} relative">
+                    <button type="button" onclick="toggleSubmenu('configuration-submenu')" class="flex items-center justify-between w-full px-4 py-3 hover:bg-indigo-800 {% if 'clinical-parameters' in request.path or '/team/' in request.path or 'invoice_config' in request.path or 'dian' in request.path %}bg-indigo-800{% endif %} relative">
                         <div class="flex items-center">
                             <i class="fas fa-cog mr-3"></i>
                             <span class="sidebar-text">Configuración</span>
@@ -548,16 +576,6 @@
                             <span class="sidebar-tooltip">Configuración DIAN</span>
                         </a>
                         
-                        <!-- WhatsApp (Plan Profesional o superior) -->
-                        {% has_module 'whatsapp' as can_access_whatsapp %}
-                        <a href="{% if can_access_whatsapp %}{% url 'dashboard:notification_settings' %}{% else %}{% url 'organizations:subscription_plans' %}{% endif %}" 
-                           class="flex items-center px-8 py-2 hover:bg-indigo-800 text-sm {% if 'notifications' in request.path %}bg-indigo-800{% endif %} relative">
-                            <i class="fab fa-whatsapp mr-3"></i>
-                            <span class="sidebar-text">WhatsApp </span>
-                            <span class="sidebar-tooltip">WhatsApp </span>
-                            {% module_badge 'whatsapp' %}
-                        </a>
-                        
                         <a href="{% url 'dashboard:clinical_parameters' %}" class="flex items-center px-8 py-2 hover:bg-indigo-800 text-sm {% if 'clinical-parameters' in request.path %}bg-indigo-800{% endif %} relative">
                             <i class="fas fa-pills mr-3"></i>
                             <span class="sidebar-text">Parámetros Clínicos</span>
@@ -574,10 +592,17 @@
                             {% module_badge 'dian_config' %}
                         </a>
                         
-                        <a href="{% url 'dashboard:landing_page_config' %}" class="flex items-center px-8 py-2 hover:bg-indigo-800 text-sm {% if 'landing-page' in request.path %}bg-indigo-800{% endif %} relative">
-                            <i class="fas fa-paint-brush mr-3"></i>
-                            <span class="sidebar-text">Landing Page</span>
-                            <span class="sidebar-tooltip">Landing Page</span>
+                        <!-- Separador -->
+                        <div class="border-t border-indigo-800 my-1"></div>
+                        
+                        <!-- Gestión de Equipo (Plan Premium o superior) -->
+                        {% has_module 'team_management' as can_access_team %}
+                        <a href="{% if can_access_team %}{% url 'dashboard:team_list' %}{% else %}{% url 'organizations:subscription_plans' %}{% endif %}" 
+                           class="flex items-center px-8 py-2 hover:bg-indigo-800 text-sm {% if '/team/' in request.path %}bg-indigo-800{% endif %} relative">
+                            <i class="fas fa-users-cog mr-3"></i>
+                            <span class="sidebar-text">Gestión de Equipo</span>
+                            <span class="sidebar-tooltip">Gestión de Equipo</span>
+                            {% module_badge 'team_management' %}
                         </a>
                     </div>
                 </div>
@@ -815,9 +840,9 @@
                 }
             }
             
-            // Submenu de Gestión de Citas (solo si no está minimizado)
+            // Submenu de Pacientes y Citas (solo si no está minimizado)
             if (!sidebar.classList.contains('mini')) {
-                if (currentPath.includes('appointments') || currentPath.includes('calendar') || currentPath.includes('configuration')) {
+                if (currentPath.includes('appointments') || currentPath.includes('calendar') || currentPath.includes('configuration') || currentPath.includes('patients') || currentPath.includes('exam')) {
                     const appointmentsSubmenu = document.getElementById('appointments-submenu');
                     if (appointmentsSubmenu) {
                         appointmentsSubmenu.classList.remove('hidden');
@@ -828,8 +853,56 @@
                     }
                 }
                 
-                // Submenu de Configuración
-                if (currentPath.includes('notifications') || currentPath.includes('landing-page') || currentPath.includes('clinical-parameters')) {
+                // Submenu de Facturación y Finanzas (incluyendo Caja)
+                if (currentPath.includes('billing') || currentPath.includes('invoices') || currentPath.includes('cash')) {
+                    const salesSubmenu = document.getElementById('sales-submenu');
+                    if (salesSubmenu) {
+                        salesSubmenu.classList.remove('hidden');
+                        const salesIcon = document.getElementById('sales-submenu-icon');
+                        if (salesIcon) {
+                            salesIcon.classList.add('rotate-180');
+                        }
+                    }
+                    
+                    // Si estamos en /cash/, también expandir el submenú anidado de Caja
+                    if (currentPath.includes('cash')) {
+                        const financeNestedSubmenu = document.getElementById('finance-nested-submenu');
+                        if (financeNestedSubmenu) {
+                            financeNestedSubmenu.classList.remove('hidden');
+                            const financeNestedIcon = document.getElementById('finance-nested-submenu-icon');
+                            if (financeNestedIcon) {
+                                financeNestedIcon.classList.add('rotate-180');
+                            }
+                        }
+                    }
+                }
+                
+                // Submenu de Marketing
+                if (currentPath.includes('landing-page') || currentPath.includes('notifications') || currentPath.includes('promociones')) {
+                    const marketingSubmenu = document.getElementById('marketing-submenu');
+                    if (marketingSubmenu) {
+                        marketingSubmenu.classList.remove('hidden');
+                        const marketingIcon = document.getElementById('marketing-submenu-icon');
+                        if (marketingIcon) {
+                            marketingIcon.classList.add('rotate-180');
+                        }
+                    }
+                }
+                
+                // Submenu de Inventario y Productos
+                if (currentPath.includes('inventory') || currentPath.includes('product') || currentPath.includes('supplier')) {
+                    const inventorySubmenu = document.getElementById('inventory-submenu');
+                    if (inventorySubmenu) {
+                        inventorySubmenu.classList.remove('hidden');
+                        const inventoryIcon = document.getElementById('inventory-submenu-icon');
+                        if (inventoryIcon) {
+                            inventoryIcon.classList.add('rotate-180');
+                        }
+                    }
+                }
+                
+                // Submenu de Configuración (incluyendo Gestión de Equipo)
+                if (currentPath.includes('clinical-parameters') || currentPath.includes('/team/') || currentPath.includes('invoice_config') || currentPath.includes('dian')) {
                     const configurationSubmenu = document.getElementById('configuration-submenu');
                     if (configurationSubmenu) {
                         configurationSubmenu.classList.remove('hidden');
