@@ -11,8 +11,9 @@ from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.contrib import messages
 from django.http import JsonResponse
 from django.utils import timezone
-from django.db.models import Count, Q
+from django.db.models import Count, Q, Sum, F
 from datetime import datetime, timedelta
+from decimal import Decimal
 from apps.organizations.decorators import require_whatsapp
 
 # Importar vistas de historia clínica
