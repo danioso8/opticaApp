@@ -504,18 +504,16 @@ def dashboard_home(request):
     }
     
     # ===== PROMOCIONES ACTIVAS =====
-    from apps.promotions.models import Campaign
+    from apps.promotions.models import PromotionCampaign
     
-    active_campaigns = Campaign.objects.filter(
-        is_active=True,
-        start_date__lte=today,
-        end_date__gte=today,
+    active_campaigns = PromotionCampaign.objects.filter(
+        status__in=['scheduled', 'in_progress'],
         **org_filter
     )
     
     promotions_stats = {
         'active_campaigns': active_campaigns.count(),
-        'total_campaigns': Campaign.objects.filter(**org_filter).count(),
+        'total_campaigns': PromotionCampaign.objects.filter(**org_filter).count(),
     }
     
     context = {
