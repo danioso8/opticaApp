@@ -487,12 +487,12 @@ def dashboard_home(request):
     from apps.sales.models import Product
     
     inventory_products = Product.objects.filter(**org_filter)
-    low_stock = inventory_products.filter(quantity__lte=F('min_stock'))
-    out_of_stock = inventory_products.filter(quantity=0)
+    low_stock = inventory_products.filter(stock__lte=F('min_stock'))
+    out_of_stock = inventory_products.filter(stock=0)
     
     # Valor total del inventario
     inventory_value = sum(
-        (p.quantity or 0) * (p.cost_price or 0)
+        (p.stock or 0) * (p.cost or 0)
         for p in inventory_products
     )
     
