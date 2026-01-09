@@ -544,7 +544,7 @@ function showNotification(message, type) {
 
 // Función para habilitar notificaciones de WhatsApp automáticamente
 function enableWhatsAppNotifications() {
-    fetch("{% url 'dashboard:notification_settings_save' %}", {
+    fetch("{% url 'dashboard:save_notification_settings' %}", {
         method: 'POST',
         headers: {
             'Content-Type': 'application/x-www-form-urlencoded',
