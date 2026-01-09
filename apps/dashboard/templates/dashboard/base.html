@@ -550,6 +550,96 @@
                 </div>
                 {% endif %}
                 
+                <!-- Automatización (Workflows + Tasks) - Solo Owner/Admin -->
+                {% if is_owner_or_admin %}
+                <div class="automation-menu">
+                    <button type="button" onclick="toggleSubmenu('automation-submenu')" class="flex items-center justify-between w-full px-4 py-3 hover:bg-indigo-800 {% if 'workflows' in request.path or 'tasks' in request.path %}bg-indigo-800{% endif %} relative">
+                        <div class="flex items-center">
+                            <i class="fas fa-robot mr-3"></i>
+                            <span class="sidebar-text">Automatización</span>
+                        </div>
+                        <i class="fas fa-chevron-down text-sm transition-transform duration-200 submenu-icon" id="automation-submenu-icon"></i>
+                        <span class="sidebar-tooltip">Automatización</span>
+                    </button>
+                    <div id="automation-submenu" class="bg-indigo-950 hidden sidebar-submenu">
+                        <!-- Workflows -->
+                        <a href="{% url 'workflows:list' %}" class="flex items-center px-8 py-2 hover:bg-indigo-800 text-sm {% if 'workflows' in request.path and 'approvals' not in request.path %}bg-indigo-800{% endif %} relative">
+                            <i class="fas fa-project-diagram mr-3"></i>
+                            <span class="sidebar-text">Workflows</span>
+                            <span class="sidebar-tooltip">Workflows</span>
+                        </a>
+                        <a href="{% url 'workflows:my_approvals' %}" class="flex items-center px-8 py-2 hover:bg-indigo-800 text-sm {% if 'approvals' in request.path %}bg-indigo-800{% endif %} relative">
+                            <i class="fas fa-clipboard-check mr-3"></i>
+                            <span class="sidebar-text">Mis Aprobaciones</span>
+                            <span class="sidebar-tooltip">Mis Aprobaciones</span>
+                            <span id="approvals-badge" class="ml-auto bg-red-500 text-white text-xs px-2 py-1 rounded-full hidden"></span>
+                        </a>
+                        
+                        <div class="border-t border-indigo-800 my-1"></div>
+                        
+                        <!-- Tasks -->
+                        <a href="{% url 'tasks:kanban' %}" class="flex items-center px-8 py-2 hover:bg-indigo-800 text-sm {% if 'tasks' in request.path and 'my-tasks' not in request.path and 'calendar' not in request.path %}bg-indigo-800{% endif %} relative">
+                            <i class="fas fa-tasks mr-3"></i>
+                            <span class="sidebar-text">Tareas (Kanban)</span>
+                            <span class="sidebar-tooltip">Tareas (Kanban)</span>
+                        </a>
+                        <a href="{% url 'tasks:my_tasks' %}" class="flex items-center px-8 py-2 hover:bg-indigo-800 text-sm {% if 'my-tasks' in request.path %}bg-indigo-800{% endif %} relative">
+                            <i class="fas fa-user-check mr-3"></i>
+                            <span class="sidebar-text">Mis Tareas</span>
+                            <span class="sidebar-tooltip">Mis Tareas</span>
+                        </a>
+                        <a href="{% url 'tasks:calendar' %}" class="flex items-center px-8 py-2 hover:bg-indigo-800 text-sm {% if 'tasks' in request.path and 'calendar' in request.path %}bg-indigo-800{% endif %} relative">
+                            <i class="fas fa-calendar-alt mr-3"></i>
+                            <span class="sidebar-text">Calendario de Tareas</span>
+                            <span class="sidebar-tooltip">Calendario de Tareas</span>
+                        </a>
+                    </div>
+                </div>
+                {% endif %}
+                
+                <!-- Reportes (Menú Desplegable) -->
+                <div class="reports-menu">
+                    <button type="button" onclick="toggleSubmenu('reports-submenu')" class="flex items-center justify-between w-full px-4 py-3 hover:bg-indigo-800 {% if 'reports' in request.path %}bg-indigo-800{% endif %} relative">
+                        <div class="flex items-center">
+                            <i class="fas fa-chart-bar mr-3"></i>
+                            <span class="sidebar-text">Reportes</span>
+                        </div>
+                        <i class="fas fa-chevron-down text-sm transition-transform duration-200 submenu-icon" id="reports-submenu-icon"></i>
+                        <span class="sidebar-tooltip">Reportes</span>
+                    </button>
+                    <div id="reports-submenu" class="submenu hidden bg-indigo-800">
+                        <a href="{% url 'reports:dashboard' %}" class="flex items-center px-8 py-2 hover:bg-indigo-900 text-sm {% if 'reports' in request.path and request.path == '/dashboard/reports/' %}bg-indigo-900{% endif %} relative">
+                            <i class="fas fa-tachometer-alt mr-3"></i>
+                            <span class="sidebar-text">Dashboard</span>
+                            <span class="sidebar-tooltip">Dashboard de Reportes</span>
+                        </a>
+                        <a href="{% url 'reports:templates' %}" class="flex items-center px-8 py-2 hover:bg-indigo-900 text-sm {% if 'templates' in request.path %}bg-indigo-900{% endif %} relative">
+                            <i class="fas fa-file-alt mr-3"></i>
+                            <span class="sidebar-text">Plantillas</span>
+                            <span class="sidebar-tooltip">Plantillas de Reportes</span>
+                        </a>
+                        <a href="{% url 'reports:reports' %}" class="flex items-center px-8 py-2 hover:bg-indigo-900 text-sm {% if 'reports/reports' in request.path %}bg-indigo-900{% endif %} relative">
+                            <i class="fas fa-list mr-3"></i>
+                            <span class="sidebar-text">Mis Reportes</span>
+                            <span class="sidebar-tooltip">Reportes Generados</span>
+                        </a>
+                        <a href="{% url 'reports:scheduled' %}" class="flex items-center px-8 py-2 hover:bg-indigo-900 text-sm {% if 'scheduled' in request.path %}bg-indigo-900{% endif %} relative">
+                            <i class="fas fa-calendar-check mr-3"></i>
+                            <span class="sidebar-text">Programados</span>
+                            <span class="sidebar-tooltip">Reportes Programados</span>
+                        </a>
+                    </div>
+                </div>
+                
+                <!-- Auditoría (Solo Owner/Admin) -->
+                {% if is_owner_or_admin %}
+                <a href="{% url 'audit:dashboard' %}" class="flex items-center px-4 py-3 hover:bg-indigo-800 {% if 'audit' in request.path %}bg-indigo-800{% endif %} relative">
+                    <i class="fas fa-shield-alt mr-3"></i>
+                    <span class="sidebar-text">Auditoría</span>
+                    <span class="sidebar-tooltip">Auditoría</span>
+                </a>
+                {% endif %}
+                
                 <!-- Configuración (Menú Desplegable) - Solo Owner/Admin -->
                 {% if is_owner_or_admin %}
                 <div class="configuration-menu">
@@ -901,6 +991,30 @@
                     }
                 }
                 
+                // Submenu de Automatización (Workflows + Tasks)
+                if (currentPath.includes('workflows') || currentPath.includes('tasks')) {
+                    const automationSubmenu = document.getElementById('automation-submenu');
+                    if (automationSubmenu) {
+                        automationSubmenu.classList.remove('hidden');
+                        const automationIcon = document.getElementById('automation-submenu-icon');
+                        if (automationIcon) {
+                            automationIcon.classList.add('rotate-180');
+                        }
+                    }
+                }
+                
+                // Submenu de Reportes
+                if (currentPath.includes('reports')) {
+                    const reportsSubmenu = document.getElementById('reports-submenu');
+                    if (reportsSubmenu) {
+                        reportsSubmenu.classList.remove('hidden');
+                        const reportsIcon = document.getElementById('reports-submenu-icon');
+                        if (reportsIcon) {
+                            reportsIcon.classList.add('rotate-180');
+                        }
+                    }
+                }
+                
                 // Submenu de Configuración (incluyendo Gestión de Equipo)
                 if (currentPath.includes('clinical-parameters') || currentPath.includes('/team/') || currentPath.includes('invoice_config') || currentPath.includes('dian')) {
                     const configurationSubmenu = document.getElementById('configuration-submenu');
@@ -976,6 +1090,31 @@
     <script>
         // Dashboard notifications functionality
         // TODO: Implement push notifications
+        
+        // Actualizar badge de aprobaciones pendientes cada 30 segundos
+        function updateApprovalsBadge() {
+            fetch("/dashboard/workflows/api/pending-count/")
+                .then(response => response.json())
+                .then(data => {
+                    const badge = document.getElementById('approvals-badge');
+                    if (badge) {
+                        if (data.count > 0) {
+                            badge.textContent = data.count;
+                            badge.classList.remove('hidden');
+                        } else {
+                            badge.classList.add('hidden');
+                        }
+                    }
+                })
+                .catch(error => console.error('Error updating approvals badge:', error));
+        }
+        
+        // Actualizar al cargar la página
+        if (document.getElementById('approvals-badge')) {
+            updateApprovalsBadge();
+            // Actualizar cada 30 segundos
+            setInterval(updateApprovalsBadge, 30000);
+        }
     </script>
     
     {% block extra_js %}{% endblock %}

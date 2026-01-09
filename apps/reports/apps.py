@@ -1,0 +1,11 @@
+from django.apps import AppConfig
+
+
+class ReportsConfig(AppConfig):
+    default_auto_field = 'django.db.models.BigAutoField'
+    name = 'apps.reports'
+    verbose_name = 'Reportes'
+
+    def ready(self):
+        """Importar signals cuando la app esté lista."""
+        import apps.reports.signals  # noqa

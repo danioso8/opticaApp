@@ -1,0 +1,143 @@
+{% extends "dashboard/base.html" %}
+
+{% block title %}Instancias de Workflow{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-6">
+    <!-- Breadcrumb -->
+    <nav class="mb-4">
+        <ol class="flex items-center space-x-2 text-sm text-gray-600">
+            <li><a href="{% url 'workflows:list' %}" class="hover:text-indigo-600"><i class="fas fa-project-diagram mr-1"></i>Workflows</a></li>
+            <li><i class="fas fa-chevron-right text-xs"></i></li>
+            <li class="text-gray-800 font-semibold">Instancias</li>
+        </ol>
+    </nav>
+
+    <!-- Header -->
+    <div class="flex justify-between items-center mb-6">
+        <h1 class="text-3xl font-bold text-gray-800">
+            <i class="fas fa-list text-indigo-600 mr-2"></i>
+            Instancias de Workflows
+        </h1>
+    </div>
+
+    <!-- Filtros -->
+    <div class="bg-white rounded-lg shadow p-6 mb-6">
+        <form method="get" class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+                <label class="block text-sm font-semibold text-gray-700 mb-2">Workflow:</label>
+                <select name="workflow" class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
+                    <option value="">Todos los workflows</option>
+                    {% for wf in workflows %}
+                    <option value="{{ wf.pk }}" {% if wf.pk|stringformat:"i" == selected_workflow %}selected{% endif %}>
+                        {{ wf.name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div>
+                <label class="block text-sm font-semibold text-gray-700 mb-2">Estado:</label>
+                <select name="status" class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
+                    <option value="">Todos los estados</option>
+                    <option value="active" {% if selected_status == 'active' %}selected{% endif %}>Activas</option>
+                    <option value="completed" {% if selected_status == 'completed' %}selected{% endif %}>Completadas</option>
+                    <option value="cancelled" {% if selected_status == 'cancelled' %}selected{% endif %}>Canceladas</option>
+                    <option value="suspended" {% if selected_status == 'suspended' %}selected{% endif %}>Suspendidas</option>
+                    <option value="error" {% if selected_status == 'error' %}selected{% endif %}>Error</option>
+                </select>
+            </div>
+
+            <div class="flex items-end">
+                <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded-lg font-semibold">
+                    <i class="fas fa-filter mr-2"></i>
+                    Filtrar
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Lista de Instancias -->
+    <div class="bg-white rounded-lg shadow">
+        {% if instances %}
+        <div class="divide-y divide-gray-200">
+            {% for instance in instances %}
+            <div class="p-6 hover:bg-gray-50 transition-colors">
+                <div class="flex items-start justify-between">
+                    <div class="flex-1">
+                        <div class="flex items-center space-x-3 mb-2">
+                            <h3 class="text-lg font-semibold text-gray-800">
+                                {{ instance.workflow.name }}
+                            </h3>
+                            
+                            {% if instance.status == 'active' %}
+                            <span class="px-3 py-1 bg-green-100 text-green-800 text-sm font-semibold rounded-full">
+                                <i class="fas fa-play-circle mr-1"></i> Activa
+                            </span>
+                            {% elif instance.status == 'completed' %}
+                            <span class="px-3 py-1 bg-blue-100 text-blue-800 text-sm font-semibold rounded-full">
+                                <i class="fas fa-check-circle mr-1"></i> Completada
+                            </span>
+                            {% elif instance.status == 'cancelled' %}
+                            <span class="px-3 py-1 bg-red-100 text-red-800 text-sm font-semibold rounded-full">
+                                <i class="fas fa-times-circle mr-1"></i> Cancelada
+                            </span>
+                            {% elif instance.status == 'suspended' %}
+                            <span class="px-3 py-1 bg-yellow-100 text-yellow-800 text-sm font-semibold rounded-full">
+                                <i class="fas fa-pause-circle mr-1"></i> Suspendida
+                            </span>
+                            {% elif instance.status == 'error' %}
+                            <span class="px-3 py-1 bg-red-100 text-red-800 text-sm font-semibold rounded-full">
+                                <i class="fas fa-exclamation-triangle mr-1"></i> Error
+                            </span>
+                            {% endif %}
+
+                            <span class="px-3 py-1 bg-indigo-100 text-indigo-800 text-sm font-semibold rounded-full">
+                                {{ instance.current_state }}
+                            </span>
+                        </div>
+
+                        <div class="flex items-center space-x-4 text-sm text-gray-600 mt-2">
+                            <span>
+                                <i class="fas fa-user mr-1"></i>
+                                Creada por: <strong>{{ instance.created_by.get_full_name|default:instance.created_by.username }}</strong>
+                            </span>
+                            <span>
+                                <i class="fas fa-calendar mr-1"></i>
+                                {{ instance.created_at|date:"d/m/Y H:i" }}
+                            </span>
+                            <span>
+                                <i class="fas fa-clock mr-1"></i>
+                                Hace {{ instance.created_at|timesince }}
+                            </span>
+                        </div>
+
+                        {% if instance.completed_at %}
+                        <div class="text-sm text-gray-600 mt-2">
+                            <i class="fas fa-flag-checkered mr-1 text-green-600"></i>
+                            Completada: {{ instance.completed_at|date:"d/m/Y H:i" }}
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="ml-4">
+                        <a href="{% url 'workflows:instance_detail' instance.pk %}" 
+                           class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg flex items-center">
+                            <i class="fas fa-eye mr-2"></i>
+                            Ver Detalle
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="p-12 text-center">
+            <i class="fas fa-list text-gray-300 text-6xl mb-4"></i>
+            <p class="text-gray-500 text-lg">No se encontraron instancias</p>
+            <p class="text-gray-400 mt-2">Ajusta los filtros para ver más resultados</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

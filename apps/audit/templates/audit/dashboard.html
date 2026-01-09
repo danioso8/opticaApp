@@ -1,0 +1,251 @@
+{% extends "dashboard/base.html" %}
+
+{% block title %}Auditoría - Dashboard{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-6">
+    <!-- Header -->
+    <div class="mb-6">
+        <h1 class="text-3xl font-bold text-gray-800">
+            <i class="fas fa-shield-alt text-indigo-600 mr-2"></i>
+            Sistema de Auditoría
+        </h1>
+        <p class="text-gray-600 mt-1">Monitorea y analiza la actividad del sistema</p>
+    </div>
+
+    <!-- Estadísticas -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+        <div class="bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg shadow p-6 text-white">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-blue-100 text-sm">Total Registros</p>
+                    <p class="text-3xl font-bold">{{ total_logs }}</p>
+                    <p class="text-blue-100 text-xs mt-1">Últimos 30 días</p>
+                </div>
+                <div class="bg-white bg-opacity-20 p-3 rounded-full">
+                    <i class="fas fa-list text-2xl"></i>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-gradient-to-r from-purple-500 to-purple-600 rounded-lg shadow p-6 text-white">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-purple-100 text-sm">IPs Únicas</p>
+                    <p class="text-3xl font-bold">{{ unique_ips }}</p>
+                    <p class="text-purple-100 text-xs mt-1">Dispositivos diferentes</p>
+                </div>
+                <div class="bg-white bg-opacity-20 p-3 rounded-full">
+                    <i class="fas fa-network-wired text-2xl"></i>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-gradient-to-r from-orange-500 to-orange-600 rounded-lg shadow p-6 text-white">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-orange-100 text-sm">Usuarios Activos</p>
+                    <p class="text-3xl font-bold">{{ top_users|length }}</p>
+                    <p class="text-orange-100 text-xs mt-1">Con actividad reciente</p>
+                </div>
+                <div class="bg-white bg-opacity-20 p-3 rounded-full">
+                    <i class="fas fa-users text-2xl"></i>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-gradient-to-r from-red-500 to-red-600 rounded-lg shadow p-6 text-white">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-red-100 text-sm">Login Fallidos</p>
+                    <p class="text-3xl font-bold">{{ failed_logins }}</p>
+                    <p class="text-red-100 text-xs mt-1">Intentos rechazados</p>
+                </div>
+                <div class="bg-white bg-opacity-20 p-3 rounded-full">
+                    <i class="fas fa-exclamation-triangle text-2xl"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Actividad por Acción -->
+        <div class="bg-white rounded-lg shadow">
+            <div class="p-6 border-b border-gray-200">
+                <h2 class="text-xl font-semibold text-gray-800">
+                    <i class="fas fa-chart-pie text-indigo-600 mr-2"></i>
+                    Actividad por Acción
+                </h2>
+            </div>
+            <div class="p-6">
+                {% if action_stats %}
+                <div class="space-y-3">
+                    {% for stat in action_stats %}
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center flex-1">
+                            <span class="text-sm font-medium text-gray-700 w-32">
+                                {{ stat.action }}
+                            </span>
+                            <div class="flex-1 mx-4">
+                                <div class="w-full bg-gray-200 rounded-full h-2">
+                                    {% widthratio stat.count action_stats.0.count 100 as percentage %}
+                                    <div class="bg-indigo-600 h-2 rounded-full" style="width: {{ percentage }}%"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <span class="text-sm font-bold text-gray-800 w-16 text-right">{{ stat.count }}</span>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="text-gray-500 text-center py-8">No hay datos disponibles</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Usuarios Más Activos -->
+        <div class="bg-white rounded-lg shadow">
+            <div class="p-6 border-b border-gray-200 flex justify-between items-center">
+                <h2 class="text-xl font-semibold text-gray-800">
+                    <i class="fas fa-user-chart text-indigo-600 mr-2"></i>
+                    Usuarios Más Activos
+                </h2>
+            </div>
+            <div class="divide-y divide-gray-200">
+                {% if top_users %}
+                    {% for user in top_users %}
+                    <div class="p-4 hover:bg-gray-50 flex items-center justify-between">
+                        <div class="flex items-center">
+                            <div class="bg-indigo-100 w-10 h-10 rounded-full flex items-center justify-center text-indigo-600 font-semibold mr-3">
+                                {{ user.user__first_name.0|default:user.user__username.0|upper }}
+                            </div>
+                            <div>
+                                <p class="font-medium text-gray-800">
+                                    {% if user.user__first_name %}
+                                        {{ user.user__first_name }} {{ user.user__last_name }}
+                                    {% else %}
+                                        {{ user.user__username }}
+                                    {% endif %}
+                                </p>
+                                <p class="text-sm text-gray-500">{{ user.count }} acciones</p>
+                            </div>
+                        </div>
+                        <a href="#" class="text-indigo-600 hover:text-indigo-800 text-sm">
+                            Ver actividad <i class="fas fa-arrow-right ml-1"></i>
+                        </a>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                <div class="p-8 text-center text-gray-500">
+                    <i class="fas fa-inbox text-4xl mb-2"></i>
+                    <p>No hay actividad registrada</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Actividad Reciente -->
+    <div class="bg-white rounded-lg shadow mt-6">
+        <div class="p-6 border-b border-gray-200 flex justify-between items-center">
+            <h2 class="text-xl font-semibold text-gray-800">
+                <i class="fas fa-history text-indigo-600 mr-2"></i>
+                Actividad Reciente
+            </h2>
+            <a href="{% url 'audit:logs' %}" class="text-indigo-600 hover:text-indigo-800 text-sm">
+                Ver todos <i class="fas fa-arrow-right ml-1"></i>
+            </a>
+        </div>
+        <div class="divide-y divide-gray-200">
+            {% if recent_logs %}
+                {% for log in recent_logs %}
+                <div class="p-4 hover:bg-gray-50">
+                    <div class="flex items-start justify-between">
+                        <div class="flex-1">
+                            <div class="flex items-center space-x-2 mb-1">
+                                {% if log.action == 'CREATE' %}
+                                <span class="px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full">
+                                    <i class="fas fa-plus mr-1"></i> Crear
+                                </span>
+                                {% elif log.action == 'UPDATE' %}
+                                <span class="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">
+                                    <i class="fas fa-edit mr-1"></i> Actualizar
+                                </span>
+                                {% elif log.action == 'DELETE' %}
+                                <span class="px-2 py-1 bg-red-100 text-red-800 text-xs rounded-full">
+                                    <i class="fas fa-trash mr-1"></i> Eliminar
+                                </span>
+                                {% elif log.action == 'LOGIN' %}
+                                <span class="px-2 py-1 bg-purple-100 text-purple-800 text-xs rounded-full">
+                                    <i class="fas fa-sign-in-alt mr-1"></i> Login
+                                </span>
+                                {% else %}
+                                <span class="px-2 py-1 bg-gray-100 text-gray-800 text-xs rounded-full">
+                                    {{ log.get_action_display }}
+                                </span>
+                                {% endif %}
+                                
+                                <span class="text-sm text-gray-600">
+                                    <i class="fas fa-user mr-1"></i>
+                                    {{ log.user.get_full_name|default:log.user.username|default:"Sistema" }}
+                                </span>
+                            </div>
+                            <p class="text-gray-800">{{ log.object_repr|default:"Sin descripción" }}</p>
+                            <p class="text-xs text-gray-500 mt-1">
+                                {{ log.created_at|date:"d/m/Y H:i:s" }}
+                                {% if log.ip_address %} - IP: {{ log.ip_address }}{% endif %}
+                            </p>
+                        </div>
+                        <a href="{% url 'audit:detail' log.pk %}" 
+                           class="text-indigo-600 hover:text-indigo-800 text-sm ml-4">
+                            <i class="fas fa-eye"></i>
+                        </a>
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+            <div class="p-8 text-center text-gray-500">
+                <i class="fas fa-inbox text-4xl mb-2"></i>
+                <p>No hay actividad reciente</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Acciones Rápidas -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
+        <a href="{% url 'audit:logs' %}" 
+           class="bg-white hover:bg-gray-50 rounded-lg shadow p-6 flex items-center space-x-4 transition-colors">
+            <div class="bg-blue-100 p-4 rounded-full">
+                <i class="fas fa-list text-blue-600 text-2xl"></i>
+            </div>
+            <div>
+                <h3 class="font-semibold text-gray-800">Ver Logs</h3>
+                <p class="text-sm text-gray-600">Consulta todos los registros</p>
+            </div>
+        </a>
+
+        <a href="{% url 'audit:logs' %}?action=LOGIN_FAILED" 
+           class="bg-white hover:bg-gray-50 rounded-lg shadow p-6 flex items-center space-x-4 transition-colors">
+            <div class="bg-red-100 p-4 rounded-full">
+                <i class="fas fa-exclamation-triangle text-red-600 text-2xl"></i>
+            </div>
+            <div>
+                <h3 class="font-semibold text-gray-800">Login Fallidos</h3>
+                <p class="text-sm text-gray-600">Revisa intentos sospechosos</p>
+            </div>
+        </a>
+
+        <a href="{% url 'audit:export' %}" 
+           class="bg-white hover:bg-gray-50 rounded-lg shadow p-6 flex items-center space-x-4 transition-colors">
+            <div class="bg-green-100 p-4 rounded-full">
+                <i class="fas fa-download text-green-600 text-2xl"></i>
+            </div>
+            <div>
+                <h3 class="font-semibold text-gray-800">Exportar</h3>
+                <p class="text-sm text-gray-600">Descarga en formato CSV</p>
+            </div>
+        </a>
+    </div>
+</div>
+{% endblock %}

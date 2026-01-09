@@ -2,7 +2,7 @@
 Utilidades para registro de auditoría
 """
 import json
-from .models_audit import AuditLog
+from apps.audit.models import AuditLog
 
 
 def log_action(user, organization, action, description, content_type=None, object_id=None, metadata=None, request=None):

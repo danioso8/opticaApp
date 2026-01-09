@@ -1,0 +1,307 @@
+{% extends "dashboard/base.html" %}
+
+{% block title %}{{ report.name }} - Detalle{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-6">
+    <!-- Breadcrumb -->
+    <nav class="mb-4">
+        <ol class="flex items-center space-x-2 text-sm text-gray-600">
+            <li><a href="{% url 'reports:dashboard' %}" class="hover:text-indigo-600">Reportes</a></li>
+            <li><i class="fas fa-chevron-right text-xs"></i></li>
+            <li><a href="{% url 'reports:reports' %}" class="hover:text-indigo-600">Mis Reportes</a></li>
+            <li><i class="fas fa-chevron-right text-xs"></i></li>
+            <li class="text-gray-800 font-semibold">{{ report.name|truncatewords:5 }}</li>
+        </ol>
+    </nav>
+
+    <!-- Header -->
+    <div class="bg-white rounded-lg shadow p-6 mb-6">
+        <div class="flex justify-between items-start">
+            <div class="flex-1">
+                <div class="flex items-center space-x-3 mb-3">
+                    {% if report.status == 'completed' %}
+                    <span class="px-4 py-2 bg-green-100 text-green-800 font-semibold rounded-full">
+                        <i class="fas fa-check-circle mr-1"></i> Completado
+                    </span>
+                    {% elif report.status == 'processing' %}
+                    <span class="px-4 py-2 bg-yellow-100 text-yellow-800 font-semibold rounded-full">
+                        <i class="fas fa-spinner fa-spin mr-1"></i> Procesando
+                    </span>
+                    {% elif report.status == 'failed' %}
+                    <span class="px-4 py-2 bg-red-100 text-red-800 font-semibold rounded-full">
+                        <i class="fas fa-times-circle mr-1"></i> Fallido
+                    </span>
+                    {% endif %}
+
+                    <span class="px-3 py-1 bg-blue-100 text-blue-800 font-semibold rounded-full">
+                        {{ report.output_format|upper }}
+                    </span>
+                </div>
+
+                <h1 class="text-2xl font-bold text-gray-800 mb-3">{{ report.name }}</h1>
+
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                    <div>
+                        <span class="text-gray-500">Plantilla:</span>
+                        <p class="font-semibold">{{ report.template.name }}</p>
+                    </div>
+                    <div>
+                        <span class="text-gray-500">Generado por:</span>
+                        <p class="font-semibold">{{ report.generated_by.get_full_name|default:report.generated_by.username }}</p>
+                    </div>
+                    <div>
+                        <span class="text-gray-500">Fecha:</span>
+                        <p class="font-semibold">{{ report.created_at|date:"d/m/Y H:i" }}</p>
+                    </div>
+                    {% if report.completed_at %}
+                    <div>
+                        <span class="text-gray-500">Completado:</span>
+                        <p class="font-semibold">{{ report.completed_at|date:"d/m/Y H:i" }}</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="ml-4 flex flex-col space-y-2">
+                {% if report.status == 'completed' %}
+                <a href="{% url 'reports:download' report.pk %}" 
+                   class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-center">
+                    <i class="fas fa-download mr-2"></i>
+                    Descargar
+                </a>
+                <button onclick="document.getElementById('shareModal').classList.remove('hidden')"
+                        class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg">
+                    <i class="fas fa-share-alt mr-2"></i>
+                    Compartir
+                </button>
+                {% endif %}
+                <a href="{% url 'reports:reports' %}" 
+                   class="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg text-center">
+                    <i class="fas fa-arrow-left mr-2"></i>
+                    Volver
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Columna Principal -->
+        <div class="lg:col-span-2 space-y-6">
+            <!-- Información del Reporte -->
+            <div class="bg-white rounded-lg shadow">
+                <div class="p-6 border-b border-gray-200">
+                    <h2 class="text-xl font-semibold text-gray-800">
+                        <i class="fas fa-info-circle text-indigo-600 mr-2"></i>
+                        Información
+                    </h2>
+                </div>
+                <div class="p-6">
+                    <div class="grid grid-cols-2 gap-4">
+                        {% if report.date_from %}
+                        <div>
+                            <label class="text-sm text-gray-500">Fecha desde</label>
+                            <p class="font-semibold">{{ report.date_from|date:"d/m/Y" }}</p>
+                        </div>
+                        {% endif %}
+                        {% if report.date_to %}
+                        <div>
+                            <label class="text-sm text-gray-500">Fecha hasta</label>
+                            <p class="font-semibold">{{ report.date_to|date:"d/m/Y" }}</p>
+                        </div>
+                        {% endif %}
+                        <div>
+                            <label class="text-sm text-gray-500">Total de registros</label>
+                            <p class="font-semibold">{{ report.total_records }}</p>
+                        </div>
+                        {% if report.generation_time %}
+                        <div>
+                            <label class="text-sm text-gray-500">Tiempo de generación</label>
+                            <p class="font-semibold">{{ report.generation_time|floatformat:2 }} segundos</p>
+                        </div>
+                        {% endif %}
+                        {% if report.expires_at %}
+                        <div class="col-span-2">
+                            <label class="text-sm text-gray-500">Expira el</label>
+                            <p class="font-semibold {% if report.is_expired %}text-red-600{% endif %}">
+                                {{ report.expires_at|date:"d/m/Y H:i" }}
+                                {% if report.is_expired %}
+                                <span class="ml-2 text-xs bg-red-100 text-red-800 px-2 py-1 rounded">Expirado</span>
+                                {% endif %}
+                            </p>
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    {% if report.parameters %}
+                    <div class="mt-4 pt-4 border-t border-gray-200">
+                        <h3 class="font-semibold text-gray-800 mb-2">Parámetros aplicados</h3>
+                        <div class="bg-gray-50 rounded-lg p-3">
+                            <pre class="text-xs text-gray-700">{{ report.parameters|safe }}</pre>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    {% if report.error_message %}
+                    <div class="mt-4 bg-red-50 border border-red-200 rounded-lg p-4">
+                        <div class="flex items-start">
+                            <i class="fas fa-exclamation-triangle text-red-600 mt-1 mr-3"></i>
+                            <div>
+                                <p class="font-semibold text-red-800 mb-1">Error al generar reporte</p>
+                                <p class="text-sm text-red-700">{{ report.error_message }}</p>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Compartidos -->
+            {% if shares %}
+            <div class="bg-white rounded-lg shadow">
+                <div class="p-6 border-b border-gray-200">
+                    <h2 class="text-xl font-semibold text-gray-800">
+                        <i class="fas fa-share-alt text-indigo-600 mr-2"></i>
+                        Compartido con ({{ shares.count }})
+                    </h2>
+                </div>
+                <div class="divide-y divide-gray-200">
+                    {% for share in shares %}
+                    <div class="p-4">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="font-semibold text-gray-800">
+                                    {% if share.shared_with %}
+                                    {{ share.shared_with.get_full_name|default:share.shared_with.username }}
+                                    {% else %}
+                                    {{ share.shared_with_email }}
+                                    {% endif %}
+                                </p>
+                                <p class="text-sm text-gray-600">{{ share.created_at|date:"d/m/Y H:i" }}</p>
+                                {% if share.message %}
+                                <p class="text-sm text-gray-500 mt-1">{{ share.message }}</p>
+                                {% endif %}
+                            </div>
+                            <div class="text-sm">
+                                {% if share.can_download %}
+                                <span class="text-green-600"><i class="fas fa-download mr-1"></i> Puede descargar</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Columna Lateral -->
+        <div class="space-y-6">
+            <!-- Estadísticas -->
+            <div class="bg-white rounded-lg shadow p-6">
+                <h3 class="font-semibold text-gray-800 mb-4">Estadísticas</h3>
+                <div class="space-y-3">
+                    <div class="flex items-center justify-between p-3 bg-blue-50 rounded-lg">
+                        <span class="text-sm text-gray-700">
+                            <i class="fas fa-database text-blue-600 mr-2"></i>
+                            Registros
+                        </span>
+                        <span class="font-bold text-blue-600">{{ report.total_records }}</span>
+                    </div>
+                    {% if report.generation_time %}
+                    <div class="flex items-center justify-between p-3 bg-green-50 rounded-lg">
+                        <span class="text-sm text-gray-700">
+                            <i class="fas fa-clock text-green-600 mr-2"></i>
+                            Tiempo
+                        </span>
+                        <span class="font-bold text-green-600">{{ report.generation_time|floatformat:1 }}s</span>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Acciones -->
+            <div class="bg-white rounded-lg shadow p-6">
+                <h3 class="font-semibold text-gray-800 mb-4">Acciones</h3>
+                <div class="space-y-2">
+                    {% if report.status == 'completed' %}
+                    <a href="{% url 'reports:generate' report.template.pk %}" 
+                       class="block w-full bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-center">
+                        <i class="fas fa-redo mr-2"></i>
+                        Regenerar
+                    </a>
+                    {% endif %}
+                    <button onclick="confirmDelete({{ report.pk }})"
+                            class="block w-full bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg">
+                        <i class="fas fa-trash mr-2"></i>
+                        Eliminar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Compartir -->
+<div id="shareModal" class="hidden fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center z-50">
+    <div class="bg-white rounded-lg shadow-xl w-full max-w-md mx-4">
+        <div class="p-6 border-b border-gray-200">
+            <h3 class="text-xl font-semibold text-gray-800">Compartir Reporte</h3>
+        </div>
+        <form method="post" action="{% url 'reports:share' report.pk %}" class="p-6">
+            {% csrf_token %}
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Email</label>
+                    <input type="email" name="email" required
+                           class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-indigo-500">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Mensaje (opcional)</label>
+                    <textarea name="message" rows="3"
+                              class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-indigo-500"></textarea>
+                </div>
+                <div class="flex items-center">
+                    <input type="checkbox" name="can_download" checked
+                           class="w-4 h-4 text-indigo-600 rounded focus:ring-indigo-500">
+                    <label class="ml-2 text-sm text-gray-700">Permitir descarga</label>
+                </div>
+            </div>
+            <div class="flex justify-end space-x-3 mt-6">
+                <button type="button" onclick="document.getElementById('shareModal').classList.add('hidden')"
+                        class="bg-gray-200 hover:bg-gray-300 text-gray-700 px-4 py-2 rounded-lg">
+                    Cancelar
+                </button>
+                <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg">
+                    Compartir
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+function confirmDelete(reportId) {
+    if (!confirm('¿Estás seguro de eliminar este reporte?')) return;
+    
+    fetch(`/dashboard/reports/reports/${reportId}/delete/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': '{{ csrf_token }}'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            window.location.href = '{% url "reports:reports" %}';
+        } else {
+            alert('Error al eliminar el reporte');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error de conexión');
+    });
+}
+</script>
+{% endblock %}

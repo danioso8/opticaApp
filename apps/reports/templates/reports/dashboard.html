@@ -1,0 +1,242 @@
+{% extends "dashboard/base.html" %}
+
+{% block title %}Reportes - Dashboard{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-6">
+    <!-- Header -->
+    <div class="mb-6">
+        <h1 class="text-3xl font-bold text-gray-800">
+            <i class="fas fa-chart-bar text-indigo-600 mr-2"></i>
+            Sistema de Reportes
+        </h1>
+        <p class="text-gray-600 mt-1">Genera, programa y gestiona reportes personalizados</p>
+    </div>
+
+    <!-- Estadísticas -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+        <div class="bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg shadow p-6 text-white">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-blue-100 text-sm">Plantillas</p>
+                    <p class="text-3xl font-bold">{{ stats.templates }}</p>
+                </div>
+                <div class="bg-white bg-opacity-20 p-3 rounded-full">
+                    <i class="fas fa-file-alt text-2xl"></i>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-gradient-to-r from-green-500 to-green-600 rounded-lg shadow p-6 text-white">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-green-100 text-sm">Generados</p>
+                    <p class="text-3xl font-bold">{{ stats.generated }}</p>
+                </div>
+                <div class="bg-white bg-opacity-20 p-3 rounded-full">
+                    <i class="fas fa-file-pdf text-2xl"></i>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-gradient-to-r from-purple-500 to-purple-600 rounded-lg shadow p-6 text-white">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-purple-100 text-sm">Programados</p>
+                    <p class="text-3xl font-bold">{{ stats.scheduled }}</p>
+                </div>
+                <div class="bg-white bg-opacity-20 p-3 rounded-full">
+                    <i class="fas fa-calendar-check text-2xl"></i>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-gradient-to-r from-orange-500 to-orange-600 rounded-lg shadow p-6 text-white">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-orange-100 text-sm">Compartidos</p>
+                    <p class="text-3xl font-bold">{{ stats.shared }}</p>
+                </div>
+                <div class="bg-white bg-opacity-20 p-3 rounded-full">
+                    <i class="fas fa-share-alt text-2xl"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Reportes Recientes -->
+        <div class="bg-white rounded-lg shadow">
+            <div class="p-6 border-b border-gray-200 flex justify-between items-center">
+                <h2 class="text-xl font-semibold text-gray-800">
+                    <i class="fas fa-history text-indigo-600 mr-2"></i>
+                    Reportes Recientes
+                </h2>
+                <a href="{% url 'reports:reports' %}" class="text-indigo-600 hover:text-indigo-800 text-sm">
+                    Ver todos <i class="fas fa-arrow-right ml-1"></i>
+                </a>
+            </div>
+            <div class="divide-y divide-gray-200">
+                {% if recent_reports %}
+                    {% for report in recent_reports %}
+                    <div class="p-4 hover:bg-gray-50">
+                        <div class="flex items-start justify-between">
+                            <div class="flex-1">
+                                <h3 class="font-medium text-gray-800">{{ report.name }}</h3>
+                                <p class="text-sm text-gray-600 mt-1">
+                                    <i class="fas fa-user mr-1"></i>
+                                    {{ report.generated_by.get_full_name|default:report.generated_by.username }}
+                                </p>
+                                <p class="text-xs text-gray-500 mt-1">
+                                    {{ report.created_at|date:"d/m/Y H:i" }}
+                                </p>
+                            </div>
+                            <div class="ml-4">
+                                {% if report.status == 'completed' %}
+                                <span class="px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full">
+                                    <i class="fas fa-check-circle mr-1"></i> Completado
+                                </span>
+                                {% elif report.status == 'processing' %}
+                                <span class="px-2 py-1 bg-yellow-100 text-yellow-800 text-xs rounded-full">
+                                    <i class="fas fa-spinner mr-1"></i> Procesando
+                                </span>
+                                {% elif report.status == 'failed' %}
+                                <span class="px-2 py-1 bg-red-100 text-red-800 text-xs rounded-full">
+                                    <i class="fas fa-times-circle mr-1"></i> Fallido
+                                </span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                <div class="p-8 text-center text-gray-500">
+                    <i class="fas fa-inbox text-4xl mb-2"></i>
+                    <p>No hay reportes generados</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Plantillas Más Usadas -->
+        <div class="bg-white rounded-lg shadow">
+            <div class="p-6 border-b border-gray-200 flex justify-between items-center">
+                <h2 class="text-xl font-semibold text-gray-800">
+                    <i class="fas fa-star text-yellow-500 mr-2"></i>
+                    Plantillas Más Usadas
+                </h2>
+                <a href="{% url 'reports:templates' %}" class="text-indigo-600 hover:text-indigo-800 text-sm">
+                    Ver todas <i class="fas fa-arrow-right ml-1"></i>
+                </a>
+            </div>
+            <div class="divide-y divide-gray-200">
+                {% if popular_templates %}
+                    {% for template in popular_templates %}
+                    <div class="p-4 hover:bg-gray-50">
+                        <div class="flex items-start justify-between">
+                            <div class="flex-1">
+                                <h3 class="font-medium text-gray-800">{{ template.name }}</h3>
+                                <p class="text-sm text-gray-600 mt-1">
+                                    {{ template.get_report_type_display }}
+                                </p>
+                            </div>
+                            <div class="flex items-center space-x-3">
+                                <span class="text-sm text-gray-500">
+                                    <i class="fas fa-chart-line mr-1"></i>
+                                    {{ template.usage_count }} usos
+                                </span>
+                                <a href="{% url 'reports:generate' template.pk %}" 
+                                   class="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1 rounded text-sm">
+                                    Generar
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                <div class="p-8 text-center text-gray-500">
+                    <i class="fas fa-inbox text-4xl mb-2"></i>
+                    <p>No hay plantillas disponibles</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Próximos Reportes Programados -->
+    {% if upcoming_scheduled %}
+    <div class="bg-white rounded-lg shadow mt-6">
+        <div class="p-6 border-b border-gray-200 flex justify-between items-center">
+            <h2 class="text-xl font-semibold text-gray-800">
+                <i class="fas fa-calendar-alt text-indigo-600 mr-2"></i>
+                Próximos Reportes Programados
+            </h2>
+            <a href="{% url 'reports:scheduled' %}" class="text-indigo-600 hover:text-indigo-800 text-sm">
+                Ver todos <i class="fas fa-arrow-right ml-1"></i>
+            </a>
+        </div>
+        <div class="p-6">
+            <div class="space-y-3">
+                {% for scheduled in upcoming_scheduled %}
+                <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                    <div class="flex items-center space-x-4">
+                        <div class="bg-indigo-100 p-3 rounded-full">
+                            <i class="fas fa-clock text-indigo-600"></i>
+                        </div>
+                        <div>
+                            <h3 class="font-medium text-gray-800">{{ scheduled.name }}</h3>
+                            <p class="text-sm text-gray-600">{{ scheduled.get_frequency_display }}</p>
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-sm font-semibold text-gray-800">
+                            {{ scheduled.next_run_at|date:"d/m/Y" }}
+                        </p>
+                        <p class="text-xs text-gray-500">
+                            {{ scheduled.next_run_at|date:"H:i" }}
+                        </p>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Acciones Rápidas -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
+        <a href="{% url 'reports:templates' %}" 
+           class="bg-white hover:bg-gray-50 rounded-lg shadow p-6 flex items-center space-x-4 transition-colors">
+            <div class="bg-blue-100 p-4 rounded-full">
+                <i class="fas fa-file-alt text-blue-600 text-2xl"></i>
+            </div>
+            <div>
+                <h3 class="font-semibold text-gray-800">Ver Plantillas</h3>
+                <p class="text-sm text-gray-600">Explora las plantillas disponibles</p>
+            </div>
+        </a>
+
+        <a href="{% url 'reports:reports' %}" 
+           class="bg-white hover:bg-gray-50 rounded-lg shadow p-6 flex items-center space-x-4 transition-colors">
+            <div class="bg-green-100 p-4 rounded-full">
+                <i class="fas fa-list text-green-600 text-2xl"></i>
+            </div>
+            <div>
+                <h3 class="font-semibold text-gray-800">Mis Reportes</h3>
+                <p class="text-sm text-gray-600">Accede a tus reportes generados</p>
+            </div>
+        </a>
+
+        <a href="{% url 'reports:scheduled' %}" 
+           class="bg-white hover:bg-gray-50 rounded-lg shadow p-6 flex items-center space-x-4 transition-colors">
+            <div class="bg-purple-100 p-4 rounded-full">
+                <i class="fas fa-calendar-check text-purple-600 text-2xl"></i>
+            </div>
+            <div>
+                <h3 class="font-semibold text-gray-800">Programados</h3>
+                <p class="text-sm text-gray-600">Gestiona reportes automáticos</p>
+            </div>
+        </a>
+    </div>
+</div>
+{% endblock %}

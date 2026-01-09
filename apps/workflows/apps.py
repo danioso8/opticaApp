@@ -1,0 +1,14 @@
+from django.apps import AppConfig
+
+
+class WorkflowsConfig(AppConfig):
+    default_auto_field = 'django.db.models.BigAutoField'
+    name = 'apps.workflows'
+    verbose_name = 'Flujos de Trabajo'
+
+    def ready(self):
+        """Import signals when app is ready"""
+        try:
+            import apps.workflows.signals  # noqa
+        except ImportError:
+            pass

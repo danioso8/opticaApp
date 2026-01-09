@@ -1,0 +1,181 @@
+{% extends "dashboard/base.html" %}
+
+{% block title %}Mis Reportes{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-6">
+    <!-- Header -->
+    <div class="flex justify-between items-center mb-6">
+        <div>
+            <h1 class="text-3xl font-bold text-gray-800">
+                <i class="fas fa-file-pdf text-indigo-600 mr-2"></i>
+                Reportes Generados
+            </h1>
+            <p class="text-gray-600 mt-1">Consulta y descarga tus reportes</p>
+        </div>
+        <a href="{% url 'reports:templates' %}" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg">
+            <i class="fas fa-plus mr-2"></i>
+            Generar Nuevo
+        </a>
+    </div>
+
+    <!-- Filtros -->
+    <div class="bg-white rounded-lg shadow p-6 mb-6">
+        <form method="get" class="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Buscar</label>
+                <input type="text" name="search" value="{{ search|default:'' }}" 
+                       placeholder="Nombre del reporte..."
+                       class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-indigo-500">
+            </div>
+            
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Estado</label>
+                <select name="status" class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-indigo-500">
+                    <option value="">Todos los estados</option>
+                    {% for value, label in status_choices %}
+                    <option value="{{ value }}" {% if current_status == value %}selected{% endif %}>
+                        {{ label }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Plantilla</label>
+                <select name="template" class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-indigo-500">
+                    <option value="">Todas las plantillas</option>
+                    {% for template in templates %}
+                    <option value="{{ template.pk }}" {% if current_template == template.pk|stringformat:"s" %}selected{% endif %}>
+                        {{ template.name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div class="flex items-end">
+                <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded-lg w-full">
+                    <i class="fas fa-search mr-2"></i>
+                    Filtrar
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Lista de Reportes -->
+    {% if reports %}
+    <div class="bg-white rounded-lg shadow">
+        <div class="divide-y divide-gray-200">
+            {% for report in reports %}
+            <div class="p-6 hover:bg-gray-50 transition-colors">
+                <div class="flex items-start justify-between">
+                    <div class="flex-1">
+                        <div class="flex items-center space-x-3 mb-2">
+                            <h3 class="text-lg font-semibold text-gray-800">{{ report.name }}</h3>
+                            
+                            {% if report.status == 'completed' %}
+                            <span class="px-3 py-1 bg-green-100 text-green-800 text-sm font-semibold rounded-full">
+                                <i class="fas fa-check-circle mr-1"></i> Completado
+                            </span>
+                            {% elif report.status == 'processing' %}
+                            <span class="px-3 py-1 bg-yellow-100 text-yellow-800 text-sm font-semibold rounded-full">
+                                <i class="fas fa-spinner fa-spin mr-1"></i> Procesando
+                            </span>
+                            {% elif report.status == 'failed' %}
+                            <span class="px-3 py-1 bg-red-100 text-red-800 text-sm font-semibold rounded-full">
+                                <i class="fas fa-times-circle mr-1"></i> Fallido
+                            </span>
+                            {% elif report.status == 'pending' %}
+                            <span class="px-3 py-1 bg-blue-100 text-blue-800 text-sm font-semibold rounded-full">
+                                <i class="fas fa-clock mr-1"></i> Pendiente
+                            </span>
+                            {% endif %}
+                        </div>
+
+                        <div class="flex items-center space-x-4 text-sm text-gray-600 mb-2">
+                            <span>
+                                <i class="fas fa-file-alt mr-1"></i>
+                                {{ report.template.name }}
+                            </span>
+                            <span>
+                                <i class="fas fa-user mr-1"></i>
+                                {{ report.generated_by.get_full_name|default:report.generated_by.username }}
+                            </span>
+                            <span>
+                                <i class="fas fa-calendar mr-1"></i>
+                                {{ report.created_at|date:"d/m/Y H:i" }}
+                            </span>
+                            {% if report.total_records %}
+                            <span>
+                                <i class="fas fa-database mr-1"></i>
+                                {{ report.total_records }} registros
+                            </span>
+                            {% endif %}
+                        </div>
+
+                        {% if report.date_from or report.date_to %}
+                        <div class="text-sm text-gray-500">
+                            <i class="fas fa-calendar-alt mr-1"></i>
+                            Período: 
+                            {% if report.date_from %}{{ report.date_from|date:"d/m/Y" }}{% else %}Inicio{% endif %}
+                            →
+                            {% if report.date_to %}{{ report.date_to|date:"d/m/Y" }}{% else %}Fin{% endif %}
+                        </div>
+                        {% endif %}
+
+                        {% if report.generation_time %}
+                        <div class="text-xs text-gray-400 mt-1">
+                            <i class="fas fa-clock mr-1"></i>
+                            Tiempo de generación: {{ report.generation_time|floatformat:2 }}s
+                        </div>
+                        {% endif %}
+
+                        {% if report.error_message %}
+                        <div class="mt-2 text-sm text-red-600">
+                            <i class="fas fa-exclamation-triangle mr-1"></i>
+                            {{ report.error_message }}
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="flex flex-col space-y-2 ml-4">
+                        <a href="{% url 'reports:detail' report.pk %}" 
+                           class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm text-center">
+                            <i class="fas fa-eye mr-1"></i>
+                            Ver Detalle
+                        </a>
+
+                        {% if report.status == 'completed' %}
+                        <a href="{% url 'reports:download' report.pk %}" 
+                           class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm text-center">
+                            <i class="fas fa-download mr-1"></i>
+                            Descargar
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% else %}
+    <div class="bg-white rounded-lg shadow p-12 text-center">
+        <i class="fas fa-inbox text-gray-300 text-6xl mb-4"></i>
+        <p class="text-gray-500 text-lg">No se encontraron reportes</p>
+        {% if search or current_status or current_template %}
+        <p class="text-gray-400 mt-2">Intenta ajustar tus filtros de búsqueda</p>
+        <a href="{% url 'reports:reports' %}" class="text-indigo-600 hover:text-indigo-800 mt-3 inline-block">
+            Limpiar filtros
+        </a>
+        {% else %}
+        <p class="text-gray-400 mt-2">Comienza generando tu primer reporte</p>
+        <a href="{% url 'reports:templates' %}" 
+           class="mt-4 inline-block bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded-lg">
+            <i class="fas fa-plus mr-2"></i>
+            Generar Reporte
+        </a>
+        {% endif %}
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

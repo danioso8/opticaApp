@@ -47,6 +47,10 @@ if not DEBUG:
     CSRF_TRUSTED_ORIGINS = [
         'https://opticaapp.com',
         'https://www.opticaapp.com',
+        'http://127.0.0.1:8000',
+        'http://127.0.0.1:8001',
+        'http://localhost:8000',
+        'http://localhost:8001',
     ]
 
 
@@ -70,6 +74,15 @@ INSTALLED_APPS = [
     
     # Local apps
     'apps.organizations',
+    'apps.permissions',  # Sistema de roles y permisos
+    'apps.notifications',  # Sistema de notificaciones multi-canal
+    'apps.audit',  # Sistema de auditoría y trazabilidad
+    'apps.settings',  # Sistema de configuraciones dinámicas
+    'apps.reports',  # Sistema de reportes y analytics
+    'apps.documents',  # Gestión de documentos y archivos
+    'apps.api',  # API REST completa con autenticación y webhooks
+    'apps.tasks',  # Sistema de gestión de tareas y seguimiento
+    'apps.workflows',  # Sistema de flujos de trabajo automatizados
     'apps.appointments',
     'apps.patients',
     'apps.users',
@@ -101,6 +114,7 @@ MIDDLEWARE = [
     'apps.organizations.middleware.LimitEnforcementMiddleware',  # Resource creation limits
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'apps.audit.middleware.AuditMiddleware',  # Captura info de requests para auditoría
 ]
 
 # Configurar Whitenoise para NO servir archivos de MEDIA en desarrollo
@@ -177,6 +191,13 @@ AUTH_PASSWORD_VALIDATORS = [
     {
         'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
     },
+]
+
+
+# Authentication backends
+AUTHENTICATION_BACKENDS = [
+    'apps.users.auth_backends.EmailOrUsernameBackend',  # Login con email o username
+    'django.contrib.auth.backends.ModelBackend',  # Fallback por defecto
 ]
 
 
@@ -350,3 +371,31 @@ DIAN_TEST_SET_ID = config('DIAN_TEST_SET_ID', default='')  # Para ambiente de pr
 
 # Modo de pruebas (True: Habilitación, False: Producción)
 DIAN_TEST_MODE = config('DIAN_TEST_MODE', default=True, cast=bool)
+
+# ==================== REST FRAMEWORK (API) ====================
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'apps.api.authentication.APIKeyAuthentication',
+        'rest_framework.authentication.SessionAuthentication',
+    ],
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.IsAuthenticated',
+    ],
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+    'PAGE_SIZE': 50,
+    'DEFAULT_FILTER_BACKENDS': [
+        'django_filters.rest_framework.DjangoFilterBackend',
+        'rest_framework.filters.SearchFilter',
+        'rest_framework.filters.OrderingFilter',
+    ],
+    'DEFAULT_THROTTLE_CLASSES': [
+        'apps.api.throttling.APIKeyRateThrottle',
+        'apps.api.throttling.IPRateThrottle',
+    ],
+    'DEFAULT_RENDERER_CLASSES': [
+        'rest_framework.renderers.JSONRenderer',
+        'rest_framework.renderers.BrowsableAPIRenderer',
+    ],
+    'EXCEPTION_HANDLER': 'rest_framework.views.exception_handler',
+    'DEFAULT_SCHEMA_CLASS': 'rest_framework.schemas.coreapi.AutoSchema',
+}

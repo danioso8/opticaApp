@@ -1,0 +1,118 @@
+{% extends "dashboard/base.html" %}
+
+{% block title %}Plantillas de Reportes{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-6">
+    <!-- Header -->
+    <div class="flex justify-between items-center mb-6">
+        <div>
+            <h1 class="text-3xl font-bold text-gray-800">
+                <i class="fas fa-file-alt text-indigo-600 mr-2"></i>
+                Plantillas de Reportes
+            </h1>
+            <p class="text-gray-600 mt-1">Selecciona una plantilla para generar un reporte</p>
+        </div>
+        <a href="{% url 'reports:dashboard' %}" class="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg">
+            <i class="fas fa-arrow-left mr-2"></i>
+            Dashboard
+        </a>
+    </div>
+
+    <!-- Filtros -->
+    <div class="bg-white rounded-lg shadow p-6 mb-6">
+        <form method="get" class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Buscar</label>
+                <input type="text" name="search" value="{{ search|default:'' }}" 
+                       placeholder="Nombre o descripción..."
+                       class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-indigo-500">
+            </div>
+            
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Tipo</label>
+                <select name="type" class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-indigo-500">
+                    <option value="">Todos los tipos</option>
+                    {% for value, label in report_types %}
+                    <option value="{{ value }}" {% if current_type == value %}selected{% endif %}>
+                        {{ label }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div class="flex items-end">
+                <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded-lg w-full">
+                    <i class="fas fa-search mr-2"></i>
+                    Filtrar
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Lista de Plantillas -->
+    {% if templates %}
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {% for template in templates %}
+        <div class="bg-white rounded-lg shadow hover:shadow-lg transition-shadow">
+            <div class="p-6">
+                <div class="flex items-start justify-between mb-3">
+                    <div class="bg-indigo-100 p-3 rounded-lg">
+                        <i class="fas fa-chart-bar text-indigo-600 text-2xl"></i>
+                    </div>
+                    <span class="px-3 py-1 bg-blue-100 text-blue-800 text-xs font-semibold rounded-full">
+                        {{ template.get_report_type_display }}
+                    </span>
+                </div>
+
+                <h3 class="text-lg font-semibold text-gray-800 mb-2">{{ template.name }}</h3>
+                
+                {% if template.description %}
+                <p class="text-sm text-gray-600 mb-4">{{ template.description|truncatewords:15 }}</p>
+                {% else %}
+                <p class="text-sm text-gray-400 mb-4 italic">Sin descripción</p>
+                {% endif %}
+
+                <div class="flex items-center text-xs text-gray-500 mb-4">
+                    {% if template.created_by %}
+                    <i class="fas fa-user mr-1"></i>
+                    <span>{{ template.created_by.get_full_name|default:template.created_by.username }}</span>
+                    {% endif %}
+                    
+                    {% if template.is_system %}
+                    <span class="ml-auto px-2 py-1 bg-purple-100 text-purple-800 rounded-full">
+                        <i class="fas fa-cog mr-1"></i> Sistema
+                    </span>
+                    {% elif template.is_public %}
+                    <span class="ml-auto px-2 py-1 bg-green-100 text-green-800 rounded-full">
+                        <i class="fas fa-globe mr-1"></i> Público
+                    </span>
+                    {% endif %}
+                </div>
+
+                <div class="flex gap-2">
+                    <a href="{% url 'reports:generate' template.pk %}" 
+                       class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-center text-sm">
+                        <i class="fas fa-play mr-1"></i>
+                        Generar
+                    </a>
+                    <a href="{% url 'reports:template_detail' template.pk %}" 
+                       class="bg-gray-200 hover:bg-gray-300 text-gray-700 px-4 py-2 rounded-lg text-sm">
+                        <i class="fas fa-eye"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="bg-white rounded-lg shadow p-12 text-center">
+        <i class="fas fa-search text-gray-300 text-6xl mb-4"></i>
+        <p class="text-gray-500 text-lg">No se encontraron plantillas</p>
+        {% if search or current_type %}
+        <p class="text-gray-400 mt-2">Intenta ajustar tus filtros de búsqueda</p>
+        {% endif %}
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,265 @@
+{% extends "dashboard/base.html" %}
+
+{% block title %}{{ task.title }} - Tareas{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-6">
+    <!-- Breadcrumb -->
+    <nav class="mb-4">
+        <ol class="flex items-center space-x-2 text-sm text-gray-600">
+            <li><a href="{% url 'tasks:kanban' %}" class="hover:text-indigo-600"><i class="fas fa-tasks mr-1"></i>Tareas</a></li>
+            <li><i class="fas fa-chevron-right text-xs"></i></li>
+            <li class="text-gray-800 font-semibold">{{ task.title|truncatewords:5 }}</li>
+        </ol>
+    </nav>
+
+    <!-- Header -->
+    <div class="bg-white rounded-lg shadow p-6 mb-6">
+        <div class="flex justify-between items-start">
+            <div class="flex-1">
+                <div class="flex items-center space-x-3 mb-3">
+                    {% if task.status == 'todo' %}
+                    <span class="px-3 py-1 bg-blue-100 text-blue-800 font-semibold rounded-full">Por Hacer</span>
+                    {% elif task.status == 'in_progress' %}
+                    <span class="px-3 py-1 bg-yellow-100 text-yellow-800 font-semibold rounded-full">En Progreso</span>
+                    {% elif task.status == 'review' %}
+                    <span class="px-3 py-1 bg-purple-100 text-purple-800 font-semibold rounded-full">En Revisión</span>
+                    {% elif task.status == 'done' %}
+                    <span class="px-3 py-1 bg-green-100 text-green-800 font-semibold rounded-full">Completada</span>
+                    {% endif %}
+
+                    {% if task.priority == 'urgent' %}
+                    <span class="px-3 py-1 bg-red-100 text-red-800 font-semibold rounded-full">Urgente</span>
+                    {% elif task.priority == 'high' %}
+                    <span class="px-3 py-1 bg-orange-100 text-orange-800 font-semibold rounded-full">Alta</span>
+                    {% endif %}
+                </div>
+
+                <h1 class="text-2xl font-bold text-gray-800 mb-2">{{ task.title }}</h1>
+                
+                {% if task.description %}
+                <p class="text-gray-600 mb-4">{{ task.description }}</p>
+                {% endif %}
+
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                    <div>
+                        <span class="text-gray-500">Creada por:</span>
+                        <p class="font-semibold">{{ task.created_by.get_full_name|default:task.created_by.username }}</p>
+                    </div>
+                    {% if task.assigned_to %}
+                    <div>
+                        <span class="text-gray-500">Asignada a:</span>
+                        <p class="font-semibold">{{ task.assigned_to.get_full_name|default:task.assigned_to.username }}</p>
+                    </div>
+                    {% endif %}
+                    {% if task.due_date %}
+                    <div>
+                        <span class="text-gray-500">Vencimiento:</span>
+                        <p class="font-semibold {% if task.is_overdue %}text-red-600{% endif %}">
+                            {{ task.due_date|date:"d/m/Y" }}
+                        </p>
+                    </div>
+                    {% endif %}
+                    {% if task.category %}
+                    <div>
+                        <span class="text-gray-500">Categoría:</span>
+                        <p class="font-semibold">{{ task.category.name }}</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="ml-4">
+                <a href="{% url 'tasks:kanban' %}" class="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg">
+                    <i class="fas fa-arrow-left mr-2"></i>
+                    Volver
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Columna Principal -->
+        <div class="lg:col-span-2 space-y-6">
+            <!-- Checklist -->
+            <div class="bg-white rounded-lg shadow">
+                <div class="p-6 border-b border-gray-200 flex justify-between items-center">
+                    <h2 class="text-xl font-semibold text-gray-800">
+                        <i class="fas fa-check-square text-indigo-600 mr-2"></i>
+                        Checklist
+                    </h2>
+                    {% if checklist_items %}
+                    <div class="text-sm text-gray-600">
+                        Progreso: <strong>{{ checklist_progress }}%</strong>
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="p-6">
+                    {% if checklist_items %}
+                    <div class="mb-4">
+                        <div class="w-full bg-gray-200 rounded-full h-3">
+                            <div class="bg-indigo-600 h-3 rounded-full transition-all" style="width: {{ checklist_progress }}%"></div>
+                        </div>
+                    </div>
+                    <div class="space-y-2">
+                        {% for item in checklist_items %}
+                        <div class="flex items-center p-3 hover:bg-gray-50 rounded-lg">
+                            <input type="checkbox" 
+                                   {% if item.is_completed %}checked{% endif %}
+                                   onchange="toggleChecklistItem({{ task.pk }}, {{ item.pk }})"
+                                   class="w-5 h-5 text-indigo-600 rounded focus:ring-indigo-500">
+                            <label class="ml-3 flex-1 {% if item.is_completed %}line-through text-gray-400{% else %}text-gray-800{% endif %}">
+                                {{ item.item_text }}
+                            </label>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <p class="text-gray-500 text-center py-8">No hay items en el checklist</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Comentarios -->
+            <div class="bg-white rounded-lg shadow">
+                <div class="p-6 border-b border-gray-200">
+                    <h2 class="text-xl font-semibold text-gray-800">
+                        <i class="fas fa-comments text-indigo-600 mr-2"></i>
+                        Comentarios ({{ comments.count }})
+                    </h2>
+                </div>
+                <div class="p-6">
+                    <!-- Formulario agregar comentario -->
+                    <form onsubmit="addComment(event)" class="mb-6">
+                        <textarea id="commentText" rows="3" 
+                                  class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-indigo-500"
+                                  placeholder="Escribe un comentario..."></textarea>
+                        <button type="submit" class="mt-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg">
+                            <i class="fas fa-paper-plane mr-2"></i>
+                            Comentar
+                        </button>
+                    </form>
+
+                    <!-- Lista de comentarios -->
+                    <div id="commentsList" class="space-y-4">
+                        {% for comment in comments %}
+                        <div class="flex space-x-3">
+                            <div class="flex-shrink-0">
+                                <div class="w-10 h-10 bg-indigo-600 rounded-full flex items-center justify-center text-white font-semibold">
+                                    {{ comment.user.first_name.0|default:comment.user.username.0|upper }}
+                                </div>
+                            </div>
+                            <div class="flex-1">
+                                <div class="bg-gray-50 rounded-lg p-3">
+                                    <div class="flex items-center justify-between mb-1">
+                                        <span class="font-semibold text-gray-800">
+                                            {{ comment.user.get_full_name|default:comment.user.username }}
+                                        </span>
+                                        <span class="text-xs text-gray-500">{{ comment.created_at|date:"d/m/Y H:i" }}</span>
+                                    </div>
+                                    <p class="text-gray-700">{{ comment.comment }}</p>
+                                </div>
+                            </div>
+                        </div>
+                        {% empty %}
+                        <p class="text-gray-500 text-center py-8">Sin comentarios aún</p>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Columna Lateral -->
+        <div class="space-y-6">
+            <!-- Actividad Reciente -->
+            <div class="bg-white rounded-lg shadow">
+                <div class="p-6 border-b border-gray-200">
+                    <h2 class="text-xl font-semibold text-gray-800">
+                        <i class="fas fa-history text-indigo-600 mr-2"></i>
+                        Actividad
+                    </h2>
+                </div>
+                <div class="p-6 max-h-96 overflow-y-auto">
+                    {% if activities %}
+                    <div class="space-y-4">
+                        {% for activity in activities %}
+                        <div class="relative pl-6 pb-4 border-l-2 {% if forloop.last %}border-transparent{% else %}border-gray-200{% endif %}">
+                            <div class="absolute -left-2 top-0 w-4 h-4 bg-indigo-600 rounded-full border-2 border-white"></div>
+                            <div class="text-xs text-gray-500 mb-1">{{ activity.timestamp|date:"d/m/Y H:i" }}</div>
+                            <div class="text-sm text-gray-800">
+                                <strong>{{ activity.user.get_full_name|default:activity.user.username }}</strong>
+                            </div>
+                            <div class="text-sm text-gray-600">{{ activity.description }}</div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <p class="text-gray-500 text-sm text-center py-8">Sin actividad</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Recordatorios -->
+            {% if reminders %}
+            <div class="bg-white rounded-lg shadow">
+                <div class="p-6 border-b border-gray-200">
+                    <h2 class="text-xl font-semibold text-gray-800">
+                        <i class="fas fa-bell text-yellow-600 mr-2"></i>
+                        Recordatorios
+                    </h2>
+                </div>
+                <div class="p-6 space-y-2">
+                    {% for reminder in reminders %}
+                    <div class="flex items-center text-sm">
+                        <i class="fas fa-clock text-yellow-600 mr-2"></i>
+                        <span>{{ reminder.remind_at|date:"d/m/Y H:i" }}</span>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<script>
+function toggleChecklistItem(taskId, itemId) {
+    fetch(`/dashboard/tasks/${taskId}/checklist/${itemId}/toggle/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': '{{ csrf_token }}'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            location.reload();
+        }
+    })
+    .catch(error => console.error('Error:', error));
+}
+
+function addComment(event) {
+    event.preventDefault();
+    const commentText = document.getElementById('commentText').value.trim();
+    
+    if (!commentText) return;
+    
+    fetch(`/dashboard/tasks/{{ task.pk }}/add-comment/`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'X-CSRFToken': '{{ csrf_token }}'
+        },
+        body: `comment=${encodeURIComponent(commentText)}`
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            location.reload();
+        }
+    })
+    .catch(error => console.error('Error:', error));
+}
+</script>
+{% endblock %}

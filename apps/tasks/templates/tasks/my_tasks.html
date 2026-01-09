@@ -1,0 +1,231 @@
+{% extends "dashboard/base.html" %}
+
+{% block title %}Mis Tareas - Dashboard{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-6">
+    <!-- Header -->
+    <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+        <div>
+            <h1 class="text-3xl font-bold text-gray-800">
+                <i class="fas fa-user-check text-indigo-600 mr-2"></i>
+                Mis Tareas
+            </h1>
+            <p class="text-gray-600 mt-1">Tareas asignadas a ti</p>
+        </div>
+        <div class="flex gap-2">
+            <a href="{% url 'tasks:kanban' %}" class="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg flex items-center">
+                <i class="fas fa-arrow-left mr-2"></i>
+                Volver al Kanban
+            </a>
+        </div>
+    </div>
+
+    <!-- Estadísticas del Usuario -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+        <div class="bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg shadow p-6 text-white">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-blue-100 text-sm">Pendientes</p>
+                    <p class="text-3xl font-bold">{{ stats.pending }}</p>
+                </div>
+                <div class="bg-white bg-opacity-20 p-3 rounded-full">
+                    <i class="fas fa-clipboard-list text-2xl"></i>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-gradient-to-r from-yellow-500 to-yellow-600 rounded-lg shadow p-6 text-white">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-yellow-100 text-sm">En Progreso</p>
+                    <p class="text-3xl font-bold">{{ stats.in_progress }}</p>
+                </div>
+                <div class="bg-white bg-opacity-20 p-3 rounded-full">
+                    <i class="fas fa-spinner text-2xl"></i>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-gradient-to-r from-red-500 to-red-600 rounded-lg shadow p-6 text-white">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-red-100 text-sm">Vencidas</p>
+                    <p class="text-3xl font-bold">{{ stats.overdue }}</p>
+                </div>
+                <div class="bg-white bg-opacity-20 p-3 rounded-full">
+                    <i class="fas fa-exclamation-triangle text-2xl"></i>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-gradient-to-r from-green-500 to-green-600 rounded-lg shadow p-6 text-white">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-green-100 text-sm">Completadas</p>
+                    <p class="text-3xl font-bold">{{ stats.completed }}</p>
+                </div>
+                <div class="bg-white bg-opacity-20 p-3 rounded-full">
+                    <i class="fas fa-check-circle text-2xl"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Lista de Tareas -->
+    <div class="bg-white rounded-lg shadow">
+        <div class="p-6 border-b border-gray-200">
+            <h2 class="text-xl font-semibold text-gray-800">
+                <i class="fas fa-list text-indigo-600 mr-2"></i>
+                Todas mis tareas
+            </h2>
+        </div>
+
+        {% if tasks %}
+        <div class="divide-y divide-gray-200">
+            {% for task in tasks %}
+            <div class="p-6 hover:bg-gray-50 transition-colors">
+                <div class="flex items-start justify-between">
+                    <div class="flex-1">
+                        <div class="flex items-center space-x-3 mb-2">
+                            <!-- Estado -->
+                            {% if task.status == 'todo' %}
+                            <span class="px-3 py-1 bg-blue-100 text-blue-800 text-sm font-semibold rounded-full">
+                                <i class="fas fa-circle mr-1"></i> Por Hacer
+                            </span>
+                            {% elif task.status == 'in_progress' %}
+                            <span class="px-3 py-1 bg-yellow-100 text-yellow-800 text-sm font-semibold rounded-full">
+                                <i class="fas fa-spinner mr-1"></i> En Progreso
+                            </span>
+                            {% elif task.status == 'review' %}
+                            <span class="px-3 py-1 bg-purple-100 text-purple-800 text-sm font-semibold rounded-full">
+                                <i class="fas fa-eye mr-1"></i> En Revisión
+                            </span>
+                            {% endif %}
+
+                            <!-- Prioridad -->
+                            {% if task.priority == 'urgent' %}
+                            <span class="px-3 py-1 bg-red-100 text-red-800 text-sm font-semibold rounded-full">
+                                <i class="fas fa-exclamation-circle mr-1"></i> Urgente
+                            </span>
+                            {% elif task.priority == 'high' %}
+                            <span class="px-3 py-1 bg-orange-100 text-orange-800 text-sm font-semibold rounded-full">
+                                <i class="fas fa-arrow-up mr-1"></i> Alta
+                            </span>
+                            {% endif %}
+
+                            <!-- Vencida -->
+                            {% if task.is_overdue %}
+                            <span class="px-3 py-1 bg-red-100 text-red-800 text-sm font-semibold rounded-full">
+                                <i class="fas fa-clock mr-1"></i> Vencida
+                            </span>
+                            {% endif %}
+                        </div>
+
+                        <h3 class="text-lg font-semibold text-gray-800 mb-1">
+                            {{ task.title }}
+                        </h3>
+
+                        {% if task.description %}
+                        <p class="text-gray-600 text-sm mb-2">{{ task.description|truncatewords:30 }}</p>
+                        {% endif %}
+
+                        <div class="flex items-center space-x-4 text-sm text-gray-500">
+                            {% if task.category %}
+                            <span>
+                                <i class="fas fa-tag mr-1"></i>
+                                {{ task.category.name }}
+                            </span>
+                            {% endif %}
+
+                            {% if task.due_date %}
+                            <span class="{% if task.is_overdue %}text-red-600 font-semibold{% endif %}">
+                                <i class="fas fa-calendar mr-1"></i>
+                                Vence: {{ task.due_date|date:"d/m/Y" }}
+                            </span>
+                            {% endif %}
+
+                            <span>
+                                <i class="fas fa-user mr-1"></i>
+                                Creada por: {{ task.created_by.get_full_name|default:task.created_by.username }}
+                            </span>
+                        </div>
+
+                        <!-- Progreso del checklist -->
+                        {% if task.checklist_items.count > 0 %}
+                        <div class="mt-3">
+                            <div class="flex items-center text-sm text-gray-600 mb-1">
+                                <i class="fas fa-check-square mr-2"></i>
+                                <span>{{ task.get_completed_checklist_items_count }}/{{ task.get_checklist_items_count }} completadas</span>
+                            </div>
+                            <div class="w-full bg-gray-200 rounded-full h-2">
+                                <div class="bg-indigo-600 h-2 rounded-full" style="width: {{ task.get_checklist_progress }}%"></div>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="flex flex-col space-y-2 ml-4">
+                        <a href="{% url 'tasks:detail' task.pk %}" 
+                           class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm text-center">
+                            <i class="fas fa-eye mr-1"></i>
+                            Ver Detalle
+                        </a>
+
+                        {% if task.status != 'in_progress' %}
+                        <button onclick="changeStatus({{ task.pk }}, 'in_progress')"
+                                class="bg-yellow-600 hover:bg-yellow-700 text-white px-4 py-2 rounded-lg text-sm">
+                            <i class="fas fa-play mr-1"></i>
+                            Iniciar
+                        </button>
+                        {% endif %}
+
+                        {% if task.status == 'in_progress' %}
+                        <button onclick="changeStatus({{ task.pk }}, 'review')"
+                                class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg text-sm">
+                            <i class="fas fa-check mr-1"></i>
+                            Enviar a Revisión
+                        </button>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="p-12 text-center">
+            <i class="fas fa-tasks text-gray-300 text-6xl mb-4"></i>
+            <p class="text-gray-500 text-lg">No tienes tareas asignadas</p>
+            <p class="text-gray-400 mt-2">¡Buen trabajo! Estás al día</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+function changeStatus(taskId, newStatus) {
+    if (!confirm('¿Cambiar el estado de esta tarea?')) return;
+    
+    fetch(`/dashboard/tasks/${taskId}/update-status/`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'X-CSRFToken': '{{ csrf_token }}'
+        },
+        body: `status=${newStatus}`
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            location.reload();
+        } else {
+            alert('Error al cambiar el estado');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error de conexión');
+    });
+}
+</script>
+{% endblock %}

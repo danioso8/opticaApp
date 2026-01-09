@@ -206,4 +206,16 @@ urlpatterns = [
     
     # Promociones y Campañas de Marketing
     path('promociones/', include('apps.promotions.urls')),
+    
+    # Workflows (Automatización)
+    path('workflows/', include('apps.workflows.urls')),
+    
+    # Tasks (Gestión de Tareas)
+    path('tasks/', include('apps.tasks.urls')),
+    
+    # Reports (Reportes)
+    path('reports/', include('apps.reports.urls')),
+    
+    # Audit (Auditoría)
+    path('audit/', include('apps.audit.urls')),
 ]

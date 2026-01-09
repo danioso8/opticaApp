@@ -1,0 +1,152 @@
+{% extends "dashboard/base.html" %}
+
+{% block title %}Reportes Programados{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-6">
+    <!-- Header -->
+    <div class="flex justify-between items-center mb-6">
+        <div>
+            <h1 class="text-3xl font-bold text-gray-800">
+                <i class="fas fa-calendar-check text-indigo-600 mr-2"></i>
+                Reportes Programados
+            </h1>
+            <p class="text-gray-600 mt-1">Automatiza la generación de reportes</p>
+        </div>
+        <a href="{% url 'reports:templates' %}" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg">
+            <i class="fas fa-plus mr-2"></i>
+            Nueva Programación
+        </a>
+    </div>
+
+    <!-- Lista de Programados -->
+    {% if scheduled_reports %}
+    <div class="space-y-4">
+        {% for scheduled in scheduled_reports %}
+        <div class="bg-white rounded-lg shadow {% if not scheduled.is_active %}opacity-60{% endif %}">
+            <div class="p-6">
+                <div class="flex items-start justify-between">
+                    <div class="flex-1">
+                        <div class="flex items-center space-x-3 mb-3">
+                            <h3 class="text-xl font-semibold text-gray-800">{{ scheduled.name }}</h3>
+                            
+                            {% if scheduled.is_active %}
+                            <span class="px-3 py-1 bg-green-100 text-green-800 text-sm font-semibold rounded-full">
+                                <i class="fas fa-check-circle mr-1"></i> Activo
+                            </span>
+                            {% else %}
+                            <span class="px-3 py-1 bg-gray-100 text-gray-800 text-sm font-semibold rounded-full">
+                                <i class="fas fa-pause-circle mr-1"></i> Pausado
+                            </span>
+                            {% endif %}
+
+                            <span class="px-3 py-1 bg-purple-100 text-purple-800 text-sm font-semibold rounded-full">
+                                {{ scheduled.get_frequency_display }}
+                            </span>
+                        </div>
+
+                        {% if scheduled.description %}
+                        <p class="text-gray-600 mb-3">{{ scheduled.description }}</p>
+                        {% endif %}
+
+                        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                            <div>
+                                <span class="text-gray-500">Plantilla:</span>
+                                <p class="font-semibold">{{ scheduled.template.name }}</p>
+                            </div>
+                            <div>
+                                <span class="text-gray-500">Formato:</span>
+                                <p class="font-semibold">{{ scheduled.get_output_format_display }}</p>
+                            </div>
+                            <div>
+                                <span class="text-gray-500">Hora:</span>
+                                <p class="font-semibold">{{ scheduled.time|time:"H:i" }}</p>
+                            </div>
+                            {% if scheduled.next_run_at %}
+                            <div>
+                                <span class="text-gray-500">Próxima ejecución:</span>
+                                <p class="font-semibold text-indigo-600">
+                                    {{ scheduled.next_run_at|date:"d/m/Y H:i" }}
+                                </p>
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        {% if scheduled.recipients %}
+                        <div class="mt-3">
+                            <span class="text-sm text-gray-500">Destinatarios:</span>
+                            <div class="flex flex-wrap gap-2 mt-1">
+                                {% for email in scheduled.recipients %}
+                                <span class="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">
+                                    <i class="fas fa-envelope mr-1"></i>
+                                    {{ email }}
+                                </span>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        {% if scheduled.last_run_at %}
+                        <div class="mt-3 text-sm text-gray-600">
+                            <i class="fas fa-history mr-1"></i>
+                            Última ejecución: {{ scheduled.last_run_at|date:"d/m/Y H:i" }}
+                            {% if scheduled.last_run_status %}
+                            - <span class="{% if scheduled.last_run_status == 'completed' %}text-green-600{% else %}text-red-600{% endif %}">
+                                {{ scheduled.last_run_status }}
+                            </span>
+                            {% endif %}
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="ml-4 flex flex-col space-y-2">
+                        <button onclick="toggleScheduled({{ scheduled.pk }})"
+                                class="{% if scheduled.is_active %}bg-yellow-600 hover:bg-yellow-700{% else %}bg-green-600 hover:bg-green-700{% endif %} text-white px-4 py-2 rounded-lg text-sm">
+                            <i class="fas {% if scheduled.is_active %}fa-pause{% else %}fa-play{% endif %} mr-1"></i>
+                            {% if scheduled.is_active %}Pausar{% else %}Activar{% endif %}
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="bg-white rounded-lg shadow p-12 text-center">
+        <i class="fas fa-calendar-times text-gray-300 text-6xl mb-4"></i>
+        <p class="text-gray-500 text-lg mb-2">No hay reportes programados</p>
+        <p class="text-gray-400 mb-6">Programa reportes para que se generen automáticamente</p>
+        <a href="{% url 'reports:templates' %}" 
+           class="inline-block bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded-lg">
+            <i class="fas fa-plus mr-2"></i>
+            Crear Programación
+        </a>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+function toggleScheduled(scheduledId) {
+    if (!confirm('¿Cambiar el estado de esta programación?')) return;
+    
+    fetch(`/dashboard/reports/scheduled/${scheduledId}/toggle/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': '{{ csrf_token }}'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            location.reload();
+        } else {
+            alert('Error al cambiar el estado');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error de conexión');
+    });
+}
+</script>
+{% endblock %}

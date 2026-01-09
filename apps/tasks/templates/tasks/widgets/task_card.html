@@ -1,0 +1,63 @@
+<div class="bg-white rounded-lg shadow-sm border border-gray-200 p-3 hover:shadow-md transition-shadow cursor-pointer"
+     onclick="window.location.href='{% url 'tasks:detail' task.pk %}'">
+    <!-- Header con prioridad -->
+    <div class="flex items-start justify-between mb-2">
+        <h4 class="font-semibold text-gray-800 text-sm flex-1">{{ task.title }}</h4>
+        {% if task.priority == 'urgent' %}
+        <span class="ml-2 text-red-600"><i class="fas fa-exclamation-circle"></i></span>
+        {% elif task.priority == 'high' %}
+        <span class="ml-2 text-orange-600"><i class="fas fa-arrow-up"></i></span>
+        {% endif %}
+    </div>
+
+    <!-- Descripción corta -->
+    {% if task.description %}
+    <p class="text-xs text-gray-600 mb-2 line-clamp-2">{{ task.description|truncatewords:15 }}</p>
+    {% endif %}
+
+    <!-- Categoría -->
+    {% if task.category %}
+    <div class="mb-2">
+        <span class="inline-block px-2 py-0.5 bg-indigo-100 text-indigo-800 text-xs rounded-full">
+            {{ task.category.name }}
+        </span>
+    </div>
+    {% endif %}
+
+    <!-- Footer: Usuario asignado y fecha -->
+    <div class="flex items-center justify-between text-xs text-gray-500 mt-2">
+        <div class="flex items-center">
+            {% if task.assigned_to %}
+            <div class="w-6 h-6 bg-indigo-600 rounded-full flex items-center justify-center text-white text-xs mr-2"
+                 title="{{ task.assigned_to.get_full_name|default:task.assigned_to.username }}">
+                {{ task.assigned_to.first_name.0|default:task.assigned_to.username.0|upper }}
+            </div>
+            {% else %}
+            <span class="text-gray-400"><i class="fas fa-user-slash mr-1"></i>Sin asignar</span>
+            {% endif %}
+        </div>
+        
+        {% if task.due_date %}
+        <div class="flex items-center {% if task.is_overdue and task.status != 'done' %}text-red-600{% endif %}">
+            <i class="fas fa-calendar mr-1"></i>
+            <span>{{ task.due_date|date:"d/m" }}</span>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Progreso de checklist (si existe) -->
+    {% if task.checklist_items.count > 0 %}
+    <div class="mt-2 flex items-center text-xs text-gray-600">
+        <i class="fas fa-check-square mr-1"></i>
+        <span>{{ task.checklist_items.filter(is_completed=True).count }}/{{ task.checklist_items.count }}</span>
+    </div>
+    {% endif %}
+
+    <!-- Indicador de comentarios -->
+    {% if task.comments.count > 0 %}
+    <div class="mt-1 text-xs text-gray-500">
+        <i class="fas fa-comment mr-1"></i>
+        <span>{{ task.comments.count }}</span>
+    </div>
+    {% endif %}
+</div>

@@ -48,6 +48,18 @@ urlpatterns = [
     # Cash Register URLs (Caja/Tesorería)
     path('dashboard/cash/', include('apps.cash_register.urls')),
     
+    # Workflows URLs
+    path('dashboard/workflows/', include('apps.workflows.urls')),
+    
+    # Tasks URLs
+    path('dashboard/tasks/', include('apps.tasks.urls')),
+    
+    # Reports URLs
+    path('dashboard/reports/', include('apps.reports.urls')),
+    
+    # Audit URLs
+    path('dashboard/audit/', include('apps.audit.urls')),
+    
     # API URLs
     path('api/', include('apps.appointments.urls')),
     

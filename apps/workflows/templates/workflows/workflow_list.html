@@ -1,0 +1,175 @@
+{% extends "dashboard/base.html" %}
+
+{% block title %}Workflows - Dashboard{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-6">
+    <!-- Header -->
+    <div class="flex justify-between items-center mb-6">
+        <div>
+            <h1 class="text-3xl font-bold text-gray-800">
+                <i class="fas fa-project-diagram text-indigo-600 mr-2"></i>
+                Workflows
+            </h1>
+            <p class="text-gray-600 mt-1">Gestiona flujos de trabajo automatizados</p>
+        </div>
+        <div class="flex space-x-3">
+            <a href="{% url 'workflows:my_approvals' %}" class="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded-lg flex items-center">
+                <i class="fas fa-clipboard-check mr-2"></i>
+                Mis Aprobaciones
+                {% if pending_approvals > 0 %}
+                <span class="ml-2 bg-red-500 text-white text-xs px-2 py-1 rounded-full">{{ pending_approvals }}</span>
+                {% endif %}
+            </a>
+        </div>
+    </div>
+
+    <!-- Estadísticas -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+        <div class="bg-white rounded-lg shadow p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-gray-500 text-sm">Total Workflows</p>
+                    <p class="text-3xl font-bold text-gray-800">{{ total_workflows }}</p>
+                </div>
+                <div class="bg-indigo-100 p-3 rounded-full">
+                    <i class="fas fa-project-diagram text-indigo-600 text-2xl"></i>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-lg shadow p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-gray-500 text-sm">Instancias Activas</p>
+                    <p class="text-3xl font-bold text-gray-800">{{ total_active_instances }}</p>
+                </div>
+                <div class="bg-green-100 p-3 rounded-full">
+                    <i class="fas fa-play-circle text-green-600 text-2xl"></i>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-lg shadow p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-gray-500 text-sm">Aprobaciones Pendientes</p>
+                    <p class="text-3xl font-bold text-gray-800">{{ pending_approvals }}</p>
+                </div>
+                <div class="bg-yellow-100 p-3 rounded-full">
+                    <i class="fas fa-clipboard-check text-yellow-600 text-2xl"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Lista de Workflows -->
+    <div class="bg-white rounded-lg shadow">
+        <div class="p-6 border-b border-gray-200">
+            <h2 class="text-xl font-semibold text-gray-800">Workflows Disponibles</h2>
+        </div>
+
+        {% if workflows %}
+        <div class="divide-y divide-gray-200">
+            {% for workflow in workflows %}
+            <div class="p-6 hover:bg-gray-50 transition-colors">
+                <div class="flex items-start justify-between">
+                    <div class="flex-1">
+                        <div class="flex items-center">
+                            <h3 class="text-lg font-semibold text-gray-800">
+                                {{ workflow.name }}
+                            </h3>
+                            {% if workflow.is_active %}
+                            <span class="ml-3 px-2 py-1 bg-green-100 text-green-800 text-xs font-semibold rounded-full">
+                                Activo
+                            </span>
+                            {% else %}
+                            <span class="ml-3 px-2 py-1 bg-gray-100 text-gray-800 text-xs font-semibold rounded-full">
+                                Inactivo
+                            </span>
+                            {% endif %}
+                        </div>
+                        
+                        {% if workflow.description %}
+                        <p class="text-gray-600 mt-2">{{ workflow.description }}</p>
+                        {% endif %}
+                        
+                        <div class="flex items-center space-x-4 mt-3 text-sm text-gray-500">
+                            <span>
+                                <i class="fas fa-circle text-blue-500 mr-1"></i>
+                                Estado inicial: <strong>{{ workflow.initial_state }}</strong>
+                            </span>
+                            <span>
+                                <i class="fas fa-flag-checkered text-green-500 mr-1"></i>
+                                Estados finales: <strong>{{ workflow.final_states|join:", " }}</strong>
+                            </span>
+                        </div>
+
+                        <div class="flex items-center space-x-6 mt-3 text-sm">
+                            <div class="flex items-center text-gray-600">
+                                <i class="fas fa-play-circle text-green-600 mr-2"></i>
+                                <span><strong>{{ workflow.active_instances }}</strong> activas</span>
+                            </div>
+                            <div class="flex items-center text-gray-600">
+                                <i class="fas fa-history text-gray-600 mr-2"></i>
+                                <span><strong>{{ workflow.total_instances }}</strong> total</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex space-x-2 ml-4">
+                        <a href="{% url 'workflows:detail' workflow.pk %}" 
+                           class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm flex items-center">
+                            <i class="fas fa-eye mr-2"></i>
+                            Ver Detalle
+                        </a>
+                        <a href="{% url 'workflows:instance_list' %}?workflow={{ workflow.pk }}" 
+                           class="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg text-sm flex items-center">
+                            <i class="fas fa-list mr-2"></i>
+                            Instancias
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="p-12 text-center">
+            <i class="fas fa-project-diagram text-gray-300 text-6xl mb-4"></i>
+            <p class="text-gray-500 text-lg">No hay workflows configurados aún</p>
+            <p class="text-gray-400 mt-2">Los workflows se configuran desde el panel de administración</p>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Acceso rápido a instancias -->
+    {% if total_active_instances > 0 %}
+    <div class="mt-6">
+        <a href="{% url 'workflows:instance_list' %}?status=active" 
+           class="block bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white p-4 rounded-lg text-center font-semibold">
+            <i class="fas fa-list-check mr-2"></i>
+            Ver todas las instancias activas ({{ total_active_instances }})
+        </a>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+// Actualizar badge de aprobaciones pendientes cada 30 segundos
+setInterval(function() {
+    fetch("{% url 'workflows:api_pending_count' %}")
+        .then(response => response.json())
+        .then(data => {
+            const badge = document.getElementById('approvals-badge');
+            if (badge) {
+                if (data.count > 0) {
+                    badge.textContent = data.count;
+                    badge.classList.remove('hidden');
+                } else {
+                    badge.classList.add('hidden');
+                }
+            }
+        });
+}, 30000);
+</script>
+{% endblock %}

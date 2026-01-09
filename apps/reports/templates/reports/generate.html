@@ -1,0 +1,131 @@
+{% extends "dashboard/base.html" %}
+
+{% block title %}{{ template.name }} - Generar Reporte{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-6 max-w-3xl">
+    <!-- Header -->
+    <div class="mb-6">
+        <nav class="mb-4">
+            <ol class="flex items-center space-x-2 text-sm text-gray-600">
+                <li><a href="{% url 'reports:dashboard' %}" class="hover:text-indigo-600">Reportes</a></li>
+                <li><i class="fas fa-chevron-right text-xs"></i></li>
+                <li><a href="{% url 'reports:templates' %}" class="hover:text-indigo-600">Plantillas</a></li>
+                <li><i class="fas fa-chevron-right text-xs"></i></li>
+                <li class="text-gray-800 font-semibold">Generar</li>
+            </ol>
+        </nav>
+        
+        <h1 class="text-3xl font-bold text-gray-800">
+            <i class="fas fa-play-circle text-indigo-600 mr-2"></i>
+            Generar Reporte
+        </h1>
+    </div>
+
+    <!-- Información de la Plantilla -->
+    <div class="bg-white rounded-lg shadow p-6 mb-6">
+        <div class="flex items-start space-x-4">
+            <div class="bg-indigo-100 p-4 rounded-lg">
+                <i class="fas fa-chart-bar text-indigo-600 text-3xl"></i>
+            </div>
+            <div class="flex-1">
+                <h2 class="text-2xl font-semibold text-gray-800">{{ template.name }}</h2>
+                <p class="text-gray-600 mt-1">{{ template.get_report_type_display }}</p>
+                {% if template.description %}
+                <p class="text-gray-500 mt-3">{{ template.description }}</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Formulario de Generación -->
+    <form method="post" class="bg-white rounded-lg shadow p-6">
+        {% csrf_token %}
+        
+        <h3 class="text-xl font-semibold text-gray-800 mb-4">
+            <i class="fas fa-cog text-indigo-600 mr-2"></i>
+            Parámetros del Reporte
+        </h3>
+
+        <div class="space-y-4">
+            <!-- Rango de Fechas -->
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        Fecha Desde
+                    </label>
+                    <input type="date" name="date_from" 
+                           class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-indigo-500">
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        Fecha Hasta
+                    </label>
+                    <input type="date" name="date_to" 
+                           class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-indigo-500">
+                </div>
+            </div>
+
+            <!-- Formato de Salida -->
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">
+                    Formato de Salida
+                </label>
+                <select name="output_format" 
+                        class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-indigo-500">
+                    {% for value, label in output_formats %}
+                    <option value="{{ value }}" {% if value == 'pdf' %}selected{% endif %}>
+                        {{ label }}
+                    </option>
+                    {% endfor %}
+                </select>
+                <p class="text-xs text-gray-500 mt-1">
+                    <i class="fas fa-info-circle mr-1"></i>
+                    PDF recomendado para visualización, Excel/CSV para análisis
+                </p>
+            </div>
+
+            <!-- Parámetros Adicionales -->
+            {% if template.config %}
+            <div class="border-t border-gray-200 pt-4">
+                <h4 class="font-medium text-gray-800 mb-3">Filtros Adicionales</h4>
+                <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                    <p class="text-sm text-blue-800">
+                        <i class="fas fa-info-circle mr-1"></i>
+                        Los filtros predeterminados de esta plantilla se aplicarán automáticamente
+                    </p>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <div class="flex justify-end space-x-3 mt-6 pt-6 border-t border-gray-200">
+            <a href="{% url 'reports:templates' %}" 
+               class="bg-gray-200 hover:bg-gray-300 text-gray-700 px-6 py-2 rounded-lg">
+                Cancelar
+            </a>
+            <button type="submit" 
+                    class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded-lg">
+                <i class="fas fa-play mr-2"></i>
+                Generar Reporte
+            </button>
+        </div>
+    </form>
+
+    <!-- Información Adicional -->
+    <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mt-6">
+        <div class="flex items-start">
+            <i class="fas fa-exclamation-triangle text-yellow-600 mt-1 mr-3"></i>
+            <div class="text-sm text-yellow-800">
+                <p class="font-semibold mb-1">Nota importante:</p>
+                <ul class="list-disc list-inside space-y-1">
+                    <li>El tiempo de generación depende de la cantidad de datos</li>
+                    <li>Los reportes se guardan por 30 días automáticamente</li>
+                    <li>Puedes descargar el reporte una vez completado</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

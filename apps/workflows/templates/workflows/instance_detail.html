@@ -1,0 +1,272 @@
+{% extends "dashboard/base.html" %}
+
+{% block title %}Instancia de Workflow #{{ instance.pk }}{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-6">
+    <!-- Breadcrumb -->
+    <nav class="mb-4">
+        <ol class="flex items-center space-x-2 text-sm text-gray-600">
+            <li><a href="{% url 'workflows:list' %}" class="hover:text-indigo-600"><i class="fas fa-project-diagram mr-1"></i>Workflows</a></li>
+            <li><i class="fas fa-chevron-right text-xs"></i></li>
+            <li><a href="{% url 'workflows:instance_list' %}" class="hover:text-indigo-600">Instancias</a></li>
+            <li><i class="fas fa-chevron-right text-xs"></i></li>
+            <li class="text-gray-800 font-semibold">#{{ instance.pk }}</li>
+        </ol>
+    </nav>
+
+    <!-- Header -->
+    <div class="bg-white rounded-lg shadow p-6 mb-6">
+        <div class="flex justify-between items-start">
+            <div class="flex-1">
+                <h1 class="text-2xl font-bold text-gray-800 mb-2">
+                    {{ instance.workflow.name }} - #{{ instance.pk }}
+                </h1>
+                
+                <div class="flex items-center space-x-3 mt-3">
+                    {% if instance.status == 'active' %}
+                    <span class="px-3 py-1 bg-green-100 text-green-800 font-semibold rounded-full">
+                        <i class="fas fa-play-circle mr-1"></i> Activa
+                    </span>
+                    {% elif instance.status == 'completed' %}
+                    <span class="px-3 py-1 bg-blue-100 text-blue-800 font-semibold rounded-full">
+                        <i class="fas fa-check-circle mr-1"></i> Completada
+                    </span>
+                    {% elif instance.status == 'cancelled' %}
+                    <span class="px-3 py-1 bg-red-100 text-red-800 font-semibold rounded-full">
+                        <i class="fas fa-times-circle mr-1"></i> Cancelada
+                    </span>
+                    {% endif %}
+
+                    <span class="px-4 py-1 bg-indigo-100 text-indigo-800 text-lg font-semibold rounded-full">
+                        {{ instance.current_state }}
+                    </span>
+                </div>
+
+                <div class="flex items-center space-x-6 text-sm text-gray-600 mt-3">
+                    <span>
+                        <i class="fas fa-user mr-1"></i>
+                        Creada por: <strong>{{ instance.created_by.get_full_name|default:instance.created_by.username }}</strong>
+                    </span>
+                    <span>
+                        <i class="fas fa-calendar mr-1"></i>
+                        {{ instance.created_at|date:"d/m/Y H:i" }}
+                    </span>
+                </div>
+            </div>
+
+            <a href="{% url 'workflows:detail' instance.workflow.pk %}" 
+               class="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg">
+                <i class="fas fa-arrow-left mr-2"></i>
+                Ver Workflow
+            </a>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Transiciones Disponibles -->
+        <div class="lg:col-span-2">
+            <div class="bg-white rounded-lg shadow">
+                <div class="p-6 border-b border-gray-200">
+                    <h2 class="text-xl font-semibold text-gray-800">
+                        <i class="fas fa-exchange-alt text-indigo-600 mr-2"></i>
+                        Transiciones Disponibles
+                    </h2>
+                </div>
+                <div class="p-6">
+                    {% if transitions %}
+                    <div class="space-y-4">
+                        {% for item in transitions %}
+                        <div class="border border-gray-200 rounded-lg p-4 {% if not item.can_execute %}opacity-50{% endif %}">
+                            <div class="flex items-center justify-between">
+                                <div class="flex-1">
+                                    <div class="flex items-center space-x-2 mb-2">
+                                        <span class="px-2 py-1 bg-gray-100 text-gray-800 text-sm rounded">{{ item.transition.from_state }}</span>
+                                        <i class="fas fa-arrow-right text-gray-400"></i>
+                                        <span class="px-2 py-1 bg-indigo-100 text-indigo-800 text-sm rounded font-semibold">{{ item.transition.to_state }}</span>
+                                    </div>
+                                    
+                                    {% if item.transition.description %}
+                                    <p class="text-sm text-gray-600 mt-1">{{ item.transition.description }}</p>
+                                    {% endif %}
+
+                                    {% if item.transition.require_approval %}
+                                    <div class="mt-2 text-xs text-yellow-700 bg-yellow-50 inline-block px-2 py-1 rounded">
+                                        <i class="fas fa-user-check mr-1"></i>
+                                        Requiere aprobación
+                                    </div>
+                                    {% endif %}
+                                </div>
+
+                                {% if item.can_execute and instance.status == 'active' %}
+                                <button onclick="executeTransition({{ instance.pk }}, {{ item.transition.pk }}, '{{ item.transition.to_state }}')"
+                                        class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg ml-4">
+                                    <i class="fas fa-play mr-1"></i>
+                                    Ejecutar
+                                </button>
+                                {% else %}
+                                <span class="text-sm text-gray-400 ml-4">
+                                    <i class="fas fa-lock mr-1"></i>
+                                    No disponible
+                                </span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <p class="text-gray-500 text-center py-8">
+                        No hay transiciones disponibles desde el estado actual
+                    </p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Aprobaciones Pendientes -->
+            {% if pending_approvals %}
+            <div class="bg-white rounded-lg shadow mt-6">
+                <div class="p-6 border-b border-gray-200">
+                    <h2 class="text-xl font-semibold text-gray-800">
+                        <i class="fas fa-clipboard-check text-yellow-600 mr-2"></i>
+                        Aprobaciones Pendientes
+                    </h2>
+                </div>
+                <div class="p-6">
+                    <div class="space-y-3">
+                        {% for approval in pending_approvals %}
+                        <div class="border border-yellow-200 bg-yellow-50 rounded-lg p-4">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <div class="font-semibold text-gray-800">
+                                        {{ approval.transition.from_state }} → {{ approval.transition.to_state }}
+                                    </div>
+                                    <div class="text-sm text-gray-600 mt-1">
+                                        Solicitado por: <strong>{{ approval.requester.get_full_name|default:approval.requester.username }}</strong>
+                                    </div>
+                                    <div class="text-xs text-gray-500 mt-1">
+                                        {{ approval.requested_at|date:"d/m/Y H:i" }}
+                                    </div>
+                                </div>
+                                <span class="px-3 py-1 bg-yellow-100 text-yellow-800 text-sm font-semibold rounded-full">
+                                    Pendiente
+                                </span>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Historial -->
+        <div class="lg:col-span-1">
+            <div class="bg-white rounded-lg shadow sticky top-4">
+                <div class="p-6 border-b border-gray-200">
+                    <h2 class="text-xl font-semibold text-gray-800">
+                        <i class="fas fa-history text-indigo-600 mr-2"></i>
+                        Historial
+                    </h2>
+                </div>
+                <div class="p-6 max-h-[600px] overflow-y-auto">
+                    {% if history %}
+                    <div class="space-y-4">
+                        {% for entry in history %}
+                        <div class="relative pl-6 pb-4 border-l-2 {% if forloop.last %}border-transparent{% else %}border-gray-200{% endif %}">
+                            <div class="absolute -left-2 top-0 w-4 h-4 bg-indigo-600 rounded-full border-2 border-white"></div>
+                            <div class="text-xs text-gray-500 mb-1">
+                                {{ entry.timestamp|date:"d/m/Y H:i" }}
+                            </div>
+                            <div class="font-semibold text-gray-800 text-sm">
+                                {{ entry.from_state }} → {{ entry.to_state }}
+                            </div>
+                            <div class="text-xs text-gray-600 mt-1">
+                                Por: {{ entry.user.get_full_name|default:entry.user.username }}
+                            </div>
+                            {% if entry.comments %}
+                            <div class="text-xs text-gray-600 mt-1 italic bg-gray-50 p-2 rounded">
+                                "{{ entry.comments }}"
+                            </div>
+                            {% endif %}
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <p class="text-gray-500 text-sm text-center py-8">
+                        Sin historial aún
+                    </p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para confirmar transición -->
+<div id="transitionModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center">
+    <div class="bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
+        <div class="p-6 border-b border-gray-200">
+            <h3 class="text-xl font-semibold text-gray-800">Ejecutar Transición</h3>
+        </div>
+        <form id="transitionForm" method="post" action="">
+            {% csrf_token %}
+            <div class="p-6">
+                <p class="text-gray-600 mb-4">
+                    ¿Estás seguro de ejecutar esta transición?
+                </p>
+                <div id="transitionInfo" class="bg-gray-50 p-4 rounded-lg mb-4"></div>
+                
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">
+                        Comentarios (opcional):
+                    </label>
+                    <textarea name="comments" rows="3" 
+                              class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                              placeholder="Agrega un comentario sobre esta transición..."></textarea>
+                </div>
+            </div>
+            <div class="p-6 border-t border-gray-200 flex justify-end space-x-3">
+                <button type="button" onclick="closeModal()" 
+                        class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">
+                    Cancelar
+                </button>
+                <button type="submit" 
+                        class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg">
+                    <i class="fas fa-check mr-2"></i>
+                    Confirmar
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+function executeTransition(instancePk, transitionPk, toState) {
+    const modal = document.getElementById('transitionModal');
+    const form = document.getElementById('transitionForm');
+    const info = document.getElementById('transitionInfo');
+    
+    form.action = "{% url 'workflows:execute_transition' instance.pk 0 %}".replace('/0/', '/' + transitionPk + '/');
+    info.innerHTML = `
+        <div class="flex items-center space-x-2">
+            <span class="px-2 py-1 bg-gray-100 text-gray-800 text-sm rounded">{{ instance.current_state }}</span>
+            <i class="fas fa-arrow-right text-gray-400"></i>
+            <span class="px-2 py-1 bg-indigo-100 text-indigo-800 text-sm rounded font-semibold">${toState}</span>
+        </div>
+    `;
+    
+    modal.classList.remove('hidden');
+}
+
+function closeModal() {
+    document.getElementById('transitionModal').classList.add('hidden');
+}
+
+// Cerrar modal con ESC
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        closeModal();
+    }
+});
+</script>
+{% endblock %}
