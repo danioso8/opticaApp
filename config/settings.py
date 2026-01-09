@@ -45,8 +45,9 @@ if not DEBUG:
     
     # CSRF trusted origins - Actualizar cuando se configure dominio
     CSRF_TRUSTED_ORIGINS = [
-        'https://opticaapp.com',
-        'https://www.opticaapp.com',
+        'https://optikaapp.com',
+        'https://www.optikaapp.com',
+        'https://demo.optikaapp.com',
         'http://127.0.0.1:8000',
         'http://127.0.0.1:8001',
         'http://localhost:8000',

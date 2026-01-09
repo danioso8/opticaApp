@@ -7,23 +7,9 @@ from apps.appointments.utils import get_available_slots_for_date
 
 
 def home(request):
-    """Página principal pública - Redirige a landing de organización si está autenticado, sino muestra landing genérica"""
-    from django.shortcuts import redirect
-    from apps.organizations.models import OrganizationMember
-    
-    # Si el usuario está autenticado, redirigir a su landing page específica
-    if request.user.is_authenticated:
-        first_membership = OrganizationMember.objects.filter(
-            user=request.user,
-            is_active=True
-        ).select_related('organization').first()
-        
-        if first_membership and first_membership.organization.slug:
-            # Redirigir a la landing page específica de su organización
-            return redirect('public:organization_landing', org_slug=first_membership.organization.slug)
-    
-    # Si no está autenticado, mostrar landing page genérica del sistema
-    return render(request, 'public/home_generic.html')
+    """Página principal pública - Nueva landing profesional de OptikaApp"""
+    # Mostrar la nueva landing profesional
+    return render(request, 'public/landing_optikaapp.html')
 
 
 def organization_landing(request, org_slug):
