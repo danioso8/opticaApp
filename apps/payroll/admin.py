@@ -44,6 +44,20 @@ class PayrollPeriodAdmin(admin.ModelAdmin):
                        'aprobado_por', 'fecha_aprobacion', 'rol_aprobador']
     date_hierarchy = 'fecha_inicio'
     
+    # Permitir eliminar períodos aprobados
+    def has_delete_permission(self, request, obj=None):
+        """Permitir eliminar incluso si está aprobado"""
+        return request.user.has_perm('payroll.delete_payrollperiod')
+    
+    def get_readonly_fields(self, request, obj=None):
+        """Hacer campos editables incluso si está aprobado"""
+        # Si el usuario es superusuario o tiene permisos, puede editar todo
+        if request.user.is_superuser or request.user.has_perm('payroll.change_payrollperiod'):
+            # Solo mantener readonly los campos de auditoría y totales
+            return ['created_at', 'updated_at', 'total_devengado', 'total_deducciones', 'total_neto']
+        # Si no, mantener readonly los campos de aprobación también
+        return self.readonly_fields
+    
     fieldsets = (
         ('Información Básica', {
             'fields': ('organization', 'nombre', 'tipo_periodo')
@@ -53,7 +67,8 @@ class PayrollPeriodAdmin(admin.ModelAdmin):
         }),
         ('Estado y Aprobación', {
             'fields': ('estado', 'aprobado_por', 'fecha_aprobacion', 'rol_aprobador'),
-            'classes': ('wide',)
+            'classes': ('wide',),
+            'description': '⚠️ Los períodos aprobados pueden editarse/eliminarse si tienes los permisos necesarios.'
         }),
         ('Totales', {
             'fields': ('total_devengado', 'total_deducciones', 'total_neto')
