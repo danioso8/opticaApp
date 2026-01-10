@@ -1,0 +1,317 @@
+<!-- Modal de Upgrade de Plan -->
+<div id="upgradeModal" class="fixed inset-0 z-50 hidden overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+    <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
+        <!-- Background overlay -->
+        <div class="fixed inset-0 transition-opacity bg-gray-500 bg-opacity-75" aria-hidden="true" onclick="closeUpgradeModal()"></div>
+
+        <!-- Modal panel -->
+        <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+        
+        <div class="inline-block overflow-hidden text-left align-bottom transition-all transform bg-white rounded-lg shadow-xl sm:my-8 sm:align-middle sm:max-w-5xl sm:w-full">
+            <!-- Header -->
+            <div class="px-6 py-4 bg-gradient-to-r from-indigo-600 to-purple-600">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h3 class="text-2xl font-bold text-white" id="modal-title">
+                            <i class="fas fa-rocket mr-2"></i>
+                            Potencia tu Óptica con un Plan Premium
+                        </h3>
+                        <p class="mt-1 text-sm text-indigo-100" id="modal-subtitle">
+                            Desbloquea todas las funcionalidades y lleva tu negocio al siguiente nivel
+                        </p>
+                    </div>
+                    <button onclick="closeUpgradeModal()" class="text-white hover:text-gray-200 transition-colors">
+                        <i class="fas fa-times text-2xl"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Body -->
+            <div class="px-6 py-6">
+                <!-- Comparación de Planes -->
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                    <!-- Plan FREE -->
+                    <div class="border-2 border-gray-200 rounded-lg p-4 bg-gray-50">
+                        <div class="text-center mb-4">
+                            <h4 class="text-lg font-bold text-gray-700">Gratuito</h4>
+                            <div class="mt-2">
+                                <span class="text-3xl font-bold text-gray-900">$0</span>
+                                <span class="text-gray-600">/mes</span>
+                            </div>
+                            <p class="text-xs text-gray-500 mt-2">30 días de prueba</p>
+                        </div>
+                        <ul class="space-y-2 text-sm">
+                            <li class="flex items-start">
+                                <i class="fas fa-check text-green-500 mr-2 mt-1"></i>
+                                <span>10 módulos básicos</span>
+                            </li>
+                            <li class="flex items-start">
+                                <i class="fas fa-check text-green-500 mr-2 mt-1"></i>
+                                <span>50 citas/mes</span>
+                            </li>
+                            <li class="flex items-start">
+                                <i class="fas fa-check text-green-500 mr-2 mt-1"></i>
+                                <span>100 pacientes</span>
+                            </li>
+                            <li class="flex items-start text-gray-400">
+                                <i class="fas fa-times text-red-400 mr-2 mt-1"></i>
+                                <span>Sin WhatsApp</span>
+                            </li>
+                            <li class="flex items-start text-gray-400">
+                                <i class="fas fa-times text-red-400 mr-2 mt-1"></i>
+                                <span>Sin facturación</span>
+                            </li>
+                        </ul>
+                        <div class="mt-4">
+                            <span class="block text-center text-xs text-gray-500 py-2 border border-gray-300 rounded">
+                                Plan Actual
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Plan BÁSICO -->
+                    <div class="border-2 border-blue-300 rounded-lg p-4 bg-blue-50">
+                        <div class="text-center mb-4">
+                            <div class="inline-block px-3 py-1 bg-blue-500 text-white text-xs rounded-full mb-2">
+                                BÁSICO
+                            </div>
+                            <h4 class="text-lg font-bold text-blue-700">Básico</h4>
+                            <div class="mt-2">
+                                <span class="text-3xl font-bold text-blue-900">$49.900</span>
+                                <span class="text-blue-600">/mes</span>
+                            </div>
+                        </div>
+                        <ul class="space-y-2 text-sm">
+                            <li class="flex items-start">
+                                <i class="fas fa-check text-green-500 mr-2 mt-1"></i>
+                                <span>16 módulos</span>
+                            </li>
+                            <li class="flex items-start">
+                                <i class="fas fa-check text-green-500 mr-2 mt-1"></i>
+                                <span>Citas ilimitadas</span>
+                            </li>
+                            <li class="flex items-start">
+                                <i class="fas fa-check text-green-500 mr-2 mt-1"></i>
+                                <span>Pacientes ilimitados</span>
+                            </li>
+                            <li class="flex items-start">
+                                <i class="fas fa-check text-green-500 mr-2 mt-1"></i>
+                                <span>Inventario completo</span>
+                            </li>
+                            <li class="flex items-start">
+                                <i class="fas fa-check text-green-500 mr-2 mt-1"></i>
+                                <span>Reportes básicos</span>
+                            </li>
+                        </ul>
+                        <div class="mt-4">
+                            <button onclick="upgradeToPlan('basic')" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded transition-colors">
+                                Actualizar Ahora
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Plan PROFESIONAL -->
+                    <div class="border-2 border-purple-400 rounded-lg p-4 bg-gradient-to-br from-purple-50 to-pink-50 relative">
+                        <div class="absolute -top-3 left-1/2 transform -translate-x-1/2">
+                            <span class="bg-purple-600 text-white text-xs font-bold px-3 py-1 rounded-full">
+                                MÁS POPULAR
+                            </span>
+                        </div>
+                        <div class="text-center mb-4 mt-2">
+                            <div class="inline-block px-3 py-1 bg-purple-600 text-white text-xs rounded-full mb-2">
+                                PRO
+                            </div>
+                            <h4 class="text-lg font-bold text-purple-700">Profesional</h4>
+                            <div class="mt-2">
+                                <span class="text-3xl font-bold text-purple-900">$99.900</span>
+                                <span class="text-purple-600">/mes</span>
+                            </div>
+                        </div>
+                        <ul class="space-y-2 text-sm">
+                            <li class="flex items-start">
+                                <i class="fas fa-check text-green-500 mr-2 mt-1"></i>
+                                <span><strong>27 módulos</strong></span>
+                            </li>
+                            <li class="flex items-start">
+                                <i class="fas fa-check text-green-500 mr-2 mt-1"></i>
+                                <span>Todo de Básico +</span>
+                            </li>
+                            <li class="flex items-start">
+                                <i class="fas fa-check text-green-500 mr-2 mt-1"></i>
+                                <span><strong>WhatsApp (2000/mes)</strong></span>
+                            </li>
+                            <li class="flex items-start">
+                                <i class="fas fa-check text-green-500 mr-2 mt-1"></i>
+                                <span><strong>Fact. Electrónica</strong></span>
+                            </li>
+                            <li class="flex items-start">
+                                <i class="fas fa-check text-green-500 mr-2 mt-1"></i>
+                                <span>Workflows</span>
+                            </li>
+                            <li class="flex items-start">
+                                <i class="fas fa-check text-green-500 mr-2 mt-1"></i>
+                                <span>Multi-Sede</span>
+                            </li>
+                        </ul>
+                        <div class="mt-4">
+                            <button onclick="upgradeToPlan('professional')" class="w-full bg-purple-600 hover:bg-purple-700 text-white font-semibold py-2 px-4 rounded transition-colors shadow-lg">
+                                Actualizar Ahora
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Plan PREMIUM -->
+                    <div class="border-2 border-yellow-400 rounded-lg p-4 bg-gradient-to-br from-yellow-50 to-orange-50">
+                        <div class="text-center mb-4">
+                            <div class="inline-block px-3 py-1 bg-gradient-to-r from-yellow-400 to-orange-500 text-white text-xs rounded-full mb-2">
+                                💎 PREMIUM
+                            </div>
+                            <h4 class="text-lg font-bold text-orange-700">Premium</h4>
+                            <div class="mt-2">
+                                <span class="text-3xl font-bold text-orange-900">$199.900</span>
+                                <span class="text-orange-600">/mes</span>
+                            </div>
+                        </div>
+                        <ul class="space-y-2 text-sm">
+                            <li class="flex items-start">
+                                <i class="fas fa-check text-green-500 mr-2 mt-1"></i>
+                                <span><strong>TODOS los módulos</strong></span>
+                            </li>
+                            <li class="flex items-start">
+                                <i class="fas fa-check text-green-500 mr-2 mt-1"></i>
+                                <span>Todo de PRO +</span>
+                            </li>
+                            <li class="flex items-start">
+                                <i class="fas fa-check text-green-500 mr-2 mt-1"></i>
+                                <span><strong>Nómina DIAN</strong></span>
+                            </li>
+                            <li class="flex items-start">
+                                <i class="fas fa-check text-green-500 mr-2 mt-1"></i>
+                                <span>WhatsApp ilimitado</span>
+                            </li>
+                            <li class="flex items-start">
+                                <i class="fas fa-check text-green-500 mr-2 mt-1"></i>
+                                <span>Soporte 24/7</span>
+                            </li>
+                            <li class="flex items-start">
+                                <i class="fas fa-check text-green-500 mr-2 mt-1"></i>
+                                <span>Sin límites</span>
+                            </li>
+                        </ul>
+                        <div class="mt-4">
+                            <button onclick="upgradeToPlan('premium')" class="w-full bg-gradient-to-r from-yellow-500 to-orange-600 hover:from-yellow-600 hover:to-orange-700 text-white font-semibold py-2 px-4 rounded transition-colors shadow-lg">
+                                Actualizar Ahora
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Características destacadas -->
+                <div class="bg-gradient-to-r from-indigo-50 to-purple-50 rounded-lg p-6 mb-6">
+                    <h5 class="text-lg font-bold text-gray-800 mb-4 text-center">
+                        <i class="fas fa-star text-yellow-500 mr-2"></i>
+                        ¿Por qué actualizar tu plan?
+                    </h5>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div class="flex items-start">
+                            <div class="flex-shrink-0">
+                                <div class="flex items-center justify-center w-12 h-12 bg-purple-100 text-purple-600 rounded-lg">
+                                    <i class="fas fa-chart-line text-xl"></i>
+                                </div>
+                            </div>
+                            <div class="ml-4">
+                                <h6 class="font-semibold text-gray-800">Más Productividad</h6>
+                                <p class="text-sm text-gray-600">Automatiza procesos y ahorra tiempo</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start">
+                            <div class="flex-shrink-0">
+                                <div class="flex items-center justify-center w-12 h-12 bg-blue-100 text-blue-600 rounded-lg">
+                                    <i class="fas fa-money-bill-wave text-xl"></i>
+                                </div>
+                            </div>
+                            <div class="ml-4">
+                                <h6 class="font-semibold text-gray-800">Aumenta Ventas</h6>
+                                <p class="text-sm text-gray-600">Herramientas de marketing integradas</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start">
+                            <div class="flex-shrink-0">
+                                <div class="flex items-center justify-center w-12 h-12 bg-green-100 text-green-600 rounded-lg">
+                                    <i class="fas fa-headset text-xl"></i>
+                                </div>
+                            </div>
+                            <div class="ml-4">
+                                <h6 class="font-semibold text-gray-800">Soporte Prioritario</h6>
+                                <p class="text-sm text-gray-600">Asistencia cuando la necesites</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Garantía -->
+                <div class="text-center">
+                    <p class="text-sm text-gray-600">
+                        <i class="fas fa-shield-alt text-green-500 mr-1"></i>
+                        <strong>Garantía de 30 días</strong> - Si no estás satisfecho, te devolvemos tu dinero
+                    </p>
+                </div>
+            </div>
+
+            <!-- Footer -->
+            <div class="px-6 py-4 bg-gray-50 border-t border-gray-200">
+                <div class="flex items-center justify-between">
+                    <p class="text-sm text-gray-600">
+                        ¿Tienes preguntas? 
+                        <a href="mailto:soporte@optikaapp.com" class="text-indigo-600 hover:text-indigo-700 font-semibold">
+                            Contáctanos
+                        </a>
+                    </p>
+                    <button onclick="closeUpgradeModal()" class="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-100 transition-colors">
+                        Cerrar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function showUpgradeModal(featureCode) {
+    // Personalizar el modal según la feature
+    const featureNames = {
+        'promotions': 'Promociones',
+        'analytics_advanced': 'Analítica Avanzada',
+        'whatsapp_integration': 'Integración WhatsApp',
+        'electronic_invoicing': 'Facturación Electrónica',
+        'payroll_dian': 'Nómina Electrónica DIAN',
+        'workflows': 'Workflows Automatizados',
+        'multi_location': 'Multi-Sede'
+    };
+    
+    const featureName = featureNames[featureCode] || 'esta funcionalidad';
+    
+    document.getElementById('modal-subtitle').innerHTML = 
+        `Actualiza tu plan para desbloquear <strong>${featureName}</strong> y mucho más`;
+    
+    document.getElementById('upgradeModal').classList.remove('hidden');
+    document.body.style.overflow = 'hidden'; // Prevent scroll
+}
+
+function closeUpgradeModal() {
+    document.getElementById('upgradeModal').classList.add('hidden');
+    document.body.style.overflow = 'auto'; // Restore scroll
+}
+
+function upgradeToPlan(planType) {
+    // Redirigir a la página de suscripciones
+    window.location.href = `/organizations/subscription-plans/?plan=${planType}`;
+}
+
+// Cerrar con tecla ESC
+document.addEventListener('keydown', function(event) {
+    if (event.key === 'Escape') {
+        closeUpgradeModal();
+    }
+});
+</script>

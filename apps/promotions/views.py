@@ -9,12 +9,14 @@ from django.utils import timezone
 from django.db.models import Q, Count
 from apps.promotions.models import Promotion, PromotionCampaign, PromotionMessage
 from apps.promotions.services import create_campaign_messages, start_campaign, CampaignSender
+from apps.organizations.decorators import require_feature
 import logging
 
 logger = logging.getLogger(__name__)
 
 
 @login_required
+@require_feature('promotions')
 def promotion_list(request):
     """Lista todas las promociones de la organización"""
     promotions = Promotion.objects.filter(
@@ -35,6 +37,7 @@ def promotion_list(request):
 
 
 @login_required
+@require_feature('promotions')
 def promotion_create(request):
     """Crear nueva promoción"""
     if request.method == 'POST':

@@ -1,0 +1,12 @@
+{% if not has_access %}
+<button onclick="showUpgradeModal('{{ feature_code }}')" class="ml-auto flex items-center hover:opacity-80 transition-opacity" title="Actualizar plan">
+    <i class="fas fa-lock text-xs text-amber-500"></i>
+    {% if required_plan == 'basic' %}
+    <span class="ml-1 text-xs bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full font-semibold">BÁSICO</span>
+    {% elif required_plan == 'professional' %}
+    <span class="ml-1 text-xs bg-purple-100 text-purple-800 px-2 py-0.5 rounded-full font-semibold">PRO</span>
+    {% elif required_plan == 'premium' %}
+    <span class="ml-1 text-xs bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full font-semibold">💎</span>
+    {% endif %}
+</button>
+{% endif %}

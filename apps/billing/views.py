@@ -9,7 +9,7 @@ from datetime import datetime, timedelta
 from decimal import Decimal
 
 from apps.organizations.models import Organization, OrganizationMember
-from apps.organizations.decorators import require_module, require_inventory, require_dian
+from apps.organizations.decorators import require_module, require_inventory, require_dian, require_feature
 from apps.patients.models import Patient
 from apps.dashboard.decorators import require_module_permission
 from .models import DianConfiguration, Invoice, InvoiceItem, Payment, Supplier, InvoiceProduct, InvoiceConfiguration
@@ -112,6 +112,7 @@ def dian_configuration_view(request):
 
 
 @require_module_permission('invoices', 'view')
+@require_feature('electronic_invoicing')
 def invoice_list(request):
     """Lista de facturas electrónicas"""
     # Obtener organización del usuario

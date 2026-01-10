@@ -8,6 +8,7 @@
     <!-- Tailwind CSS Compiled -->
     {% load static %}
     {% load plan_features %}
+    {% load plan_permissions %}
     <link rel="stylesheet" href="{% static 'dashboard/css/output.css' %}">
     
     <!-- Font Awesome -->
@@ -262,6 +263,7 @@
                         <a href="{% url 'billing:invoice_list' %}" class="flex items-center px-8 py-2 hover:bg-indigo-800 text-sm relative">
                             <i class="fas fa-file-invoice mr-3"></i>
                             <span class="sidebar-text">Facturas Electrónicas</span>
+                            {% show_feature_lock 'electronic_invoicing' %}
                         </a>
                         {% endif %}
                         
@@ -333,6 +335,7 @@
                             <i class="fas fa-money-check-alt mr-3"></i>
                             <span class="sidebar-text">Nómina Electrónica</span>
                             <span class="sidebar-tooltip">Nómina Electrónica</span>
+                            {% show_feature_lock 'payroll_dian' %}
                         </a>
                         
                         <a href="{% url 'payroll:employee_list' %}" class="flex items-center px-8 py-2 hover:bg-indigo-800 text-sm {% if 'payroll/empleados' in request.path %}bg-indigo-800{% endif %} relative">
@@ -512,11 +515,12 @@
                             <span class="sidebar-tooltip">Landing Page</span>
                         </a>
                         
-                        <!-- Promociones -->
+                        <!-- Promociones (PRO) -->
                         <a href="/dashboard/promociones/" class="flex items-center px-8 py-2 hover:bg-indigo-800 text-sm {% if 'promociones' in request.path %}bg-indigo-800{% endif %} relative">
                             <i class="fas fa-tags mr-3"></i>
                             <span class="sidebar-text">Promociones</span>
                             <span class="sidebar-tooltip">Promociones</span>
+                            {% show_feature_lock 'promotions' %}
                         </a>
                         
                         <div class="border-t border-indigo-800 my-1"></div>
@@ -562,11 +566,12 @@
                         <span class="sidebar-tooltip">Automatización</span>
                     </button>
                     <div id="automation-submenu" class="bg-indigo-950 hidden sidebar-submenu">
-                        <!-- Workflows -->
+                        <!-- Workflows (PRO) -->
                         <a href="{% url 'workflows:list' %}" class="flex items-center px-8 py-2 hover:bg-indigo-800 text-sm {% if 'workflows' in request.path and 'approvals' not in request.path %}bg-indigo-800{% endif %} relative">
                             <i class="fas fa-project-diagram mr-3"></i>
                             <span class="sidebar-text">Workflows</span>
                             <span class="sidebar-tooltip">Workflows</span>
+                            {% show_feature_lock 'workflows' %}
                         </a>
                         <a href="{% url 'workflows:my_approvals' %}" class="flex items-center px-8 py-2 hover:bg-indigo-800 text-sm {% if 'approvals' in request.path %}bg-indigo-800{% endif %} relative">
                             <i class="fas fa-clipboard-check mr-3"></i>
@@ -612,6 +617,7 @@
                             <i class="fas fa-tachometer-alt mr-3"></i>
                             <span class="sidebar-text">Dashboard</span>
                             <span class="sidebar-tooltip">Dashboard de Reportes</span>
+                            {% show_feature_lock 'analytics_advanced' %}
                         </a>
                         <a href="{% url 'reports:templates' %}" class="flex items-center px-8 py-2 hover:bg-indigo-900 text-sm {% if 'templates' in request.path %}bg-indigo-900{% endif %} relative">
                             <i class="fas fa-file-alt mr-3"></i>
@@ -1116,6 +1122,9 @@
             setInterval(updateApprovalsBadge, 30000);
         }
     </script>
+    
+    <!-- Modal de Upgrade -->
+    {% include 'dashboard/modals/upgrade_modal.html' %}
     
     {% block extra_js %}{% endblock %}
 </body>
