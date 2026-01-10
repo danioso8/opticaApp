@@ -107,8 +107,9 @@ def available_dates(request):
     Endpoint: /api/appointments/available-dates/?organization_id=1
     """
     from apps.organizations.models import Organization
-    from .models import SpecificDateSchedule, BlockedDate
+    from .models import SpecificDateSchedule, BlockedDate, WorkingHours, AppointmentConfiguration
     from django.utils import timezone
+    from datetime import timedelta
     
     org_id = request.query_params.get('organization_id')
     
@@ -126,40 +127,73 @@ def available_dates(request):
             status=status.HTTP_404_NOT_FOUND
         )
     
+    # Obtener configuración
+    config = AppointmentConfiguration.get_config(organization)
+    if not config.is_open:
+        return Response({'dates': [], 'message': 'Sistema de citas cerrado'})
+    
     # Usar fecha local de Colombia en lugar de UTC
     import pytz
     local_tz = pytz.timezone('America/Bogota')
     today = timezone.now().astimezone(local_tz).date()
     doctor_id = request.query_params.get('doctor_id')
     
-    # Construir filtros
+    # Generar fechas basadas en horarios regulares
+    available_dates = []
+    max_days = config.advance_booking_days
+    
+    # Obtener horarios regulares activos
+    working_hours = WorkingHours.objects.filter(
+        organization=organization,
+        is_active=True
+    ).values_list('day_of_week', flat=True)
+    
+    working_days = set(working_hours)
+    
+    # Generar fechas para los próximos N días
+    for i in range(max_days + 1):
+        current_date = today + timedelta(days=i)
+        
+        # Verificar si es día laborable
+        if current_date.weekday() in working_days:
+            # Verificar si no está bloqueada
+            is_blocked = BlockedDate.objects.filter(
+                organization=organization,
+                date=current_date
+            ).exists()
+            
+            if not is_blocked:
+                available_dates.append(str(current_date))
+    
+    # También agregar fechas específicas (por si hay horarios especiales)
     filters = {
         'organization': organization,
         'date__gte': today,
         'is_active': True
     }
     
-    # Filtrar por doctor si se especifica (buscar en ambos campos: nuevo y legacy)
-    # TAMBIÉN incluir horarios sin doctor asignado para compartir disponibilidad
     if doctor_id:
         from django.db.models import Q
         specific_dates = SpecificDateSchedule.objects.filter(
             Q(doctor_profile_id=doctor_id) | Q(doctor_id=doctor_id) | Q(doctor_profile__isnull=True, doctor__isnull=True),
             **filters
-        ).values_list('date', flat=True).distinct().order_by('date')
+        ).values_list('date', flat=True).distinct()
     else:
-        specific_dates = SpecificDateSchedule.objects.filter(**filters).values_list('date', flat=True).distinct().order_by('date')
+        specific_dates = SpecificDateSchedule.objects.filter(**filters).values_list('date', flat=True).distinct()
     
-    # Filtrar fechas bloqueadas
-    available_dates = []
+    # Agregar fechas específicas que no estén ya en la lista
     for date in specific_dates:
-        is_blocked = BlockedDate.objects.filter(
-            organization=organization,
-            date=date
-        ).exists()
-        
-        if not is_blocked:
-            available_dates.append(str(date))
+        date_str = str(date)
+        if date_str not in available_dates:
+            is_blocked = BlockedDate.objects.filter(
+                organization=organization,
+                date=date
+            ).exists()
+            if not is_blocked:
+                available_dates.append(date_str)
+    
+    # Ordenar fechas
+    available_dates.sort()
     
     return Response({'dates': available_dates})
 
