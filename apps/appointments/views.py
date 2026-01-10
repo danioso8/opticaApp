@@ -111,91 +111,96 @@ def available_dates(request):
     from django.utils import timezone
     from datetime import timedelta
     
-    org_id = request.query_params.get('organization_id')
-    
-    if not org_id:
-        return Response(
-            {'error': 'El parámetro "organization_id" es requerido'},
-            status=status.HTTP_400_BAD_REQUEST
-        )
-    
     try:
-        organization = Organization.objects.get(id=org_id, is_active=True)
-    except Organization.DoesNotExist:
-        return Response(
-            {'error': 'Organización no encontrada'},
-            status=status.HTTP_404_NOT_FOUND
-        )
+        # Usar request.GET en lugar de query_params para compatibilidad
+        org_id = request.GET.get('organization_id') if hasattr(request, 'GET') else request.query_params.get('organization_id')
+        
+        if not org_id:
+            return Response({'dates': [], 'error': 'El parámetro "organization_id" es requerido'})
+        
+        try:
+            organization = Organization.objects.get(id=org_id, is_active=True)
+        except Organization.DoesNotExist:
+            return Response({'dates': [], 'error': 'Organización no encontrada'})
+    except Exception as e:
+        return Response({'dates': [], 'error': 'Error al procesar la solicitud'})
     
     # Obtener configuración
-    config = AppointmentConfiguration.get_config(organization)
-    if not config.is_open:
-        return Response({'dates': [], 'message': 'Sistema de citas cerrado'})
-    
-    # Usar fecha local de Colombia en lugar de UTC
-    import pytz
-    local_tz = pytz.timezone('America/Bogota')
-    today = timezone.now().astimezone(local_tz).date()
-    doctor_id = request.query_params.get('doctor_id')
-    
-    # Generar fechas basadas en horarios regulares
-    available_dates = []
-    max_days = config.advance_booking_days
-    
-    # Obtener horarios regulares activos
-    working_hours = WorkingHours.objects.filter(
-        organization=organization,
-        is_active=True
-    ).values_list('day_of_week', flat=True)
-    
-    working_days = set(working_hours)
-    
-    # Generar fechas para los próximos N días
-    for i in range(max_days + 1):
-        current_date = today + timedelta(days=i)
+    try:
+        config = AppointmentConfiguration.get_config(organization)
+        if not config.is_open:
+            return Response({'dates': [], 'message': 'Sistema de citas cerrado'})
         
-        # Verificar si es día laborable
-        if current_date.weekday() in working_days:
-            # Verificar si no está bloqueada
-            is_blocked = BlockedDate.objects.filter(
-                organization=organization,
-                date=current_date
-            ).exists()
+        # Usar fecha local de Colombia en lugar de UTC
+        import pytz
+        local_tz = pytz.timezone('America/Bogota')
+        today = timezone.now().astimezone(local_tz).date()
+        doctor_id = request.GET.get('doctor_id') if hasattr(request, 'GET') else request.query_params.get('doctor_id')
+        
+        # Generar fechas basadas en horarios regulares
+        available_dates = []
+        max_days = config.advance_booking_days
+        
+        # Obtener horarios regulares activos
+        working_hours = WorkingHours.objects.filter(
+            organization=organization,
+            is_active=True
+        ).values_list('day_of_week', flat=True)
+        
+        working_days = set(working_hours)
+        
+        # Generar fechas para los próximos N días
+        for i in range(max_days + 1):
+            current_date = today + timedelta(days=i)
             
-            if not is_blocked:
-                available_dates.append(str(current_date))
+            # Verificar si es día laborable
+            if current_date.weekday() in working_days:
+                # Verificar si no está bloqueada
+                is_blocked = BlockedDate.objects.filter(
+                    organization=organization,
+                    date=current_date
+                ).exists()
+                
+                if not is_blocked:
+                    available_dates.append(str(current_date))
+        
+        # También agregar fechas específicas (por si hay horarios especiales)
+        filters = {
+            'organization': organization,
+            'date__gte': today,
+            'is_active': True
+        }
+        
+        if doctor_id:
+            from django.db.models import Q
+            specific_dates = SpecificDateSchedule.objects.filter(
+                Q(doctor_profile_id=doctor_id) | Q(doctor_id=doctor_id) | Q(doctor_profile__isnull=True, doctor__isnull=True),
+                **filters
+            ).values_list('date', flat=True).distinct()
+        else:
+            specific_dates = SpecificDateSchedule.objects.filter(**filters).values_list('date', flat=True).distinct()
+        
+        # Agregar fechas específicas que no estén ya en la lista
+        for date in specific_dates:
+            date_str = str(date)
+            if date_str not in available_dates:
+                is_blocked = BlockedDate.objects.filter(
+                    organization=organization,
+                    date=date
+                ).exists()
+                if not is_blocked:
+                    available_dates.append(date_str)
+        
+        # Ordenar fechas
+        available_dates.sort()
+        
+        return Response({'dates': available_dates})
     
-    # También agregar fechas específicas (por si hay horarios especiales)
-    filters = {
-        'organization': organization,
-        'date__gte': today,
-        'is_active': True
-    }
-    
-    if doctor_id:
-        from django.db.models import Q
-        specific_dates = SpecificDateSchedule.objects.filter(
-            Q(doctor_profile_id=doctor_id) | Q(doctor_id=doctor_id) | Q(doctor_profile__isnull=True, doctor__isnull=True),
-            **filters
-        ).values_list('date', flat=True).distinct()
-    else:
-        specific_dates = SpecificDateSchedule.objects.filter(**filters).values_list('date', flat=True).distinct()
-    
-    # Agregar fechas específicas que no estén ya en la lista
-    for date in specific_dates:
-        date_str = str(date)
-        if date_str not in available_dates:
-            is_blocked = BlockedDate.objects.filter(
-                organization=organization,
-                date=date
-            ).exists()
-            if not is_blocked:
-                available_dates.append(date_str)
-    
-    # Ordenar fechas
-    available_dates.sort()
-    
-    return Response({'dates': available_dates})
+    except Exception as e:
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.error(f"Error en available_dates: {str(e)}", exc_info=True)
+        return Response({'dates': [], 'error': 'Error al cargar las fechas'})
 
 
 @api_view(['GET'])
@@ -207,50 +212,47 @@ def available_slots(request):
     """
     from apps.organizations.models import Organization
     
-    date_str = request.query_params.get('date')
-    org_id = request.query_params.get('organization_id')
-    
-    if not date_str:
-        return Response(
-            {'error': 'El parámetro "date" es requerido'},
-            status=status.HTTP_400_BAD_REQUEST
-        )
-    
-    if not org_id:
-        return Response(
-            {'error': 'El parámetro "organization_id" es requerido'},
-            status=status.HTTP_400_BAD_REQUEST
-        )
-    
     try:
-        date = datetime.strptime(date_str, '%Y-%m-%d').date()
-    except ValueError:
-        return Response(
-            {'error': 'Formato de fecha inválido. Use YYYY-MM-DD'},
-            status=status.HTTP_400_BAD_REQUEST
-        )
+        # Usar request.GET para compatibilidad
+        date_str = request.GET.get('date') if hasattr(request, 'GET') else request.query_params.get('date')
+        org_id = request.GET.get('organization_id') if hasattr(request, 'GET') else request.query_params.get('organization_id')
+        
+        if not date_str:
+            return Response({'slots': [], 'error': 'El parámetro "date" es requerido'})
+        
+        if not org_id:
+            return Response({'slots': [], 'error': 'El parámetro "organization_id" es requerido'})
+        
+        try:
+            date = datetime.strptime(date_str, '%Y-%m-%d').date()
+        except ValueError:
+            return Response({'slots': [], 'error': 'Formato de fecha inválido. Use YYYY-MM-DD'})
+        
+        try:
+            organization = Organization.objects.get(id=org_id, is_active=True)
+        except Organization.DoesNotExist:
+            return Response({'slots': [], 'error': 'Organización no encontrada'})
+        
+        # Obtener doctor_id si está presente
+        doctor_id = request.GET.get('doctor_id') if hasattr(request, 'GET') else request.query_params.get('doctor_id')
+        
+        # Obtener solo_disponibles si está presente (por defecto True para modales)
+        only_available_param = request.GET.get('only_available', 'true') if hasattr(request, 'GET') else request.query_params.get('only_available', 'true')
+        only_available = only_available_param.lower() == 'true'
+        
+        slots = get_available_slots_for_date(date, organization, doctor_id, only_available)
+        serializer = AvailableSlotsSerializer(slots, many=True)
+        
+        return Response({
+            'date': date,
+            'slots': serializer.data
+        })
     
-    try:
-        organization = Organization.objects.get(id=org_id, is_active=True)
-    except Organization.DoesNotExist:
-        return Response(
-            {'error': 'Organización no encontrada'},
-            status=status.HTTP_404_NOT_FOUND
-        )
-    
-    # Obtener doctor_id si está presente
-    doctor_id = request.query_params.get('doctor_id')
-    
-    # Obtener solo_disponibles si está presente (por defecto True para modales)
-    only_available = request.query_params.get('only_available', 'true').lower() == 'true'
-    
-    slots = get_available_slots_for_date(date, organization, doctor_id, only_available)
-    serializer = AvailableSlotsSerializer(slots, many=True)
-    
-    return Response({
-        'date': date,
-        'slots': serializer.data
-    })
+    except Exception as e:
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.error(f"Error en available_slots: {str(e)}", exc_info=True)
+        return Response({'slots': [], 'error': 'Error al cargar los horarios'})
 
 
 @api_view(['POST'])
