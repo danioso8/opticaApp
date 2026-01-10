@@ -21,28 +21,28 @@
                 </div>
                 <div class="flex gap-2">
                     {% if campaign.status == 'draft' %}
-                    <form method="POST" action="{% url 'promotions:campaign_start' campaign.id %}" class="inline">
+                    <form method="POST" action="/dashboard/promociones/campanas/{{ campaign.id }}/iniciar/" class="inline">
                         {% csrf_token %}
                         <button type="submit" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition">
                             <i class="fas fa-play mr-2"></i>Iniciar
                         </button>
                     </form>
                     {% elif campaign.status == 'active' %}
-                    <form method="POST" action="{% url 'promotions:campaign_pause' campaign.id %}" class="inline">
+                    <form method="POST" action="/dashboard/promociones/campanas/{{ campaign.id }}/pausar/" class="inline">
                         {% csrf_token %}
                         <button type="submit" class="px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition">
                             <i class="fas fa-pause mr-2"></i>Pausar
                         </button>
                     </form>
                     {% elif campaign.status == 'paused' %}
-                    <form method="POST" action="{% url 'promotions:campaign_resume' campaign.id %}" class="inline">
+                    <form method="POST" action="/dashboard/promociones/campanas/{{ campaign.id }}/reanudar/" class="inline">
                         {% csrf_token %}
                         <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
                             <i class="fas fa-play mr-2"></i>Reanudar
                         </button>
                     </form>
                     {% endif %}
-                    <a href="{% url 'promotions:campaign_edit' campaign.id %}" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition">
+                    <a href="/dashboard/promociones/campanas/{{ campaign.id }}/editar/" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition">
                         <i class="fas fa-edit mr-2"></i>Editar
                     </a>
                 </div>
