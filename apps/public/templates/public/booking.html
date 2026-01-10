@@ -484,7 +484,8 @@ function loadAvailableDates(orgId) {
         .then(response => response.json())
         .then(data => {
             if (data.dates && data.dates.length > 0) {
-                container.innerHTML = data.dates.slice(0, 16).map(dateStr => {
+                // Mostrar solo los próximos 8 días disponibles
+                container.innerHTML = data.dates.slice(0, 8).map(dateStr => {
                     // Agregar 'T00:00:00' para evitar problemas de zona horaria
                     const date = new Date(dateStr + 'T00:00:00');
                     const dayNames = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
