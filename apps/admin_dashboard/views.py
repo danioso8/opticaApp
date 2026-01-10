@@ -1161,3 +1161,92 @@ def addon_purchase_create(request, org_id):
         'available_features': available_features,
     }
     return render(request, 'admin_dashboard/addon_purchase_create.html', context)
+
+
+@superuser_required
+def error_monitoring(request):
+    """Vista para monitorear errores del sistema."""
+    from apps.audit.models import ErrorLog
+    from django.db.models import Count
+    from datetime import datetime, timedelta
+    
+    # Filtros
+    severity_filter = request.GET.get('severity')
+    resolved_filter = request.GET.get('resolved')
+    search_query = request.GET.get('search')
+    
+    # Query base
+    errors = ErrorLog.objects.all()
+    
+    # Aplicar filtros
+    if severity_filter:
+        errors = errors.filter(severity=severity_filter)
+    
+    if resolved_filter:
+        is_resolved = resolved_filter == 'resolved'
+        errors = errors.filter(is_resolved=is_resolved)
+    
+    if search_query:
+        errors = errors.filter(
+            Q(error_type__icontains=search_query) |
+            Q(error_message__icontains=search_query) |
+            Q(url__icontains=search_query)
+        )
+    
+    # Estadísticas generales
+    total_errors = ErrorLog.objects.count()
+    unresolved_errors = ErrorLog.objects.filter(is_resolved=False).count()
+    critical_errors = ErrorLog.objects.filter(severity='CRITICAL', is_resolved=False).count()
+    
+    # Errores por severidad
+    errors_by_severity = ErrorLog.objects.values('severity').annotate(
+        count=Count('id')
+    ).order_by('severity')
+    
+    # Errores recientes (últimas 24 horas)
+    yesterday = timezone.now() - timedelta(days=1)
+    recent_errors = ErrorLog.objects.filter(timestamp__gte=yesterday).count()
+    
+    # Errores más frecuentes (últimos 7 días)
+    week_ago = timezone.now() - timedelta(days=7)
+    top_errors = ErrorLog.objects.filter(
+        timestamp__gte=week_ago
+    ).values('error_type', 'error_message').annotate(
+        count=Count('id')
+    ).order_by('-count')[:10]
+    
+    # Errores por día (últimos 7 días)
+    errors_by_day = []
+    for i in range(6, -1, -1):
+        day = timezone.now() - timedelta(days=i)
+        day_start = day.replace(hour=0, minute=0, second=0, microsecond=0)
+        day_end = day_start + timedelta(days=1)
+        
+        count = ErrorLog.objects.filter(
+            timestamp__gte=day_start,
+            timestamp__lt=day_end
+        ).count()
+        
+        errors_by_day.append({
+            'date': day_start.strftime('%d/%m'),
+            'count': count
+        })
+    
+    # Lista de errores (paginado)
+    errors_list = errors.select_related('user', 'organization').order_by('-timestamp')[:100]
+    
+    context = {
+        'total_errors': total_errors,
+        'unresolved_errors': unresolved_errors,
+        'critical_errors': critical_errors,
+        'recent_errors': recent_errors,
+        'errors_by_severity': errors_by_severity,
+        'top_errors': top_errors,
+        'errors_by_day': errors_by_day,
+        'errors_list': errors_list,
+        'severity_filter': severity_filter,
+        'resolved_filter': resolved_filter,
+        'search_query': search_query,
+    }
+    
+    return render(request, 'admin_dashboard/error_monitoring.html', context)

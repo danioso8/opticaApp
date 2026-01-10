@@ -56,4 +56,7 @@ urlpatterns = [
     # Gestión de compras de módulos adicionales
     path('addon-purchases/', views.addon_purchases_list, name='addon_purchases_list'),
     path('organizations/<int:org_id>/addon-purchases/create/', views.addon_purchase_create, name='addon_purchase_create'),
+    
+    # Monitoreo de errores
+    path('errors/', views.error_monitoring, name='error_monitoring'),
 ]

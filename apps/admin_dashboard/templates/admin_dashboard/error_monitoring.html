@@ -1,0 +1,304 @@
+{% extends 'admin_dashboard/base.html' %}
+
+{% block title %}Monitoreo de Errores - SaaS Admin{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2><i class="fas fa-exclamation-triangle text-danger"></i> Monitoreo de Errores del Sistema</h2>
+        <a href="{% url 'admin:audit_errorlog_changelist' %}" class="btn btn-outline-primary">
+            <i class="fas fa-cog"></i> Admin Completo
+        </a>
+    </div>
+
+    <!-- Estadísticas Principales -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card border-primary">
+                <div class="card-body text-center">
+                    <h3 class="mb-0">{{ total_errors }}</h3>
+                    <p class="text-muted mb-0">Total de Errores</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-warning">
+                <div class="card-body text-center">
+                    <h3 class="mb-0 text-warning">{{ unresolved_errors }}</h3>
+                    <p class="text-muted mb-0">Sin Resolver</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-danger">
+                <div class="card-body text-center">
+                    <h3 class="mb-0 text-danger">{{ critical_errors }}</h3>
+                    <p class="text-muted mb-0">Críticos Pendientes</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-info">
+                <div class="card-body text-center">
+                    <h3 class="mb-0 text-info">{{ recent_errors }}</h3>
+                    <p class="text-muted mb-0">Últimas 24h</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Gráfico de Errores por Día -->
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <strong>Errores de los Últimos 7 Días</strong>
+                </div>
+                <div class="card-body">
+                    <canvas id="errorsChart" height="80"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <strong>Errores por Severidad</strong>
+                </div>
+                <div class="card-body">
+                    {% for item in errors_by_severity %}
+                    <div class="mb-2">
+                        <div class="d-flex justify-content-between">
+                            <span>
+                                {% if item.severity == 'CRITICAL' %}
+                                    <span class="badge badge-dark">CRÍTICO</span>
+                                {% elif item.severity == 'ERROR' %}
+                                    <span class="badge badge-danger">ERROR</span>
+                                {% elif item.severity == 'WARNING' %}
+                                    <span class="badge badge-warning">ADVERTENCIA</span>
+                                {% elif item.severity == 'INFO' %}
+                                    <span class="badge badge-info">INFO</span>
+                                {% else %}
+                                    <span class="badge badge-secondary">DEBUG</span>
+                                {% endif %}
+                            </span>
+                            <strong>{{ item.count }}</strong>
+                        </div>
+                        <div class="progress mt-1" style="height: 5px;">
+                            <div class="progress-bar 
+                                {% if item.severity == 'CRITICAL' %}bg-dark
+                                {% elif item.severity == 'ERROR' %}bg-danger
+                                {% elif item.severity == 'WARNING' %}bg-warning
+                                {% elif item.severity == 'INFO' %}bg-info
+                                {% else %}bg-secondary{% endif %}" 
+                                style="width: {{ item.count|floatformat:0 }}%">
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filtros -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="get" class="form-inline">
+                <div class="form-group mr-3">
+                    <label for="severity" class="mr-2">Severidad:</label>
+                    <select name="severity" id="severity" class="form-control">
+                        <option value="">Todas</option>
+                        <option value="DEBUG" {% if severity_filter == 'DEBUG' %}selected{% endif %}>Debug</option>
+                        <option value="INFO" {% if severity_filter == 'INFO' %}selected{% endif %}>Info</option>
+                        <option value="WARNING" {% if severity_filter == 'WARNING' %}selected{% endif %}>Advertencia</option>
+                        <option value="ERROR" {% if severity_filter == 'ERROR' %}selected{% endif %}>Error</option>
+                        <option value="CRITICAL" {% if severity_filter == 'CRITICAL' %}selected{% endif %}>Crítico</option>
+                    </select>
+                </div>
+                <div class="form-group mr-3">
+                    <label for="resolved" class="mr-2">Estado:</label>
+                    <select name="resolved" id="resolved" class="form-control">
+                        <option value="">Todos</option>
+                        <option value="unresolved" {% if resolved_filter == 'unresolved' %}selected{% endif %}>Sin Resolver</option>
+                        <option value="resolved" {% if resolved_filter == 'resolved' %}selected{% endif %}>Resueltos</option>
+                    </select>
+                </div>
+                <div class="form-group mr-3 flex-grow-1">
+                    <input type="text" name="search" class="form-control w-100" placeholder="Buscar por tipo, mensaje o URL..." value="{{ search_query }}">
+                </div>
+                <button type="submit" class="btn btn-primary mr-2">
+                    <i class="fas fa-search"></i> Filtrar
+                </button>
+                <a href="{% url 'admin_dashboard:error_monitoring' %}" class="btn btn-secondary">
+                    <i class="fas fa-times"></i> Limpiar
+                </a>
+            </form>
+        </div>
+    </div>
+
+    <!-- Lista de Errores -->
+    <div class="card">
+        <div class="card-header">
+            <strong>Errores Recientes</strong>
+            <span class="float-right text-muted">Mostrando últimos 100 registros</span>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="thead-light">
+                        <tr>
+                            <th>Fecha/Hora</th>
+                            <th>Severidad</th>
+                            <th>Tipo</th>
+                            <th>Mensaje</th>
+                            <th>URL</th>
+                            <th>Usuario</th>
+                            <th>Ocurrencias</th>
+                            <th>Estado</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for error in errors_list %}
+                        <tr>
+                            <td class="text-nowrap">
+                                <small>{{ error.timestamp|date:"d/m/Y H:i" }}</small>
+                            </td>
+                            <td>
+                                {% if error.severity == 'CRITICAL' %}
+                                    <span class="badge badge-dark">CRÍTICO</span>
+                                {% elif error.severity == 'ERROR' %}
+                                    <span class="badge badge-danger">ERROR</span>
+                                {% elif error.severity == 'WARNING' %}
+                                    <span class="badge badge-warning">ALERTA</span>
+                                {% elif error.severity == 'INFO' %}
+                                    <span class="badge badge-info">INFO</span>
+                                {% else %}
+                                    <span class="badge badge-secondary">DEBUG</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <small>{{ error.error_type|truncatechars:30 }}</small>
+                            </td>
+                            <td>
+                                <small>{{ error.error_message|truncatechars:60 }}</small>
+                            </td>
+                            <td>
+                                <small>{{ error.url|default:"-"|truncatechars:40 }}</small>
+                            </td>
+                            <td>
+                                {% if error.user %}
+                                    <small>{{ error.user.get_full_name|default:error.user.username }}</small>
+                                {% else %}
+                                    <small class="text-muted">-</small>
+                                {% endif %}
+                            </td>
+                            <td class="text-center">
+                                <span class="badge badge-pill badge-secondary">{{ error.occurrence_count }}</span>
+                            </td>
+                            <td>
+                                {% if error.is_resolved %}
+                                    <span class="badge badge-success">Resuelto</span>
+                                {% else %}
+                                    <span class="badge badge-warning">Pendiente</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <a href="{% url 'admin:audit_errorlog_change' error.pk %}" class="btn btn-sm btn-outline-primary" title="Ver Detalles">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="9" class="text-center text-muted py-4">
+                                No se encontraron errores con los filtros aplicados.
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Top 10 Errores Más Frecuentes -->
+    {% if top_errors %}
+    <div class="card mt-4">
+        <div class="card-header">
+            <strong>Top 10 Errores Más Frecuentes (Últimos 7 Días)</strong>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-sm">
+                    <thead>
+                        <tr>
+                            <th>Tipo</th>
+                            <th>Mensaje</th>
+                            <th class="text-center">Ocurrencias</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for error in top_errors %}
+                        <tr>
+                            <td><code>{{ error.error_type|truncatechars:40 }}</code></td>
+                            <td>{{ error.error_message|truncatechars:80 }}</td>
+                            <td class="text-center">
+                                <span class="badge badge-danger">{{ error.count }}</span>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+<script>
+    // Gráfico de errores por día
+    const ctx = document.getElementById('errorsChart').getContext('2d');
+    const errorsChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: [
+                {% for item in errors_by_day %}
+                    '{{ item.date }}',
+                {% endfor %}
+            ],
+            datasets: [{
+                label: 'Errores',
+                data: [
+                    {% for item in errors_by_day %}
+                        {{ item.count }},
+                    {% endfor %}
+                ],
+                borderColor: 'rgb(220, 53, 69)',
+                backgroundColor: 'rgba(220, 53, 69, 0.1)',
+                tension: 0.1,
+                fill: true
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: {
+                    display: false
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        stepSize: 1
+                    }
+                }
+            }
+        }
+    });
+</script>
+{% endblock %}

@@ -116,6 +116,7 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'apps.audit.middleware.AuditMiddleware',  # Captura info de requests para auditoría
+    'apps.audit.middleware.ErrorCaptureMiddleware',  # Captura y registra errores automáticamente
 ]
 
 # Configurar Whitenoise para NO servir archivos de MEDIA en desarrollo

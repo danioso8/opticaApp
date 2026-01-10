@@ -9,7 +9,7 @@ from django.http import HttpResponse
 from datetime import timedelta
 from django.utils import timezone
 
-from .models import AuditLog, AuditConfig, AuditRetentionLog
+from .models import AuditLog, AuditConfig, AuditRetentionLog, ErrorLog
 from .services import AuditService
 
 
@@ -236,3 +236,174 @@ class AuditRetentionLogAdmin(admin.ModelAdmin):
     def has_change_permission(self, request, obj=None):
         """Solo lectura."""
         return False
+
+
+@admin.register(ErrorLog)
+class ErrorLogAdmin(admin.ModelAdmin):
+    """Admin para logs de errores del sistema."""
+    
+    list_display = [
+        'timestamp', 'severity_badge', 'error_type_display',
+        'error_message_short', 'url_short', 'user', 'occurrence_count',
+        'resolved_badge'
+    ]
+    
+    list_filter = [
+        'severity',
+        'is_resolved',
+        'error_type',
+        'timestamp',
+        ('user', admin.RelatedOnlyFieldListFilter),
+        'organization',
+    ]
+    
+    search_fields = [
+        'error_type',
+        'error_message',
+        'url',
+        'user__email',
+        'user__first_name',
+        'user__last_name'
+    ]
+    
+    readonly_fields = [
+        'timestamp', 'error_type', 'error_message', 'stack_trace_display',
+        'url', 'method', 'user', 'organization', 'request_data_display',
+        'context_display', 'severity', 'first_seen', 'last_seen',
+        'occurrence_count'
+    ]
+    
+    date_hierarchy = 'timestamp'
+    
+    fieldsets = (
+        ('Información del Error', {
+            'fields': ('timestamp', 'severity', 'error_type', 'error_message')
+        }),
+        ('Detalles de la Solicitud', {
+            'fields': ('url', 'method', 'user', 'organization')
+        }),
+        ('Stack Trace', {
+            'fields': ('stack_trace_display',),
+            'classes': ('collapse',)
+        }),
+        ('Datos de la Solicitud', {
+            'fields': ('request_data_display',),
+            'classes': ('collapse',)
+        }),
+        ('Contexto Adicional', {
+            'fields': ('context_display',),
+            'classes': ('collapse',)
+        }),
+        ('Estadísticas', {
+            'fields': ('first_seen', 'last_seen', 'occurrence_count', 'is_resolved', 'resolved_at', 'resolved_by')
+        }),
+    )
+    
+    actions = ['mark_as_resolved', 'mark_as_unresolved', 'delete_resolved_errors']
+    
+    def has_add_permission(self, request):
+        """No permitir creación manual."""
+        return False
+    
+    def severity_badge(self, obj):
+        """Muestra la severidad con color."""
+        colors = {
+            'DEBUG': 'secondary',
+            'INFO': 'info',
+            'WARNING': 'warning',
+            'ERROR': 'danger',
+            'CRITICAL': 'dark'
+        }
+        color = colors.get(obj.severity, 'secondary')
+        return format_html(
+            '<span class="badge badge-{}">{}</span>',
+            color,
+            obj.get_severity_display()
+        )
+    severity_badge.short_description = 'Severidad'
+    
+    def error_type_display(self, obj):
+        """Muestra el tipo de error formateado."""
+        parts = obj.error_type.split('.')
+        if len(parts) > 1:
+            return parts[-1]
+        return obj.error_type
+    error_type_display.short_description = 'Tipo'
+    
+    def error_message_short(self, obj):
+        """Muestra una versión corta del mensaje."""
+        if len(obj.error_message) > 100:
+            return obj.error_message[:100] + '...'
+        return obj.error_message
+    error_message_short.short_description = 'Mensaje'
+    
+    def url_short(self, obj):
+        """Muestra una URL acortada."""
+        if not obj.url:
+            return '-'
+        if len(obj.url) > 50:
+            return obj.url[:50] + '...'
+        return obj.url
+    url_short.short_description = 'URL'
+    
+    def resolved_badge(self, obj):
+        """Muestra el estado de resolución."""
+        if obj.is_resolved:
+            return format_html('<span class="badge badge-success">Resuelto</span>')
+        return format_html('<span class="badge badge-warning">Pendiente</span>')
+    resolved_badge.short_description = 'Estado'
+    
+    def stack_trace_display(self, obj):
+        """Muestra el stack trace formateado."""
+        if not obj.stack_trace:
+            return "No disponible"
+        return format_html('<pre style="max-height: 400px; overflow-y: auto;">{}</pre>', obj.stack_trace)
+    stack_trace_display.short_description = 'Stack Trace'
+    
+    def request_data_display(self, obj):
+        """Muestra los datos de la solicitud formateados."""
+        if not obj.request_data:
+            return "No disponible"
+        
+        import json
+        formatted = json.dumps(obj.request_data, indent=2, ensure_ascii=False)
+        return format_html('<pre style="max-height: 300px; overflow-y: auto;">{}</pre>', formatted)
+    request_data_display.short_description = 'Datos de Solicitud'
+    
+    def context_display(self, obj):
+        """Muestra el contexto formateado."""
+        if not obj.context:
+            return "No disponible"
+        
+        import json
+        formatted = json.dumps(obj.context, indent=2, ensure_ascii=False)
+        return format_html('<pre style="max-height: 300px; overflow-y: auto;">{}</pre>', formatted)
+    context_display.short_description = 'Contexto'
+    
+    def mark_as_resolved(self, request, queryset):
+        """Marca los errores seleccionados como resueltos."""
+        count = 0
+        for error in queryset:
+            if not error.is_resolved:
+                error.mark_resolved(request.user)
+                count += 1
+        self.message_user(request, f"{count} errores marcados como resueltos.")
+    mark_as_resolved.short_description = "Marcar como resueltos"
+    
+    def mark_as_unresolved(self, request, queryset):
+        """Marca los errores seleccionados como no resueltos."""
+        count = queryset.update(
+            is_resolved=False,
+            resolved_at=None,
+            resolved_by=None
+        )
+        self.message_user(request, f"{count} errores marcados como pendientes.")
+    mark_as_unresolved.short_description = "Marcar como pendientes"
+    
+    def delete_resolved_errors(self, request, queryset):
+        """Elimina solo los errores resueltos."""
+        resolved = queryset.filter(is_resolved=True)
+        count = resolved.count()
+        resolved.delete()
+        self.message_user(request, f"{count} errores resueltos eliminados.")
+    delete_resolved_errors.short_description = "Eliminar errores resueltos"

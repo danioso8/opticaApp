@@ -360,3 +360,213 @@ class AuditRetentionLog(models.Model):
     
     def __str__(self):
         return f"Limpieza {self.executed_at.strftime('%d/%m/%Y %H:%M')} - {self.logs_deleted} logs"
+
+
+class ErrorLog(models.Model):
+    """
+    Registro de errores de la aplicación para monitoreo en tiempo real.
+    Similar a Sentry pero propio.
+    """
+    
+    # Timestamp
+    timestamp = models.DateTimeField(
+        'Fecha y hora',
+        default=timezone.now,
+        db_index=True
+    )
+    
+    # Error information
+    error_type = models.CharField(
+        'Tipo de error',
+        max_length=200,
+        help_text='ValueError, AttributeError, KeyError, etc.'
+    )
+    
+    error_message = models.TextField(
+        'Mensaje de error'
+    )
+    
+    stack_trace = models.TextField(
+        'Stack trace completo'
+    )
+    
+    # Request information
+    url = models.CharField(
+        'URL',
+        max_length=500,
+        blank=True
+    )
+    
+    method = models.CharField(
+        'Método HTTP',
+        max_length=10,
+        blank=True,
+        help_text='GET, POST, PUT, DELETE, etc.'
+    )
+    
+    # User context
+    user = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        verbose_name='Usuario',
+        related_name='error_logs'
+    )
+    
+    organization = models.ForeignKey(
+        'organizations.Organization',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        verbose_name='Organización',
+        related_name='error_logs'
+    )
+    
+    # Request data
+    request_data = JSONFieldCompatible(
+        'Datos de petición',
+        help_text='GET params, POST data, etc.'
+    )
+    
+    user_agent = models.TextField(
+        'User Agent',
+        blank=True
+    )
+    
+    ip_address = models.GenericIPAddressField(
+        'Dirección IP',
+        null=True,
+        blank=True
+    )
+    
+    # Additional context
+    context = JSONFieldCompatible(
+        'Contexto adicional',
+        help_text='Variables locales, estado de la sesión, etc.'
+    )
+    
+    # Resolution tracking
+    is_resolved = models.BooleanField(
+        'Resuelto',
+        default=False,
+        db_index=True
+    )
+    
+    resolved_at = models.DateTimeField(
+        'Resuelto en',
+        null=True,
+        blank=True
+    )
+    
+    resolved_by = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        verbose_name='Resuelto por',
+        related_name='resolved_errors'
+    )
+    
+    resolution_notes = models.TextField(
+        'Notas de resolución',
+        blank=True
+    )
+    
+    # Occurrence tracking
+    occurrence_count = models.IntegerField(
+        'Veces que ocurrió',
+        default=1
+    )
+    
+    first_seen = models.DateTimeField(
+        'Primera vez visto',
+        default=timezone.now
+    )
+    
+    last_seen = models.DateTimeField(
+        'Última vez visto',
+        auto_now=True
+    )
+    
+    # Severity
+    SEVERITY_CHOICES = [
+        ('low', 'Baja'),
+        ('medium', 'Media'),
+        ('high', 'Alta'),
+        ('critical', 'Crítica'),
+    ]
+    
+    severity = models.CharField(
+        'Severidad',
+        max_length=10,
+        choices=SEVERITY_CHOICES,
+        default='medium'
+    )
+    
+    # Notification
+    notification_sent = models.BooleanField(
+        'Notificación enviada',
+        default=False
+    )
+    
+    class Meta:
+        verbose_name = 'Error de sistema'
+        verbose_name_plural = 'Errores de sistema'
+        ordering = ['-timestamp']
+        indexes = [
+            models.Index(fields=['error_type', 'is_resolved']),
+            models.Index(fields=['-timestamp']),
+            models.Index(fields=['user', '-timestamp']),
+            models.Index(fields=['severity', 'is_resolved']),
+        ]
+    
+    def __str__(self):
+        return f"{self.error_type} - {self.timestamp.strftime('%d/%m/%Y %H:%M')}"
+    
+    def mark_resolved(self, user, notes=''):
+        """Marca el error como resuelto"""
+        self.is_resolved = True
+        self.resolved_at = timezone.now()
+        self.resolved_by = user
+        self.resolution_notes = notes
+        self.save()
+    
+    def get_similar_errors(self, limit=5):
+        """Encuentra errores similares (mismo tipo y mensaje)"""
+        return ErrorLog.objects.filter(
+            error_type=self.error_type,
+            error_message=self.error_message,
+            is_resolved=False
+        ).exclude(id=self.id).order_by('-timestamp')[:limit]
+    
+    @classmethod
+    def get_unresolved_count(cls):
+        """Cuenta de errores sin resolver"""
+        return cls.objects.filter(is_resolved=False).count()
+    
+    @classmethod
+    def get_critical_errors(cls):
+        """Errores críticos sin resolver"""
+        return cls.objects.filter(
+            is_resolved=False,
+            severity='critical'
+        ).order_by('-timestamp')
+    
+    @classmethod
+    def get_error_stats(cls, days=7):
+        """Estadísticas de errores de los últimos N días"""
+        from django.db.models import Count, Sum
+        from django.utils import timezone
+        from datetime import timedelta
+        
+        start_date = timezone.now() - timedelta(days=days)
+        
+        stats = cls.objects.filter(timestamp__gte=start_date).aggregate(
+            total_errors=Count('id'),
+            unique_errors=Count('id', distinct=True),
+            total_occurrences=Sum('occurrence_count'),
+            unresolved=Count('id', filter=models.Q(is_resolved=False))
+        )
+        
+        return stats
