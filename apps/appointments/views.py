@@ -138,34 +138,11 @@ def available_dates(request):
         today = timezone.now().astimezone(local_tz).date()
         doctor_id = request.GET.get('doctor_id') if hasattr(request, 'GET') else request.query_params.get('doctor_id')
         
-        # Generar fechas basadas en horarios regulares
+        # SOLO mostrar fechas específicas configuradas (SpecificDateSchedule)
+        # NO generar fechas automáticas desde WorkingHours
         available_dates = []
-        max_days = config.advance_booking_days
         
-        # Obtener horarios regulares activos
-        working_hours = WorkingHours.objects.filter(
-            organization=organization,
-            is_active=True
-        ).values_list('day_of_week', flat=True)
-        
-        working_days = set(working_hours)
-        
-        # Generar fechas para los próximos N días
-        for i in range(max_days + 1):
-            current_date = today + timedelta(days=i)
-            
-            # Verificar si es día laborable
-            if current_date.weekday() in working_days:
-                # Verificar si no está bloqueada
-                is_blocked = BlockedDate.objects.filter(
-                    organization=organization,
-                    date=current_date
-                ).exists()
-                
-                if not is_blocked:
-                    available_dates.append(str(current_date))
-        
-        # También agregar fechas específicas (por si hay horarios especiales)
+        # Obtener fechas específicas configuradas
         filters = {
             'organization': organization,
             'date__gte': today,
@@ -173,24 +150,24 @@ def available_dates(request):
         }
         
         if doctor_id:
+            # SOLO fechas del doctor específico seleccionado
             from django.db.models import Q
             specific_dates = SpecificDateSchedule.objects.filter(
-                Q(doctor_profile_id=doctor_id) | Q(doctor_id=doctor_id) | Q(doctor_profile__isnull=True, doctor__isnull=True),
+                Q(doctor_profile_id=doctor_id) | Q(doctor_id=doctor_id),
                 **filters
             ).values_list('date', flat=True).distinct()
         else:
+            # Todas las fechas específicas si no hay doctor seleccionado
             specific_dates = SpecificDateSchedule.objects.filter(**filters).values_list('date', flat=True).distinct()
         
-        # Agregar fechas específicas que no estén ya en la lista
+        # Agregar solo fechas específicas que no estén bloqueadas
         for date in specific_dates:
-            date_str = str(date)
-            if date_str not in available_dates:
-                is_blocked = BlockedDate.objects.filter(
-                    organization=organization,
-                    date=date
-                ).exists()
-                if not is_blocked:
-                    available_dates.append(date_str)
+            is_blocked = BlockedDate.objects.filter(
+                organization=organization,
+                date=date
+            ).exists()
+            if not is_blocked:
+                available_dates.append(str(date))
         
         # Ordenar fechas
         available_dates.sort()
