@@ -92,12 +92,25 @@ def whatsapp_get_qr(request):
 def whatsapp_get_status(request):
     """Obtener estado de la conexión"""
     
-    if not hasattr(request, 'organization') or not request.organization:
-        return JsonResponse({'success': False, 'message': 'No hay organización activa'}, status=400)
-    
-    org_id = request.organization.id
-    
     try:
+        # Verificar organización
+        if not hasattr(request, 'organization') or not request.organization:
+            return JsonResponse({
+                'success': False, 
+                'status': 'not_started',
+                'message': 'No hay organización activa'
+            })
+        
+        org_id = request.organization.id
+        
+        # Verificar salud del servidor WhatsApp primero
+        if not whatsapp_baileys_client.healthcheck():
+            return JsonResponse({
+                'success': False,
+                'status': 'server_down',
+                'message': 'Servidor WhatsApp no disponible'
+            })
+        
         result = whatsapp_baileys_client.get_status(org_id)
         
         if result:
@@ -120,12 +133,17 @@ def whatsapp_get_status(request):
         else:
             return JsonResponse({
                 'success': False,
+                'status': 'error',
                 'message': 'No se pudo obtener el estado'
-            }, status=500)
+            })
     
     except Exception as e:
-        logger.error(f"Error obteniendo estado: {e}")
-        return JsonResponse({'success': False, 'message': str(e)}, status=500)
+        logger.error(f"Error obteniendo estado WhatsApp: {e}", exc_info=True)
+        return JsonResponse({
+            'success': False, 
+            'status': 'error',
+            'message': 'Error interno del servidor'
+        })
 
 
 @login_required
