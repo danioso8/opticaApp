@@ -112,36 +112,25 @@ def has_plan_access(context, required_plan_type):
 def show_feature_lock(context, feature_code, feature_name):
     """
     Muestra un ícono de candado y badge si el usuario no tiene acceso al feature
-    
-    MODIFICADO: Ahora siempre indica acceso completo (sin candados ni diamantes)
     """
-    # MODIFICADO: Siempre retornar acceso completo
+    request = context.get('request')
+    has_access = False
+    required_plan = 'premium'
+    
+    try:
+        if request and hasattr(request, 'user') and request.user.is_authenticated:
+            # Usar la función has_module_access para verificar
+            from apps.organizations.plan_features import has_module_access
+            has_access = has_module_access(request.user, feature_code)
+        
+        if not has_access:
+            required_plan = get_feature_required_plan(feature_code)
+    except:
+        pass
+    
     return {
-        'has_access': True,  # Siempre tiene acceso
-        'required_plan': 'free',
+        'has_access': has_access,
+        'required_plan': required_plan,
         'feature_code': feature_code,
         'feature_name': feature_name,
     }
-    
-    # CÓDIGO ORIGINAL DESHABILITADO:
-    # request = context.get('request')
-    # has_access = False
-    # required_plan = 'premium'
-    # 
-    # try:
-    #     if request and hasattr(request, 'organization'):
-    #         org = request.organization
-    #         if org and org.subscription:
-    #             has_access = org.subscription.plan.features.filter(code=feature_code).exists()
-    #     
-    #     if not has_access:
-    #         required_plan = get_feature_required_plan(feature_code)
-    # except:
-    #     pass
-    # 
-    # return {
-    #     'has_access': has_access,
-    #     'required_plan': required_plan,
-    #     'feature_code': feature_code,
-    #     'feature_name': feature_name,
-    # }

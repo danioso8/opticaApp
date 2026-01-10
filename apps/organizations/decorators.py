@@ -23,17 +23,32 @@ def require_module(module_code):
         def wrapper(request, *args, **kwargs):
             # Verificar si el usuario tiene acceso
             if not has_module_access(request.user, module_code):
-                # Obtener información del módulo y plan requerido
+                # Obtener información del módulo
                 module_info = get_module_info(module_code)
-                required_plan = get_required_plan_for_module(module_code)
-                
                 module_name = module_info.get('name', 'este módulo') if module_info else 'este módulo'
                 
-                messages.warning(
-                    request,
-                    f'⚠️ Necesitas actualizar a un plan superior para acceder a {module_name}. '
-                    f'Plan requerido: {required_plan.upper()}'
-                )
+                # Obtener planes que tienen este módulo
+                from .models import SubscriptionPlan
+                plans_with_module = SubscriptionPlan.objects.filter(
+                    features__code=module_code,
+                    features__is_active=True,
+                    is_active=True
+                ).values_list('name', flat=True)
+                
+                if plans_with_module:
+                    plans_list = ', '.join(plans_with_module)
+                    messages.warning(
+                        request,
+                        f'🔒 "{module_name}" no está disponible en tu plan actual. '
+                        f'Disponible en: {plans_list}. '
+                        f'Actualiza tu plan para tener acceso.'
+                    )
+                else:
+                    messages.warning(
+                        request,
+                        f'🔒 "{module_name}" no está disponible en tu plan actual. '
+                        f'Contacta con soporte para más información.'
+                    )
                 
                 # Redirigir a página de planes
                 return redirect('organizations:subscription_plans')

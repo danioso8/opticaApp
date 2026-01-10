@@ -206,12 +206,8 @@ class SubscriptionPlan(models.Model):
         return f"{self.name} - ${self.price_monthly}/mes"
     
     def has_feature(self, feature_code):
-        """Verifica si el plan tiene un módulo específico
-        
-        MODIFICADO: Ahora retorna siempre True para permitir acceso total
-        """
-        return True
-        # CÓDIGO ORIGINAL: return self.features.filter(code=feature_code, is_active=True).exists()
+        """Verifica si el plan tiene un módulo específico asignado"""
+        return self.features.filter(code=feature_code, is_active=True).exists()
     
     def get_max_users_display(self):
         """Retorna el límite de usuarios o 'Ilimitado'"""
@@ -365,27 +361,22 @@ class Organization(models.Model):
         """
         Verifica si la organización tiene acceso a un módulo específico.
         Considera tanto el plan como módulos comprados individualmente.
-        
-        MODIFICADO: Ahora retorna siempre True para permitir acceso total
         """
-        return True
+        # Verificar si viene del plan actual
+        subscription = self.current_subscription
+        if subscription and subscription.plan.has_feature(feature_code):
+            return True
         
-        # CÓDIGO ORIGINAL DESHABILITADO:
-        # # Verificar si viene del plan actual
-        # subscription = self.current_subscription
-        # if subscription and subscription.plan.has_feature(feature_code):
-        #     return True
-        # 
-        # # Verificar si fue habilitado manualmente o comprado por separado
-        # org_feature = self.enabled_features.filter(
-        #     feature__code=feature_code,
-        #     is_enabled=True
-        # ).first()
-        # 
-        # if org_feature:
-        #     return org_feature.is_active
-        # 
-        # return False
+        # Verificar si fue habilitado manualmente o comprado por separado
+        org_feature = self.enabled_features.filter(
+            feature__code=feature_code,
+            is_enabled=True
+        ).first()
+        
+        if org_feature:
+            return org_feature.is_active
+        
+        return False
     
     def get_available_invoices(self):
         """
@@ -510,15 +501,10 @@ class Subscription(models.Model):
         return delta.days
     
     def has_feature(self, feature_code):
-        """Verifica si la suscripción tiene acceso a un módulo específico
-        
-        MODIFICADO: Ahora retorna siempre True para permitir acceso total
-        """
-        return True
-        # CÓDIGO ORIGINAL:
-        # if not self.is_active or self.is_expired:
-        #     return False
-        # return self.plan.has_feature(feature_code)
+        """Verifica si la suscripción tiene acceso a un módulo específico"""
+        if not self.is_active or self.is_expired:
+            return False
+        return self.plan.has_feature(feature_code)
 
 
 class ModulePermission(models.Model):

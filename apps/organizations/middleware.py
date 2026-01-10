@@ -254,49 +254,53 @@ class PlanFeatureMiddleware(MiddlewareMixin):
     def process_request(self, request):
         """Verifica si el usuario tiene acceso a la característica"""
         
-        # ACCESO TOTAL: Permitir acceso a todas las características sin verificación
-        return None
+        # Saltar verificación para URLs exentas
+        if any(request.path.startswith(url) for url in self.EXEMPT_URLS):
+            return None
         
-        # CÓDIGO ORIGINAL DESHABILITADO:
-        # # Saltar verificación para URLs exentas
-        # if any(request.path.startswith(url) for url in self.EXEMPT_URLS):
-        #     return None
-        # 
-        # # Solo verificar para usuarios autenticados
-        # if not request.user.is_authenticated:
-        #     return None
-        # 
-        # # Superusuarios tienen acceso completo
-        # if request.user.is_superuser:
-        #     return None
-        # 
-        # # Verificar si la URL requiere una característica específica
-        # required_feature = self._get_required_feature(request.path)
-        # 
-        # if not required_feature:
-        #     return None
-        # 
-        # # Obtener el plan del usuario
-        # plan = getattr(request, 'plan', None)
-        # 
-        # if not plan:
-        #     return None
-        # 
-        # # Verificar si el plan incluye la característica
-        # has_feature = self._check_feature_access(plan, required_feature)
-        # 
-        # if not has_feature:
-        #     # Bloquear acceso y mostrar mensaje
-        #     from django.contrib import messages
-        #     feature_name = self._get_feature_display_name(required_feature)
-        #     messages.warning(
-        #         request,
-        #         f'🔒 La característica "{feature_name}" no está disponible en tu plan actual. '
-        #         f'Actualiza tu plan para desbloquearla.'
-        #     )
-        #     return redirect(reverse('dashboard:home'))
-        # 
-        # return None
+        # Solo verificar para usuarios autenticados
+        if not request.user.is_authenticated:
+            return None
+        
+        # Superusuarios tienen acceso completo
+        if request.user.is_superuser:
+            return None
+        
+        # Verificar si la URL requiere una característica específica
+        required_feature = self._get_required_feature(request.path)
+        
+        if not required_feature:
+            return None
+        
+        # Usar has_module_access para verificar
+        from .plan_features import has_module_access
+        
+        if not has_module_access(request.user, required_feature):
+            # Obtener planes que tienen este módulo
+            from .models import SubscriptionPlan
+            plans_with_module = SubscriptionPlan.objects.filter(
+                features__code=required_feature,
+                features__is_active=True,
+                is_active=True
+            ).values_list('name', flat=True)
+            
+            if plans_with_module:
+                plans_list = ', '.join(plans_with_module)
+                feature_name = self._get_feature_display_name(required_feature)
+                messages.warning(
+                    request,
+                    f'🔒 "{feature_name}" no está disponible en tu plan actual. '
+                    f'Disponible en: {plans_list}. Actualiza tu plan para acceder.'
+                )
+            else:
+                messages.warning(
+                    request,
+                    f'🔒 Esta característica no está disponible en tu plan actual.'
+                )
+            
+            return redirect(reverse('dashboard:home'))
+        
+        return None
     
     def _get_required_feature(self, path):
         """Obtiene la característica requerida para una URL"""
