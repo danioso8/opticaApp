@@ -1,5 +1,5 @@
 from rest_framework import viewsets, status
-from rest_framework.decorators import action, api_view, permission_classes
+from rest_framework.decorators import action, api_view, permission_classes, throttle_classes
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from django.utils import timezone
@@ -101,6 +101,7 @@ class AppointmentViewSet(viewsets.ModelViewSet):
 
 @api_view(['GET'])
 @permission_classes([AllowAny])
+@throttle_classes([])  # Desactivar throttling para endpoint público
 def available_dates(request):
     """
     API pública para obtener fechas disponibles
@@ -205,6 +206,7 @@ def available_dates(request):
 
 @api_view(['GET'])
 @permission_classes([AllowAny])
+@throttle_classes([])  # Desactivar throttling para endpoint público
 def available_slots(request):
     """
     API pública para obtener horarios disponibles de una fecha
@@ -257,6 +259,7 @@ def available_slots(request):
 
 @api_view(['POST'])
 @permission_classes([AllowAny])
+@throttle_classes([])  # Desactivar throttling para endpoint público
 def book_appointment(request):
     """
     API pública para agendar cita desde landing page
