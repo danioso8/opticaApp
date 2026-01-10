@@ -152,6 +152,10 @@ PLAN_MODULES = {
         'landing_config',
         'invoices_basic',
         'clinical_history',
+        # Inventario básico
+        'products',
+        'inventory',
+        'suppliers',
     ],
     'basic': [
         # Todo lo de Free +
@@ -162,7 +166,7 @@ PLAN_MODULES = {
         'landing_config',
         'invoices_basic',
         'clinical_history',
-        # + Inventario
+        # Inventario
         'products',
         'inventory',
         'suppliers',
@@ -223,6 +227,8 @@ PLAN_MODULES = {
         'doctors',
         'landing_config',
         'invoices_basic',
+        'invoices',  # Facturación general
+        'billing',  # Módulo billing completo
         'clinical_history',
         'products',
         'inventory',
@@ -238,16 +244,22 @@ PLAN_MODULES = {
         'multi_location',
         'api_access',
         # + Nómina Electrónica
+        'payroll',  # Nómina general
         'payroll_dian',
         'payroll_config',
         # + Marketing y Automatización
         'workflows',
         'promotions',
+        'marketing',  # Marketing general
         'email_marketing',
         # + Adicionales Enterprise
         'audit',
         'permissions_advanced',
         'configuration_advanced',
+        # + Otros módulos
+        'cash_register',  # Caja registradora
+        'sales',  # Ventas
+        'employees',  # Empleados
     ],
 }
 
@@ -269,66 +281,73 @@ def has_module_access(user, module_code):
     """
     Verifica si un usuario tiene acceso a un módulo específico
     
+    MODIFICADO: Ahora permite acceso total a todos los módulos sin restricciones de plan
+    
     Args:
         user: Usuario de Django
         module_code (str): Código del módulo a verificar
     
     Returns:
-        bool: True si tiene acceso, False si no
+        bool: True (siempre tiene acceso)
     """
-    # Superusuarios tienen acceso a todo
-    if user.is_superuser:
-        return True
+    # ACCESO TOTAL: Todos los usuarios autenticados tienen acceso a todos los módulos
+    return True
     
-    # Primero verificar la suscripción de la organización (si pertenece a alguna)
-    try:
-        from apps.organizations.models import OrganizationMember
-        from apps.users.models import UserSubscription
-        
-        # Buscar membresía activa del usuario
-        membership = OrganizationMember.objects.filter(
-            user=user,
-            is_active=True,
-            organization__is_active=True
-        ).select_related('organization').first()
-        
-        if membership and membership.organization:
-            # Si la organización tiene suscripción, usar esa
-            org_subscription = UserSubscription.objects.filter(
-                user=membership.organization.owner,
-                is_active=True
-            ).first()
-            
-            if org_subscription and not org_subscription.needs_payment_after_trial():
-                plan_type = org_subscription.plan.plan_type
-                allowed_modules = get_plan_modules(plan_type)
-                return module_code in allowed_modules
-        
-        # Si no hay suscripción de organización, verificar suscripción personal del usuario
-        subscription = UserSubscription.objects.get(user=user)
-        
-        # Verificar que la suscripción esté activa
-        if not subscription.is_active:
-            return False
-        
-        # Si el trial expiró y no ha pagado, bloquear todo excepto dashboard
-        if subscription.needs_payment_after_trial():
-            return module_code == 'dashboard'
-        
-        # Obtener módulos del plan
-        plan_type = subscription.plan.plan_type
-        allowed_modules = get_plan_modules(plan_type)
-        
-        return module_code in allowed_modules
-        
-    except:
-        # Si no tiene suscripción, solo acceso a dashboard
-        return module_code == 'dashboard'
+    # CÓDIGO ORIGINAL DESHABILITADO:
+    # # Superusuarios tienen acceso a todo
+    # if user.is_superuser:
+    #     return True
+    # 
+    # # Primero verificar la suscripción de la organización (si pertenece a alguna)
+    # try:
+    #     from apps.organizations.models import OrganizationMember, Subscription
+    #     from apps.users.models import UserSubscription
+    #     
+    #     # Buscar membresía activa del usuario
+    #     membership = OrganizationMember.objects.filter(
+    #         user=user,
+    #         is_active=True,
+    #         organization__is_active=True
+    #     ).select_related('organization').first()
+    #     
+    #     if membership and membership.organization:
+    #         organization = membership.organization
+    #         
+    #         # CORRECCIÓN: Usar current_subscription de la organización, NO la del owner
+    #         org_subscription = organization.current_subscription
+    #         
+    #         if org_subscription and org_subscription.is_active:
+    #             plan_type = org_subscription.plan_type
+    #             allowed_modules = get_plan_modules(plan_type)
+    #             return module_code in allowed_modules
+    #     
+    #     # Si no hay suscripción de organización, verificar suscripción personal del usuario
+    #     subscription = UserSubscription.objects.get(user=user)
+    #     
+    #     # Verificar que la suscripción esté activa
+    #     if not subscription.is_active:
+    #         return False
+    #     
+    #     # Si el trial expiró y no ha pagado, bloquear todo excepto dashboard
+    #     if subscription.needs_payment_after_trial():
+    #         return module_code == 'dashboard'
+    #     
+    #     # Obtener módulos del plan
+    #     plan_type = subscription.plan.plan_type
+    #     allowed_modules = get_plan_modules(plan_type)
+    #     
+    #     return module_code in allowed_modules
+    #     
+    # except:
+    #     # Si no tiene suscripción, solo acceso a dashboard
+    #     return module_code == 'dashboard'
 
 
 def get_user_modules(user):
     """
     Obtiene todos los módulos a los que el usuario tiene acceso
+    
+    MODIFICADO: Ahora retorna todos los módulos disponibles sin restricciones
     
     Args:
         user: Usuario de Django
@@ -336,22 +355,26 @@ def get_user_modules(user):
     Returns:
         dict: Diccionario con módulos agrupados por categoría
     """
-    # Superusuarios tienen acceso a todo
-    if user.is_superuser:
-        allowed_modules = list(MODULES.keys())
-    else:
-        try:
-            from apps.users.models import UserSubscription
-            subscription = UserSubscription.objects.get(user=user)
-            
-            # Si el trial expiró, solo dashboard
-            if subscription.needs_payment_after_trial():
-                allowed_modules = ['dashboard']
-            else:
-                plan_type = subscription.plan.plan_type
-                allowed_modules = get_plan_modules(plan_type)
-        except:
-            allowed_modules = ['dashboard']
+    # ACCESO TOTAL: Retornar todos los módulos disponibles
+    allowed_modules = list(MODULES.keys())
+    
+    # CÓDIGO ORIGINAL DESHABILITADO:
+    # # Superusuarios tienen acceso a todo
+    # if user.is_superuser:
+    #     allowed_modules = list(MODULES.keys())
+    # else:
+    #     try:
+    #         from apps.users.models import UserSubscription
+    #         subscription = UserSubscription.objects.get(user=user)
+    #         
+    #         # Si el trial expiró, solo dashboard
+    #         if subscription.needs_payment_after_trial():
+    #             allowed_modules = ['dashboard']
+    #         else:
+    #             plan_type = subscription.plan.plan_type
+    #             allowed_modules = get_plan_modules(plan_type)
+    #     except:
+    #         allowed_modules = ['dashboard']
     
     # Organizar por categorías
     modules_by_category = {}

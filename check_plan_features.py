@@ -1,29 +1,68 @@
-from apps.organizations.models import SubscriptionPlan, PlanFeature
+"""
+Verificar PlanFeature para electronic_invoicing
+"""
+import os
+import django
 
-# Obtener el Plan Empresarial
-plan = SubscriptionPlan.objects.get(name='Plan Empresarial')
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.settings')
+django.setup()
 
-print(f'=== {plan.name} ===')
-print(f'Tipo: {plan.plan_type}')
-print(f'\n=== Campos Booleanos de Características ===')
-print(f'allow_electronic_invoicing: {plan.allow_electronic_invoicing}')
-print(f'whatsapp_integration: {plan.whatsapp_integration}')
-print(f'custom_branding: {plan.custom_branding}')
-print(f'api_access: {plan.api_access}')
-print(f'priority_support: {plan.priority_support}')
-print(f'analytics: {plan.analytics}')
-print(f'multi_location: {plan.multi_location}')
+from apps.organizations.models import PlanFeature, SubscriptionPlan
 
-print(f'\n=== Features M2M Asignadas ===')
-features = plan.features.all()
-print(f'Total: {features.count()}')
-for feature in features:
-    print(f'  ✓ {feature.code}: {feature.name} ({feature.category})')
+print("=" * 70)
+print("VERIFICACIÓN DE PlanFeature")
+print("=" * 70)
 
-print(f'\n=== TODAS las Features Disponibles en el Sistema ===')
-all_features = PlanFeature.objects.filter(is_active=True)
-print(f'Total disponibles: {all_features.count()}')
-for feature in all_features:
-    has_it = plan.features.filter(code=feature.code).exists()
-    status = '✓' if has_it else '✗'
-    print(f'  {status} {feature.code}: {feature.name} ({feature.category})')
+# Listar todos los PlanFeature
+print("\nTodos los PlanFeature en la base de datos:")
+print("-" * 70)
+features = PlanFeature.objects.all()
+if features.exists():
+    for feat in features:
+        print(f"  - {feat.code}: {feat.name}")
+else:
+    print("  ❌ No hay PlanFeature registrados")
+
+# Buscar electronic_invoicing específicamente
+print("\n" + "=" * 70)
+print("Buscar 'electronic_invoicing':")
+print("-" * 70)
+
+try:
+    elec_inv = PlanFeature.objects.get(code='electronic_invoicing')
+    print(f"✅ Encontrado: {elec_inv.name}")
+    print(f"   Descripción: {elec_inv.description}")
+    print(f"   Categoría: {elec_inv.category}")
+    
+    # Ver qué planes lo tienen
+    plans = SubscriptionPlan.objects.filter(features__code='electronic_invoicing')
+    print(f"\n   Planes que lo incluyen:")
+    for plan in plans:
+        print(f"     - {plan.name} ({plan.plan_type})")
+        
+except PlanFeature.DoesNotExist:
+    print("❌ NO existe PlanFeature con code='electronic_invoicing'")
+    print("\n💡 SOLUCIÓN: Necesitas crear este PlanFeature o")
+    print("   usar el sistema PLAN_MODULES en lugar de PlanFeature")
+
+print("\n" + "=" * 70)
+print("Plan Empresarial:")
+print("-" * 70)
+
+try:
+    plan = SubscriptionPlan.objects.get(plan_type='enterprise')
+    print(f"✅ Plan: {plan.name}")
+    print(f"   Features asociados: {plan.features.count()}")
+    
+    if plan.features.exists():
+        print("\n   Lista de features:")
+        for feat in plan.features.all():
+            print(f"     - {feat.code}: {feat.name}")
+    else:
+        print("   ⚠️ Este plan NO tiene features asociados")
+        print("   El sidebar mostrará candados en todo")
+        
+except SubscriptionPlan.DoesNotExist:
+    print("❌ Plan enterprise no encontrado")
+
+print("\n" + "=" * 70)

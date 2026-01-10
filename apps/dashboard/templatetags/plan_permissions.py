@@ -62,6 +62,7 @@ def get_plan_badge(plan_type):
         'basic': '<span class="text-xs bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full font-semibold ml-1">BÁSICO</span>',
         'professional': '<span class="text-xs bg-purple-100 text-purple-800 px-2 py-0.5 rounded-full font-semibold ml-1">PRO</span>',
         'premium': '<span class="text-xs bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full font-semibold ml-1">💎 PREMIUM</span>',
+        'enterprise': '<span class="text-xs bg-gradient-to-r from-purple-500 to-pink-500 text-white px-2 py-0.5 rounded-full font-semibold ml-1">👑 EMPRESARIAL</span>',
     }
     return badges.get(plan_type, '')
 
@@ -99,10 +100,10 @@ def has_plan_access(context, required_plan_type):
         current_plan = org.subscription.plan.plan_type
     
     # Orden de planes
-    plan_hierarchy = {'free': 0, 'basic': 1, 'professional': 2, 'premium': 3}
+    plan_hierarchy = {'free': 0, 'basic': 1, 'professional': 2, 'premium': 3, 'enterprise': 4}
     
     current_level = plan_hierarchy.get(current_plan, 0)
-    required_level = plan_hierarchy.get(required_plan_type, 3)
+    required_level = plan_hierarchy.get(required_plan_type, 4)
     
     return current_level >= required_level
 
@@ -111,25 +112,36 @@ def has_plan_access(context, required_plan_type):
 def show_feature_lock(context, feature_code, feature_name):
     """
     Muestra un ícono de candado y badge si el usuario no tiene acceso al feature
+    
+    MODIFICADO: Ahora siempre indica acceso completo (sin candados ni diamantes)
     """
-    request = context.get('request')
-    has_access = False
-    required_plan = 'premium'
-    
-    try:
-        if request and hasattr(request, 'organization'):
-            org = request.organization
-            if org and org.subscription:
-                has_access = org.subscription.plan.features.filter(code=feature_code).exists()
-        
-        if not has_access:
-            required_plan = get_feature_required_plan(feature_code)
-    except:
-        pass
-    
+    # MODIFICADO: Siempre retornar acceso completo
     return {
-        'has_access': has_access,
-        'required_plan': required_plan,
+        'has_access': True,  # Siempre tiene acceso
+        'required_plan': 'free',
         'feature_code': feature_code,
         'feature_name': feature_name,
     }
+    
+    # CÓDIGO ORIGINAL DESHABILITADO:
+    # request = context.get('request')
+    # has_access = False
+    # required_plan = 'premium'
+    # 
+    # try:
+    #     if request and hasattr(request, 'organization'):
+    #         org = request.organization
+    #         if org and org.subscription:
+    #             has_access = org.subscription.plan.features.filter(code=feature_code).exists()
+    #     
+    #     if not has_access:
+    #         required_plan = get_feature_required_plan(feature_code)
+    # except:
+    #     pass
+    # 
+    # return {
+    #     'has_access': has_access,
+    #     'required_plan': required_plan,
+    #     'feature_code': feature_code,
+    #     'feature_name': feature_name,
+    # }

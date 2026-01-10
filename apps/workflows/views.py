@@ -16,11 +16,9 @@ from .models import (
 from .services import (
     WorkflowService, WorkflowApprovalService, WorkflowHistoryService
 )
-from apps.organizations.decorators import require_feature
 
 
 @login_required
-@require_feature('workflows')
 def workflow_list(request):
     """Lista de workflows disponibles"""
     organization = request.organization

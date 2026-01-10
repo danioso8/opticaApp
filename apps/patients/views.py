@@ -8,10 +8,8 @@ from datetime import datetime
 
 from .models import Patient
 from apps.appointments.models import Appointment
-from apps.dashboard.decorators import require_module_permission
 
 
-@require_module_permission('patients', 'view')
 def patient_list(request):
     """Lista de pacientes con búsqueda y filtros"""
     org_filter = {'organization': request.organization} if hasattr(request, 'organization') and request.organization else {}
@@ -61,7 +59,6 @@ def patient_list(request):
     return render(request, 'dashboard/patients/list.html', context)
 
 
-@require_module_permission('patients', 'view')
 def patient_detail(request, pk):
     """Detalle de un paciente"""
     from apps.patients.models import Doctor
@@ -96,7 +93,6 @@ def patient_detail(request, pk):
     return render(request, 'dashboard/patients/detail.html', context)
 
 
-@require_module_permission('patients', 'create')
 def patient_create(request):
     """Crear nuevo paciente"""
     if request.method == 'POST':
@@ -146,7 +142,6 @@ def patient_create(request):
     return render(request, 'dashboard/patients/create.html', context)
 
 
-@require_module_permission('patients', 'edit')
 def patient_edit(request, pk):
     """Editar paciente"""
     org_filter = {'organization': request.organization} if hasattr(request, 'organization') and request.organization else {}
@@ -199,7 +194,6 @@ def patient_edit(request, pk):
     return render(request, 'dashboard/patients/edit.html', context)
 
 
-@require_module_permission('patients', 'delete')
 def patient_delete(request, pk):
     """Eliminar (desactivar) paciente"""
     if request.method == 'POST':
@@ -228,7 +222,6 @@ def patient_delete(request, pk):
     return redirect('dashboard:patients_list')
 
 
-@require_module_permission('patients', 'view')
 def patient_search_api(request):
     """API para búsqueda de pacientes (AJAX)"""
     query = request.GET.get('q', '')

@@ -78,17 +78,20 @@ def module_badge(context, module_code):
     """
     Muestra un badge de "Upgrade" si el usuario no tiene acceso al módulo
     
+    MODIFICADO: Ahora siempre indica acceso completo (sin candados)
+    
     Uso en templates:
         {% load plan_features %}
         {% module_badge 'whatsapp' %}
     """
     request = context.get('request')
-    has_access = False
+    has_access = True  # MODIFICADO: Siempre tiene acceso
     required_plan = get_required_plan_for_module(module_code)
     module_data = get_module_info(module_code)
     
-    if request and request.user.is_authenticated:
-        has_access = has_module_access(request.user, module_code)
+    # CÓDIGO ORIGINAL DESHABILITADO:
+    # if request and request.user.is_authenticated:
+    #     has_access = has_module_access(request.user, module_code)
     
     return {
         'has_access': has_access,

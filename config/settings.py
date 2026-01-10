@@ -42,12 +42,20 @@ if not DEBUG:
     SECURE_HSTS_SECONDS = 31536000
     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
     SECURE_HSTS_PRELOAD = True
-    
-    # CSRF trusted origins - Actualizar cuando se configure dominio
+
+# CSRF trusted origins - Lee de .env o usa defaults
+csrf_origins_str = config('CSRF_TRUSTED_ORIGINS', default='')
+if csrf_origins_str:
+    CSRF_TRUSTED_ORIGINS = csrf_origins_str.split(',')
+else:
+    # Fallback a valores por defecto
     CSRF_TRUSTED_ORIGINS = [
         'https://optikaapp.com',
         'https://www.optikaapp.com',
         'https://demo.optikaapp.com',
+        'http://www.optikaapp.com',
+        'http://optikaapp.com',
+        'http://84.247.129.180',
         'http://127.0.0.1:8000',
         'http://127.0.0.1:8001',
         'http://localhost:8000',
@@ -116,7 +124,7 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'apps.audit.middleware.AuditMiddleware',  # Captura info de requests para auditoría
-    'apps.audit.middleware.ErrorCaptureMiddleware',  # Captura y registra errores automáticamente
+    'apps.audit.middleware.ErrorCaptureMiddleware',  # Monitoreo de errores (similar a Sentry)
 ]
 
 # Configurar Whitenoise para NO servir archivos de MEDIA en desarrollo

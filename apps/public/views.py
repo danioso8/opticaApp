@@ -8,8 +8,36 @@ from apps.appointments.utils import get_available_slots_for_date
 
 def home(request):
     """Página principal pública - Nueva landing profesional de OptikaApp"""
-    # Mostrar la nueva landing profesional
-    return render(request, 'public/landing_optikaapp.html')
+    from apps.organizations.models import SubscriptionPlan, PlanFeature, OrganizationMember
+    from django.shortcuts import redirect
+    
+    # Si el usuario está autenticado, redirigir a la landing de su organización
+    if request.user.is_authenticated:
+        # Obtener la primera organización del usuario
+        membership = OrganizationMember.objects.filter(
+            user=request.user,
+            is_active=True
+        ).select_related('organization').first()
+        
+        if membership and membership.organization.slug:
+            # Redirigir a la landing page de la organización
+            return redirect('public:organization_landing', org_slug=membership.organization.slug)
+        else:
+            # Si no tiene organización, ir al dashboard
+            return redirect('dashboard:home')
+    
+    # Obtener todos los planes activos ordenados por precio mensual
+    plans = SubscriptionPlan.objects.filter(is_active=True).prefetch_related('features').order_by('price_monthly')
+    
+    # Obtener todas las features disponibles para mostrar comparación
+    all_features = PlanFeature.objects.filter(is_active=True).order_by('category', 'name')
+    
+    context = {
+        'plans': plans,
+        'all_features': all_features,
+    }
+    
+    return render(request, 'public/landing_optikaapp.html', context)
 
 
 def organization_landing(request, org_slug):

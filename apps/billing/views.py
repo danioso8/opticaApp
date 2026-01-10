@@ -9,9 +9,7 @@ from datetime import datetime, timedelta
 from decimal import Decimal
 
 from apps.organizations.models import Organization, OrganizationMember
-from apps.organizations.decorators import require_module, require_inventory, require_dian, require_feature
 from apps.patients.models import Patient
-from apps.dashboard.decorators import require_module_permission
 from .models import DianConfiguration, Invoice, InvoiceItem, Payment, Supplier, InvoiceProduct, InvoiceConfiguration
 
 
@@ -32,7 +30,6 @@ def get_user_organization(request):
 
 
 @login_required
-@require_dian
 def dian_configuration_view(request):
     """
     Vista para configurar los parámetros de la DIAN.
@@ -111,8 +108,6 @@ def dian_configuration_view(request):
     return render(request, 'billing/dian_config.html', context)
 
 
-@require_module_permission('invoices', 'view')
-@require_feature('electronic_invoicing')
 def invoice_list(request):
     """Lista de facturas electrónicas"""
     # Obtener organización del usuario
@@ -188,7 +183,6 @@ def invoice_list(request):
     return render(request, 'billing/invoice_list.html', context)
 
 
-@require_module_permission('invoices', 'create')
 def invoice_create(request):
     """Crear nueva factura electrónica"""
     from django.utils import timezone
@@ -599,8 +593,6 @@ def invoice_create(request):
 # VISTAS PARA PROVEEDORES
 # =====================================================
 
-@require_module_permission('suppliers', 'view')
-@require_inventory
 def supplier_list(request):
     """Lista de proveedores"""
     org_member = OrganizationMember.objects.filter(user=request.user).first()
@@ -636,7 +628,6 @@ def supplier_list(request):
     return render(request, 'billing/supplier_list.html', context)
 
 
-@require_module_permission('suppliers', 'create')
 def supplier_create(request):
     """Crear nuevo proveedor"""
     org_member = OrganizationMember.objects.filter(user=request.user).first()
@@ -698,7 +689,6 @@ def supplier_create(request):
     return render(request, 'billing/supplier_form.html', context)
 
 
-@require_module_permission('suppliers', 'edit')
 def supplier_edit(request, supplier_id):
     """Editar proveedor"""
     org_member = OrganizationMember.objects.filter(user=request.user).first()
@@ -962,8 +952,6 @@ def supplier_delete(request, supplier_id):
 # VISTAS PARA PRODUCTOS
 # =====================================================
 
-@require_module_permission('products', 'view')
-@require_inventory
 def product_list(request):
     """Lista de productos"""
     organization = get_user_organization(request)
@@ -1037,7 +1025,6 @@ def product_list(request):
     return render(request, 'billing/product_list.html', context)
 
 
-@require_module_permission('products', 'create')
 def product_create(request):
     """Crear nuevo producto"""
     organization = get_user_organization(request)
@@ -1116,7 +1103,6 @@ def product_create(request):
     return render(request, 'billing/product_form.html', context)
 
 
-@require_module_permission('products', 'edit')
 def product_edit(request, product_id):
     """Editar producto"""
     organization = get_user_organization(request)
@@ -1194,7 +1180,6 @@ def product_edit(request, product_id):
     return render(request, 'billing/product_form.html', context)
 
 
-@require_module_permission('products', 'delete')
 def product_delete(request, product_id):
     """Eliminar producto"""
     org_member = OrganizationMember.objects.filter(user=request.user).first()
@@ -1322,7 +1307,6 @@ def invoice_config(request):
     return render(request, 'billing/invoice_config.html', context)
 
 
-@require_module_permission('invoices', 'view')
 def invoice_detail(request, invoice_id):
     """Ver detalle de factura"""
     org_member = OrganizationMember.objects.filter(user=request.user).first()

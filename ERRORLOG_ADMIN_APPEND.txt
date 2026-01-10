@@ -1,0 +1,162 @@
+
+# Admin adicional para ErrorLog al final del archivo audit/admin.py
+
+@admin.register(ErrorLog)
+class ErrorLogAdmin(admin.ModelAdmin):
+    """Admin para logs de errores del sistema."""
+    
+    list_display = [
+        'timestamp', 'severity_badge', 'error_type_display',
+        'error_message_short', 'url_short', 'user', 'occurrence_count',
+        'resolved_badge'
+    ]
+    
+    list_filter = [
+        'severity',
+        'is_resolved',
+        'error_type',
+        'timestamp',
+        ('user', admin.RelatedOnlyFieldListFilter),
+        'organization',
+    ]
+    
+    search_fields = [
+        'error_type',
+        'error_message',
+        'url',
+        'user__username',
+        'user__email',
+        'stack_trace',
+    ]
+    
+    readonly_fields = [
+        'timestamp', 'error_type', 'error_message', 'stack_trace_display',
+        'url', 'method', 'user', 'organization', 'request_data_display',
+        'user_agent', 'ip_address', 'context_display', 'occurrence_count',
+        'first_seen', 'last_seen', 'notification_sent'
+    ]
+    
+    date_hierarchy = 'timestamp'
+    
+    fieldsets = (
+        ('Información del Error', {
+            'fields': ('timestamp', 'error_type', 'error_message', 'severity')
+        }),
+        ('Stack Trace', {
+            'fields': ('stack_trace_display',),
+            'classes': ('collapse',),
+        }),
+        ('Contexto de la Petición', {
+            'fields': ('url', 'method', 'user', 'organization')
+        }),
+        ('Datos de la Petición', {
+            'fields': ('request_data_display', 'user_agent', 'ip_address'),
+            'classes': ('collapse',),
+        }),
+        ('Contexto Adicional', {
+            'fields': ('context_display',),
+            'classes': ('collapse',),
+        }),
+        ('Seguimiento de Ocurrencias', {
+            'fields': ('occurrence_count', 'first_seen', 'last_seen')
+        }),
+        ('Resolución', {
+            'fields': ('is_resolved', 'resolved_at', 'resolved_by', 'resolution_notes')
+        }),
+        ('Notificación', {
+            'fields': ('notification_sent',),
+            'classes': ('collapse',),
+        }),
+    )
+    
+    actions = ['mark_as_resolved', 'mark_as_unresolved', 'delete_resolved_errors']
+    
+    def severity_badge(self, obj):
+        colors = {
+            'low': '#28a745',
+            'medium': '#ffc107',
+            'high': '#fd7e14',
+            'critical': '#dc3545',
+        }
+        color = colors.get(obj.severity, '#6c757d')
+        return format_html(
+            '<span style="background-color: {}; color: white; padding: 3px 10px; border-radius: 3px; font-weight: bold;">{}</span>',
+            color,
+            obj.get_severity_display().upper()
+        )
+    severity_badge.short_description = 'Severidad'
+    
+    def error_type_display(self, obj):
+        return format_html('<code>{}</code>', obj.error_type)
+    error_type_display.short_description = 'Tipo'
+    
+    def error_message_short(self, obj):
+        if len(obj.error_message) > 100:
+            return obj.error_message[:100] + '...'
+        return obj.error_message
+    error_message_short.short_description = 'Mensaje'
+    
+    def url_short(self, obj):
+        if len(obj.url) > 50:
+            return obj.url[:50] + '...'
+        return obj.url
+    url_short.short_description = 'URL'
+    
+    def resolved_badge(self, obj):
+        if obj.is_resolved:
+            return format_html(
+                '<span style="background-color: #28a745; color: white; padding: 3px 10px; border-radius: 3px;">✓ Resuelto</span>'
+            )
+        return format_html(
+            '<span style="background-color: #dc3545; color: white; padding: 3px 10px; border-radius: 3px;">Pendiente</span>'
+        )
+    resolved_badge.short_description = 'Estado'
+    
+    def stack_trace_display(self, obj):
+        return format_html('<pre style="background: #f8f9fa; padding: 15px; border-radius: 5px; overflow-x: auto;">{}</pre>', obj.stack_trace)
+    stack_trace_display.short_description = 'Stack Trace Completo'
+    
+    def request_data_display(self, obj):
+        import json
+        try:
+            formatted = json.dumps(obj.request_data, indent=2, ensure_ascii=False)
+            return format_html('<pre style="background: #f8f9fa; padding: 10px;">{}</pre>', formatted)
+        except:
+            return str(obj.request_data)
+    request_data_display.short_description = 'Datos de Petición'
+    
+    def context_display(self, obj):
+        import json
+        try:
+            formatted = json.dumps(obj.context, indent=2, ensure_ascii=False)
+            return format_html('<pre style="background: #f8f9fa; padding: 10px;">{}</pre>', formatted)
+        except:
+            return str(obj.context)
+    context_display.short_description = 'Contexto'
+    
+    def mark_as_resolved(self, request, queryset):
+        for error in queryset:
+            error.mark_resolved(request.user, 'Resuelto desde admin')
+        count = queryset.count()
+        self.message_user(request, f"{count} errores marcados como resueltos.")
+    mark_as_resolved.short_description = "Marcar como resuelto"
+    
+    def mark_as_unresolved(self, request, queryset):
+        count = queryset.update(
+            is_resolved=False,
+            resolved_at=None,
+            resolved_by=None,
+            resolution_notes=''
+        )
+        self.message_user(request, f"{count} errores marcados como no resueltos.")
+    mark_as_unresolved.short_description = "Marcar como no resuelto"
+    
+    def delete_resolved_errors(self, request, queryset):
+        resolved = queryset.filter(is_resolved=True)
+        count = resolved.count()
+        resolved.delete()
+        self.message_user(request, f"{count} errores resueltos eliminados.")
+    delete_resolved_errors.short_description = "Eliminar errores resueltos"
+    
+    def has_add_permission(self, request):
+        return False

@@ -14,7 +14,6 @@ from django.utils import timezone
 from django.db.models import Count, Q, Sum, F
 from datetime import datetime, timedelta
 from decimal import Decimal
-from apps.organizations.decorators import require_whatsapp
 
 # Importar vistas de historia clínica
 from .views_clinical import (
@@ -1722,7 +1721,6 @@ _Este mensaje fue enviado desde el panel de administración_
 # ==================== CONFIGURACIÓN DE NOTIFICACIONES ====================
 
 @login_required
-@require_whatsapp
 def notification_settings(request):
     """Vista de configuración de notificaciones"""
     from apps.appointments.models_notifications import NotificationSettings
@@ -1738,7 +1736,6 @@ def notification_settings(request):
     return render(request, 'dashboard/notification_settings.html', context)
 
 @login_required
-@require_whatsapp
 def save_notification_settings(request):
     """Guardar configuración de notificaciones"""
     if request.method == 'POST':

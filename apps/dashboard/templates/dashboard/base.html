@@ -259,7 +259,7 @@
                         <span class="sidebar-tooltip">Facturación y Finanzas</span>
                     </button>
                     <div id="sales-submenu" class="bg-indigo-950 hidden sidebar-submenu">
-                        {% if user_perms.all_access or user_perms.invoices.can_view %}
+                        {% if user_perms.all_access or user_perms.invoices_basic.can_view %}
                         <a href="{% url 'billing:invoice_list' %}" class="flex items-center px-8 py-2 hover:bg-indigo-800 text-sm relative">
                             <i class="fas fa-file-invoice mr-3"></i>
                             <span class="sidebar-text">Facturas Electrónicas</span>

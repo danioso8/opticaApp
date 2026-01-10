@@ -351,11 +351,9 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.http import JsonResponse
-from apps.organizations.decorators import require_feature
 
 
 @login_required
-@require_feature('payroll_dian')
 def payroll_dashboard(request):
     """Dashboard principal de nómina"""
     organization = request.organization

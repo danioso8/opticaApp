@@ -8,11 +8,12 @@ user = User.objects.get(username='danioso8329')
 print(f'Usuario encontrado: {user.username}')
 
 # Crear/actualizar plan empresarial
-plan, created = SubscriptionPlan.objects.get_or_create(
+plan, created = SubscriptionPlan.objects.update_or_create(
     name='Plan Empresarial',
     defaults={
-        'plan_type': 'enterprise',
-        'price': 0,
+        'plan_type': 'enterprise',  # DEBE SER 'enterprise' NO 'empresarial'
+        'price_monthly': 0,
+        'price_yearly': 0,
         'max_users': 999999,
         'max_organizations': 999999,
         'max_appointments_per_month': 999999,
@@ -25,6 +26,7 @@ plan, created = SubscriptionPlan.objects.get_or_create(
 )
 
 # Actualizar todos los límites a ilimitado
+plan.plan_type = 'enterprise'  # FORZAR plan_type correcto
 plan.max_users = 999999
 plan.max_organizations = 999999
 plan.max_appointments_per_month = 999999
@@ -38,6 +40,7 @@ plan.is_active = True
 plan.save()
 
 print(f'Plan configurado: {plan.name}')
+print(f'Plan Type: {plan.plan_type}')
 
 # Actualizar suscripción existente
 from django.utils import timezone

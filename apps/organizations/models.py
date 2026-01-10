@@ -206,8 +206,12 @@ class SubscriptionPlan(models.Model):
         return f"{self.name} - ${self.price_monthly}/mes"
     
     def has_feature(self, feature_code):
-        """Verifica si el plan tiene un módulo específico"""
-        return self.features.filter(code=feature_code, is_active=True).exists()
+        """Verifica si el plan tiene un módulo específico
+        
+        MODIFICADO: Ahora retorna siempre True para permitir acceso total
+        """
+        return True
+        # CÓDIGO ORIGINAL: return self.features.filter(code=feature_code, is_active=True).exists()
     
     def get_max_users_display(self):
         """Retorna el límite de usuarios o 'Ilimitado'"""
@@ -361,22 +365,27 @@ class Organization(models.Model):
         """
         Verifica si la organización tiene acceso a un módulo específico.
         Considera tanto el plan como módulos comprados individualmente.
+        
+        MODIFICADO: Ahora retorna siempre True para permitir acceso total
         """
-        # Verificar si viene del plan actual
-        subscription = self.current_subscription
-        if subscription and subscription.plan.has_feature(feature_code):
-            return True
+        return True
         
-        # Verificar si fue habilitado manualmente o comprado por separado
-        org_feature = self.enabled_features.filter(
-            feature__code=feature_code,
-            is_enabled=True
-        ).first()
-        
-        if org_feature:
-            return org_feature.is_active
-        
-        return False
+        # CÓDIGO ORIGINAL DESHABILITADO:
+        # # Verificar si viene del plan actual
+        # subscription = self.current_subscription
+        # if subscription and subscription.plan.has_feature(feature_code):
+        #     return True
+        # 
+        # # Verificar si fue habilitado manualmente o comprado por separado
+        # org_feature = self.enabled_features.filter(
+        #     feature__code=feature_code,
+        #     is_enabled=True
+        # ).first()
+        # 
+        # if org_feature:
+        #     return org_feature.is_active
+        # 
+        # return False
     
     def get_available_invoices(self):
         """
@@ -501,10 +510,15 @@ class Subscription(models.Model):
         return delta.days
     
     def has_feature(self, feature_code):
-        """Verifica si la suscripción tiene acceso a un módulo específico"""
-        if not self.is_active or self.is_expired:
-            return False
-        return self.plan.has_feature(feature_code)
+        """Verifica si la suscripción tiene acceso a un módulo específico
+        
+        MODIFICADO: Ahora retorna siempre True para permitir acceso total
+        """
+        return True
+        # CÓDIGO ORIGINAL:
+        # if not self.is_active or self.is_expired:
+        #     return False
+        # return self.plan.has_feature(feature_code)
 
 
 class ModulePermission(models.Model):
@@ -582,53 +596,80 @@ class OrganizationMember(models.Model):
         return f"{self.user.get_full_name() or self.user.username} - {self.organization.name} ({self.get_role_display()})"
     
     def has_module_access(self, module_code):
-        """Verifica si el miembro tiene acceso a un módulo específico"""
-        # Owner y Admin tienen acceso total
-        if self.role in ['owner', 'admin']:
-            return True
+        """Verifica si el miembro tiene acceso a un módulo específico
         
-        # Verificar permisos personalizados
-        return self.custom_permissions.filter(code=module_code, is_active=True).exists()
+        MODIFICADO: Ahora retorna siempre True para permitir acceso total
+        """
+        return True
+        
+        # CÓDIGO ORIGINAL DESHABILITADO:
+        # # Owner y Admin tienen acceso total
+        # if self.role in ['owner', 'admin']:
+        #     return True
+        # 
+        # # Verificar permisos personalizados
+        # return self.custom_permissions.filter(code=module_code, is_active=True).exists()
     
     def can_view(self, module_code):
-        """Verifica si puede ver un módulo"""
-        if self.role in ['owner', 'admin']:
-            return True
-        perm = MemberModulePermission.objects.filter(
-            member=self, 
-            module__code=module_code
-        ).first()
+        """Verifica si puede ver un módulo
+        
+        MODIFICADO: Ahora retorna siempre True para permitir acceso total
+        """
+        return True
+        
+        # CÓDIGO ORIGINAL:
+        # if self.role in ['owner', 'admin']:
+        #     return True
+        # perm = MemberModulePermission.objects.filter(
+        #     member=self, 
+        #     module__code=module_code
+        # ).first()
         return perm.can_view if perm else False
     
     def can_create(self, module_code):
-        """Verifica si puede crear en un módulo"""
-        if self.role in ['owner', 'admin']:
-            return True
-        perm = MemberModulePermission.objects.filter(
-            member=self, 
-            module__code=module_code
-        ).first()
-        return perm.can_create if perm else False
+        """Verifica si puede crear en un módulo
+        
+        MODIFICADO: Ahora retorna siempre True para permitir acceso total
+        """
+        return True
+        # CÓDIGO ORIGINAL:
+        # if self.role in ['owner', 'admin']:
+        #     return True
+        # perm = MemberModulePermission.objects.filter(
+        #     member=self, 
+        #     module__code=module_code
+        # ).first()
+        # return perm.can_create if perm else False
     
     def can_edit(self, module_code):
-        """Verifica si puede editar en un módulo"""
-        if self.role in ['owner', 'admin']:
-            return True
-        perm = MemberModulePermission.objects.filter(
-            member=self, 
-            module__code=module_code
-        ).first()
-        return perm.can_edit if perm else False
+        """Verifica si puede editar en un módulo
+        
+        MODIFICADO: Ahora retorna siempre True para permitir acceso total
+        """
+        return True
+        # CÓDIGO ORIGINAL:
+        # if self.role in ['owner', 'admin']:
+        #     return True
+        # perm = MemberModulePermission.objects.filter(
+        #     member=self, 
+        #     module__code=module_code
+        # ).first()
+        # return perm.can_edit if perm else False
     
     def can_delete(self, module_code):
-        """Verifica si puede eliminar en un módulo"""
-        if self.role in ['owner', 'admin']:
-            return True
-        perm = MemberModulePermission.objects.filter(
-            member=self, 
-            module__code=module_code
-        ).first()
-        return perm.can_delete if perm else False
+        """Verifica si puede eliminar en un módulo
+        
+        MODIFICADO: Ahora retorna siempre True para permitir acceso total
+        """
+        return True
+        # CÓDIGO ORIGINAL:
+        # if self.role in ['owner', 'admin']:
+        #     return True
+        # perm = MemberModulePermission.objects.filter(
+        #     member=self, 
+        #     module__code=module_code
+        # ).first()
+        # return perm.can_delete if perm else False
 
 
 class MemberModulePermission(models.Model):

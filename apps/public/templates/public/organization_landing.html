@@ -1,7 +1,7 @@
 {% extends 'public/base.html' %}
 {% load static %}
 
-{% block title %}Inicio - OCEANO OPTICO{% endblock %}
+{% block title %}{% if organization_data %}{{ organization_data.name }}{% else %}Inicio{% endif %}{% endblock %}
 
 {% block content %}
 <!-- Hero Section -->

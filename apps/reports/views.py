@@ -12,11 +12,9 @@ from datetime import datetime, timedelta
 import json
 from .models import ReportTemplate, Report, ScheduledReport, ReportShare
 from .services import ReportService
-from apps.organizations.decorators import require_feature
 
 
 @login_required
-@require_feature('analytics_advanced')
 def report_dashboard(request):
     """Dashboard principal de reportes."""
     organization = request.organization
