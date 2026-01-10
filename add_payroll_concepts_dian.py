@@ -307,7 +307,7 @@ deductions = [
         'tipo': 'SALUD',
         'descripcion': 'Aporte del empleado a salud (4%)',
         'porcentaje_base': 4.00,
-        'es_obligatorio': True,
+        'es_obligatoria': True,
     },
     {
         'codigo': 'DED002',
@@ -315,7 +315,7 @@ deductions = [
         'tipo': 'PENSION',
         'descripcion': 'Aporte del empleado a pensión (4%)',
         'porcentaje_base': 4.00,
-        'es_obligatorio': True,
+        'es_obligatoria': True,
     },
     {
         'codigo': 'DED003',
@@ -323,7 +323,7 @@ deductions = [
         'tipo': 'PENSION',
         'descripcion': 'Aporte solidaridad pensional (1% o 2%)',
         'porcentaje_base': 1.00,
-        'es_obligatorio': False,
+        'es_obligatoria': False,
     },
     
     # RETENCIÓN EN LA FUENTE
@@ -333,7 +333,7 @@ deductions = [
         'tipo': 'RETENCION',
         'descripcion': 'Retención en la fuente por impuestos',
         'porcentaje_base': 0.00,
-        'es_obligatorio': False,
+        'es_obligatoria': False,
     },
     
     # EMBARGOS
@@ -343,7 +343,7 @@ deductions = [
         'tipo': 'EMBARGO',
         'descripcion': 'Embargo ordenado por autoridad judicial',
         'porcentaje_base': 0.00,
-        'es_obligatorio': False,
+        'es_obligatoria': False,
     },
     {
         'codigo': 'DED006',
@@ -351,7 +351,7 @@ deductions = [
         'tipo': 'LIBRANZA',
         'descripcion': 'Descuento por libranza',
         'porcentaje_base': 0.00,
-        'es_obligatorio': False,
+        'es_obligatoria': False,
     },
     
     # CUOTAS Y PRÉSTAMOS
@@ -361,7 +361,7 @@ deductions = [
         'tipo': 'PRESTAMO',
         'descripcion': 'Descuento por préstamo de la empresa',
         'porcentaje_base': 0.00,
-        'es_obligatorio': False,
+        'es_obligatoria': False,
     },
     {
         'codigo': 'DED008',
@@ -369,7 +369,7 @@ deductions = [
         'tipo': 'CUOTA',
         'descripcion': 'Cuota sindical autorizada',
         'porcentaje_base': 0.00,
-        'es_obligatorio': False,
+        'es_obligatoria': False,
     },
     {
         'codigo': 'DED009',
@@ -377,7 +377,7 @@ deductions = [
         'tipo': 'CUOTA',
         'descripcion': 'Aporte a cooperativa',
         'porcentaje_base': 0.00,
-        'es_obligatorio': False,
+        'es_obligatoria': False,
     },
     
     # ANTICIPOS
@@ -387,7 +387,7 @@ deductions = [
         'tipo': 'ANTICIPO',
         'descripcion': 'Anticipo de salario',
         'porcentaje_base': 0.00,
-        'es_obligatorio': False,
+        'es_obligatoria': False,
     },
     
     # OTROS
@@ -397,7 +397,7 @@ deductions = [
         'tipo': 'OTRO',
         'descripcion': 'Descuento por llegadas tarde',
         'porcentaje_base': 0.00,
-        'es_obligatorio': False,
+        'es_obligatoria': False,
     },
     {
         'codigo': 'DED012',
@@ -405,7 +405,7 @@ deductions = [
         'tipo': 'OTRO',
         'descripcion': 'Descuento por días no trabajados',
         'porcentaje_base': 0.00,
-        'es_obligatorio': False,
+        'es_obligatoria': False,
     },
     {
         'codigo': 'DED013',
@@ -413,7 +413,7 @@ deductions = [
         'tipo': 'OTRO',
         'descripcion': 'Descuento por daños a equipo o mercancía',
         'porcentaje_base': 0.00,
-        'es_obligatorio': False,
+        'es_obligatoria': False,
     },
     {
         'codigo': 'DED014',
@@ -421,7 +421,7 @@ deductions = [
         'tipo': 'RETENCION',
         'descripcion': 'Retención de cesantías por retiro antes de año',
         'porcentaje_base': 0.00,
-        'es_obligatorio': False,
+        'es_obligatoria': False,
     },
     {
         'codigo': 'DED015',
@@ -429,7 +429,7 @@ deductions = [
         'tipo': 'PENSION',
         'descripcion': 'Aporte voluntario a fondo de pensiones',
         'porcentaje_base': 0.00,
-        'es_obligatorio': False,
+        'es_obligatoria': False,
     },
     {
         'codigo': 'DED016',
@@ -437,7 +437,7 @@ deductions = [
         'tipo': 'CUOTA',
         'descripcion': 'Aporte a fondo de empleados',
         'porcentaje_base': 0.00,
-        'es_obligatorio': False,
+        'es_obligatoria': False,
     },
     {
         'codigo': 'DED017',
@@ -445,7 +445,7 @@ deductions = [
         'tipo': 'OTRO',
         'descripcion': 'Descuento por póliza de seguro de vida',
         'porcentaje_base': 0.00,
-        'es_obligatorio': False,
+        'es_obligatoria': False,
     },
     {
         'codigo': 'DED018',
@@ -453,7 +453,7 @@ deductions = [
         'tipo': 'SALUD',
         'descripcion': 'Descuento por plan complementario de salud',
         'porcentaje_base': 0.00,
-        'es_obligatorio': False,
+        'es_obligatoria': False,
     },
 ]
 

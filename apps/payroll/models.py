@@ -167,6 +167,100 @@ class PayrollPeriod(TenantModel):
     
     def __str__(self):
         return f"{self.nombre} - {self.get_tipo_periodo_display()}"
+    
+    def save(self, *args, **kwargs):
+        """Enviar correos cuando se aprueba la nómina"""
+        # Verificar si el estado cambió a APROBADO
+        if self.pk:
+            try:
+                old_instance = PayrollPeriod.objects.get(pk=self.pk)
+                if old_instance.estado != 'APROBADO' and self.estado == 'APROBADO':
+                    # Estado cambió a APROBADO, enviar correos
+                    self._enviar_nominas_por_correo()
+            except PayrollPeriod.DoesNotExist:
+                pass
+        
+        super().save(*args, **kwargs)
+    
+    def _enviar_nominas_por_correo(self):
+        """Enviar la nómina por correo a cada empleado"""
+        from django.core.mail import send_mail
+        from django.template.loader import render_to_string
+        from django.conf import settings
+        
+        for entrada in self.entries.all():
+            try:
+                # Preparar datos para el correo
+                empleado = entrada.empleado
+                
+                # Obtener devengados y deducciones
+                devengados = entrada.accruals.all()
+                deducciones = entrada.deductions.all()
+                
+                # Contexto para el template
+                context = {
+                    'empleado': empleado,
+                    'periodo': self,
+                    'entrada': entrada,
+                    'devengados': devengados,
+                    'deducciones': deducciones,
+                }
+                
+                # Renderizar mensaje (texto plano)
+                mensaje = f"""
+Estimado(a) {empleado.primer_nombre} {empleado.primer_apellido},
+
+Se ha procesado su nómina para el período: {self.nombre}
+
+DETALLES DE SU NÓMINA
+{'=' * 60}
+
+Período: {self.fecha_inicio.strftime('%d/%m/%Y')} al {self.fecha_fin.strftime('%d/%m/%Y')}
+Fecha de Pago: {self.fecha_pago.strftime('%d/%m/%Y')}
+Días Trabajados: {entrada.dias_trabajados}
+
+DEVENGADOS (INGRESOS):
+{'-' * 60}
+"""
+                for dev in devengados:
+                    mensaje += f"{dev.concepto.nombre:.<40} ${dev.valor:>15,.2f}\n"
+                
+                mensaje += f"{'':.<40} {'-' * 15}\n"
+                mensaje += f"{'TOTAL DEVENGADO':.<40} ${entrada.total_devengado:>15,.2f}\n\n"
+                
+                mensaje += f"""DEDUCCIONES:
+{'-' * 60}
+"""
+                for ded in deducciones:
+                    mensaje += f"{ded.concepto.nombre:.<40} ${ded.valor:>15,.2f}\n"
+                
+                mensaje += f"{'':.<40} {'-' * 15}\n"
+                mensaje += f"{'TOTAL DEDUCCIONES':.<40} ${entrada.total_deducciones:>15,.2f}\n\n"
+                
+                mensaje += f"""{'=' * 60}
+{'NETO A PAGAR':.<40} ${entrada.total_neto:>15,.2f}
+{'=' * 60}
+
+Este es un correo automático, por favor no responder.
+
+Atentamente,
+{self.organization.name}
+"""
+                
+                # Enviar correo
+                send_mail(
+                    subject=f'Nómina {self.nombre} - {self.organization.name}',
+                    message=mensaje,
+                    from_email=settings.DEFAULT_FROM_EMAIL,
+                    recipient_list=[empleado.email],
+                    fail_silently=True,  # No fallar si hay error al enviar
+                )
+                
+                print(f"✉️ Nómina enviada a: {empleado.email} ({empleado.primer_nombre} {empleado.primer_apellido})")
+                
+            except Exception as e:
+                print(f"❌ Error enviando nómina a {empleado.email}: {str(e)}")
+                continue
 
 
 class AccrualConcept(TenantModel):
@@ -186,7 +280,7 @@ class AccrualConcept(TenantModel):
         ('OTRO', 'Otro'),
     ]
     
-    codigo = models.CharField(max_length=20, unique=True, db_index=True)
+    codigo = models.CharField(max_length=20, db_index=True)
     nombre = models.CharField(max_length=200)
     tipo = models.CharField(max_length=30, choices=TIPO_CHOICES)
     descripcion = models.TextField(blank=True, null=True)
@@ -206,6 +300,9 @@ class AccrualConcept(TenantModel):
         ordering = ['codigo']
         indexes = [
             models.Index(fields=['organization', 'activo']),
+        ]
+        constraints = [
+            models.UniqueConstraint(fields=['organization', 'codigo'], name='unique_accrual_code_per_org'),
         ]
     
     def __str__(self):
@@ -236,7 +333,7 @@ class DeductionConcept(TenantModel):
         ('DEVENGADO', 'Sobre Total Devengado'),
     ]
     
-    codigo = models.CharField(max_length=20, unique=True, db_index=True)
+    codigo = models.CharField(max_length=20, db_index=True)
     nombre = models.CharField(max_length=200)
     tipo = models.CharField(max_length=30, choices=TIPO_CHOICES)
     descripcion = models.TextField(blank=True, null=True)
@@ -268,6 +365,9 @@ class DeductionConcept(TenantModel):
         ordering = ['codigo']
         indexes = [
             models.Index(fields=['organization', 'activo']),
+        ]
+        constraints = [
+            models.UniqueConstraint(fields=['organization', 'codigo'], name='unique_deduction_code_per_org'),
         ]
     
     def __str__(self):

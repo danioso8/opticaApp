@@ -37,12 +37,61 @@ class EmployeeAdmin(admin.ModelAdmin):
 
 @admin.register(PayrollPeriod)
 class PayrollPeriodAdmin(admin.ModelAdmin):
-    list_display = ['nombre', 'tipo_periodo', 'fecha_inicio', 'fecha_fin', 'fecha_pago', 'estado', 'total_neto', 'aprobado_por', 'rol_aprobador']
+    list_display = ['ver_detalle', 'tipo_periodo', 'fecha_inicio', 'fecha_fin', 'fecha_pago', 'estado_badge', 'total_neto', 'acciones']
     list_filter = ['estado', 'tipo_periodo', 'rol_aprobador', 'organization']
     search_fields = ['nombre', 'aprobado_por__username', 'aprobado_por__first_name', 'aprobado_por__last_name']
     readonly_fields = ['created_at', 'updated_at', 'total_devengado', 'total_deducciones', 'total_neto', 
-                       'aprobado_por', 'fecha_aprobacion', 'rol_aprobador']
+                       'aprobado_por', 'fecha_aprobacion', 'rol_aprobador', 'ver_entradas']
     date_hierarchy = 'fecha_inicio'
+    list_display_links = ['ver_detalle']
+    
+    def ver_detalle(self, obj):
+        """Nombre del período clickeable"""
+        return obj.nombre
+    ver_detalle.short_description = 'Período'
+    
+    def estado_badge(self, obj):
+        """Mostrar estado con color"""
+        colors = {
+            'BORRADOR': '#6c757d',
+            'CALCULADO': '#0dcaf0',
+            'APROBADO': '#198754',
+            'ENVIADO_DIAN': '#0d6efd',
+            'VALIDADO_DIAN': '#20c997',
+            'RECHAZADO_DIAN': '#dc3545',
+            'PAGADO': '#ffc107',
+        }
+        color = colors.get(obj.estado, '#6c757d')
+        return f'<span style="background-color: {color}; color: white; padding: 3px 8px; border-radius: 3px; font-size: 11px; font-weight: bold;">{obj.get_estado_display()}</span>'
+    estado_badge.short_description = 'Estado'
+    estado_badge.allow_tags = True
+    
+    def acciones(self, obj):
+        """Botones de acción"""
+        from django.urls import reverse
+        from django.utils.html import format_html
+        
+        url = reverse('admin:payroll_payrollperiod_change', args=[obj.pk])
+        return format_html(
+            '<a class="button" href="{}">✏️ Editar</a>',
+            url
+        )
+    acciones.short_description = 'Acciones'
+    
+    def ver_entradas(self, obj):
+        """Ver las entradas de nómina de este período"""
+        from django.utils.html import format_html
+        from django.urls import reverse
+        
+        count = obj.entries.count()
+        if count > 0:
+            url = reverse('admin:payroll_payrollentry_changelist')
+            return format_html(
+                '<a href="{}?periodo__id__exact={}" class="button" style="background: #417690; color: white; padding: 5px 10px; text-decoration: none; border-radius: 3px;">📋 Ver {} entradas</a>',
+                url, obj.id, count
+            )
+        return format_html('<span style="color: #999;">Sin entradas</span>')
+    ver_entradas.short_description = 'Entradas de Nómina'
     
     # Permitir eliminar períodos aprobados
     def has_delete_permission(self, request, obj=None):
@@ -54,7 +103,7 @@ class PayrollPeriodAdmin(admin.ModelAdmin):
         # Si el usuario es superusuario o tiene permisos, puede editar todo
         if request.user.is_superuser or request.user.has_perm('payroll.change_payrollperiod'):
             # Solo mantener readonly los campos de auditoría y totales
-            return ['created_at', 'updated_at', 'total_devengado', 'total_deducciones', 'total_neto']
+            return ['created_at', 'updated_at', 'total_devengado', 'total_deducciones', 'total_neto', 'ver_entradas']
         # Si no, mantener readonly los campos de aprobación también
         return self.readonly_fields
     
@@ -73,8 +122,13 @@ class PayrollPeriodAdmin(admin.ModelAdmin):
         ('Totales', {
             'fields': ('total_devengado', 'total_deducciones', 'total_neto')
         }),
+        ('Entradas', {
+            'fields': ('ver_entradas',),
+            'description': 'Entradas de nómina de empleados en este período'
+        }),
         ('Observaciones', {
-            'fields': ('observaciones',)
+            'fields': ('observaciones',),
+            'classes': ('collapse',)
         }),
         ('Auditoría', {
             'fields': ('created_by', 'created_at', 'updated_at'),

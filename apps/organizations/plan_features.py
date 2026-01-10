@@ -216,7 +216,7 @@ PLAN_MODULES = {
         'multi_location',
     ],
     'enterprise': [
-        # Todo lo de Premium + API
+        # Todo lo de Premium + API + Todas las funcionalidades avanzadas
         'dashboard',
         'patients',
         'appointments',
@@ -236,8 +236,18 @@ PLAN_MODULES = {
         'reports',
         'team_management',
         'multi_location',
-        # + API
         'api_access',
+        # + Nómina Electrónica
+        'payroll_dian',
+        'payroll_config',
+        # + Marketing y Automatización
+        'workflows',
+        'promotions',
+        'email_marketing',
+        # + Adicionales Enterprise
+        'audit',
+        'permissions_advanced',
+        'configuration_advanced',
     ],
 }
 
