@@ -290,12 +290,23 @@ def book_appointment(request):
 @permission_classes([IsAuthenticated])
 def configuration(request):
     """Obtiene la configuración del sistema"""
-    if not hasattr(request, 'organization') or not request.organization:
-        return Response({'error': 'No hay organización activa'}, status=status.HTTP_400_BAD_REQUEST)
-    
-    config = AppointmentConfiguration.get_config(request.organization)
-    serializer = AppointmentConfigurationSerializer(config)
-    return Response(serializer.data)
+    try:
+        if not hasattr(request, 'organization') or not request.organization:
+            # Devolver configuración por defecto en lugar de error
+            return Response({
+                'is_open': False,
+                'error': 'No hay organización activa'
+            })
+        
+        config = AppointmentConfiguration.get_config(request.organization)
+        serializer = AppointmentConfigurationSerializer(config)
+        return Response(serializer.data)
+    except Exception as e:
+        # Devolver configuración por defecto en caso de error
+        return Response({
+            'is_open': False,
+            'error': 'Error al obtener configuración'
+        })
 
 
 @api_view(['POST'])
