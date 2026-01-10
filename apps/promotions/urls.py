@@ -20,6 +20,7 @@ urlpatterns = [
     path('campanas/<int:campaign_id>/iniciar/', views.campaign_start, name='campaign_start'),
     path('campanas/<int:campaign_id>/pausar/', views.campaign_pause, name='campaign_pause'),
     path('campanas/<int:campaign_id>/reanudar/', views.campaign_resume, name='campaign_resume'),
+    path('campanas/<int:campaign_id>/eliminar/', views.campaign_delete, name='campaign_delete'),
     path('campanas/<int:campaign_id>/enviar-lote/', views.campaign_send_batch, name='campaign_send_batch'),
     
     # API

@@ -334,3 +334,21 @@ def campaign_send_batch(request, campaign_id):
             logger.error(f"Error enviando lote: {e}")
     
     return redirect(f'/dashboard/promociones/campanas/{campaign_id}/')
+
+
+@login_required
+def campaign_delete(request, campaign_id):
+    """Eliminar una campaña"""
+    campaign = get_object_or_404(
+        PromotionCampaign,
+        id=campaign_id,
+        organization=request.organization
+    )
+    
+    if request.method == 'POST':
+        campaign_name = campaign.name
+        campaign.delete()
+        messages.success(request, f'🗑️ Campaña "{campaign_name}" eliminada correctamente')
+        return redirect('/dashboard/promociones/campanas/')
+    
+    return redirect(f'/dashboard/promociones/campanas/{campaign_id}/')

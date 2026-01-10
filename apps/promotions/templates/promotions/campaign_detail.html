@@ -45,9 +45,24 @@
                     <a href="/dashboard/promociones/campanas/{{ campaign.id }}/editar/" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition">
                         <i class="fas fa-edit mr-2"></i>Editar
                     </a>
+                    <button type="button" onclick="confirmDelete()" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition">
+                        <i class="fas fa-trash mr-2"></i>Eliminar
+                    </button>
                 </div>
             </div>
         </div>
+
+        <script>
+        function confirmDelete() {
+            if (confirm('¿Estás seguro de que deseas eliminar esta campaña? Esta acción no se puede deshacer.')) {
+                document.getElementById('deleteForm').submit();
+            }
+        }
+        </script>
+
+        <form id="deleteForm" method="POST" action="/dashboard/promociones/campanas/{{ campaign.id }}/eliminar/" style="display: none;">
+            {% csrf_token %}
+        </form>
 
         <!-- Campaign Status -->
         <div class="bg-white rounded-xl shadow-md p-6 mb-6">
