@@ -263,7 +263,7 @@
                         <a href="{% url 'billing:invoice_list' %}" class="flex items-center px-8 py-2 hover:bg-indigo-800 text-sm relative">
                             <i class="fas fa-file-invoice mr-3"></i>
                             <span class="sidebar-text">Facturas Electrónicas</span>
-                            {% show_feature_lock 'electronic_invoicing' %}
+                            {% show_feature_lock 'electronic_invoicing' 'Facturas Electrónicas' %}
                         </a>
                         {% endif %}
                         
@@ -335,7 +335,7 @@
                             <i class="fas fa-money-check-alt mr-3"></i>
                             <span class="sidebar-text">Nómina Electrónica</span>
                             <span class="sidebar-tooltip">Nómina Electrónica</span>
-                            {% show_feature_lock 'payroll_dian' %}
+                            {% show_feature_lock 'payroll_dian' 'Nómina Electrónica DIAN' %}
                         </a>
                         
                         <a href="{% url 'payroll:employee_list' %}" class="flex items-center px-8 py-2 hover:bg-indigo-800 text-sm {% if 'payroll/empleados' in request.path %}bg-indigo-800{% endif %} relative">
@@ -520,7 +520,7 @@
                             <i class="fas fa-tags mr-3"></i>
                             <span class="sidebar-text">Promociones</span>
                             <span class="sidebar-tooltip">Promociones</span>
-                            {% show_feature_lock 'promotions' %}
+                            {% show_feature_lock 'promotions' 'Promociones Automáticas' %}
                         </a>
                         
                         <div class="border-t border-indigo-800 my-1"></div>
@@ -571,7 +571,7 @@
                             <i class="fas fa-project-diagram mr-3"></i>
                             <span class="sidebar-text">Workflows</span>
                             <span class="sidebar-tooltip">Workflows</span>
-                            {% show_feature_lock 'workflows' %}
+                            {% show_feature_lock 'workflows' 'Workflows Automatizados' %}
                         </a>
                         <a href="{% url 'workflows:my_approvals' %}" class="flex items-center px-8 py-2 hover:bg-indigo-800 text-sm {% if 'approvals' in request.path %}bg-indigo-800{% endif %} relative">
                             <i class="fas fa-clipboard-check mr-3"></i>
@@ -617,7 +617,7 @@
                             <i class="fas fa-tachometer-alt mr-3"></i>
                             <span class="sidebar-text">Dashboard</span>
                             <span class="sidebar-tooltip">Dashboard de Reportes</span>
-                            {% show_feature_lock 'analytics_advanced' %}
+                            {% show_feature_lock 'analytics_advanced' 'Analítica Avanzada' %}
                         </a>
                         <a href="{% url 'reports:templates' %}" class="flex items-center px-8 py-2 hover:bg-indigo-900 text-sm {% if 'templates' in request.path %}bg-indigo-900{% endif %} relative">
                             <i class="fas fa-file-alt mr-3"></i>

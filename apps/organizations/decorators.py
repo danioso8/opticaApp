@@ -164,6 +164,19 @@ def require_api(view_func):
     return require_module('api_access')(view_func)
 
 
+def require_feature(feature_code):
+    """
+    Decorador que requiere acceso a una feature específica
+    Alias de require_module para compatibilidad con el nuevo sistema de planes
+    
+    Uso:
+        @require_feature('promotions')
+        def my_view(request):
+            ...
+    """
+    return require_module(feature_code)
+
+
 # DECORADORES LEGACY (mantener para compatibilidad)
 def feature_required(feature_code, redirect_to='dashboard:index'):
     """
