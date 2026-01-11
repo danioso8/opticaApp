@@ -154,6 +154,20 @@ def campaign_create(request):
             promotion_id = request.POST.get('promotion')
             promotion = get_object_or_404(Promotion, id=promotion_id, organization=request.organization)
             
+            # Procesar fecha y hora programada (si se proporciona)
+            scheduled_datetime = None
+            if request.POST.get('scheduled_datetime'):
+                from django.utils import timezone
+                from datetime import datetime
+                import pytz
+                
+                # Parse datetime-local input (formato: 2026-01-10T14:30)
+                dt_str = request.POST.get('scheduled_datetime')
+                # Asumir zona horaria de Colombia (UTC-5)
+                colombia_tz = pytz.timezone('America/Bogota')
+                naive_dt = datetime.strptime(dt_str, '%Y-%m-%dT%H:%M')
+                scheduled_datetime = colombia_tz.localize(naive_dt)
+            
             # Crear campaña
             campaign = PromotionCampaign.objects.create(
                 organization=request.organization,
@@ -165,6 +179,7 @@ def campaign_create(request):
                 delay_seconds=int(request.POST.get('delay_seconds', 10)),
                 send_hour_start=int(request.POST.get('send_hour_start', 9)),
                 send_hour_end=int(request.POST.get('send_hour_end', 19)),
+                scheduled_datetime=scheduled_datetime,
                 status='draft',
                 created_by=request.user
             )
@@ -206,6 +221,71 @@ def campaign_create(request):
     }
     
     return render(request, 'promotions/campaign_form.html', context)
+
+
+@login_required
+def campaign_edit(request, campaign_id):
+    """Editar campaña existente"""
+    campaign = get_object_or_404(
+        PromotionCampaign,
+        id=campaign_id,
+        organization=request.organization
+    )
+    
+    if request.method == 'POST':
+        try:
+            from datetime import time
+            # Actualizar campos
+            campaign.name = request.POST.get('name')
+            campaign.message_template = request.POST.get('message_template')
+            campaign.daily_limit = int(request.POST.get('daily_limit', 20))
+            campaign.delay_seconds = int(request.POST.get('delay_seconds', 10))
+            
+            # Convertir horas de texto a time
+            if request.POST.get('send_hour_start'):
+                hour_str = request.POST.get('send_hour_start')
+                h, m = hour_str.split(':')
+                campaign.send_hour_start = time(int(h), int(m))
+            if request.POST.get('send_hour_end'):
+                hour_str = request.POST.get('send_hour_end')
+                h, m = hour_str.split(':')
+                campaign.send_hour_end = time(int(h), int(m))
+            
+            # Actualizar fecha programada si se proporciona
+            if request.POST.get('scheduled_datetime'):
+                from django.utils import timezone
+                from datetime import datetime
+                import pytz
+                
+                dt_str = request.POST.get('scheduled_datetime')
+                colombia_tz = pytz.timezone('America/Bogota')
+                naive_dt = datetime.strptime(dt_str, '%Y-%m-%dT%H:%M')
+                campaign.scheduled_datetime = colombia_tz.localize(naive_dt)
+            
+            campaign.save()
+            
+            messages.success(request, f'✅ Campaña "{campaign.name}" actualizada')
+            return redirect(f'/dashboard/promociones/campanas/{campaign.id}/')
+            
+        except Exception as e:
+            messages.error(request, f'❌ Error al actualizar: {e}')
+            logger.error(f"Error editando campaña: {e}")
+    
+    # Convertir scheduled_datetime a formato datetime-local para el input
+    scheduled_value = ''
+    if campaign.scheduled_datetime:
+        import pytz
+        colombia_tz = pytz.timezone('America/Bogota')
+        local_dt = campaign.scheduled_datetime.astimezone(colombia_tz)
+        scheduled_value = local_dt.strftime('%Y-%m-%dT%H:%M')
+    
+    context = {
+        'campaign': campaign,
+        'is_edit': True,
+        'scheduled_value': scheduled_value,
+    }
+    
+    return render(request, 'promotions/campaign_edit.html', context)
 
 
 @login_required

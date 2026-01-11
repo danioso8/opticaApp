@@ -110,6 +110,7 @@ urlpatterns = [
     path('whatsapp-baileys/qr/', views_whatsapp_baileys.whatsapp_get_qr, name='whatsapp_get_qr'),
     path('whatsapp-baileys/status/', views_whatsapp_baileys.whatsapp_get_status, name='whatsapp_get_status'),
     path('whatsapp-baileys/logout/', views_whatsapp_baileys.whatsapp_logout, name='whatsapp_logout'),
+    path('whatsapp-baileys/clear/', views_whatsapp_baileys.whatsapp_clear_session, name='whatsapp_clear_session'),
     path('whatsapp-baileys/test/', views_whatsapp_baileys.whatsapp_test_message, name='whatsapp_test_message'),
     
     # Configuración de Landing Page

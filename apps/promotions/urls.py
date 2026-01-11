@@ -17,6 +17,7 @@ urlpatterns = [
     path('campanas/', views.campaign_list, name='campaign_list'),
     path('campanas/crear/', views.campaign_create, name='campaign_create'),
     path('campanas/<int:campaign_id>/', views.campaign_detail, name='campaign_detail'),
+    path('campanas/<int:campaign_id>/editar/', views.campaign_edit, name='campaign_edit'),
     path('campanas/<int:campaign_id>/iniciar/', views.campaign_start, name='campaign_start'),
     path('campanas/<int:campaign_id>/pausar/', views.campaign_pause, name='campaign_pause'),
     path('campanas/<int:campaign_id>/reanudar/', views.campaign_resume, name='campaign_resume'),

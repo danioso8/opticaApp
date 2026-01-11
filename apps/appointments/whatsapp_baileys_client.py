@@ -65,6 +65,11 @@ class WhatsAppBaileysClient:
         data = {'organization_id': str(organization_id)}
         return self._make_request('POST', '/api/logout', data)
     
+    def clear_session(self, organization_id):
+        """Limpiar sesión corrupta de WhatsApp"""
+        data = {'organization_id': str(organization_id)}
+        return self._make_request('POST', '/api/clear-session', data)
+    
     def list_sessions(self):
         """Listar todas las sesiones activas"""
         return self._make_request('GET', '/api/sessions')

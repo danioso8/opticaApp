@@ -21,13 +21,20 @@ def whatsapp_baileys_config(request):
     
     org_id = request.organization.id
     
-    # Obtener estado actual
-    status_data = whatsapp_baileys_client.get_status(org_id)
+    # Obtener estado actual de forma segura
+    try:
+        status_data = whatsapp_baileys_client.get_status(org_id)
+        server_active = whatsapp_baileys_client.healthcheck()
+    except Exception as e:
+        logger.error(f"Error al conectar con servidor WhatsApp: {e}")
+        status_data = None
+        server_active = False
+        messages.warning(request, 'No se pudo conectar con el servidor de WhatsApp. El servicio puede estar temporalmente no disponible.')
     
     context = {
         'organization': request.organization,
-        'whatsapp_status': status_data,
-        'server_active': whatsapp_baileys_client.healthcheck()
+        'whatsapp_status': status_data or {'connected': False, 'message': 'Servidor no disponible'},
+        'server_active': server_active
     }
     
     return render(request, 'dashboard/whatsapp_baileys_config.html', context)
@@ -171,6 +178,44 @@ def whatsapp_logout(request):
     
     except Exception as e:
         logger.error(f"Error cerrando sesión: {e}")
+        return JsonResponse({'error': str(e)}, status=500)
+
+
+@login_required
+def whatsapp_clear_session(request):
+    """Limpiar sesión corrupta de WhatsApp"""
+    
+    if request.method != 'POST':
+        return JsonResponse({'error': 'Método no permitido'}, status=405)
+    
+    if not hasattr(request, 'organization') or not request.organization:
+        return JsonResponse({'error': 'No hay organización activa'}, status=400)
+    
+    org_id = request.organization.id
+    
+    try:
+        # Intentar cerrar sesión primero
+        try:
+            whatsapp_baileys_client.logout(org_id)
+        except:
+            pass  # Ignorar errores al cerrar sesión corrupta
+        
+        # Limpiar sesión en el servidor
+        result = whatsapp_baileys_client.clear_session(org_id)
+        
+        if result and result.get('success'):
+            messages.success(request, 'Sesión limpiada correctamente. Ya puedes conectar nuevamente.')
+            return JsonResponse({
+                'success': True,
+                'message': 'Sesión limpiada correctamente'
+            })
+        else:
+            return JsonResponse({
+                'error': 'No se pudo limpiar la sesión'
+            }, status=500)
+    
+    except Exception as e:
+        logger.error(f"Error limpiando sesión: {e}")
         return JsonResponse({'error': str(e)}, status=500)
 
 

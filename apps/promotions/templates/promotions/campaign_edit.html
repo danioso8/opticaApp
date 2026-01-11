@@ -1,0 +1,150 @@
+{% extends 'dashboard/base.html' %}
+{% load static %}
+
+{% block extra_css %}
+<style>
+    .form-container {
+        max-width: 800px;
+        margin: 0 auto;
+    }
+    .form-group {
+        margin-bottom: 20px;
+    }
+    .form-group label {
+        display: block;
+        margin-bottom: 5px;
+        font-weight: 600;
+        color: #333;
+    }
+    .form-control {
+        width: 100%;
+        padding: 10px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        font-size: 14px;
+    }
+    textarea.form-control {
+        min-height: 120px;
+        resize: vertical;
+    }
+    .btn {
+        padding: 10px 20px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 14px;
+        text-decoration: none;
+        display: inline-block;
+    }
+    .btn-primary {
+        background-color: #007bff;
+        color: white;
+    }
+    .btn-primary:hover {
+        background-color: #0056b3;
+    }
+    .btn-secondary {
+        background-color: #6c757d;
+        color: white;
+        margin-left: 10px;
+    }
+    .btn-secondary:hover {
+        background-color: #545b62;
+    }
+    .form-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 15px;
+    }
+    .card {
+        background: white;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        padding: 30px;
+        margin: 20px 0;
+    }
+    .card-header {
+        margin-bottom: 25px;
+    }
+    .card-header h2 {
+        margin: 0;
+        color: #333;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="form-container">
+    <div class="card">
+        <div class="card-header">
+            <h2>Editar Campaña</h2>
+        </div>
+        
+        <form method="post">
+            {% csrf_token %}
+            
+            <div class="form-group">
+                <label for="name">Nombre de la Campaña *</label>
+                <input type="text" id="name" name="name" class="form-control" value="{{ campaign.name }}" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="message_template">Mensaje *</label>
+                <textarea id="message_template" name="message_template" class="form-control" required>{{ campaign.message_template }}</textarea>
+                <small style="color: #666; display: block; margin-top: 5px;">
+                    Usa {nombre}, {apellido}, {fecha_ultimo_examen} para personalizar
+                </small>
+            </div>
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="daily_limit">Límite Diario</label>
+                    <input type="number" id="daily_limit" name="daily_limit" class="form-control" value="{{ campaign.daily_limit }}" min="1">
+                    <small style="color: #666; display: block; margin-top: 5px;">
+                        Máximo de mensajes por día
+                    </small>
+                </div>
+                
+                <div class="form-group">
+                    <label for="delay_seconds">Retraso entre mensajes (segundos)</label>
+                    <input type="number" id="delay_seconds" name="delay_seconds" class="form-control" value="{{ campaign.delay_seconds }}" min="1">
+                    <small style="color: #666; display: block; margin-top: 5px;">
+                        Tiempo de espera entre envíos
+                    </small>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label for="scheduled_datetime">Fecha y Hora de Inicio</label>
+                <input type="datetime-local" id="scheduled_datetime" name="scheduled_datetime" class="form-control" value="{{ scheduled_value }}">
+                <small style="color: #666; display: block; margin-top: 5px;">
+                    Deja vacío para iniciar manualmente
+                </small>
+            </div>
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="send_hour_start">Hora de inicio de envío</label>
+                    <input type="time" id="send_hour_start" name="send_hour_start" class="form-control" value="{{ campaign.send_hour_start }}">
+                    <small style="color: #666; display: block; margin-top: 5px;">
+                        Hora mínima para enviar mensajes
+                    </small>
+                </div>
+                
+                <div class="form-group">
+                    <label for="send_hour_end">Hora de fin de envío</label>
+                    <input type="time" id="send_hour_end" name="send_hour_end" class="form-control" value="{{ campaign.send_hour_end }}">
+                    <small style="color: #666; display: block; margin-top: 5px;">
+                        Hora máxima para enviar mensajes
+                    </small>
+                </div>
+            </div>
+            
+            <div style="margin-top: 30px;">
+                <button type="submit" class="btn btn-primary">Guardar Cambios</button>
+                <a href="/dashboard/promociones/campanas/{{ campaign.id }}/" class="btn btn-secondary">Cancelar</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

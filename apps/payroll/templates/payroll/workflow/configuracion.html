@@ -299,12 +299,12 @@
                             </label>
                             <div class="flex items-center gap-2">
                                 <span class="text-gray-600">$</span>
-                                <input type="number" name="salario_minimo" id="salario_minimo" 
-                                       step="1000" min="0"
-                                       value="{{ config.salario_minimo }}"
-                                       class="flex-1 border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500">
+                                <input type="text" name="salario_minimo_display" id="salario_minimo_display" 
+                                       value="{{ config.salario_minimo|floatformat:2 }}"
+                                       class="flex-1 border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 currency-input">
+                                <input type="hidden" name="salario_minimo" id="salario_minimo" value="{{ config.salario_minimo }}">
                             </div>
-                            <p class="text-xs text-gray-500 mt-1">Valor: $1,300,000 (2026)</p>
+                            <p class="text-xs text-gray-500 mt-1">Valor: $1,300,000.00 (2026)</p>
                         </div>
 
                         <div>
@@ -313,12 +313,12 @@
                             </label>
                             <div class="flex items-center gap-2">
                                 <span class="text-gray-600">$</span>
-                                <input type="number" name="auxilio_transporte" id="auxilio_transporte" 
-                                       step="1000" min="0"
-                                       value="{{ config.auxilio_transporte }}"
-                                       class="flex-1 border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500">
+                                <input type="text" name="auxilio_transporte_display" id="auxilio_transporte_display" 
+                                       value="{{ config.auxilio_transporte|floatformat:2 }}"
+                                       class="flex-1 border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 currency-input">
+                                <input type="hidden" name="auxilio_transporte" id="auxilio_transporte" value="{{ config.auxilio_transporte }}">
                             </div>
-                            <p class="text-xs text-gray-500 mt-1">Valor: $162,000 (2026)</p>
+                            <p class="text-xs text-gray-500 mt-1">Valor: $162,000.00 (2026)</p>
                         </div>
                     </div>
 
@@ -390,4 +390,76 @@
         </div>
     </div>
 </div>
+
+<script>
+// Formatear campos de moneda
+document.addEventListener('DOMContentLoaded', function() {
+    const currencyInputs = document.querySelectorAll('.currency-input');
+    
+    // Función para formatear número a moneda
+    function formatCurrency(value) {
+        // Remover todo excepto números y punto decimal
+        let numValue = value.replace(/[^\d.]/g, '');
+        
+        // Asegurar solo un punto decimal
+        const parts = numValue.split('.');
+        if (parts.length > 2) {
+            numValue = parts[0] + '.' + parts.slice(1).join('');
+        }
+        
+        // Convertir a número
+        const num = parseFloat(numValue) || 0;
+        
+        // Formatear con separadores de miles y 2 decimales
+        return num.toLocaleString('es-CO', {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+        });
+    }
+    
+    // Función para limpiar formato y obtener número
+    function cleanCurrency(value) {
+        return value.replace(/[^\d.]/g, '');
+    }
+    
+    // Aplicar formato inicial
+    currencyInputs.forEach(input => {
+        const hiddenInput = document.getElementById(input.id.replace('_display', ''));
+        if (hiddenInput && hiddenInput.value) {
+            input.value = formatCurrency(hiddenInput.value);
+        }
+        
+        // Al escribir
+        input.addEventListener('input', function(e) {
+            const cursorPos = this.selectionStart;
+            const oldLength = this.value.length;
+            
+            // Guardar valor limpio en campo oculto
+            const cleanValue = cleanCurrency(this.value);
+            if (hiddenInput) {
+                hiddenInput.value = cleanValue;
+            }
+            
+            // Formatear para mostrar
+            this.value = formatCurrency(this.value);
+            
+            // Restaurar posición del cursor
+            const newLength = this.value.length;
+            const newCursorPos = cursorPos + (newLength - oldLength);
+            this.setSelectionRange(newCursorPos, newCursorPos);
+        });
+        
+        // Al perder foco, asegurar formato correcto
+        input.addEventListener('blur', function() {
+            if (this.value) {
+                this.value = formatCurrency(this.value);
+                if (hiddenInput) {
+                    hiddenInput.value = cleanCurrency(this.value);
+                }
+            }
+        });
+    });
+});
+</script>
+
 {% endblock %}

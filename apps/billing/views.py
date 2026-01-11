@@ -36,76 +36,81 @@ def dian_configuration_view(request):
     Solo permite UNA configuración por organización que siempre se muestra para actualizar.
     Solo para usuarios con plan Profesional o Empresarial.
     """
-    # Obtener organización del usuario
-    organization = get_user_organization(request)
-    if not organization:
-        messages.error(request, 'No tienes una organización asignada')
-        return redirect('dashboard:home')
-    
-    # Verificar si el plan permite facturación electrónica
-    can_use, message = Invoice.puede_crear_factura_electronica(organization)
-    
-    # Siempre obtener o crear configuración DIAN (una sola por organización)
-    dian_config, created = DianConfiguration.objects.get_or_create(
-        organization=organization,
-        defaults={
-            'configurado_por': request.user
-        }
-    )
-    
-    if created:
-        messages.info(request, 'Se ha creado la configuración DIAN para tu organización. Completa los datos requeridos.')
-    
-    if request.method == 'POST':
-        # Validar que puede usar facturación
-        if not can_use:
-            messages.error(request, message)
+    try:
+        # Obtener organización del usuario
+        organization = get_user_organization(request)
+        if not organization:
+            messages.error(request, 'No tienes una organización asignada')
+            return redirect('dashboard:home')
+        
+        # Verificar si el plan permite facturación electrónica
+        can_use, message = Invoice.puede_crear_factura_electronica(organization)
+        
+        # Siempre obtener o crear configuración DIAN (una sola por organización)
+        dian_config, created = DianConfiguration.objects.get_or_create(
+            organization=organization,
+            defaults={
+                'configurado_por': request.user
+            }
+        )
+        
+        if created:
+            messages.info(request, 'Se ha creado la configuración DIAN para tu organización. Completa los datos requeridos.')
+        
+        if request.method == 'POST':
+            # Validar que puede usar facturación
+            if not can_use:
+                messages.error(request, message)
+                return redirect('billing:dian_configuration')
+            
+            # Actualizar campos básicos
+            dian_config.razon_social = request.POST.get('razon_social', '').strip()
+            dian_config.tipo_documento = request.POST.get('tipo_documento', 'NIT')
+            dian_config.nit = request.POST.get('nit', '').strip()
+            dian_config.dv = request.POST.get('dv', '').strip()
+            dian_config.tipo_organizacion = request.POST.get('tipo_organizacion', '2')
+            
+            # Dirección
+            dian_config.direccion = request.POST.get('direccion', '').strip()
+            dian_config.ciudad_codigo = request.POST.get('ciudad_codigo', '').strip()
+            dian_config.departamento_codigo = request.POST.get('departamento_codigo', '').strip()
+            dian_config.pais_codigo = request.POST.get('pais_codigo', 'CO')
+            dian_config.codigo_postal = request.POST.get('codigo_postal', '').strip()
+            
+            # Contacto
+            dian_config.telefono = request.POST.get('telefono', '').strip()
+            dian_config.email_facturacion = request.POST.get('email_facturacion', '').strip()
+            
+            # Resolución DIAN
+            dian_config.resolucion_numero = request.POST.get('resolucion_numero', '').strip()
+            dian_config.resolucion_fecha = request.POST.get('resolucion_fecha')
+            dian_config.resolucion_prefijo = request.POST.get('resolucion_prefijo', 'FE').strip()
+            dian_config.resolucion_numero_inicio = int(request.POST.get('resolucion_numero_inicio', 1))
+            dian_config.resolucion_numero_fin = int(request.POST.get('resolucion_numero_fin', 1000))
+            
+            # Estado
+            dian_config.is_active = request.POST.get('is_active') == 'on'
+            dian_config.habilitado_dian = request.POST.get('habilitado_dian') == 'on'
+            
+            dian_config.configurado_por = request.user
+            dian_config.save()
+            
+            messages.success(request, '✅ Configuración DIAN actualizada correctamente')
             return redirect('billing:dian_configuration')
         
-        # Actualizar campos básicos
-        dian_config.razon_social = request.POST.get('razon_social', '').strip()
-        dian_config.tipo_documento = request.POST.get('tipo_documento', 'NIT')
-        dian_config.nit = request.POST.get('nit', '').strip()
-        dian_config.dv = request.POST.get('dv', '').strip()
-        dian_config.tipo_organizacion = request.POST.get('tipo_organizacion', '2')
+        context = {
+            'dian_config': dian_config,
+            'can_use_invoicing': can_use,
+            'plan_message': message,
+            'organization': organization,
+            'subscription': organization.subscriptions.filter(is_active=True).first(),
+        }
         
-        # Dirección
-        dian_config.direccion = request.POST.get('direccion', '').strip()
-        dian_config.ciudad_codigo = request.POST.get('ciudad_codigo', '').strip()
-        dian_config.departamento_codigo = request.POST.get('departamento_codigo', '').strip()
-        dian_config.pais_codigo = request.POST.get('pais_codigo', 'CO')
-        dian_config.codigo_postal = request.POST.get('codigo_postal', '').strip()
+        return render(request, 'billing/dian_config.html', context)
         
-        # Contacto
-        dian_config.telefono = request.POST.get('telefono', '').strip()
-        dian_config.email_facturacion = request.POST.get('email_facturacion', '').strip()
-        
-        # Resolución DIAN
-        dian_config.resolucion_numero = request.POST.get('resolucion_numero', '').strip()
-        dian_config.resolucion_fecha = request.POST.get('resolucion_fecha')
-        dian_config.resolucion_prefijo = request.POST.get('resolucion_prefijo', 'FE').strip()
-        dian_config.resolucion_numero_inicio = int(request.POST.get('resolucion_numero_inicio', 1))
-        dian_config.resolucion_numero_fin = int(request.POST.get('resolucion_numero_fin', 1000))
-        
-        # Estado
-        dian_config.is_active = request.POST.get('is_active') == 'on'
-        dian_config.habilitado_dian = request.POST.get('habilitado_dian') == 'on'
-        
-        dian_config.configurado_por = request.user
-        dian_config.save()
-        
-        messages.success(request, '✅ Configuración DIAN actualizada correctamente')
-        return redirect('billing:dian_configuration')
-    
-    context = {
-        'dian_config': dian_config,
-        'can_use_invoicing': can_use,
-        'plan_message': message,
-        'organization': organization,
-        'subscription': organization.subscriptions.filter(is_active=True).first(),
-    }
-    
-    return render(request, 'billing/dian_config.html', context)
+    except Exception as e:
+        messages.error(request, f'Error al cargar configuración DIAN: {str(e)}')
+        return redirect('dashboard:home')
 
 
 def invoice_list(request):

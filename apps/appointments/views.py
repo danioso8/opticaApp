@@ -303,26 +303,39 @@ def book_appointment(request):
 
 
 @api_view(['GET'])
-@permission_classes([IsAuthenticated])
+@permission_classes([AllowAny])
 def configuration(request):
-    """Obtiene la configuración del sistema"""
+    """Obtiene la configuración del sistema - Endpoint público"""
     try:
+        # Si no hay organización, devolver configuración por defecto
         if not hasattr(request, 'organization') or not request.organization:
-            # Devolver configuración por defecto en lugar de error
             return Response({
                 'is_open': False,
-                'error': 'No hay organización activa'
-            })
+                'message': 'No hay organización activa'
+            }, status=status.HTTP_200_OK)
         
+        # Obtener configuración de la organización
         config = AppointmentConfiguration.get_config(request.organization)
         serializer = AppointmentConfigurationSerializer(config)
-        return Response(serializer.data)
-    except Exception as e:
-        # Devolver configuración por defecto en caso de error
+        return Response(serializer.data, status=status.HTTP_200_OK)
+        
+    except AppointmentConfiguration.DoesNotExist:
         return Response({
             'is_open': False,
-            'error': 'Error al obtener configuración'
-        })
+            'message': 'Configuración no encontrada'
+        }, status=status.HTTP_200_OK)
+        
+    except Exception as e:
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.error(f"Error en /api/configuration/: {str(e)}")
+        
+        # Siempre devolver JSON válido
+        return Response({
+            'is_open': False,
+            'error': 'Error al obtener configuración',
+            'detail': str(e) if request.user.is_authenticated else ''
+        }, status=status.HTTP_200_OK)
 
 
 @api_view(['POST'])

@@ -10,7 +10,17 @@ class TenantMiddleware(MiddlewareMixin):
     basándose en el subdominio o en la sesión del usuario
     """
     
-    EXEMPT_PATHS = ['/admin/', '/saas-admin/', '/dashboard/login/', '/dashboard/logout/', '/organizations/register/']
+    EXEMPT_PATHS = [
+        '/admin/', 
+        '/saas-admin/', 
+        '/dashboard/login/', 
+        '/dashboard/logout/', 
+        '/organizations/register/',
+        '/api/configuration/',  # Endpoint público para verificar sistema
+        '/api/available-dates/',  # API pública de disponibilidad
+        '/api/available-slots/',  # API pública de slots
+        '/api/book/',  # API pública de reservas
+    ]
     
     def process_request(self, request):
         # Inicializar el tenant en None
