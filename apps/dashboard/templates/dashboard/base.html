@@ -798,6 +798,171 @@
                 </div>
                 {% endif %}
             </nav>
+            
+            <!-- Script para sidebar dinámico -->
+            <script>
+            (function() {
+                // Verificar si hay configuración guardada en localStorage
+                const savedConfig = localStorage.getItem('sidebarConfig');
+                if (!savedConfig) {
+                    // No hay configuración personalizada, usar sidebar por defecto
+                    return;
+                }
+                
+                try {
+                    const config = JSON.parse(savedConfig);
+                    const nav = document.querySelector('#sidebar nav');
+                    
+                    if (!nav || !config.items) {
+                        return;
+                    }
+                    
+                    // Limpiar el nav actual (mantener solo la estructura base)
+                    const originalNav = nav.cloneNode(true);
+                    nav.innerHTML = '';
+                    
+                    // Función para crear elemento de menú
+                    function createMenuItem(item, config) {
+                        if (item.isDivider) {
+                            const div = document.createElement('div');
+                            div.className = 'border-t border-indigo-800 my-2';
+                            return div;
+                        }
+                        
+                        if (item.isSubmenu) {
+                            // Crear menú desplegable
+                            const container = document.createElement('div');
+                            container.className = 'submenu-container';
+                            
+                            const button = document.createElement('button');
+                            button.type = 'button';
+                            button.onclick = function() { toggleSubmenu(item.id + '-submenu'); };
+                            button.className = 'flex items-center justify-between w-full px-4 py-3 hover:bg-indigo-800 relative';
+                            
+                            button.innerHTML = `
+                                <div class="flex items-center">
+                                    <i class="fas ${item.icon} mr-3"></i>
+                                    <span class="sidebar-text">${item.name}</span>
+                                </div>
+                                <i class="fas fa-chevron-down text-sm transition-transform duration-200 submenu-icon" id="${item.id}-submenu-icon"></i>
+                                <span class="sidebar-tooltip">${item.name}</span>
+                            `;
+                            
+                            container.appendChild(button);
+                            
+                            // Crear contenedor de hijos
+                            const childrenContainer = document.createElement('div');
+                            childrenContainer.id = item.id + '-submenu';
+                            childrenContainer.className = 'bg-indigo-950 hidden sidebar-submenu';
+                            
+                            // Agregar items hijos
+                            const children = config.items
+                                .filter(child => child.parent === item.id && child.visible)
+                                .sort((a, b) => a.order - b.order);
+                            
+                            children.forEach(child => {
+                                const childElement = createMenuItem(child, config);
+                                if (childElement) {
+                                    // Ajustar padding para items de submenú
+                                    if (childElement.tagName === 'A') {
+                                        childElement.className = childElement.className.replace('px-4', 'px-8');
+                                        childElement.classList.add('text-sm');
+                                    }
+                                    childrenContainer.appendChild(childElement);
+                                }
+                            });
+                            
+                            container.appendChild(childrenContainer);
+                            return container;
+                        }
+                        
+                        // Crear link normal
+                        const link = document.createElement('a');
+                        link.href = getUrlForItem(item.id);
+                        link.className = 'flex items-center px-4 py-3 hover:bg-indigo-800 relative';
+                        
+                        link.innerHTML = `
+                            <i class="fas ${item.icon} mr-3"></i>
+                            <span class="sidebar-text">${item.name}</span>
+                            <span class="sidebar-tooltip">${item.name}</span>
+                        `;
+                        
+                        return link;
+                    }
+                    
+                    // Mapeo de IDs a URLs (usando Django template tags cuando sea posible)
+                    function getUrlForItem(id) {
+                        const urlMap = {
+                            'my-companies': '{% url "organizations:list" %}',
+                            'my-modules': '{% url "dashboard:my_plan" %}',
+                            'dashboard': '{% url "dashboard:home" %}',
+                            'sales-dashboard': '{% url "sales:dashboard" %}',
+                            'billing-basic': '{% url "billing:invoice_list" %}',
+                            'billing-electronic': '{% url "billing:invoice_list" %}',
+                            'cash-dashboard': '{% url "cash_register:dashboard" %}',
+                            'cash-registers': '{% url "cash_register:register_list" %}',
+                            'cash-movements': '{% url "cash_register:movement_list" %}',
+                            'cash-closures': '{% url "cash_register:closure_list" %}',
+                            'cash-reports': '{% url "cash_register:reports" %}',
+                            'doctors': '{% url "dashboard:doctors_list" %}',
+                            'employees': '{% url "dashboard:employee_list" %}',
+                            'payroll-electronic': '{% url "payroll:payroll_dashboard" %}',
+                            'payroll-employees': '{% url "payroll:employee_list" %}',
+                            'payroll-workflow': '{% url "payroll:workflow_dashboard" %}',
+                            'contracts': '{% url "payroll:contract_list" %}',
+                            'vacations': '{% url "payroll:vacation_list" %}',
+                            'loans': '{% url "payroll:loan_list" %}',
+                            'social-benefits': '{% url "payroll:social_benefits_dashboard" %}',
+                            'provisions': '{% url "payroll:provision_list" %}',
+                            'pila': '{% url "payroll:pila_list" %}',
+                            'incapacities': '{% url "payroll:incapacity_list" %}',
+                            'payroll-concepts': '{% url "payroll:concept_list" %}',
+                            'inventory': '{% url "inventory:dashboard" %}',
+                            'products': '{% url "billing:product_list" %}',
+                            'suppliers': '{% url "billing:supplier_list" %}',
+                            'patients': '{% url "dashboard:patients_list" %}',
+                            'exams': '{% url "dashboard:exam_order_list" %}',
+                            'appointments-list': '{% url "dashboard:appointments_list" %}',
+                            'appointments-schedule': '{% url "dashboard:configuration" %}',
+                            'landing-page': '{% url "dashboard:landing_page_config" %}',
+                            'promotions': '/dashboard/promociones/',
+                            'whatsapp': '{% url "dashboard:notification_settings" %}',
+                            'workflows': '{% url "workflows:list" %}',
+                            'approvals': '{% url "workflows:my_approvals" %}',
+                            'tasks-kanban': '{% url "tasks:kanban" %}',
+                            'my-tasks': '{% url "tasks:my_tasks" %}',
+                            'tasks-calendar': '{% url "tasks:calendar" %}',
+                            'reports-dashboard': '{% url "reports:dashboard" %}',
+                            'reports-templates': '{% url "reports:templates" %}',
+                            'reports-list': '{% url "reports:reports" %}',
+                            'reports-scheduled': '{% url "reports:scheduled" %}',
+                            'my-plan': '{% url "dashboard:my_plan" %}',
+                            'marketplace': '{% url "dashboard:module_marketplace" %}'
+                        };
+                        
+                        return urlMap[id] || '#';
+                    }
+                    
+                    // Renderizar items de nivel raíz
+                    const rootItems = config.items
+                        .filter(item => !item.parent && item.visible)
+                        .sort((a, b) => a.order - b.order);
+                    
+                    rootItems.forEach(item => {
+                        const element = createMenuItem(item, config);
+                        if (element) {
+                            nav.appendChild(element);
+                        }
+                    });
+                    
+                    console.log('✅ Sidebar renderizado dinámicamente según configuración personalizada');
+                    
+                } catch (error) {
+                    console.error('Error al renderizar sidebar dinámico:', error);
+                    // En caso de error, mantener el sidebar original
+                }
+            })();
+            </script>
         </aside>
         
         <!-- Main Content -->
