@@ -642,6 +642,19 @@ document.addEventListener('DOMContentLoaded', function() {
                     }
                 });
                 
+                // Verificar si la respuesta fue exitosa
+                if (!response.ok) {
+                    let errorMessage = `Error ${response.status}: ${response.statusText}`;
+                    try {
+                        const errorData = await response.json();
+                        errorMessage = errorData.message || errorData.error || errorMessage;
+                        console.error('Server error details:', errorData);
+                    } catch (e) {
+                        console.error('Could not parse error response:', e);
+                    }
+                    throw new Error(errorMessage);
+                }
+                
                 const data = await response.json();
                 
                 if (data.success) {

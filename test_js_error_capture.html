@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Test Error Capture</title>
+</head>
+<body>
+    <h1>Test de Captura de Errores JavaScript</h1>
+    <p>Abre la consola del navegador para ver los logs</p>
+    
+    <button onclick="testNormalError()">Test Error Normal</button>
+    <button onclick="testReferenceError()">Test ReferenceError</button>
+    <button onclick="testPromiseError()">Test Promise Rejection</button>
+    
+    <script>
+        console.log('🔍 Error tracking system initialized');
+        
+        // Capturar errores JavaScript globales
+        window.addEventListener('error', function(event) {
+            if (event.target !== window) return;
+            
+            const errorData = {
+                message: event.message || 'Unknown error',
+                type: event.error ? event.error.name : 'Error',
+                stack: event.error ? event.error.stack : '',
+                url: event.filename || window.location.href,
+                lineNumber: event.lineno || '',
+                columnNumber: event.colno || ''
+            };
+            
+            console.error('❌ JS Error captured:', errorData);
+            
+            fetch('/audit/api/log-js-error/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(errorData)
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log('✅ Error logged to server:', data);
+            })
+            .catch(err => {
+                console.error('❌ Failed to log error to server:', err);
+            });
+        });
+        
+        // Capturar promesas rechazadas
+        window.addEventListener('unhandledrejection', function(event) {
+            const errorData = {
+                message: event.reason ? event.reason.message || String(event.reason) : 'Unhandled Promise Rejection',
+                type: 'UnhandledPromiseRejection',
+                stack: event.reason ? event.reason.stack : '',
+                url: window.location.href
+            };
+            
+            console.error('❌ Promise rejection captured:', errorData);
+            
+            fetch('/audit/api/log-js-error/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(errorData)
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log('✅ Error logged to server:', data);
+            })
+            .catch(err => {
+                console.error('❌ Failed to log error to server:', err);
+            });
+        });
+        
+        // Funciones de test
+        function testNormalError() {
+            throw new Error('This is a test error!');
+        }
+        
+        function testReferenceError() {
+            undefinedVariable.someMethod();
+        }
+        
+        function testPromiseError() {
+            Promise.reject('Promise rejection test');
+        }
+    </script>
+</body>
+</html>

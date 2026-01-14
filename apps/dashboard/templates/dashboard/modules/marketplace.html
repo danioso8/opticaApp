@@ -1,0 +1,648 @@
+{% extends "dashboard/base.html" %}
+{% load static %}
+
+{% block title %}Marketplace de Módulos - OpticaApp{% endblock %}
+
+{% block extra_css %}
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    .animate-fadeInUp {
+        animation: fadeInUp 0.6s ease-out;
+    }
+    
+    .module-icon-bg {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+    
+    .category-icon-core { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); }
+    .category-icon-medical { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); }
+    .category-icon-commercial { background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); }
+    .category-icon-communication { background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); }
+    .category-icon-analytics { background: linear-gradient(135deg, #30cfd0 0%, #330867 100%); }
+    .category-icon-default { background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%); }
+    
+    .module-checkbox:checked + label .module-card-inner {
+        border-color: #3b82f6 !important;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+    
+    .module-checkbox:checked + label .checkbox-indicator {
+        background-color: #3b82f6 !important;
+        border-color: #3b82f6 !important;
+    }
+    
+    .module-checkbox:checked + label .checkbox-indicator i {
+        display: block !important;
+    }
+    
+    .floating-cart {
+        position: fixed;
+        bottom: 30px;
+        right: 30px;
+        z-index: 1000;
+        transition: all 0.3s ease;
+    }
+    
+    .floating-cart.dragging {
+        cursor: move;
+    }
+    
+    .floating-cart.minimized {
+        width: 80px;
+        height: 80px;
+    }
+    
+    .floating-cart.minimized .cart-content {
+        display: none;
+    }
+    
+    .floating-cart.minimized .cart-minimized {
+        display: flex !important;
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let selectedModules = new Set();
+let modulePrices = {};
+let isDragging = false;
+let currentX;
+let currentY;
+let initialX;
+let initialY;
+let xOffset = 0;
+let yOffset = 0;
+
+// Cargar desde localStorage
+function loadFromLocalStorage() {
+    const saved = localStorage.getItem('selectedModules');
+    const savedPrices = localStorage.getItem('modulePrices');
+    
+    if (saved) {
+        selectedModules = new Set(JSON.parse(saved));
+    }
+    if (savedPrices) {
+        modulePrices = JSON.parse(savedPrices);
+    }
+}
+
+// Guardar en localStorage
+function saveToLocalStorage() {
+    localStorage.setItem('selectedModules', JSON.stringify(Array.from(selectedModules)));
+    localStorage.setItem('modulePrices', JSON.stringify(modulePrices));
+}
+
+function toggleCategorySelection(category) {
+    const checkboxes = document.querySelectorAll(`input[data-category="${category}"]:not(:disabled)`);
+    const availableCheckboxes = Array.from(checkboxes).filter(cb => !cb.disabled);
+    const allAvailableChecked = availableCheckboxes.every(cb => cb.checked);
+    
+    availableCheckboxes.forEach(cb => {
+        cb.checked = !allAvailableChecked;
+        updateModuleSelection(cb);
+    });
+}
+
+function updateModuleSelection(checkbox) {
+    const moduleId = parseInt(checkbox.value);
+    const price = parseFloat(checkbox.dataset.price);
+    
+    if (checkbox.checked) {
+        selectedModules.add(moduleId);
+        modulePrices[moduleId] = price;
+    } else {
+        selectedModules.delete(moduleId);
+        delete modulePrices[moduleId];
+    }
+    
+    updateFloatingCart();
+    saveToLocalStorage(); // Persistir cambios
+    
+    // Auto-expandir el carrito si está minimizado y se selecciona un módulo
+    const cart = document.getElementById('floating-cart');
+    if (checkbox.checked && cart.classList.contains('minimized')) {
+        cart.classList.remove('minimized');
+    }
+}
+
+function updateFloatingCart() {
+    const count = selectedModules.size;
+    const total = Object.values(modulePrices).reduce((sum, price) => sum + price, 0);
+    
+    const cart = document.getElementById('floating-cart');
+    const countBadge = document.getElementById('cart-count');
+    const totalPrice = document.getElementById('cart-total');
+    const checkoutBtn = document.getElementById('checkout-btn');
+    const minimizedBadge = document.getElementById('minimized-count');
+    
+    if (count > 0) {
+        cart.classList.remove('hidden');
+        countBadge.textContent = count;
+        if (minimizedBadge) minimizedBadge.textContent = count;
+        
+        // Calcular descuento
+        let discount = 0;
+        if (count >= 7) discount = 0.20;
+        else if (count >= 4) discount = 0.10;
+        
+        const finalTotal = total * (1 - discount);
+        totalPrice.textContent = `$${finalTotal.toFixed(2)}`;
+        
+        if (discount > 0) {
+            totalPrice.innerHTML += ` <span class="text-xs text-green-300">(${(discount * 100)}% OFF)</span>`;
+        }
+        
+        checkoutBtn.onclick = () => proceedToCheckout();
+    } else {
+        cart.classList.add('hidden');
+    }
+}
+
+function proceedToCheckout() {
+    if (selectedModules.size === 0) {
+        alert('Selecciona al menos un módulo');
+        return;
+    }
+    
+    // Enviar al checkout
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = '{% url "dashboard:module_checkout" %}';
+    
+    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+    const csrfInput = document.createElement('input');
+    csrfInput.type = 'hidden';
+    csrfInput.name = 'csrfmiddlewaretoken';
+    csrfInput.value = csrfToken;
+    form.appendChild(csrfInput);
+    
+    const moduleIdsInput = document.createElement('input');
+    moduleIdsInput.type = 'hidden';
+    moduleIdsInput.name = 'module_ids';
+    moduleIdsInput.value = JSON.stringify(Array.from(selectedModules));
+    form.appendChild(moduleIdsInput);
+    
+    document.body.appendChild(form);
+    form.submit();
+}
+
+function toggleCart(event) {
+    if (event) event.stopPropagation();
+    const cart = document.getElementById('floating-cart');
+    cart.classList.toggle('minimized');
+}
+
+function closeCart(event) {
+    if (event) event.stopPropagation();
+    const cart = document.getElementById('floating-cart');
+    cart.classList.add('hidden');
+    // No limpiar selecciones, solo ocultar el carrito
+}
+
+// Hacer el carrito arrastrable
+function dragStart(e) {
+    const cart = document.getElementById('floating-cart');
+    if (cart.classList.contains('minimized')) return;
+    
+    if (!e.target.closest('.drag-handle')) return;
+    
+    cart.classList.add('dragging');
+    
+    if (e.type === "touchstart") {
+        initialX = e.touches[0].clientX - xOffset;
+        initialY = e.touches[0].clientY - yOffset;
+    } else {
+        initialX = e.clientX - xOffset;
+        initialY = e.clientY - yOffset;
+    }
+
+    isDragging = true;
+}
+
+function drag(e) {
+    if (isDragging) {
+        e.preventDefault();
+        
+        if (e.type === "touchmove") {
+            currentX = e.touches[0].clientX - initialX;
+            currentY = e.touches[0].clientY - initialY;
+        } else {
+            currentX = e.clientX - initialX;
+            currentY = e.clientY - initialY;
+        }
+
+        xOffset = currentX;
+        yOffset = currentY;
+
+        setTranslate(currentX, currentY, document.getElementById('floating-cart'));
+    }
+}
+
+function dragEnd(e) {
+    const cart = document.getElementById('floating-cart');
+    cart.classList.remove('dragging');
+    initialX = currentX;
+    initialY = currentY;
+    isDragging = false;
+}
+
+function setTranslate(xPos, yPos, el) {
+    el.style.transform = `translate3d(${xPos}px, ${yPos}px, 0)`;
+}
+
+// Inicializar módulos ya comprados y restaurar selecciones guardadas
+document.addEventListener('DOMContentLoaded', () => {
+    // Cargar selecciones desde localStorage
+    loadFromLocalStorage();
+    
+    // Restaurar checkboxes según datos guardados
+    selectedModules.forEach(moduleId => {
+        const checkbox = document.querySelector(`input[value="${moduleId}"]:not(:disabled)`);
+        if (checkbox) {
+            checkbox.checked = true;
+        }
+    });
+    
+    // Inicializar módulos ya comprados
+    const purchasedCheckboxes = document.querySelectorAll('.module-checkbox:disabled:checked');
+    purchasedCheckboxes.forEach(cb => {
+        const moduleId = parseInt(cb.value);
+        const price = parseFloat(cb.dataset.price);
+        modulePrices[moduleId] = price;
+    });
+    
+    // Actualizar UI del carrito con datos restaurados
+    updateFloatingCart();
+    
+    // Agregar eventos de arrastre
+    const cart = document.getElementById('floating-cart');
+    if (cart) {
+        cart.addEventListener('mousedown', dragStart);
+        cart.addEventListener('touchstart', dragStart);
+        
+        document.addEventListener('mousemove', drag);
+        document.addEventListener('touchmove', drag);
+        
+        document.addEventListener('mouseup', dragEnd);
+        document.addEventListener('touchend', dragEnd);
+    }
+});
+</script>
+{% endblock %}
+
+{% block content %}
+{% csrf_token %}
+<div class="p-6 max-w-7xl mx-auto">
+    <!-- Header -->
+    <div class="mb-8 animate-fadeInUp">
+        <h1 class="text-4xl font-bold text-gray-800 mb-2 flex items-center gap-3">
+            <i class="fas fa-store text-blue-600"></i> 
+            Catálogo de Módulos
+        </h1>
+        <p class="text-gray-600 text-lg">Personaliza tu OpticaApp con los módulos que necesitas</p>
+    </div>
+    
+    <!-- Trial Banner -->
+    {% if trial %}
+        {% if trial.state == 'active' %}
+            <div class="bg-gradient-to-r from-emerald-500 to-emerald-600 text-white rounded-2xl p-8 mb-8 shadow-xl animate-fadeInUp">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h3 class="text-2xl font-bold mb-2 flex items-center gap-2">
+                            <i class="fas fa-gift"></i> ¡Trial Activo!
+                        </h3>
+                        <p class="text-emerald-50 text-lg">
+                            Tienes <span class="font-bold text-white">{{ trial.days_remaining }} días</span> para probar TODOS los módulos gratis.
+                        </p>
+                    </div>
+                    <div class="bg-white/20 rounded-full p-4">
+                        <i class="fas fa-rocket text-5xl"></i>
+                    </div>
+                </div>
+            </div>
+        {% elif trial.state == 'expired_grace' or trial.state == 'expired_readonly' %}
+            <div class="bg-gradient-to-r from-red-500 to-red-600 text-white rounded-2xl p-8 mb-8 shadow-xl animate-fadeInUp">
+                <div class="text-center">
+                    <h3 class="text-2xl font-bold mb-3 flex items-center justify-center gap-2">
+                        <i class="fas fa-exclamation-triangle"></i> Trial Expirado
+                    </h3>
+                    <p class="mb-4 text-red-50">Selecciona los módulos que necesitas para continuar usando OpticaApp.</p>
+                    <a href="{% url 'dashboard:module_selector' %}" class="inline-block bg-white text-red-600 px-8 py-3 rounded-lg font-semibold hover:bg-red-50 transition shadow-lg">
+                        <i class="fas fa-arrow-right mr-2"></i> Elegir Módulos Ahora
+                    </a>
+                </div>
+            </div>
+        {% endif %}
+    {% endif %}
+    
+    <!-- Módulos por Categoría -->
+    {% for category, data in categories.items %}
+        <div class="mb-12 animate-fadeInUp">
+            <!-- Category Header con Selector -->
+            <div class="bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl p-6 mb-6 shadow-lg">
+                <div class="flex items-center justify-between">
+                    <h3 class="text-2xl font-bold flex items-center gap-3">
+                        <div class="w-12 h-12 rounded-full 
+                            {% if 'CORE' in category or 'Otros' in category %}category-icon-core
+                            {% elif 'MÉDICO' in category or 'Clínic' in category or 'Medical' in category %}category-icon-medical
+                            {% elif 'COMERCIAL' in category or 'Sales' in category or 'Ventas' in category or 'Inventory' in category or 'Inventario' in category %}category-icon-commercial
+                            {% elif 'COMUNICACIÓN' in category or 'Communication' in category %}category-icon-communication
+                            {% elif 'ANÁLISIS' in category or 'Analytics' in category %}category-icon-analytics
+                            {% else %}category-icon-default{% endif %}
+                            flex items-center justify-center shadow-md">
+                            {% if 'CORE' in category or 'Otros' in category %}
+                                <i class="fas fa-cog text-2xl"></i>
+                            {% elif 'MÉDICO' in category or 'Clínic' in category or 'Medical' in category %}
+                                <i class="fas fa-stethoscope text-2xl"></i>
+                            {% elif 'COMERCIAL' in category or 'Sales' in category or 'Ventas' in category %}
+                                <i class="fas fa-shopping-cart text-2xl"></i>
+                            {% elif 'Inventory' in category or 'Inventario' in category %}
+                                <i class="fas fa-boxes text-2xl"></i>
+                            {% elif 'COMUNICACIÓN' in category or 'Communication' in category %}
+                                <i class="fas fa-comments text-2xl"></i>
+                            {% elif 'ANÁLISIS' in category or 'Analytics' in category %}
+                                <i class="fas fa-chart-bar text-2xl"></i>
+                            {% else %}
+                                <i class="fas fa-cube text-2xl"></i>
+                            {% endif %}
+                        </div>
+                        <span>
+                            {% if 'Medical' in category %}Módulos Médicos
+                            {% elif 'Sales' in category %}Módulos Comerciales
+                            {% elif 'Inventory' in category %}Gestión de Inventario
+                            {% elif 'Communication' in category %}Comunicación
+                            {% elif 'Analytics' in category %}Análisis y Reportes
+                            {% elif 'Integration' in category %}Integraciones
+                            {% elif 'Customization' in category %}Personalización
+                            {% elif 'Other' in category %}Otros Módulos
+                            {% else %}{{ category }}{% endif %}
+                        </span>
+                    </h3>
+                    <div class="flex items-center gap-4">
+                        <div class="bg-white/20 backdrop-blur-sm px-6 py-3 rounded-full font-bold text-lg">
+                            ${{ data.total|floatformat:2 }}/mes
+                        </div>
+                        <button 
+                            onclick="toggleCategorySelection('{{ category }}')"
+                            class="bg-white text-blue-600 hover:bg-blue-50 px-6 py-3 rounded-lg font-semibold transition shadow-md hover:shadow-lg flex items-center gap-2">
+                            <i class="fas fa-check-double"></i>
+                            Seleccionar Todo
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Module Cards Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {% for module in data.modules %}
+                    <div class="relative">
+                        <input 
+                            type="checkbox" 
+                            id="module-{{ module.id }}" 
+                            value="{{ module.id }}"
+                            data-category="{{ category }}"
+                            data-price="{{ module.price }}"
+                            class="module-checkbox hidden peer"
+                            {% if module.is_purchased %}checked disabled{% endif %}
+                            onchange="updateModuleSelection(this)">
+                        
+                        <label for="module-{{ module.id }}" class="cursor-pointer block">
+                            <div class="module-card-inner bg-white rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 border-2 
+                                {% if module.is_purchased %}border-emerald-400 bg-emerald-50{% else %}border-gray-200 peer-checked:border-blue-500 peer-checked:bg-blue-50{% endif %}
+                                overflow-hidden group relative">
+                                
+                                <!-- Purchased/Selected Badge -->
+                                {% if module.is_purchased %}
+                                    <div class="absolute top-4 right-4 bg-emerald-500 text-white px-4 py-1 rounded-full text-xs font-bold shadow-lg z-10">
+                                        <i class="fas fa-check-circle mr-1"></i> ACTIVO
+                                    </div>
+                                {% else %}
+                                    <div class="absolute top-4 right-4 hidden peer-checked:block bg-blue-500 text-white px-4 py-1 rounded-full text-xs font-bold shadow-lg z-10">
+                                        <i class="fas fa-check mr-1"></i> SELECCIONADO
+                                    </div>
+                                {% endif %}
+                                
+                                <!-- Card Content -->
+                                <div class="p-6">
+                                    <!-- Icon -->
+                                    <div class="w-16 h-16 rounded-2xl module-icon-bg flex items-center justify-center mb-4 shadow-lg">
+                                        {% if 'agenda' in module.name.lower or 'citas' in module.name.lower or 'appointments' in module.name.lower %}
+                                            <i class="fas fa-calendar-alt text-3xl text-white"></i>
+                                        {% elif 'paciente' in module.name.lower or 'patients' in module.name.lower %}
+                                            <i class="fas fa-user-injured text-3xl text-white"></i>
+                                        {% elif 'historia' in module.name.lower or 'clínica' in module.name.lower or 'clinical' in module.name.lower %}
+                                            <i class="fas fa-notes-medical text-3xl text-white"></i>
+                                        {% elif 'venta' in module.name.lower or 'pos' in module.name.lower or 'punto de venta' in module.name.lower %}
+                                            <i class="fas fa-cash-register text-3xl text-white"></i>
+                                        {% elif 'inventario' in module.name.lower or 'inventory' in module.name.lower or 'stock' in module.name.lower %}
+                                            <i class="fas fa-boxes text-3xl text-white"></i>
+                                        {% elif 'producto' in module.name.lower or 'products' in module.name.lower %}
+                                            <i class="fas fa-shopping-bag text-3xl text-white"></i>
+                                        {% elif 'whatsapp' in module.name.lower %}
+                                            <i class="fab fa-whatsapp text-3xl text-white"></i>
+                                        {% elif 'email' in module.name.lower or 'correo' in module.name.lower %}
+                                            <i class="fas fa-envelope text-3xl text-white"></i>
+                                        {% elif 'sms' in module.name.lower %}
+                                            <i class="fas fa-sms text-3xl text-white"></i>
+                                        {% elif 'reporte' in module.name.lower or 'reports' in module.name.lower %}
+                                            <i class="fas fa-chart-line text-3xl text-white"></i>
+                                        {% elif 'análisis' in module.name.lower or 'analytics' in module.name.lower %}
+                                            <i class="fas fa-chart-pie text-3xl text-white"></i>
+                                        {% elif 'factura' in module.name.lower or 'invoic' in module.name.lower or 'dian' in module.name.lower %}
+                                            <i class="fas fa-file-invoice-dollar text-3xl text-white"></i>
+                                        {% elif 'nómina' in module.name.lower or 'payroll' in module.name.lower %}
+                                            <i class="fas fa-money-check-alt text-3xl text-white"></i>
+                                        {% elif 'workflows' in module.name.lower or 'flujos' in module.name.lower or 'automatización' in module.name.lower %}
+                                            <i class="fas fa-project-diagram text-3xl text-white"></i>
+                                        {% elif 'examen' in module.name.lower or 'visual' in module.name.lower or 'exam' in module.name.lower %}
+                                            <i class="fas fa-eye text-3xl text-white"></i>
+                                        {% elif 'prescripcion' in module.name.lower or 'prescription' in module.name.lower or 'receta' in module.name.lower %}
+                                            <i class="fas fa-prescription text-3xl text-white"></i>
+                                        {% elif 'marketing' in module.name.lower or 'promocion' in module.name.lower or 'campaign' in module.name.lower %}
+                                            <i class="fas fa-bullhorn text-3xl text-white"></i>
+                                        {% elif 'crm' in module.name.lower %}
+                                            <i class="fas fa-users-cog text-3xl text-white"></i>
+                                        {% elif 'api' in module.name.lower %}
+                                            <i class="fas fa-code text-3xl text-white"></i>
+                                        {% elif 'multi' in module.name.lower or 'sede' in module.name.lower or 'location' in module.name.lower %}
+                                            <i class="fas fa-store-alt text-3xl text-white"></i>
+                                        {% elif 'equipo' in module.name.lower or 'team' in module.name.lower or 'usuario' in module.name.lower %}
+                                            <i class="fas fa-users text-3xl text-white"></i>
+                                        {% elif 'ar' in module.name.lower or 'probador' in module.name.lower or 'virtual' in module.name.lower %}
+                                            <i class="fas fa-glasses text-3xl text-white"></i>
+                                        {% elif 'tarea' in module.name.lower or 'task' in module.name.lower %}
+                                            <i class="fas fa-tasks text-3xl text-white"></i>
+                                        {% elif 'dashboard' in module.name.lower %}
+                                            <i class="fas fa-chart-line text-3xl text-white"></i>
+                                        {% else %}
+                                            <i class="fas fa-puzzle-piece text-3xl text-white"></i>
+                                        {% endif %}
+                                    </div>
+                                    
+                                    <!-- Module Name -->
+                                    <h4 class="text-xl font-bold text-gray-800 mb-3 group-hover:text-blue-600 transition">
+                                        {{ module.name }}
+                                    </h4>
+                                    
+                                    <!-- Description -->
+                                    <p class="text-gray-600 text-sm mb-4 line-clamp-3">
+                                        {{ module.description|truncatewords:15 }}
+                                    </p>
+                                    
+                                    <!-- Price & Checkbox Indicator -->
+                                    <div class="flex items-center justify-between mt-6 pt-4 border-t border-gray-200">
+                                        <div>
+                                            <div class="text-3xl font-bold text-blue-600">
+                                                ${{ module.price|floatformat:2 }}
+                                            </div>
+                                            <div class="text-xs text-gray-500">/mes</div>
+                                        </div>
+                                        
+                                        {% if module.is_purchased %}
+                                            <span class="text-emerald-600 font-bold flex items-center gap-2">
+                                                <i class="fas fa-check-circle text-xl"></i> En tu plan
+                                            </span>
+                                        {% else %}
+                                            <div class="flex items-center gap-2">
+                                                <div class="checkbox-indicator w-6 h-6 rounded border-2 border-gray-300 flex items-center justify-center transition">
+                                                    <i class="fas fa-check text-white text-xs hidden"></i>
+                                                </div>
+                                                <span class="text-gray-600 text-sm">Seleccionar</span>
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </label>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    {% endfor %}
+    
+    <!-- Floating Cart -->
+    <div id="floating-cart" class="floating-cart hidden">
+        <div class="bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-2xl shadow-2xl min-w-[300px]">
+            <!-- Version Minimizada -->
+            <div class="cart-minimized hidden flex-col items-center justify-center p-4 cursor-pointer" onclick="toggleCart(event)">
+                <div class="bg-white/20 rounded-full w-16 h-16 flex items-center justify-center mb-2 relative">
+                    <i class="fas fa-shopping-cart text-3xl"></i>
+                    <div class="absolute -top-2 -right-2 bg-red-500 rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold" id="minimized-count">0</div>
+                </div>
+                <div class="text-xs">Ver Carrito</div>
+            </div>
+            
+            <!-- Version Expandida -->
+            <div class="cart-content">
+                <!-- Header con controles -->
+                <div class="drag-handle cursor-move bg-white/10 p-3 rounded-t-2xl flex items-center justify-between">
+                    <div class="flex items-center gap-2">
+                        <i class="fas fa-grip-vertical text-white/50"></i>
+                        <span class="text-sm font-semibold">Carrito de Compras</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <button onclick="toggleCart(event)" class="hover:bg-white/20 rounded p-1 transition" title="Minimizar">
+                            <i class="fas fa-minus text-sm"></i>
+                        </button>
+                        <button onclick="closeCart(event)" class="hover:bg-white/20 rounded p-1 transition" title="Cerrar">
+                            <i class="fas fa-times text-sm"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="p-6 pt-4">
+                    <div class="flex items-center gap-3 mb-4">
+                        <div class="bg-white/20 rounded-full w-10 h-10 flex items-center justify-center">
+                            <i class="fas fa-shopping-cart text-xl"></i>
+                        </div>
+                        <div>
+                            <div class="text-sm text-blue-100">Módulos seleccionados</div>
+                            <div class="font-bold text-2xl" id="cart-count">0</div>
+                        </div>
+                    </div>
+                    
+                    <div class="border-t border-white/20 pt-4 mb-4">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-blue-100">Total:</span>
+                            <span class="text-2xl font-bold" id="cart-total">$0.00</span>
+                        </div>
+                    </div>
+                    
+                    <button 
+                        id="checkout-btn"
+                        class="w-full bg-white text-blue-600 hover:bg-blue-50 py-3 rounded-lg font-bold transition shadow-lg hover:shadow-xl flex items-center justify-center gap-2">
+                        <i class="fas fa-shopping-cart"></i>
+                        Ir al Checkout
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Resumen de Precios -->
+    <div class="bg-gradient-to-br from-gray-50 to-blue-50 rounded-2xl p-8 shadow-xl border-2 border-dashed border-blue-300 animate-fadeInUp">
+        <h3 class="text-3xl font-bold text-center mb-8 text-gray-800 flex items-center justify-center gap-3">
+            <i class="fas fa-calculator text-blue-600"></i> Resumen de Precios
+        </h3>
+        
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <!-- Precio Total -->
+            <div class="bg-white rounded-xl p-6 shadow-md hover:shadow-xl transition text-center">
+                <div class="text-gray-600 text-sm font-semibold mb-2 uppercase tracking-wide">Precio Total</div>
+                <div class="text-4xl font-bold text-blue-600 mb-2">${{ total_if_all|floatformat:2 }}</div>
+                <div class="text-xs text-gray-500 mb-3">/mes</div>
+                <div class="text-xs text-gray-600 bg-gray-100 rounded-full px-3 py-1 inline-block">
+                    23 módulos incluidos
+                </div>
+            </div>
+            
+            <!-- Con 4-6 Módulos -->
+            <div class="bg-white rounded-xl p-6 shadow-md hover:shadow-xl transition text-center border-2 border-yellow-400">
+                <div class="text-gray-600 text-sm font-semibold mb-2 uppercase tracking-wide">Con 4-6 Módulos</div>
+                <div class="text-4xl font-bold text-emerald-600 mb-2">${{ total_with_10_discount|floatformat:2 }}</div>
+                <div class="text-xs text-gray-500 mb-3">/mes</div>
+                <div class="bg-yellow-100 text-yellow-800 rounded-full px-4 py-2 inline-flex items-center gap-2 font-bold text-sm">
+                    <i class="fas fa-tag"></i> 10% descuento
+                </div>
+            </div>
+            
+            <!-- Con 7+ Módulos -->
+            <div class="bg-white rounded-xl p-6 shadow-md hover:shadow-xl transition text-center border-2 border-emerald-400">
+                <div class="text-gray-600 text-sm font-semibold mb-2 uppercase tracking-wide">Con 7+ Módulos</div>
+                <div class="text-4xl font-bold text-emerald-600 mb-2">${{ total_with_20_discount|floatformat:2 }}</div>
+                <div class="text-xs text-gray-500 mb-3">/mes</div>
+                <div class="bg-emerald-100 text-emerald-800 rounded-full px-4 py-2 inline-flex items-center gap-2 font-bold text-sm">
+                    <i class="fas fa-tag"></i> 20% descuento
+                </div>
+            </div>
+        </div>
+        
+        <!-- Action Buttons -->
+        <div class="text-center pt-6 border-t-2 border-gray-200">
+            {% if purchased_count > 0 %}
+                <p class="text-gray-700 mb-4 text-lg">
+                    <i class="fas fa-info-circle text-blue-500"></i> 
+                    Actualmente tienes <span class="font-bold text-blue-600">{{ purchased_count }} módulo{{ purchased_count|pluralize }}</span> activo{{ purchased_count|pluralize }}.
+                </p>
+                <a href="{% url 'dashboard:my_plan' %}" class="inline-block bg-blue-600 hover:bg-blue-700 text-white px-10 py-4 rounded-lg font-bold text-lg shadow-lg hover:shadow-xl transition">
+                    <i class="fas fa-eye mr-2"></i> Ver Mi Plan
+                </a>
+            {% else %}
+                <p class="text-gray-600 mb-4">Selecciona los módulos que necesitas y agrégalos a tu plan</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

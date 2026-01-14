@@ -582,72 +582,57 @@ class OrganizationMember(models.Model):
         return f"{self.user.get_full_name() or self.user.username} - {self.organization.name} ({self.get_role_display()})"
     
     def has_module_access(self, module_code):
-        """Verifica si el miembro tiene acceso a un módulo específico
+        """Verifica si el miembro tiene acceso a un módulo específico"""
+        # Owner y Admin tienen acceso total
+        if self.role in ['owner', 'admin']:
+            return True
         
-        MODIFICADO: Ahora retorna siempre True para permitir acceso total
-        """
-        return True
-        
-        # CÓDIGO ORIGINAL DESHABILITADO:
-        # # Owner y Admin tienen acceso total
-        # if self.role in ['owner', 'admin']:
-        #     return True
-        # 
-        # # Verificar permisos personalizados
-        # return self.custom_permissions.filter(code=module_code, is_active=True).exists()
+        # Verificar permisos personalizados
+        return self.custom_permissions.filter(code=module_code, is_active=True).exists()
     
     def can_view(self, module_code):
-        """Verifica si puede ver un módulo
+        """Verifica si puede ver un módulo"""
+        if self.role in ['owner', 'admin']:
+            return True
         
-        MODIFICADO: Ahora retorna siempre True para permitir acceso total
-        """
-        return True
-        
-        # CÓDIGO ORIGINAL:
-        # if self.role in ['owner', 'admin']:
-        #     return True
-        # perm = MemberModulePermission.objects.filter(
-        #     member=self, 
-        #     module__code=module_code
-        # ).first()
+        perm = MemberModulePermission.objects.filter(
+            member=self, 
+            module__code=module_code
+        ).first()
         return perm.can_view if perm else False
     
     def can_create(self, module_code):
-        """Verifica si puede crear en un módulo
+        """Verifica si puede crear en un módulo"""
+        if self.role in ['owner', 'admin']:
+            return True
         
-        MODIFICADO: Ahora retorna siempre True para permitir acceso total
-        """
-        return True
-        # CÓDIGO ORIGINAL:
-        # if self.role in ['owner', 'admin']:
-        #     return True
-        # perm = MemberModulePermission.objects.filter(
-        #     member=self, 
-        #     module__code=module_code
-        # ).first()
-        # return perm.can_create if perm else False
+        perm = MemberModulePermission.objects.filter(
+            member=self, 
+            module__code=module_code
+        ).first()
+        return perm.can_create if perm else False
     
     def can_edit(self, module_code):
-        """Verifica si puede editar en un módulo
+        """Verifica si puede editar en un módulo"""
+        if self.role in ['owner', 'admin']:
+            return True
         
-        MODIFICADO: Ahora retorna siempre True para permitir acceso total
-        """
-        return True
-        # CÓDIGO ORIGINAL:
-        # if self.role in ['owner', 'admin']:
-        #     return True
-        # perm = MemberModulePermission.objects.filter(
-        #     member=self, 
-        #     module__code=module_code
-        # ).first()
-        # return perm.can_edit if perm else False
+        perm = MemberModulePermission.objects.filter(
+            member=self, 
+            module__code=module_code
+        ).first()
+        return perm.can_edit if perm else False
     
     def can_delete(self, module_code):
-        """Verifica si puede eliminar en un módulo
+        """Verifica si puede eliminar en un módulo"""
+        if self.role in ['owner', 'admin']:
+            return True
         
-        MODIFICADO: Ahora retorna siempre True para permitir acceso total
-        """
-        return True
+        perm = MemberModulePermission.objects.filter(
+            member=self, 
+            module__code=module_code
+        ).first()
+        return perm.can_delete if perm else False
         # CÓDIGO ORIGINAL:
         # if self.role in ['owner', 'admin']:
         #     return True

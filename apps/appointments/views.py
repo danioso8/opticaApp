@@ -316,6 +316,14 @@ def configuration(request):
         
         # Obtener configuración de la organización
         config = AppointmentConfiguration.get_config(request.organization)
+        
+        # Si no se pudo obtener config, devolver respuesta segura
+        if not config:
+            return Response({
+                'is_open': False,
+                'message': 'Configuración no disponible'
+            }, status=status.HTTP_200_OK)
+        
         serializer = AppointmentConfigurationSerializer(config)
         return Response(serializer.data, status=status.HTTP_200_OK)
         

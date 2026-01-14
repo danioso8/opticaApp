@@ -42,8 +42,16 @@ class AppointmentConfiguration(TenantModel):
     def get_config(cls, organization=None):
         """Obtiene o crea la configuración para una organización"""
         if organization:
-            config, created = cls.objects.get_or_create(organization=organization)
-            return config
+            try:
+                config, created = cls.objects.get_or_create(organization=organization)
+                return config
+            except Exception as e:
+                # Si hay error al obtener/crear config, retornar None
+                # Esto evita errores cuando la organización no existe
+                import logging
+                logger = logging.getLogger(__name__)
+                logger.warning(f"No se pudo obtener configuración para organización {organization}: {str(e)}")
+                return None
         # Si no hay organización, retornar la primera configuración disponible (para vistas públicas)
         return cls.objects.first()
 

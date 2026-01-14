@@ -72,5 +72,111 @@
             {% block content %}{% endblock %}
         </main>
     </div>
+    
+    <!-- Captura de errores JavaScript -->
+    <script>
+        console.log('🔍 Admin error tracking initialized');
+        
+        // Interceptor de fetch para capturar errores HTTP
+        const originalFetch = window.fetch;
+        window.fetch = function(...args) {
+            console.log('🔍 Admin Fetch intercepted:', args[0]);
+            
+            return originalFetch(...args)
+                .then(response => {
+                    // Si la respuesta no es OK (400, 500, etc.), capturar el error
+                    if (!response.ok) {
+                        const errorData = {
+                            type: 'NetworkError',
+                            message: `HTTP ${response.status}: ${response.statusText} - ${args[0]}`,
+                            url: window.location.href,
+                            stack: `Fetch to ${args[0]}\nStatus: ${response.status}\nStatusText: ${response.statusText}`
+                        };
+                        
+                        console.error('❌ Admin Network error:', errorData);
+                        
+                        // Enviar error al servidor
+                        originalFetch('/dashboard/audit/api/log-js-error/', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(errorData)
+                        }).catch(err => console.error('Failed to log network error:', err));
+                    }
+                    return response;
+                })
+                .catch(error => {
+                    // Error de red (timeout, sin conexión, etc.)
+                    const errorData = {
+                        type: 'FetchError',
+                        message: `Network request failed: ${error.message} - ${args[0]}`,
+                        url: window.location.href,
+                        stack: error.stack || `Fetch failed to ${args[0]}`
+                    };
+                    
+                    console.error('❌ Admin Fetch error:', errorData);
+                    
+                    originalFetch('/dashboard/audit/api/log-js-error/', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(errorData)
+                    }).catch(err => console.error('Failed to log fetch error:', err));
+                    
+                    throw error;
+                });
+        };
+        
+        window.addEventListener('error', function(event) {
+            if (event.target !== window) return;
+            
+            const errorData = {
+                message: event.message || 'Unknown error',
+                type: event.error ? event.error.name : 'Error',
+                stack: event.error ? event.error.stack : '',
+                url: event.filename || window.location.href,
+                lineNumber: event.lineno || '',
+                columnNumber: event.colno || ''
+            };
+            
+            console.error('❌ Admin JS Error:', errorData);
+            
+            fetch('/dashboard/audit/api/log-js-error/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(errorData)
+            })
+            .then(response => response.json())
+            .then(data => console.log('✅ Error logged:', data))
+            .catch(err => console.error('❌ Failed to log:', err));
+        });
+        
+        window.addEventListener('unhandledrejection', function(event) {
+            const errorData = {
+                message: event.reason ? event.reason.message || String(event.reason) : 'Unhandled Promise Rejection',
+                type: 'UnhandledPromiseRejection',
+                stack: event.reason ? event.reason.stack : '',
+                url: window.location.href
+            };
+            
+            console.error('❌ Admin Promise rejection:', errorData);
+            
+            fetch('/dashboard/audit/api/log-js-error/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(errorData)
+            })
+            .then(response => response.json())
+            .then(data => console.log('✅ Error logged:', data))
+            .catch(err => console.error('❌ Failed to log:', err));
+        });
+        
+        window.testErrorCapture = function() {
+            console.log('🧪 Testing admin error capture...');
+            throw new Error('Test error from Admin dashboard');
+        };
+    </script>
 </body>
 </html>

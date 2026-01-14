@@ -363,29 +363,40 @@ let ws = null;
 
 // Función para cambiar la vista (lista/cards)
 function changeView(viewType) {
-    const currentTab = document.querySelector('.tab-content:not(.hidden)').id;
+    const currentTabElement = document.querySelector('.tab-content:not(.hidden)');
+    if (!currentTabElement) {
+        console.warn('No se encontró el tab activo');
+        return;
+    }
+    
+    const currentTab = currentTabElement.id;
     const isToday = currentTab === 'content-today';
     
     // Guardar preferencia en localStorage
     localStorage.setItem('appointmentsView', viewType);
     
     if (isToday) {
-        // Para citas de hoy (solo cards actualmente)
-        updateViewButtons(viewType, 'today');
+        // Para citas de hoy (solo cards actualmente, sin botones de vista)
+        // No llamar updateViewButtons porque no existen botones para este tab
+        console.log('Tab "Hoy" no tiene botones de vista');
     } else {
         // Para todas las citas
         const listView = document.getElementById('all-appointments-list');
         const cardsView = document.getElementById('all-appointments-cards');
         
-        if (viewType === 'list') {
-            listView.classList.remove('hidden');
-            cardsView.classList.add('hidden');
+        if (listView && cardsView) {
+            if (viewType === 'list') {
+                listView.classList.remove('hidden');
+                cardsView.classList.add('hidden');
+            } else {
+                listView.classList.add('hidden');
+                cardsView.classList.remove('hidden');
+            }
+            
+            updateViewButtons(viewType, 'all');
         } else {
-            listView.classList.add('hidden');
-            cardsView.classList.remove('hidden');
+            console.warn('Elementos de vista no encontrados para tab "Todas"');
         }
-        
-        updateViewButtons(viewType, 'all');
     }
 }
 
@@ -393,6 +404,12 @@ function changeView(viewType) {
 function updateViewButtons(viewType, tab) {
     const listBtn = document.getElementById(`view-${tab}-list`);
     const cardsBtn = document.getElementById(`view-${tab}-cards`);
+    
+    // Validar que los botones existan antes de modificar sus clases
+    if (!listBtn || !cardsBtn) {
+        console.warn(`Botones de vista no encontrados para tab: ${tab}`);
+        return;
+    }
     
     if (viewType === 'list') {
         listBtn.classList.add('bg-blue-600', 'text-white');
@@ -541,9 +558,12 @@ document.addEventListener('DOMContentLoaded', () => {
         showTab('all');
     }
     
-    // Restaurar vista guardada desde localStorage
-    const savedView = localStorage.getItem('appointmentsView') || 'list';
-    changeView(savedView);
+    // Restaurar vista guardada desde localStorage solo si estamos en el tab "all"
+    const currentTabElement = document.querySelector('.tab-content:not(.hidden)');
+    if (currentTabElement && currentTabElement.id === 'content-all') {
+        const savedView = localStorage.getItem('appointmentsView') || 'list';
+        changeView(savedView);
+    }
 });
 </script>
 

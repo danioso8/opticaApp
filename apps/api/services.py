@@ -152,7 +152,7 @@ class RateLimitService:
                 'window_end': window_end,
                 'limit': limit,
                 'request_count': 0,
-                'organization_id': 1  # TODO: Get from context
+                'organization': None  # No asignar organización para rate limits públicos
             }
         )
         
@@ -166,7 +166,7 @@ class RateLimitService:
                 window_end=now + timedelta(minutes=window_minutes),
                 limit=limit,
                 request_count=0,
-                organization_id=1  # TODO: Get from context
+                organization=None  # No asignar organización para rate limits públicos
             )
         
         # Verificar si puede hacer la petición

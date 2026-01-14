@@ -1,0 +1,8 @@
+{
+  "message": "Error de prueba desde archivo JSON",
+  "type": "TestError",
+  "stack": "at modal.js line 145",
+  "url": "https://www.optikaapp.com/dashboard/patients/",
+  "lineNumber": "145",
+  "columnNumber": "12"
+}

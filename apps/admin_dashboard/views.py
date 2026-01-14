@@ -1165,7 +1165,37 @@ def addon_purchase_create(request, org_id):
 
 @superuser_required
 def error_monitoring(request):
-    """Vista para monitorear errores del sistema."""
+    """
+    Dashboard de Monitoreo de Errores del Sistema
+    
+    Esta vista proporciona un panel de control completo para monitorear y analizar
+    todos los errores capturados automáticamente en la aplicación.
+    
+    Características:
+    - Errores JavaScript capturados automáticamente desde el frontend
+    - Errores de red (HTTP 400, 500) interceptados por fetch
+    - Errores de backend (excepciones Python, Django)
+    - Estadísticas en tiempo real (total, sin resolver, críticos)
+    - Gráficos de tendencias (últimos 7 días)
+    - Distribución por severidad
+    - Top 10 errores más frecuentes
+    - Filtros avanzados (severidad, estado, búsqueda)
+    
+    Filtros disponibles:
+    - severity: DEBUG, INFO, WARNING, ERROR, CRITICAL
+    - resolved: 'resolved' (resueltos) o 'unresolved' (pendientes)
+    - search: busca en tipo de error, mensaje y URL
+    
+    Contexto retornado:
+    - total_errors: Total de errores en el sistema
+    - unresolved_errors: Errores pendientes de resolver
+    - critical_errors: Errores críticos activos
+    - recent_errors: Errores en las últimas 24 horas
+    - errors_by_severity: Distribución por nivel de severidad
+    - top_errors: Los 10 errores más frecuentes (últimos 7 días)
+    - errors_by_day: Tendencia diaria (últimos 7 días)
+    - errors_list: Lista paginada de errores (últimos 100)
+    """
     from apps.audit.models import ErrorLog
     from django.db.models import Count
     from datetime import datetime, timedelta
@@ -1250,3 +1280,37 @@ def error_monitoring(request):
     }
     
     return render(request, 'admin_dashboard/error_monitoring.html', context)
+
+
+@superuser_required
+def error_resolve(request, error_id):
+    """
+    Marca un error como resuelto.
+    Útil cuando ya se corrigió el problema en el código.
+    """
+    from apps.audit.models import ErrorLog
+    
+    error = get_object_or_404(ErrorLog, id=error_id)
+    error.is_resolved = True
+    error.save()
+    
+    messages.success(request, f'✅ Error #{error_id} marcado como RESUELTO')
+    
+    return redirect('admin_dashboard:error_monitoring')
+
+
+@superuser_required
+def error_unresolve(request, error_id):
+    """
+    Marca un error como NO resuelto.
+    Útil si el error vuelve a ocurrir después de creer que se solucionó.
+    """
+    from apps.audit.models import ErrorLog
+    
+    error = get_object_or_404(ErrorLog, id=error_id)
+    error.is_resolved = False
+    error.save()
+    
+    messages.warning(request, f'⚠️ Error #{error_id} marcado como NO RESUELTO')
+    
+    return redirect('admin_dashboard:error_monitoring')

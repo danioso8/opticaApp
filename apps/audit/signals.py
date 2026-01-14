@@ -60,10 +60,15 @@ def log_model_save(sender, instance, created, **kwargs):
     
     # Obtener organización si el modelo tiene ese campo
     organization = None
-    if hasattr(instance, 'organization'):
-        organization = instance.organization
-    elif hasattr(instance, 'get_organization'):
-        organization = instance.get_organization()
+    try:
+        # Usar hasattr en el modelo, no en la instancia para evitar consultas
+        if 'organization' in [f.name for f in instance._meta.fields]:
+            organization = instance.organization
+        elif hasattr(instance, 'get_organization'):
+            organization = instance.get_organization()
+    except Exception:
+        # Si falla, simplemente no asignar organización
+        pass
     
     # Detectar cambios en UPDATE
     changes = {}

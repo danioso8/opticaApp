@@ -371,3 +371,131 @@ def audit_stats_api(request):
     
     return JsonResponse(data)
 
+
+from django.views.decorators.csrf import csrf_exempt
+import logging
+
+logger = logging.getLogger(__name__)
+
+@csrf_exempt
+def log_js_error(request):
+    """
+    🎯 Endpoint de Captura Automática de Errores JavaScript/Network
+    
+    Este endpoint recibe y registra errores capturados automáticamente desde
+    el frontend de la aplicación mediante interceptores de JavaScript.
+    
+    📡 URL: /dashboard/audit/api/log-js-error/
+    🔓 Autenticación: NO requerida (para capturar errores de usuarios no autenticados)
+    📝 Método: POST
+    🔒 CSRF: Exento (errores pueden ocurrir antes de cargar token CSRF)
+    
+    Tipos de errores capturados:
+    - ❌ JavaScript Errors: TypeError, ReferenceError, SyntaxError
+    - 🌐 Network Errors: HTTP 400, 500 responses desde fetch()
+    - 💥 Promise Rejections: Promesas no manejadas
+    - 🚫 Fetch Failures: Timeouts, conexiones fallidas
+    
+    Datos esperados en POST (JSON):
+    {
+        "type": "TypeError",           // Tipo de error
+        "message": "Cannot read...",   // Mensaje descriptivo
+        "stack": "Error: at...",       // Stack trace completo
+        "url": "/dashboard/patients/", // URL donde ocurrió
+        "lineNumber": 123,             // Línea del error (opcional)
+        "columnNumber": 45             // Columna del error (opcional)
+    }
+    
+    Comportamiento:
+    - Si el error YA existe y NO está resuelto: incrementa occurrence_count
+    - Si es un error NUEVO: crea registro en ErrorLog
+    - Almacena: tipo, mensaje, stack, URL, user agent, usuario (si autenticado)
+    
+    Respuestas:
+    - 200: {"status": "success", "logged": true} - Error registrado
+    - 400: {"status": "error", "message": "..."} - Error en procesamiento
+    - 405: {"status": "error", "message": "Method not allowed"} - Método incorrecto
+    
+    Ejemplo de uso desde JavaScript:
+    ```javascript
+    fetch('/dashboard/audit/api/log-js-error/', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+            type: error.name,
+            message: error.message,
+            stack: error.stack,
+            url: window.location.href
+        })
+    });
+    ```
+    """
+    if request.method == 'POST':
+        try:
+            from .models import ErrorLog
+            import json
+            
+            # Log para debugging
+            logger.info(f"Recibiendo error JS desde: {request.META.get('REMOTE_ADDR')}")
+            
+            data = json.loads(request.body)
+            
+            error_message = data.get('message', 'Unknown JavaScript error')
+            error_type = data.get('type', 'JavaScriptError')
+            stack_trace = data.get('stack', '')
+            url = data.get('url', request.path)
+            line_number = data.get('lineNumber', '')
+            column_number = data.get('columnNumber', '')
+            user_agent = request.META.get('HTTP_USER_AGENT', '')
+            
+            # Log para debugging
+            logger.info(f"Error capturado: {error_type} - {error_message}")
+            
+            # Crear mensaje completo
+            full_message = f"{error_message}"
+            if line_number:
+                full_message += f" (Line: {line_number}"
+                if column_number:
+                    full_message += f", Column: {column_number}"
+                full_message += ")"
+            
+            # Crear stack trace completo
+            full_stack = f"URL: {url}\n"
+            full_stack += f"User Agent: {user_agent}\n"
+            if stack_trace:
+                full_stack += f"\nStack Trace:\n{stack_trace}"
+            
+            # Buscar error existente
+            existing_error = ErrorLog.objects.filter(
+                error_type=error_type,
+                error_message=full_message,
+                is_resolved=False
+            ).first()
+            
+            if existing_error:
+                # Actualizar error existente
+                existing_error.occurrence_count += 1
+                existing_error.last_seen = timezone.now()
+                existing_error.save()
+                logger.info(f"Error actualizado (#{existing_error.occurrence_count}): {error_type}")
+            else:
+                # Crear nuevo error
+                new_error = ErrorLog.objects.create(
+                    error_type=error_type,
+                    error_message=full_message,
+                    stack_trace=full_stack,
+                    url=url,
+                    user=request.user if request.user.is_authenticated else None,
+                    severity='medium',
+                    is_resolved=False,
+                    occurrence_count=1
+                )
+                logger.info(f"Nuevo error registrado (ID: {new_error.id}): {error_type}")
+            
+            return JsonResponse({'status': 'success', 'logged': True})
+        except Exception as e:
+            logger.error(f"Error al registrar error JS: {str(e)}")
+            return JsonResponse({'status': 'error', 'message': str(e)}, status=400)
+    
+    return JsonResponse({'status': 'error', 'message': 'Method not allowed'}, status=405)
+

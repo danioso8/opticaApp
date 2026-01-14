@@ -344,6 +344,8 @@ class RateLimitRecord(TenantModel):
     organization = models.ForeignKey(
         'organizations.Organization',
         on_delete=models.CASCADE,
+        null=True,  # Permitir NULL para rate limits públicos (sin organización)
+        blank=True,
         verbose_name='Organización',
         related_name='rate_limits'
     )

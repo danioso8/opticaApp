@@ -209,15 +209,22 @@
     <div class="flex h-screen pt-16 md:pt-0">
         <!-- Sidebar -->
         <aside id="sidebar" class="sidebar-mobile sidebar-hidden md:sidebar-mobile md:translate-x-0 fixed md:relative w-64 bg-indigo-900 text-white flex-shrink-0 h-full z-40 overflow-y-auto">
-            <div class="p-4 sidebar-brand flex items-center justify-between">
-                <div>
+            <div class="p-4 sidebar-brand flex items-center justify-between border-b border-indigo-800">
+                <div class="flex-1">
+                    {% if request.organization %}
+                    <h1 class="text-xl font-bold sidebar-brand-text truncate" title="{{ request.organization.name }}">
+                        {{ request.organization.name }}
+                    </h1>
+                    <p class="text-indigo-300 text-xs sidebar-brand-text">Panel Administrativo</p>
+                    {% else %}
                     <h1 class="text-2xl font-bold">
-                        <i class="fas fa-glasses mr-2"></i><span class="sidebar-brand-text">OCEANO OPTICO</span>
+                        <i class="fas fa-glasses mr-2"></i><span class="sidebar-brand-text">OpticaApp</span>
                     </h1>
                     <p class="text-indigo-300 text-sm sidebar-brand-text">Panel Administrativo</p>
+                    {% endif %}
                 </div>
                 <!-- Botón toggle mini-sidebar (solo visible en desktop) -->
-                <button onclick="toggleMiniSidebar()" class="hidden md:block text-white hover:bg-indigo-800 rounded p-2 focus:outline-none">
+                <button onclick="toggleMiniSidebar()" class="hidden md:block text-white hover:bg-indigo-800 rounded p-2 focus:outline-none flex-shrink-0">
                     <i id="toggle-mini-icon" class="fas fa-bars"></i>
                 </button>
             </div>
@@ -1129,6 +1136,129 @@
             // Actualizar cada 30 segundos
             setInterval(updateApprovalsBadge, 30000);
         }
+    </script>
+    
+    <!-- Captura de errores JavaScript y de Red -->
+    <script>
+        console.log('🔍 Error tracking system initialized');
+        
+        // Interceptar fetch para capturar errores HTTP (500, 404, etc.)
+        const originalFetch = window.fetch;
+        window.fetch = function(...args) {
+            return originalFetch.apply(this, args)
+                .then(response => {
+                    // Capturar errores HTTP 400, 500, etc.
+                    if (!response.ok && response.status >= 400) {
+                        const errorData = {
+                            message: `HTTP ${response.status}: ${response.statusText} - ${args[0]}`,
+                            type: 'NetworkError',
+                            stack: `Fetch to ${args[0]}\nStatus: ${response.status} ${response.statusText}\nMethod: ${args[1]?.method || 'GET'}`,
+                            url: window.location.href,
+                            lineNumber: new Error().stack.split('\n')[2] || '',
+                            columnNumber: ''
+                        };
+                        
+                        console.error('❌ Network Error captured:', errorData);
+                        
+                        // Enviar al backend
+                        originalFetch('/dashboard/audit/api/log-js-error/', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(errorData)
+                        }).catch(err => console.error('Failed to log network error:', err));
+                    }
+                    return response;
+                })
+                .catch(error => {
+                    // Capturar errores de red (sin conexión, timeout, etc.)
+                    const errorData = {
+                        message: `Network request failed: ${error.message} - ${args[0]}`,
+                        type: 'NetworkError',
+                        stack: error.stack || `Fetch to ${args[0]} failed`,
+                        url: window.location.href,
+                        lineNumber: '',
+                        columnNumber: ''
+                    };
+                    
+                    console.error('❌ Network Error captured:', errorData);
+                    
+                    originalFetch('/dashboard/audit/api/log-js-error/', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(errorData)
+                    }).catch(err => console.error('Failed to log network error:', err));
+                    
+                    throw error;
+                });
+        };
+        
+        // Capturar errores JavaScript globales
+        window.addEventListener('error', function(event) {
+            // Evitar capturar errores de recursos (imágenes, scripts, etc.)
+            if (event.target !== window) {
+                return;
+            }
+            
+            const errorData = {
+                message: event.message || 'Unknown error',
+                type: event.error ? event.error.name : 'Error',
+                stack: event.error ? event.error.stack : '',
+                url: event.filename || window.location.href,
+                lineNumber: event.lineno || '',
+                columnNumber: event.colno || ''
+            };
+            
+            console.error('❌ JS Error captured:', errorData);
+            
+            // Enviar error al backend
+            fetch('/dashboard/audit/api/log-js-error/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(errorData)
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log('✅ Error logged to server:', data);
+            })
+            .catch(err => {
+                console.error('❌ Failed to log error to server:', err);
+            });
+        });
+        
+        // Capturar promesas rechazadas no manejadas
+        window.addEventListener('unhandledrejection', function(event) {
+            const errorData = {
+                message: event.reason ? event.reason.message || String(event.reason) : 'Unhandled Promise Rejection',
+                type: 'UnhandledPromiseRejection',
+                stack: event.reason ? event.reason.stack : '',
+                url: window.location.href
+            };
+            
+            console.error('❌ Promise rejection captured:', errorData);
+            
+            fetch('/dashboard/audit/api/log-js-error/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(errorData)
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log('✅ Error logged to server:', data);
+            })
+            .catch(err => {
+                console.error('❌ Failed to log error to server:', err);
+            });
+        });
+        
+        // Opcional: Trigger manual de test (para debugging)
+        window.testErrorCapture = function() {
+            console.log('🧪 Testing error capture...');
+            throw new Error('Test error from OpticaApp error tracking system');
+        };
     </script>
     
     <!-- Modal de Upgrade -->

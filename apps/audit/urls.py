@@ -23,4 +23,5 @@ urlpatterns = [
     
     # API
     path('api/stats/', views.audit_stats_api, name='stats_api'),
+    path('api/log-js-error/', views.log_js_error, name='log_js_error'),
 ]

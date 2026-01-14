@@ -527,6 +527,46 @@
             </div>
         </div>
 
+        <!-- DISTANCIA PUPILAR -->
+        <div class="bg-gradient-to-r from-blue-50 to-blue-100 border-l-4 border-blue-600 rounded-lg p-6 mb-6 shadow-sm">
+            <h3 class="text-xl font-bold text-gray-800 mb-4 flex items-center uppercase tracking-wide">
+                <i class="fas fa-ruler-horizontal text-blue-600 mr-2"></i>
+                DISTANCIA PUPILAR (mm)
+            </h3>
+            
+            <div class="bg-white rounded-lg p-4 shadow-sm">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            <i class="fas fa-arrows-alt-h text-blue-600 mr-1"></i> DP Lejos
+                        </label>
+                        <input type="number" step="0.5" name="pd_distance"
+                               value="{% if history.pd_distance %}{{ history.pd_distance|stringformat:'g' }}{% endif %}"
+                               class="w-full px-3 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                               placeholder="63.0">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            <i class="fas fa-eye text-blue-600 mr-1"></i> DNP OD
+                        </label>
+                        <input type="number" step="0.5" name="pd_od"
+                               value="{% if history.pd_od %}{{ history.pd_od|stringformat:'g' }}{% endif %}"
+                               class="w-full px-3 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                               placeholder="31.5">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            <i class="fas fa-eye text-green-600 mr-1"></i> DNP OI
+                        </label>
+                        <input type="number" step="0.5" name="pd_os"
+                               value="{% if history.pd_os %}{{ history.pd_os|stringformat:'g' }}{% endif %}"
+                               class="w-full px-3 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                               placeholder="31.5">
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- EXÁMENES REFRACTIVOS ADICIONALES -->
         <div class="bg-gradient-to-r from-purple-50 to-purple-100 border-l-4 border-purple-600 rounded-lg p-6 mb-6 shadow-sm">
             <h3 class="text-xl font-bold text-gray-800 mb-5 flex items-center uppercase tracking-wide">
@@ -895,6 +935,41 @@
                 <label class="block text-sm font-bold text-gray-800 mb-3 flex items-center">
                     <i class="fas fa-check-circle text-purple-600 mr-1"></i> RX FINAL
                 </label>
+                
+                <!-- Selector de examen a copiar -->
+                <div class="bg-gradient-to-r from-purple-100 to-indigo-100 border-2 border-purple-300 rounded-lg p-4 mb-4">
+                    <label class="block text-sm font-bold text-gray-800 mb-3 flex items-center">
+                        <i class="fas fa-copy text-indigo-600 mr-2"></i> Copiar datos desde examen:
+                    </label>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                        <button type="button" onclick="copyToFinalRx('retinoscopy')" 
+                                class="flex items-center justify-center space-x-2 bg-white hover:bg-purple-50 border-2 border-purple-300 hover:border-purple-500 px-4 py-2 rounded-lg transition-all shadow-sm">
+                            <i class="fas fa-eye-dropper text-purple-600"></i>
+                            <span class="text-sm font-medium text-gray-700">Retinoscopia</span>
+                        </button>
+                        
+                        <button type="button" onclick="copyToFinalRx('subjective')" 
+                                class="flex items-center justify-center space-x-2 bg-white hover:bg-purple-50 border-2 border-purple-300 hover:border-purple-500 px-4 py-2 rounded-lg transition-all shadow-sm">
+                            <i class="fas fa-user-check text-blue-600"></i>
+                            <span class="text-sm font-medium text-gray-700">Subjetivo</span>
+                        </button>
+                        
+                        <button type="button" onclick="copyToFinalRx('refinement')" 
+                                class="flex items-center justify-center space-x-2 bg-white hover:bg-purple-50 border-2 border-purple-300 hover:border-purple-500 px-4 py-2 rounded-lg transition-all shadow-sm">
+                            <i class="fas fa-adjust text-green-600"></i>
+                            <span class="text-sm font-medium text-gray-700">Afinación</span>
+                        </button>
+                        
+                        <button type="button" onclick="copyToFinalRx('cycloplegic')" 
+                                class="flex items-center justify-center space-x-2 bg-white hover:bg-purple-50 border-2 border-purple-300 hover:border-purple-500 px-4 py-2 rounded-lg transition-all shadow-sm">
+                            <i class="fas fa-flask text-orange-600"></i>
+                            <span class="text-sm font-medium text-gray-700">Ciclopléjico</span>
+                        </button>
+                    </div>
+                    <p class="text-xs text-gray-600 mt-2 italic">
+                        <i class="fas fa-info-circle mr-1"></i> Haz clic en un botón para copiar automáticamente los datos de ese examen a RX Final
+                    </p>
+                </div>
                 
                 <!-- OD -->
                 <div class="mb-3">
@@ -1321,190 +1396,6 @@
                                    placeholder="J1 a 40cm">
                         </div>
                     </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- REFRACCIÓN CON BOTÓN COPIAR OD→OI -->
-        <div class="bg-gradient-to-r from-blue-50 to-blue-100 border-l-4 border-blue-600 rounded-lg p-6 mb-6 shadow-sm">
-            <div class="flex items-center justify-between mb-5">
-                <h3 class="text-xl font-bold text-gray-800 flex items-center uppercase tracking-wide">
-                    <i class="fas fa-eye-dropper text-blue-600 mr-2"></i>
-                    REFRACCIÓN
-                    <span class="ml-3 text-xs font-normal text-gray-600 bg-white px-2 py-1 rounded">
-                        <i class="fas fa-info-circle mr-1"></i>Rangos: -20.00 a +20.00 D
-                    </span>
-                </h3>
-                <!-- BOTONES RÁPIDOS DE REFRACCIÓN -->
-                <div class="flex gap-2">
-                    <button type="button" onclick="copyODtoOI()" class="quick-btn bg-blue-600 text-white border-blue-700 hover:bg-blue-700">
-                        <i class="fas fa-copy mr-1"></i>Copiar OD → OI
-                    </button>
-                    <button type="button" onclick="setPlano()" class="quick-btn bg-white text-blue-700 border-blue-300 hover:bg-blue-50">
-                        <i class="fas fa-minus mr-1"></i>Plano
-                    </button>
-                    <button type="button" onclick="clearRefraction()" class="quick-btn bg-gray-500 text-white border-gray-600 hover:bg-gray-600">
-                        <i class="fas fa-eraser mr-1"></i>Limpiar
-                    </button>
-                </div>
-            </div>
-            
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <!-- OD -->
-                <div class="bg-white rounded-lg p-4 shadow-sm">
-                    <h4 class="font-bold text-gray-800 mb-4 text-center">OD (Ojo Derecho)</h4>
-                    <div class="space-y-3">
-                        <div class="grid grid-cols-3 gap-2">
-                            <div>
-                                <label class="block text-xs font-medium text-gray-700 mb-1">Esfera</label>
-                                <input type="text" name="refraction_od_sphere" id="refraction_od_sphere"
-                                       class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500"
-                                       placeholder="±2.00, N, NLP o N/A"
-                                       value="{% if history %}{{ history.refraction_od_sphere }}{% endif %}"
-                                       oninput="validateSphereInput(this)">
-                            </div>
-                            <div>
-                                <label class="block text-xs font-medium text-gray-700 mb-1">Cilindro</label>
-                                <input type="number" step="0.25" name="refraction_od_cylinder" id="refraction_od_cylinder"
-                                       class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500"
-                                       placeholder="0.00"
-                                       value="{% if history.refraction_od_cylinder %}{{ history.refraction_od_cylinder|stringformat:'g' }}{% endif %}">
-                            </div>
-                            <div>
-                                <label class="block text-xs font-medium text-gray-700 mb-1">Eje</label>
-                                <input type="number" min="0" max="180" name="refraction_od_axis" id="refraction_od_axis"
-                                       class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500"
-                                       placeholder="0"
-                                       value="{% if history.refraction_od_axis %}{{ history.refraction_od_axis }}{% endif %}">
-                            </div>
-                        </div>
-                        <div>
-                            <label class="block text-xs font-medium text-gray-700 mb-1">ADD</label>
-                            <input type="number" step="0.25" name="refraction_od_add" id="refraction_od_add"
-                                   class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500"
-                                   placeholder="0.00"
-                                   value="{% if history.refraction_od_add %}{{ history.refraction_od_add|stringformat:'g' }}{% endif %}">
-                        </div>
-                    </div>
-                </div>
-
-                <!-- OS -->
-                <div class="bg-white rounded-lg p-4 shadow-sm">
-                    <h4 class="font-bold text-gray-800 mb-4 text-center">OI (Ojo Izquierdo)</h4>
-                    <div class="space-y-3">
-                        <div class="grid grid-cols-3 gap-2">
-                            <div>
-                                <label class="block text-xs font-medium text-gray-700 mb-1">Esfera</label>
-                                <input type="text" name="refraction_os_sphere" id="refraction_os_sphere"
-                                       class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500"
-                                       placeholder="±2.00, N, NLP o N/A"
-                                       value="{% if history %}{{ history.refraction_os_sphere }}{% endif %}"
-                                       oninput="validateSphereInput(this)">
-                            </div>
-                            <div>
-                                <label class="block text-xs font-medium text-gray-700 mb-1">Cilindro</label>
-                                <input type="number" step="0.25" name="refraction_os_cylinder" id="refraction_os_cylinder"
-                                       class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500"
-                                       placeholder="0.00"
-                                       value="{% if history.refraction_os_cylinder %}{{ history.refraction_os_cylinder|stringformat:'g' }}{% endif %}">
-                            </div>
-                            <div>
-                                <label class="block text-xs font-medium text-gray-700 mb-1">Eje</label>
-                                <input type="number" min="0" max="180" name="refraction_os_axis" id="refraction_os_axis"
-                                       class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500"
-                                       placeholder="0"
-                                       value="{% if history.refraction_os_axis %}{{ history.refraction_os_axis }}{% endif %}">
-                            </div>
-                        </div>
-                        <div>
-                            <label class="block text-xs font-medium text-gray-700 mb-1">ADD</label>
-                            <input type="number" step="0.25" name="refraction_os_add" id="refraction_os_add"
-                                   class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500"
-                                   placeholder="0.00"
-                                   value="{% if history.refraction_os_add %}{{ history.refraction_os_add|stringformat:'g' }}{% endif %}">
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Distancia Pupilar -->
-            <div class="bg-white p-3 rounded mt-4">
-                <h4 class="font-semibold text-gray-700 mb-2">Distancia Pupilar (mm)</h4>
-                <div class="grid grid-cols-3 gap-2">
-                    <div>
-                        <label class="block text-xs font-medium text-gray-600 mb-1">DP Lejos</label>
-                        <input type="number" step="0.5" name="pd_distance"
-                               value="{% if history.pd_distance %}{{ history.pd_distance|stringformat:'g' }}{% endif %}"
-                               class="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-purple-500"
-                               placeholder="63.0">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-medium text-gray-600 mb-1">DNP OD</label>
-                        <input type="number" step="0.5" name="pd_od"
-                               value="{% if history.pd_od %}{{ history.pd_od|stringformat:'g' }}{% endif %}"
-                               class="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-purple-500"
-                               placeholder="31.5">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-medium text-gray-600 mb-1">DNP OI</label>
-                        <input type="number" step="0.5" name="pd_os"
-                               value="{% if history.pd_os %}{{ history.pd_os|stringformat:'g' }}{% endif %}"
-                               class="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-purple-500"
-                               placeholder="31.5">
-                    </div>
-                </div>
-            </div>
-
-            <!-- Gráfico Visual de Refracción -->
-            <div class="bg-white p-3 rounded mt-3">
-                <h4 class="font-semibold text-gray-700 mb-3 flex items-center">
-                    <i class="fas fa-chart-bar text-purple-600 mr-2"></i>
-                    Representación Visual
-                </h4>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <!-- Gráfico OD -->
-                    <div class="text-center">
-                        <p class="text-sm font-medium text-gray-700 mb-2">
-                            <span class="bg-blue-500 text-white w-6 h-6 rounded-full inline-flex items-center justify-center text-xs mr-1">OD</span>
-                            Ojo Derecho
-                        </p>
-                        <div class="relative w-32 h-32 mx-auto border-4 border-blue-500 rounded-full flex items-center justify-center bg-gradient-to-br from-blue-50 to-blue-100">
-                            <div id="od-visual" class="text-center">
-                                <p class="text-xs text-gray-500">Vista Esquemática</p>
-                                <p class="text-2xl font-bold text-blue-600 mt-1" id="od-sphere-display">--</p>
-                                <p class="text-xs text-gray-600" id="od-cyl-display">--</p>
-                            </div>
-                        </div>
-                        <div class="mt-2 text-xs text-gray-600">
-                            <p><strong>AV:</strong> <span id="od-av-display">--</span></p>
-                        </div>
-                    </div>
-                    
-                    <!-- Gráfico OS -->
-                    <div class="text-center">
-                        <p class="text-sm font-medium text-gray-700 mb-2">
-                            <span class="bg-green-500 text-white w-6 h-6 rounded-full inline-flex items-center justify-center text-xs mr-1">OS</span>
-                            Ojo Izquierdo
-                        </p>
-                        <div class="relative w-32 h-32 mx-auto border-4 border-green-500 rounded-full flex items-center justify-center bg-gradient-to-br from-green-50 to-green-100">
-                            <div id="os-visual" class="text-center">
-                                <p class="text-xs text-gray-500">Vista Esquemática</p>
-                                <p class="text-2xl font-bold text-green-600 mt-1" id="os-sphere-display">--</p>
-                                <p class="text-xs text-gray-600" id="os-cyl-display">--</p>
-                            </div>
-                        </div>
-                        <div class="mt-2 text-xs text-gray-600">
-                            <p><strong>AV:</strong> <span id="os-av-display">--</span></p>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Interpretación -->
-                <div class="mt-3 p-2 bg-purple-50 rounded text-xs text-center">
-                    <p class="font-medium text-purple-800">
-                        <i class="fas fa-info-circle mr-1"></i>
-                        <span id="refraction-interpretation">Ingrese valores de refracción para ver la interpretación</span>
-                    </p>
                 </div>
             </div>
         </div>
@@ -4487,6 +4378,113 @@ function toggleExamSection(examType, isChecked) {
     if (section) {
         section.style.display = isChecked ? 'block' : 'none';
     }
+}
+
+// ============ COPIAR DATOS A RX FINAL ============
+function copyToFinalRx(sourceExam) {
+    // Definir los campos a copiar (OD y OS)
+    const fields = ['sphere', 'cylinder', 'axis', 'add'];
+    const eyes = ['od', 'os'];
+    
+    let copiedFields = 0;
+    
+    // Copiar cada campo de OD y OS
+    eyes.forEach(eye => {
+        fields.forEach(field => {
+            const sourceField = document.querySelector(`input[name="${sourceExam}_${eye}_${field}"]`);
+            const targetField = document.querySelector(`input[name="final_rx_${eye}_${field}"]`);
+            
+            if (sourceField && targetField) {
+                const value = sourceField.value.trim();
+                if (value !== '') {
+                    targetField.value = value;
+                    // Efecto visual de cambio
+                    targetField.classList.add('bg-green-100');
+                    setTimeout(() => {
+                        targetField.classList.remove('bg-green-100');
+                    }, 1000);
+                    copiedFields++;
+                }
+            }
+        });
+    });
+    
+    // Mensaje de confirmación moderno
+    if (copiedFields > 0) {
+        const examNames = {
+            'retinoscopy': 'Retinoscopia',
+            'subjective': 'Subjetivo',
+            'refinement': 'Afinación',
+            'cycloplegic': 'Subjetivo Ciclopléjico'
+        };
+        
+        showModernNotification(`Datos copiados desde ${examNames[sourceExam]} a RX Final (${copiedFields} campos)`, 'success');
+    } else {
+        showModernNotification(`No hay datos en ${sourceExam} para copiar. Por favor ingresa los datos primero.`, 'warning');
+    }
+}
+
+// ============ NOTIFICACIÓN MODERNA ============
+function showModernNotification(message, type = 'info') {
+    // Eliminar notificación anterior si existe
+    const existingNotification = document.getElementById('modern-notification');
+    if (existingNotification) {
+        existingNotification.remove();
+    }
+    
+    // Configuración de colores según tipo
+    const config = {
+        success: {
+            bg: 'bg-gradient-to-r from-green-500 to-emerald-600',
+            icon: '<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>'
+        },
+        error: {
+            bg: 'bg-gradient-to-r from-red-500 to-pink-600',
+            icon: '<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>'
+        },
+        warning: {
+            bg: 'bg-gradient-to-r from-yellow-500 to-orange-600',
+            icon: '<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>'
+        },
+        info: {
+            bg: 'bg-gradient-to-r from-blue-500 to-indigo-600',
+            icon: '<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>'
+        }
+    };
+    
+    const { bg, icon } = config[type] || config.info;
+    
+    // Crear notificación
+    const notification = document.createElement('div');
+    notification.id = 'modern-notification';
+    notification.className = `fixed top-20 right-4 ${bg} text-white px-6 py-4 rounded-lg shadow-2xl z-50 flex items-center gap-3 transform transition-all duration-300 ease-out translate-x-0`;
+    notification.style.minWidth = '300px';
+    notification.style.maxWidth = '500px';
+    notification.innerHTML = `
+        <div class="flex-shrink-0">${icon}</div>
+        <div class="flex-1 text-sm font-medium">${message}</div>
+        <button onclick="this.parentElement.remove()" class="flex-shrink-0 hover:bg-white/20 rounded p-1 transition">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+        </button>
+    `;
+    
+    // Agregar al DOM
+    document.body.appendChild(notification);
+    
+    // Animación de entrada
+    setTimeout(() => {
+        notification.style.transform = 'translateX(0)';
+    }, 10);
+    
+    // Auto-ocultar después de 4 segundos
+    setTimeout(() => {
+        notification.style.transform = 'translateX(120%)';
+        setTimeout(() => {
+            notification.remove();
+        }, 300);
+    }, 4000);
 }
 
 // Inicializar el estado de las secciones al cargar la página

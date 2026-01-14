@@ -269,6 +269,90 @@
         }
     </script>
     
+    <!-- Captura de errores JavaScript para Landing Pages -->
+    <script>
+        console.log('🔍 Public landing error tracking initialized');
+        
+        // Interceptor de fetch para capturar errores HTTP
+        const originalFetch = window.fetch;
+        window.fetch = function(...args) {
+            return originalFetch(...args)
+                .then(response => {
+                    if (!response.ok) {
+                        const errorData = {
+                            type: 'NetworkError',
+                            message: `HTTP ${response.status}: ${response.statusText} - ${args[0]}`,
+                            url: window.location.href,
+                            stack: `Fetch to ${args[0]}\nStatus: ${response.status}`
+                        };
+                        
+                        console.error('❌ Public Network error:', errorData);
+                        
+                        originalFetch('/dashboard/audit/api/log-js-error/', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(errorData)
+                        }).catch(err => console.error('Failed to log:', err));
+                    }
+                    return response;
+                })
+                .catch(error => {
+                    const errorData = {
+                        type: 'FetchError',
+                        message: `Network failed: ${error.message} - ${args[0]}`,
+                        url: window.location.href,
+                        stack: error.stack || `Fetch failed to ${args[0]}`
+                    };
+                    
+                    originalFetch('/dashboard/audit/api/log-js-error/', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(errorData)
+                    }).catch(err => console.error('Failed to log:', err));
+                    
+                    throw error;
+                });
+        };
+        
+        window.addEventListener('error', function(event) {
+            if (event.target !== window) return;
+            
+            const errorData = {
+                message: event.message || 'Unknown error',
+                type: event.error ? event.error.name : 'Error',
+                stack: event.error ? event.error.stack : '',
+                url: event.filename || window.location.href,
+                lineNumber: event.lineno || '',
+                columnNumber: event.colno || ''
+            };
+            
+            console.error('❌ Public JS Error:', errorData);
+            
+            fetch('/dashboard/audit/api/log-js-error/', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(errorData)
+            }).catch(err => console.error('Failed to log:', err));
+        });
+        
+        window.addEventListener('unhandledrejection', function(event) {
+            const errorData = {
+                message: event.reason ? event.reason.message || String(event.reason) : 'Unhandled Promise Rejection',
+                type: 'UnhandledPromiseRejection',
+                stack: event.reason ? event.reason.stack : '',
+                url: window.location.href
+            };
+            
+            console.error('❌ Public Promise rejection:', errorData);
+            
+            fetch('/dashboard/audit/api/log-js-error/', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(errorData)
+            }).catch(err => console.error('Failed to log:', err));
+        });
+    </script>
+    
     <!-- Sistema de Notificaciones Toast -->
     {% include 'dashboard/components/toast.html' %}
     

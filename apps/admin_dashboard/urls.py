@@ -59,4 +59,6 @@ urlpatterns = [
     
     # Monitoreo de errores
     path('errors/', views.error_monitoring, name='error_monitoring'),
+    path('errors/<int:error_id>/resolve/', views.error_resolve, name='error_resolve'),
+    path('errors/<int:error_id>/unresolve/', views.error_unresolve, name='error_unresolve'),
 ]
