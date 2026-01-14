@@ -2694,3 +2694,99 @@ def whatsapp_usage_history(request):
     
     return render(request, 'dashboard/whatsapp_usage_history.html', context)
 
+
+@login_required
+def appointment_resend_notification(request, pk):
+    """Reenviar notificación de una cita"""
+    if request.method != 'POST':
+        return JsonResponse({
+            'success': False,
+            'message': 'Método no permitido'
+        }, status=405)
+    
+    import logging
+    from apps.appointments.models_notifications import NotificationSettings
+    from apps.appointments.notifications import get_notifier
+    
+    logger = logging.getLogger(__name__)
+    
+    try:
+        # Obtener la organización
+        organization = None
+        if hasattr(request, 'organization') and request.organization:
+            organization = request.organization
+        
+        if not organization:
+            return JsonResponse({
+                'success': False,
+                'message': 'No hay organización activa'
+            }, status=400)
+        
+        # Obtener la cita
+        appointment = get_object_or_404(Appointment, pk=pk, organization=organization)
+        
+        # Obtener configuración de notificaciones
+        notification_settings = NotificationSettings.get_settings(appointment.organization)
+        
+        if not notification_settings or not notification_settings.send_confirmation:
+            return JsonResponse({
+                'success': False,
+                'message': 'Las notificaciones de confirmación están deshabilitadas'
+            }, status=400)
+        
+        # Enviar notificación
+        notifier = get_notifier(appointment.organization)
+        active_method = notification_settings.get_active_method()
+        
+        if active_method == 'none':
+            return JsonResponse({
+                'success': False,
+                'message': 'No hay métodos de notificación configurados'
+            }, status=400)
+        
+        # Verificar que el paciente tenga el contacto necesario
+        if active_method in ['whatsapp', 'twilio', 'local_whatsapp']:
+            if not appointment.phone_number:
+                return JsonResponse({
+                    'success': False,
+                    'message': 'El paciente no tiene número de teléfono registrado'
+                }, status=400)
+        elif active_method == 'email':
+            if not appointment.email:
+                return JsonResponse({
+                    'success': False,
+                    'message': 'El paciente no tiene email registrado'
+                }, status=400)
+        
+        # Enviar la notificación
+        result = notifier.send_appointment_confirmation(appointment)
+        
+        method_names = {
+            'whatsapp': 'WhatsApp',
+            'local_whatsapp': 'WhatsApp',
+            'twilio': 'SMS',
+            'email': 'Email'
+        }
+        
+        return JsonResponse({
+            'success': True,
+            'message': f'Notificación reenviada exitosamente por {method_names.get(active_method, active_method)}',
+            'method': active_method
+        })
+        
+    except Exception as e:
+        logger.error(f"Error en appointment_resend_notification: {str(e)}", exc_info=True)
+        return JsonResponse({
+            'success': False,
+            'message': f'Error al reenviar notificación: {str(e)}'
+        }, status=500)
+
+
+@login_required
+def sidebar_customizer(request):
+    """
+    Vista para personalizar el sidebar con drag & drop
+    """
+    return render(request, 'dashboard/sidebar_customizer.html', {
+        'title': 'Personalizar Sidebar'
+    })

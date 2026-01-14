@@ -55,7 +55,14 @@ class WhatsAppBaileysNotifier:
             
             # Preparar variables para la plantilla
             org_name = appointment.organization.name if appointment.organization else 'OCEANO OPTICO'
-            date_str = appointment.appointment_date.strftime('%d/%m/%Y')
+            
+            # Convertir fecha a objeto date si es string
+            from datetime import datetime
+            if isinstance(appointment.appointment_date, str):
+                date_obj = datetime.strptime(appointment.appointment_date, '%Y-%m-%d').date()
+                date_str = date_obj.strftime('%d/%m/%Y')
+            else:
+                date_str = appointment.appointment_date.strftime('%d/%m/%Y')
             
             time_str = format_time(appointment.appointment_time)
             

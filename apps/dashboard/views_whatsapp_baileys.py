@@ -6,6 +6,7 @@ from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
 from django.contrib import messages
 from apps.appointments.whatsapp_baileys_client import whatsapp_baileys_client
+from apps.notifications.models_whatsapp_connection import WhatsAppConnection
 import logging
 
 logger = logging.getLogger(__name__)
@@ -21,10 +22,18 @@ def whatsapp_baileys_config(request):
     
     org_id = request.organization.id
     
+    # Obtener o crear el registro de conexión en BD
+    connection = WhatsAppConnection.get_or_create_for_org(request.organization)
+    
     # Obtener estado actual de forma segura
     try:
         status_data = whatsapp_baileys_client.get_status(org_id)
         server_active = whatsapp_baileys_client.healthcheck()
+        
+        # Sincronizar estado con la base de datos
+        if status_data:
+            WhatsAppConnection.sync_from_server(org_id, status_data)
+            
     except Exception as e:
         logger.error(f"Error al conectar con servidor WhatsApp: {e}")
         status_data = None
@@ -34,7 +43,8 @@ def whatsapp_baileys_config(request):
     context = {
         'organization': request.organization,
         'whatsapp_status': status_data or {'connected': False, 'message': 'Servidor no disponible'},
-        'server_active': server_active
+        'server_active': server_active,
+        'whatsapp_connection': connection,  # Información de BD
     }
     
     return render(request, 'dashboard/whatsapp_baileys_config.html', context)
@@ -131,6 +141,9 @@ def whatsapp_get_status(request):
                 if qr_result and qr_result.get('qr'):
                     qr_code = qr_result.get('qr')
             
+            # Sincronizar estado con la base de datos
+            WhatsAppConnection.sync_from_server(org_id, result)
+            
             return JsonResponse({
                 'success': True,
                 'status': status,
@@ -166,6 +179,14 @@ def whatsapp_logout(request):
         result = whatsapp_baileys_client.logout(org_id)
         
         if result:
+            # Marcar como desconectado manualmente en la BD
+            connection = WhatsAppConnection.get_or_create_for_org(request.organization)
+            connection.mark_disconnected(
+                reason='Desconexión manual del usuario',
+                manual=True,
+                user=request.user
+            )
+            
             messages.success(request, 'Sesión de WhatsApp cerrada correctamente')
             return JsonResponse({
                 'success': True,
@@ -204,6 +225,16 @@ def whatsapp_clear_session(request):
         result = whatsapp_baileys_client.clear_session(org_id)
         
         if result and result.get('success'):
+            # Actualizar estado en BD
+            connection = WhatsAppConnection.get_or_create_for_org(request.organization)
+            connection.mark_disconnected(
+                reason='Sesión corrupta limpiada',
+                manual=False,
+                user=None
+            )
+            connection.session_exists = False
+            connection.save()
+            
             messages.success(request, 'Sesión limpiada correctamente. Ya puedes conectar nuevamente.')
             return JsonResponse({
                 'success': True,

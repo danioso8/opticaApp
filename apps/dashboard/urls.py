@@ -89,6 +89,7 @@ urlpatterns = [
     path('appointments/<int:pk>/', views.appointment_detail, name='appointment_detail'),
     path('appointments/<int:pk>/edit/', views.appointment_edit, name='appointment_edit'),
     path('appointments/<int:pk>/change-status/', views.appointment_change_status, name='appointment_change_status'),
+    path('appointments/<int:pk>/resend-notification/', views.appointment_resend_notification, name='appointment_resend_notification'),
     
     # Configuración
     path('configuration/', views.configuration, name='configuration'),
@@ -204,6 +205,9 @@ urlpatterns = [
     
     # Demostración
     path('notifications-demo/', views.notifications_demo, name='notifications_demo'),
+    
+    # Sidebar Customizer
+    path('sidebar/customize/', views.sidebar_customizer, name='sidebar_customizer'),
     
     # Promociones y Campañas de Marketing
     path('promociones/', include('apps.promotions.urls')),

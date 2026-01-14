@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>URGENTE: Tus datos serán archivados</title>
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; }
+        .header { background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
+        .content { background: #f9fafb; padding: 30px; }
+        .warning-box { background: #fef2f2; border: 3px solid #dc2626; padding: 20px; margin: 20px 0; border-radius: 8px; }
+        .cta-button { background: #dc2626; color: white; padding: 18px 40px; text-decoration: none; border-radius: 8px; display: inline-block; margin: 20px 0; font-weight: bold; font-size: 18px; }
+        .footer { background: #1f2937; color: white; padding: 20px; text-align: center; border-radius: 0 0 10px 10px; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>⚠️ ACCIÓN REQUERIDA</h1>
+        <p>Tus datos serán archivados pronto</p>
+    </div>
+    
+    <div class="content">
+        <h2>Hola {{ user.first_name }},</h2>
+        
+        <div class="warning-box">
+            <h2 style="color: #dc2626; margin-top: 0;">🚨 ÚLTIMA ADVERTENCIA</h2>
+            <p style="font-size: 18px; margin: 0;">Tus datos serán <strong>ARCHIVADOS</strong> el <strong>{{ archive_date|date:"d de F, Y" }}</strong></p>
+            <p style="margin: 10px 0 0 0;">Solo quedan <strong>{{ days_until_archive }} días</strong></p>
+        </div>
+        
+        <h3>¿Qué significa "archivado"?</h3>
+        <ul>
+            <li>❌ <strong>No podrás acceder</strong> a tu cuenta</li>
+            <li>❌ <strong>No podrás ver</strong> historias clínicas</li>
+            <li>❌ <strong>No podrás recuperar</strong> datos fácilmente</li>
+            <li>❌ Todos tus registros quedarán <strong>inaccesibles</strong></li>
+        </ul>
+        
+        <h3>⏰ Evita perder tu información</h3>
+        <p>Activa tu cuenta <strong>HOY</strong> y mantén acceso completo a:</p>
+        <ul>
+            <li>✅ Todas tus historias clínicas</li>
+            <li>✅ Registros de pacientes</li>
+            <li>✅ Exámenes visuales</li>
+            <li>✅ Facturas y ventas</li>
+            <li>✅ Todo tu inventario</li>
+        </ul>
+        
+        <div style="text-align: center; margin: 30px 0; background: #fef3c7; padding: 20px; border-radius: 8px;">
+            <p style="margin: 0; font-size: 14px;">🎁 <strong>OFERTA DE RESCATE</strong></p>
+            <p style="margin: 5px 0; font-size: 20px; color: #92400e;"><strong>50% DE DESCUENTO</strong></p>
+            <p style="margin: 0; font-size: 14px;">en tu primer mes si activas HOY</p>
+        </div>
+        
+        <div style="text-align: center; margin: 30px 0;">
+            <a href="https://www.optikaapp.com/dashboard/modules/selector/?promo=rescue50" class="cta-button">
+                ACTIVAR AHORA CON 50% OFF
+            </a>
+        </div>
+        
+        <p><strong>Nota final:</strong> Después del archivo, recuperar tu información costará $200 USD y tomará 5-7 días hábiles. <strong>Activa hoy y evita este costo.</strong></p>
+        
+        <p>No dejes que esto pase,<br>
+        <strong>El equipo de OpticaApp</strong></p>
+    </div>
+    
+    <div class="footer">
+        <p>OpticaApp<br>
+        📧 soporte@optikaapp.com | 📱 WhatsApp (URGENTE): +57 312 345 6789</p>
+    </div>
+</body>
+</html>

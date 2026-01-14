@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Te extrañamos</title>
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; }
+        .header { background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
+        .content { background: #f9fafb; padding: 30px; }
+        .cta-button { background: #8b5cf6; color: white; padding: 18px 40px; text-decoration: none; border-radius: 8px; display: inline-block; margin: 20px 0; font-weight: bold; font-size: 18px; }
+        .footer { background: #1f2937; color: white; padding: 20px; text-align: center; border-radius: 0 0 10px 10px; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>💔 Te extrañamos</h1>
+    </div>
+    
+    <div class="content">
+        <h2>Hola {{ user.first_name }},</h2>
+        
+        <p>Han pasado {{ days_since_expiration }} días desde que tu trial expiró y notamos que aún no has seleccionado tus módulos.</p>
+        
+        <p><strong>¿Hubo algún problema?</strong> Nos encantaría saber qué te detuvo. Tu feedback es muy valioso para nosotros.</p>
+        
+        <h3>🎁 Oferta especial solo para ti:</h3>
+        <p>Sabemos que elegir puede ser difícil. Por eso, si activas tu cuenta esta semana, te damos <strong>el primer mes con 30% de descuento</strong>.</p>
+        
+        <div style="text-align: center; margin: 30px 0;">
+            <a href="https://www.optikaapp.com/dashboard/modules/selector/?promo=comeback30" class="cta-button">
+                Activar con 30% Descuento
+            </a>
+        </div>
+        
+        <p>⚠️ <strong>Importante:</strong> Tus datos se archivarán automáticamente en {{ archive_date|date:"d/m/Y" }} ({{ days_until_archive }} días). Después de esa fecha, recuperarlos será más difícil.</p>
+        
+        <p>Si decidiste no continuar con OpticaApp, entendemos. Pero nos encantaría saber por qué. ¿Podrías tomarte 1 minuto para respondernos?</p>
+        
+        <p>Saludos,<br>
+        <strong>El equipo de OpticaApp</strong></p>
+    </div>
+    
+    <div class="footer">
+        <p>OpticaApp<br>
+        📧 soporte@optikaapp.com | 📱 WhatsApp: +57 312 345 6789</p>
+    </div>
+</body>
+</html>

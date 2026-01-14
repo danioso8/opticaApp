@@ -1,0 +1,363 @@
+{% extends "dashboard/base.html" %}
+{% load static %}
+
+{% block title %}Personalizar Sidebar - OpticaApp{% endblock %}
+
+{% block extra_css %}
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+<style>
+    .sidebar-item {
+        cursor: grab;
+        transition: all 0.2s ease;
+    }
+    
+    .sidebar-item:active {
+        cursor: grabbing;
+    }
+    
+    .sidebar-item.sortable-ghost {
+        opacity: 0.4;
+        background: #dbeafe !important;
+    }
+    
+    .sidebar-item.sortable-drag {
+        opacity: 1;
+        box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+        transform: rotate(2deg);
+    }
+    
+    .submenu-container {
+        background: #f3f4f6;
+        border-left: 3px solid #3b82f6;
+        margin-left: 20px;
+        padding: 10px;
+        border-radius: 8px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 py-8">
+    <div class="bg-white rounded-xl shadow-lg p-8 mb-6">
+        <div class="flex items-center justify-between mb-6">
+            <div>
+                <h1 class="text-3xl font-bold text-gray-800">
+                    <i class="fas fa-sliders-h text-blue-600"></i>
+                    Personalizar Sidebar
+                </h1>
+                <p class="text-gray-600 mt-2">Organiza el menú lateral según tus preferencias</p>
+            </div>
+            <div class="flex gap-3">
+                <button onclick="resetToDefault()" class="bg-gray-500 hover:bg-gray-600 text-white px-6 py-3 rounded-lg font-semibold transition flex items-center gap-2">
+                    <i class="fas fa-undo"></i>
+                    Restaurar por Defecto
+                </button>
+                <button onclick="saveConfiguration()" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-semibold transition flex items-center gap-2">
+                    <i class="fas fa-save"></i>
+                    Guardar Cambios
+                </button>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <!-- Panel de configuración -->
+            <div>
+                <div class="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-6 mb-6">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                        <i class="fas fa-info-circle text-blue-600"></i>
+                        Instrucciones
+                    </h3>
+                    <ul class="space-y-2 text-sm text-gray-700">
+                        <li class="flex items-start gap-2">
+                            <i class="fas fa-arrows-alt text-blue-600 mt-1"></i>
+                            <span><strong>Arrastra y suelta</strong> para reordenar los elementos del menú</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <i class="fas fa-eye text-blue-600 mt-1"></i>
+                            <span><strong>Haz clic en el ojo</strong> para mostrar/ocultar elementos</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <i class="fas fa-level-down-alt text-blue-600 mt-1"></i>
+                            <span><strong>Arrastra dentro de un submenú</strong> para añadir items anidados</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <i class="fas fa-level-up-alt text-blue-600 mt-1"></i>
+                            <span><strong>Arrastra afuera</strong> para sacar items de un submenú</span>
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- Lista de items del sidebar -->
+                <div class="bg-white border-2 border-gray-200 rounded-lg p-4">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-4">
+                        <i class="fas fa-list"></i>
+                        Elementos del Menú
+                    </h3>
+                    <div id="sidebar-items-list" class="space-y-2">
+                        <!-- Se llenará con JavaScript -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Vista previa -->
+            <div>
+                <div class="sticky top-4">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-4">
+                        <i class="fas fa-eye"></i>
+                        Vista Previa
+                    </h3>
+                    <div class="bg-indigo-900 text-white rounded-lg p-4 shadow-xl">
+                        <div class="mb-4 pb-4 border-b border-indigo-700">
+                            <h4 class="font-bold text-lg">{{ request.organization.name }}</h4>
+                            <p class="text-xs text-indigo-300">Panel Administrativo</p>
+                        </div>
+                        <div id="sidebar-preview" class="space-y-1">
+                            <!-- Se llenará con JavaScript -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+// Configuración por defecto del sidebar
+const DEFAULT_CONFIG = {
+    items: [
+        {id: 'my-companies', name: 'Mis Empresas', icon: 'fa-building', visible: true, order: 0, parent: null},
+        {id: 'my-modules', name: 'Mis Módulos', icon: 'fa-puzzle-piece', visible: true, order: 1, parent: null},
+        {id: 'divider-1', name: '--- Separador ---', icon: 'fa-minus', visible: true, order: 2, parent: null, isDivider: true},
+        {id: 'dashboard', name: 'Dashboard', icon: 'fa-home', visible: true, order: 3, parent: null},
+        {id: 'sales-dashboard', name: 'Panel de Ventas', icon: 'fa-chart-line', visible: true, order: 4, parent: null},
+        {id: 'billing-menu', name: 'Facturación y Finanzas', icon: 'fa-file-invoice-dollar', visible: true, order: 5, parent: null, isSubmenu: true},
+        {id: 'billing-basic', name: 'Facturación Básica', icon: 'fa-file-invoice', visible: true, order: 0, parent: 'billing-menu'},
+        {id: 'billing-electronic', name: 'Facturas Electrónicas', icon: 'fa-file-invoice-dollar', visible: true, order: 1, parent: 'billing-menu'},
+        {id: 'cash-register-menu', name: 'Caja y Tesorería', icon: 'fa-cash-register', visible: true, order: 2, parent: 'billing-menu', isSubmenu: true},
+        {id: 'cash-dashboard', name: 'Dashboard', icon: 'fa-tachometer-alt', visible: true, order: 0, parent: 'cash-register-menu'},
+        {id: 'cash-registers', name: 'Cajas', icon: 'fa-cash-register', visible: true, order: 1, parent: 'cash-register-menu'},
+        {id: 'cash-movements', name: 'Movimientos', icon: 'fa-exchange-alt', visible: true, order: 2, parent: 'cash-register-menu'},
+        {id: 'cash-closures', name: 'Cierres', icon: 'fa-clipboard-check', visible: true, order: 3, parent: 'cash-register-menu'},
+        {id: 'cash-reports', name: 'Reportes', icon: 'fa-chart-bar', visible: true, order: 4, parent: 'cash-register-menu'},
+        {id: 'doctors', name: 'Doctores / Optómetras', icon: 'fa-user-md', visible: true, order: 6, parent: null},
+        {id: 'payroll-menu', name: 'Nómina y Empleados', icon: 'fa-users-cog', visible: true, order: 7, parent: null, isSubmenu: true},
+        {id: 'employees', name: 'Empleados', icon: 'fa-users', visible: true, order: 0, parent: 'payroll-menu'},
+        {id: 'payroll-electronic', name: 'Nómina Electrónica', icon: 'fa-money-check-alt', visible: true, order: 1, parent: 'payroll-menu'},
+        {id: 'patients', name: 'Pacientes', icon: 'fa-user-injured', visible: true, order: 8, parent: null},
+        {id: 'appointments', name: 'Citas', icon: 'fa-calendar-alt', visible: true, order: 9, parent: null},
+        {id: 'inventory', name: 'Inventario', icon: 'fa-boxes', visible: true, order: 10, parent: null},
+        {id: 'products', name: 'Productos', icon: 'fa-shopping-bag', visible: true, order: 11, parent: null},
+        {id: 'reports', name: 'Reportes', icon: 'fa-chart-pie', visible: true, order: 12, parent: null},
+        {id: 'settings', name: 'Configuración', icon: 'fa-cog', visible: true, order: 13, parent: null},
+    ]
+};
+
+let sidebarConfig = JSON.parse(localStorage.getItem('sidebarConfig')) || JSON.parse(JSON.stringify(DEFAULT_CONFIG));
+
+function renderSidebarItems() {
+    const container = document.getElementById('sidebar-items-list');
+    container.innerHTML = '';
+    
+    // Filtrar items de nivel raíz
+    const rootItems = sidebarConfig.items
+        .filter(item => !item.parent)
+        .sort((a, b) => a.order - b.order);
+    
+    rootItems.forEach(item => {
+        const itemDiv = createItemElement(item);
+        container.appendChild(itemDiv);
+        
+        // Si es un submenú, agregar sus hijos
+        if (item.isSubmenu) {
+            const submenuContainer = document.createElement('div');
+            submenuContainer.className = 'submenu-container mt-2';
+            submenuContainer.id = `submenu-${item.id}`;
+            
+            const childItems = sidebarConfig.items
+                .filter(child => child.parent === item.id)
+                .sort((a, b) => a.order - b.order);
+            
+            childItems.forEach(child => {
+                const childDiv = createItemElement(child, true);
+                submenuContainer.appendChild(childDiv);
+            });
+            
+            container.appendChild(submenuContainer);
+            
+            // Inicializar Sortable para el submenú
+            new Sortable(submenuContainer, {
+                group: 'sidebar-items',
+                animation: 150,
+                handle: '.drag-handle',
+                onEnd: function(evt) {
+                    updateOrder(evt.to.id.replace('submenu-', ''));
+                }
+            });
+        }
+    });
+    
+    // Inicializar Sortable para el contenedor principal
+    new Sortable(container, {
+        group: 'sidebar-items',
+        animation: 150,
+        handle: '.drag-handle',
+        onEnd: function(evt) {
+            updateOrder(null);
+        }
+    });
+    
+    renderPreview();
+}
+
+function createItemElement(item, isChild = false) {
+    const div = document.createElement('div');
+    div.className = `sidebar-item bg-white border-2 border-gray-200 rounded-lg p-3 flex items-center justify-between ${item.visible ? '' : 'opacity-50'}`;
+    div.dataset.itemId = item.id;
+    
+    const iconColor = item.isDivider ? 'text-gray-400' : (item.visible ? 'text-blue-600' : 'text-gray-400');
+    
+    div.innerHTML = `
+        <div class="flex items-center gap-3 flex-grow">
+            <div class="drag-handle cursor-grab text-gray-400 hover:text-gray-600">
+                <i class="fas fa-grip-vertical"></i>
+            </div>
+            <div class="${iconColor}">
+                <i class="fas ${item.icon} text-lg"></i>
+            </div>
+            <span class="font-medium ${item.visible ? 'text-gray-800' : 'text-gray-400'}">${item.name}</span>
+            ${item.isSubmenu ? '<span class="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">Submenú</span>' : ''}
+        </div>
+        <div class="flex items-center gap-2">
+            <button onclick="toggleVisibility('${item.id}')" class="p-2 rounded hover:bg-gray-100 transition">
+                <i class="fas fa-eye${item.visible ? '' : '-slash'} ${item.visible ? 'text-blue-600' : 'text-gray-400'}"></i>
+            </button>
+        </div>
+    `;
+    
+    return div;
+}
+
+function renderPreview() {
+    const preview = document.getElementById('sidebar-preview');
+    preview.innerHTML = '';
+    
+    const rootItems = sidebarConfig.items
+        .filter(item => !item.parent && item.visible)
+        .sort((a, b) => a.order - b.order);
+    
+    rootItems.forEach(item => {
+        if (item.isDivider) {
+            const divider = document.createElement('div');
+            divider.className = 'border-t border-indigo-700 my-2';
+            preview.appendChild(divider);
+        } else {
+            const itemDiv = document.createElement('div');
+            itemDiv.className = `px-4 py-2 hover:bg-indigo-800 rounded flex items-center gap-3 ${item.isSubmenu ? 'font-semibold' : ''}`;
+            itemDiv.innerHTML = `
+                <i class="fas ${item.icon}"></i>
+                <span>${item.name}</span>
+                ${item.isSubmenu ? '<i class="fas fa-chevron-down ml-auto text-xs"></i>' : ''}
+            `;
+            preview.appendChild(itemDiv);
+            
+            // Mostrar items del submenú
+            if (item.isSubmenu) {
+                const childItems = sidebarConfig.items
+                    .filter(child => child.parent === item.id && child.visible)
+                    .sort((a, b) => a.order - b.order);
+                
+                const submenuDiv = document.createElement('div');
+                submenuDiv.className = 'bg-indigo-950 rounded ml-4 mt-1 mb-2';
+                
+                childItems.forEach(child => {
+                    const childItemDiv = document.createElement('div');
+                    childItemDiv.className = 'px-6 py-2 hover:bg-indigo-800 text-sm flex items-center gap-2';
+                    childItemDiv.innerHTML = `
+                        <i class="fas ${child.icon} text-xs"></i>
+                        <span>${child.name}</span>
+                    `;
+                    submenuDiv.appendChild(childItemDiv);
+                });
+                
+                preview.appendChild(submenuDiv);
+            }
+        }
+    });
+}
+
+function toggleVisibility(itemId) {
+    const item = sidebarConfig.items.find(i => i.id === itemId);
+    if (item) {
+        item.visible = !item.visible;
+        renderSidebarItems();
+    }
+}
+
+function updateOrder(parentId) {
+    // Actualizar orden según la posición en el DOM
+    const items = parentId 
+        ? document.querySelectorAll(`#submenu-${parentId} .sidebar-item`)
+        : document.querySelectorAll('#sidebar-items-list > .sidebar-item');
+    
+    items.forEach((itemEl, index) => {
+        const itemId = itemEl.dataset.itemId;
+        const item = sidebarConfig.items.find(i => i.id === itemId);
+        if (item) {
+            item.order = index;
+            item.parent = parentId;
+        }
+    });
+    
+    renderPreview();
+}
+
+function saveConfiguration() {
+    localStorage.setItem('sidebarConfig', JSON.stringify(sidebarConfig));
+    
+    Swal.fire({
+        title: '¡Guardado!',
+        text: 'Tu configuración de sidebar ha sido guardada correctamente',
+        icon: 'success',
+        timer: 2000,
+        showConfirmButton: false
+    });
+}
+
+function resetToDefault() {
+    Swal.fire({
+        title: '¿Restaurar configuración por defecto?',
+        text: 'Se perderán todos tus cambios personalizados',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#3b82f6',
+        cancelButtonColor: '#6b7280',
+        confirmButtonText: 'Sí, restaurar',
+        cancelButtonText: 'Cancelar'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            sidebarConfig = JSON.parse(JSON.stringify(DEFAULT_CONFIG));
+            localStorage.setItem('sidebarConfig', JSON.stringify(sidebarConfig));
+            renderSidebarItems();
+            
+            Swal.fire({
+                title: '¡Restaurado!',
+                text: 'La configuración por defecto ha sido restaurada',
+                icon: 'success',
+                timer: 2000,
+                showConfirmButton: false
+            });
+        }
+    });
+}
+
+// Inicializar al cargar la página
+document.addEventListener('DOMContentLoaded', () => {
+    renderSidebarItems();
+});
+</script>
+{% endblock %}

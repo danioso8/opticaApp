@@ -222,7 +222,7 @@ class ErrorCaptureMiddleware:
     def _send_notification(self, error_log, is_recurring=False):
         """Envía notificación de error a administradores"""
         try:
-            from apps.notifications.services import send_notification
+            from apps.notifications.services import NotificationService
             from django.contrib.auth import get_user_model
             
             User = get_user_model()
@@ -238,14 +238,19 @@ class ErrorCaptureMiddleware:
                 message = f'{error_log.error_message}\nURL: {error_log.url}\nSeveridad: {error_log.get_severity_display()}'
             
             for user in superusers:
-                send_notification(
-                    user=user,
-                    title=title,
-                    message=message,
-                    notification_type='error',
-                    channels=['email'],  # Email para errores
-                    action_url=f'/admin/audit/errorlog/{error_log.id}/change/'
-                )
+                # Obtener organización del usuario
+                org_membership = user.organization_memberships.first()
+                if org_membership:
+                    # Usar NotificationService correctamente
+                    notif_service = NotificationService(org_membership.organization)
+                    notif_service.send_notification(
+                        user=user,
+                        title=title,
+                        message=message,
+                        notification_type='error',
+                        channels=['system'],  # Solo sistema para no saturar
+                        action_url=f'/saas-admin/errors/'
+                    )
             
             # Marcar como notificado
             error_log.notification_sent = True

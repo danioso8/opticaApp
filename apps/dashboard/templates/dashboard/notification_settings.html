@@ -618,9 +618,13 @@ function checkConnection() {
     
     // Simulate connection check
     setTimeout(() => {
-        const whatsappEnabled = document.getElementById('whatsapp_enabled').checked;
-        const localEnabled = document.getElementById('local_whatsapp_enabled').checked;
-        const emailEnabled = document.getElementById('email_enabled').checked;
+        const whatsappEnabledEl = document.getElementById('whatsapp_enabled');
+        const localEnabledEl = document.getElementById('local_whatsapp_enabled');
+        const emailEnabledEl = document.getElementById('email_enabled');
+        
+        const whatsappEnabled = whatsappEnabledEl ? whatsappEnabledEl.checked : false;
+        const localEnabled = localEnabledEl ? localEnabledEl.checked : false;
+        const emailEnabled = emailEnabledEl ? emailEnabledEl.checked : false;
         
         if (whatsappEnabled) {
             indicator.innerHTML = '<i class="fas fa-check text-green-500 text-2xl"></i>';

@@ -658,9 +658,36 @@ document.addEventListener('DOMContentLoaded', function() {
                 const data = await response.json();
                 
                 if (data.success) {
-                    Toast.success(data.message);
-                    closeNewAppointmentModal();
-                    setTimeout(() => location.reload(), 1500);
+                    // Mostrar mensaje de éxito con opción de reenviar notificación
+                    const appointmentId = data.appointment.id;
+                    
+                    Swal.fire({
+                        icon: 'success',
+                        title: '¡Cita Agendada!',
+                        html: `
+                            <div class="text-left">
+                                <p class="mb-2">${data.message}</p>
+                                <div class="bg-blue-50 p-3 rounded-lg mb-3">
+                                    <p class="text-sm text-gray-700"><strong>Fecha:</strong> ${data.appointment.date}</p>
+                                    <p class="text-sm text-gray-700"><strong>Hora:</strong> ${data.appointment.time}</p>
+                                </div>
+                                <p class="text-sm text-green-600"><i class="fas fa-check-circle mr-1"></i>Se ha enviado una notificación al paciente</p>
+                            </div>
+                        `,
+                        showCancelButton: true,
+                        confirmButtonText: '<i class="fas fa-sync-alt mr-2"></i>Reenviar Notificación',
+                        cancelButtonText: '<i class="fas fa-check mr-2"></i>Cerrar',
+                        confirmButtonColor: '#3b82f6',
+                        cancelButtonColor: '#6b7280',
+                        reverseButtons: true
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            resendNotification(appointmentId);
+                        } else {
+                            closeNewAppointmentModal();
+                            location.reload();
+                        }
+                    });
                 } else {
                     Toast.error(data.message);
                     submitBtn.disabled = false;
@@ -681,6 +708,58 @@ document.addEventListener('keydown', function(e) {
         closeNewAppointmentModal();
     }
 });
+
+// Función para reenviar notificación
+async function resendNotification(appointmentId) {
+    try {
+        Swal.fire({
+            title: 'Reenviando notificación...',
+            html: '<i class="fas fa-spinner fa-spin text-4xl text-blue-600"></i>',
+            showConfirmButton: false,
+            allowOutsideClick: false
+        });
+        
+        const response = await fetch(`/api/appointments/${appointmentId}/resend-notification/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token }}'
+            }
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            Swal.fire({
+                icon: 'success',
+                title: '¡Notificación Enviada!',
+                text: data.message,
+                confirmButtonText: 'Aceptar',
+                confirmButtonColor: '#10b981'
+            }).then(() => {
+                closeNewAppointmentModal();
+                location.reload();
+            });
+        } else {
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: data.message,
+                confirmButtonText: 'Aceptar',
+                confirmButtonColor: '#ef4444'
+            });
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: 'No se pudo reenviar la notificación',
+            confirmButtonText: 'Aceptar',
+            confirmButtonColor: '#ef4444'
+        });
+    }
+}
 </script>
 
 <!-- Modal Nueva Cita -->
@@ -933,9 +1012,35 @@ async function saveQuickEdit() {
         const data = await response.json();
         
         if (data.success) {
-            Toast.success(data.message);
             closeQuickEditModal();
-            setTimeout(() => location.reload(), 1500);
+            
+            // Mostrar mensaje de éxito con opción de reenviar notificación
+            Swal.fire({
+                icon: 'success',
+                title: '¡Cita Reagendada!',
+                html: `
+                    <div class="text-left">
+                        <p class="mb-2">${data.message}</p>
+                        <div class="bg-orange-50 p-3 rounded-lg mb-3">
+                            <p class="text-sm text-gray-700"><strong>Nueva Fecha:</strong> ${date}</p>
+                            <p class="text-sm text-gray-700"><strong>Nueva Hora:</strong> ${time}</p>
+                        </div>
+                        <p class="text-sm text-green-600"><i class="fas fa-check-circle mr-1"></i>Se ha enviado una notificación al paciente</p>
+                    </div>
+                `,
+                showCancelButton: true,
+                confirmButtonText: '<i class="fas fa-sync-alt mr-2"></i>Reenviar Notificación',
+                cancelButtonText: '<i class="fas fa-check mr-2"></i>Cerrar',
+                confirmButtonColor: '#ea580c',
+                cancelButtonColor: '#6b7280',
+                reverseButtons: true
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    resendNotification(appointmentId);
+                } else {
+                    location.reload();
+                }
+            });
         } else {
             Toast.error(data.message);
         }
@@ -953,6 +1058,9 @@ document.addEventListener('click', function(event) {
     }
 });
 </script>
+
+<!-- SweetAlert2 para modales bonitos -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 <style>
 .tab-button {

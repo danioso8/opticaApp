@@ -1,0 +1,649 @@
+{% extends 'admin_dashboard/base.html' %}
+{% load static %}
+
+{% block title %}Monitoreo de Errores - SaaS Admin{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/output.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-6 py-8">
+    <!-- Header con Documentación -->
+    <div class="flex justify-between items-center mb-8">
+        <div>
+            <h2 class="text-3xl font-bold text-gray-800 flex items-center gap-3">
+                <svg class="w-8 h-8 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                </svg>
+                Monitoreo de Errores del Sistema
+            </h2>
+            <p class="text-gray-500 mt-1">
+                📊 Panel de control y análisis de errores en tiempo real
+            </p>
+            <div class="mt-3 flex flex-wrap gap-2">
+                <span class="inline-flex items-center gap-1 px-3 py-1 bg-blue-50 text-blue-700 rounded-full text-xs font-medium" title="Los errores JavaScript se capturan automáticamente desde el navegador">
+                    ✨ Captura Automática JS
+                </span>
+                <span class="inline-flex items-center gap-1 px-3 py-1 bg-green-50 text-green-700 rounded-full text-xs font-medium" title="Los errores HTTP 400/500 se interceptan automáticamente">
+                    🌐 Errores de Red
+                </span>
+                <span class="inline-flex items-center gap-1 px-3 py-1 bg-purple-50 text-purple-700 rounded-full text-xs font-medium" title="Las excepciones del backend se registran automáticamente">
+                    🐍 Excepciones Python
+                </span>
+            </div>
+        </div>
+        <div class="flex gap-3">
+            <button onclick="document.getElementById('helpModal').classList.remove('hidden')" class="px-4 py-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-all flex items-center gap-2" title="Ver ayuda sobre cómo usar este dashboard">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                Ayuda
+            </button>
+            <a href="/admin/" class="px-6 py-3 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-lg hover:from-purple-700 hover:to-indigo-700 transition-all duration-300 shadow-lg hover:shadow-xl flex items-center gap-2">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                </svg>
+                Admin Avanzado
+            </a>
+        </div>
+    </div>
+
+    <!-- Stats Cards con Explicaciones -->
+    <div class="mb-8">
+        <div class="bg-gradient-to-br from-purple-600 via-purple-700 to-indigo-800 rounded-2xl shadow-2xl p-8">
+            <div class="grid grid-cols-4 gap-8 text-white">
+                <div class="text-center border-r border-white/20" title="Número total de errores capturados en el sistema desde que se activó el monitoreo">
+                    <svg class="w-16 h-16 mx-auto mb-3 opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4"></path>
+                    </svg>
+                    <h2 class="text-5xl font-bold mb-2">{{ total_errors }}</h2>
+                    <p class="text-white/80 font-medium">Total de Errores</p>
+                    <p class="text-white/60 text-xs mt-1">Desde inicio del monitoreo</p>
+                </div>
+                <div class="text-center border-r border-white/20" title="Errores que necesitan atención - aún no se han marcado como resueltos">
+                    <svg class="w-16 h-16 mx-auto mb-3 opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    <h2 class="text-5xl font-bold mb-2">{{ unresolved_errors }}</h2>
+                    <p class="text-white/80 font-medium">Sin Resolver</p>
+                    <p class="text-white/60 text-xs mt-1">⚠️ Requieren atención</p>
+                </div>
+                <div class="text-center border-r border-white/20" title="Errores críticos activos que pueden afectar el funcionamiento del sistema">
+                    <svg class="w-16 h-16 mx-auto mb-3 opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                    </svg>
+                    <h2 class="text-5xl font-bold mb-2">{{ critical_errors }}</h2>
+                    <p class="text-white/80 font-medium">Críticos Activos</p>
+                    <p class="text-white/60 text-xs mt-1">🚨 Prioridad alta</p>
+                </div>
+                <div class="text-center" title="Errores capturados en las últimas 24 horas - útil para detectar problemas recientes">
+                    <svg class="w-16 h-16 mx-auto mb-3 opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    <h2 class="text-5xl font-bold mb-2">{{ recent_errors }}</h2>
+                    <p class="text-white/80 font-medium">Últimas 24h</p>
+                    <p class="text-white/60 text-xs mt-1">📅 Actividad reciente</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Gráficos -->
+    <div class="row mb-4">
+        <div class="col-md-8 mb-3">
+            <div class="card shadow-sm" style="border-radius: 12px; border: none;">
+                <div class="card-header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-radius: 12px 12px 0 0;">
+                    <h5 class="mb-0"><i class="fas fa-chart-area mr-2"></i>Tendencia de Errores - Últimos 7 Días</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="errorsChart" height="80"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-3">
+            <div class="card shadow-sm" style="border-radius: 12px; border: none;">
+                <div class="card-header" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white; border-radius: 12px 12px 0 0;">
+                    <h5 class="mb-0"><i class="fas fa-layer-group mr-2"></i>Distribución por Severidad</h5>
+                </div>
+                <div class="card-body">
+                    {% for item in errors_by_severity %}
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <span>
+                                {% if item.severity == 'CRITICAL' %}
+                                    <span class="badge badge-pill badge-dark"><i class="fas fa-skull mr-1"></i>CRÍTICO</span>
+                                {% elif item.severity == 'ERROR' %}
+                                    <span class="badge badge-pill badge-danger"><i class="fas fa-times-circle mr-1"></i>ERROR</span>
+                                {% elif item.severity == 'WARNING' %}
+                                    <span class="badge badge-pill badge-warning"><i class="fas fa-exclamation-triangle mr-1"></i>ADVERTENCIA</span>
+                                {% elif item.severity == 'INFO' %}
+                                    <span class="badge badge-pill badge-info"><i class="fas fa-info-circle mr-1"></i>INFO</span>
+                                {% else %}
+                                    <span class="badge badge-pill badge-secondary"><i class="fas fa-bug mr-1"></i>DEBUG</span>
+                                {% endif %}
+                            </span>
+                            <strong class="text-muted">{{ item.count }}</strong>
+                        </div>
+                        <div class="progress mt-1" style="height: 5px;">
+                            <div class="progress-bar 
+                                {% if item.severity == 'CRITICAL' %}bg-dark
+                                {% elif item.severity == 'ERROR' %}bg-danger
+                                {% elif item.severity == 'WARNING' %}bg-warning
+                                {% elif item.severity == 'INFO' %}bg-info
+                                {% else %}bg-secondary{% endif %}" 
+                                style="width: {{ item.count|floatformat:0 }}%">
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filtros -->
+    <div class="bg-white rounded-2xl shadow-xl mb-8">
+        <div class="bg-gradient-to-r from-indigo-500 to-purple-600 rounded-t-2xl px-6 py-4">
+            <div class="flex items-center gap-3">
+                <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"></path>
+                </svg>
+                <h5 class="text-xl font-bold text-white mb-0">Filtros de Búsqueda</h5>
+            </div>
+        </div>
+        <div class="p-6">
+            <form method="get" class="grid grid-cols-1 md:grid-cols-4 gap-6 items-end">
+                <div>
+                    <label for="severity" class="block text-sm font-semibold text-gray-700 mb-2">
+                        <svg class="inline w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01"></path>
+                        </svg>
+                        Severidad
+                    </label>
+                    <select name="severity" id="severity" class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all">
+                        <option value="">🔵 Todas</option>
+                        <option value="DEBUG" {% if severity_filter == 'DEBUG' %}selected{% endif %}>🐛 Debug</option>
+                        <option value="INFO" {% if severity_filter == 'INFO' %}selected{% endif %}>ℹ️ Info</option>
+                        <option value="WARNING" {% if severity_filter == 'WARNING' %}selected{% endif %}>⚠️ Advertencia</option>
+                        <option value="ERROR" {% if severity_filter == 'ERROR' %}selected{% endif %}>❌ Error</option>
+                        <option value="CRITICAL" {% if severity_filter == 'CRITICAL' %}selected{% endif %}>💀 Crítico</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="resolved" class="block text-sm font-semibold text-gray-700 mb-2">
+                        <svg class="inline w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                        Estado
+                    </label>
+                    <select name="resolved" id="resolved" class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all">
+                        <option value="">📊 Todos</option>
+                        <option value="unresolved" {% if resolved_filter == 'unresolved' %}selected{% endif %}>🔴 Sin Resolver</option>
+                        <option value="resolved" {% if resolved_filter == 'resolved' %}selected{% endif %}>✅ Resueltos</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="search" class="block text-sm font-semibold text-gray-700 mb-2">
+                        <svg class="inline w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                        </svg>
+                        Búsqueda
+                    </label>
+                    <input type="text" name="search" id="search" class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all" placeholder="🔍 Buscar por tipo, mensaje o URL..." value="{{ search_query }}">
+                </div>
+                <div>
+                    <button type="submit" class="w-full px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-bold rounded-lg shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200">
+                        <svg class="inline w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"></path>
+                        </svg>
+                        Aplicar
+                    </button>
+                </div>
+            </form>
+            <div class="mt-4">
+                <a href="{% url 'admin_dashboard:error_monitoring' %}" class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-all">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                    </svg>
+                    Limpiar Filtros
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Lista de Errores -->
+    <div class="bg-white rounded-2xl shadow-xl overflow-hidden">
+        <div class="bg-gradient-to-r from-purple-600 to-indigo-800 px-6 py-4 flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path>
+                </svg>
+                <h5 class="text-xl font-bold text-white">Errores Recientes</h5>
+            </div>
+            <span class="px-4 py-2 bg-white/20 backdrop-blur-sm rounded-full text-white text-sm font-semibold">Últimos 100 registros</span>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="w-full divide-y divide-gray-200">
+                <thead class="bg-gradient-to-r from-gray-50 to-gray-100">
+                    <tr>
+                        <th class="px-3 py-3 text-left text-xs font-bold text-gray-700 uppercase">Fecha</th>
+                        <th class="px-3 py-3 text-left text-xs font-bold text-gray-700 uppercase">Severidad</th>
+                        <th class="px-3 py-3 text-left text-xs font-bold text-gray-700 uppercase">Tipo</th>
+                        <th class="px-3 py-3 text-left text-xs font-bold text-gray-700 uppercase">Mensaje</th>
+                        <th class="px-3 py-3 text-center text-xs font-bold text-gray-700 uppercase">Estado</th>
+                        <th class="px-3 py-3 text-center text-xs font-bold text-gray-700 uppercase">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    {% for error in errors_list %}
+                    <tr class="hover:bg-gradient-to-r hover:from-purple-50 hover:to-indigo-50 transition-all duration-200">
+                        <td class="px-3 py-3 whitespace-nowrap text-sm">
+                            <span class="text-gray-900 text-xs">{{ error.timestamp|date:"d/m H:i" }}</span>
+                        </td>
+                        <td class="px-3 py-3 whitespace-nowrap">
+                            {% if error.severity == 'CRITICAL' %}
+                                <span class="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-bold bg-gray-900 text-white">CRÍTICO</span>
+                            {% elif error.severity == 'ERROR' %}
+                                <span class="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-bold bg-red-100 text-red-800">ERROR</span>
+                            {% elif error.severity == 'WARNING' %}
+                                <span class="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-bold bg-yellow-100 text-yellow-800">ALERTA</span>
+                            {% elif error.severity == 'INFO' %}
+                                <span class="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-bold bg-blue-100 text-blue-800">INFO</span>
+                            {% else %}
+                                <span class="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-bold bg-gray-100 text-gray-800">DEBUG</span>
+                            {% endif %}
+                        </td>
+                        <td class="px-3 py-3 text-xs text-gray-900 font-mono max-w-xs truncate">
+                            {{ error.error_type|truncatechars:25 }}
+                        </td>
+                        <td class="px-3 py-3 text-xs text-gray-600 max-w-md truncate">
+                            {{ error.error_message|truncatechars:50 }}
+                        </td>
+                        <td class="px-3 py-3 whitespace-nowrap text-center">
+                            <div class="flex items-center justify-center gap-2">
+                                {% if error.is_resolved %}
+                                    <button onclick="if(confirm('¿Marcar como NO resuelto?')) window.location.href='{% url 'admin_dashboard:error_unresolve' error.id %}'" class="inline-flex items-center gap-1 px-3 py-1 bg-green-100 text-green-800 rounded-lg hover:bg-green-200 transition-all text-xs font-bold" title="Click para marcar como NO resuelto">
+                                        ✓ Resuelto
+                                    </button>
+                                {% else %}
+                                    <button onclick="if(confirm('¿Marcar como RESUELTO?')) window.location.href='{% url 'admin_dashboard:error_resolve' error.id %}'" class="inline-flex items-center gap-1 px-3 py-1 bg-orange-100 text-orange-800 rounded-lg hover:bg-orange-200 transition-all text-xs font-bold" title="Click para marcar como resuelto">
+                                        ⏱ Pendiente
+                                    </button>
+                                {% endif %}
+                            </div>
+                        </td>
+                        <td class="px-3 py-3 whitespace-nowrap text-center">
+                            <button onclick="showErrorDetails({{ error.id }}, '{{ error.error_type|escapejs }}', '{{ error.error_message|escapejs }}', '{{ error.timestamp }}', '{{ error.url|escapejs }}', {{ error.occurrence_count }}, '{{ error.stack_trace|escapejs }}')" class="inline-flex items-center gap-1 px-3 py-1 bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white text-xs font-medium rounded-lg shadow-md hover:shadow-lg transition-all duration-200" title="Ver Detalles">
+                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                </svg>
+                                Ver
+                            </button>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="px-6 py-12 text-center">
+                            <svg class="w-16 h-16 mx-auto text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                            </svg>
+                            <p class="text-gray-500 font-medium">No se encontraron errores con los filtros aplicados.</p>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Top 10 Errores Más Frecuentes -->
+    {% if top_errors %}
+    <div class="card mt-4">
+        <div class="card-header">
+            <strong>Top 10 Errores Más Frecuentes (Últimos 7 Días)</strong>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-sm">
+                    <thead>
+                        <tr>
+                            <th>Tipo</th>
+                            <th>Mensaje</th>
+                            <th class="text-center">Ocurrencias</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for error in top_errors %}
+                        <tr>
+                            <td><code>{{ error.error_type|truncatechars:40 }}</code></td>
+                            <td>{{ error.error_message|truncatechars:80 }}</td>
+                            <td class="text-center">
+                                <span class="badge badge-danger">{{ error.count }}</span>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+<script>
+    // Gráfico de errores por día
+    const ctx = document.getElementById('errorsChart').getContext('2d');
+    const errorsChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: [
+                {% for item in errors_by_day %}
+                    '{{ item.date }}',
+                {% endfor %}
+            ],
+            datasets: [{
+                label: 'Errores',
+                data: [
+                    {% for item in errors_by_day %}
+                        {{ item.count }},
+                    {% endfor %}
+                ],
+                borderColor: 'rgb(220, 53, 69)',
+                backgroundColor: 'rgba(220, 53, 69, 0.1)',
+                tension: 0.1,
+                fill: true
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: {
+                    display: false
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        stepSize: 1
+                    }
+                }
+            }
+        }
+    });
+</script>
+
+<!-- Modal de Ayuda -->
+<div id="helpModal" class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+        <div class="bg-gradient-to-r from-blue-600 to-indigo-600 p-6 rounded-t-2xl flex justify-between items-center sticky top-0">
+            <div class="flex items-center gap-3">
+                <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
+                </svg>
+                <h3 class="text-2xl font-bold text-white">📖 Guía del Dashboard de Errores</h3>
+            </div>
+            <button onclick="document.getElementById('helpModal').classList.add('hidden')" class="text-white hover:bg-white/20 rounded-lg p-2 transition-all">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+            </button>
+        </div>
+        
+        <div class="p-8 space-y-6">
+            <!-- Sección 1: ¿Qué es esto? -->
+            <div>
+                <h4 class="text-xl font-bold text-gray-800 mb-3 flex items-center gap-2">
+                    <span class="text-2xl">🎯</span>
+                    ¿Qué es el Dashboard de Errores?
+                </h4>
+                <p class="text-gray-600 leading-relaxed">
+                    Este panel de control captura y analiza <strong>automáticamente</strong> todos los errores que ocurren en la aplicación. 
+                    No necesitas revisar la consola del navegador ni los logs del servidor manualmente - todo se registra aquí en tiempo real.
+                </p>
+            </div>
+
+            <!-- Sección 2: Tipos de errores -->
+            <div class="bg-gradient-to-r from-purple-50 to-indigo-50 p-6 rounded-xl">
+                <h4 class="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
+                    <span class="text-2xl">🔍</span>
+                    Tipos de Errores Capturados
+                </h4>
+                <div class="space-y-3">
+                    <div class="flex items-start gap-3">
+                        <span class="text-2xl">✨</span>
+                        <div>
+                            <p class="font-semibold text-gray-800">Errores JavaScript</p>
+                            <p class="text-sm text-gray-600">TypeError, ReferenceError, SyntaxError - capturados automáticamente desde el navegador del usuario</p>
+                        </div>
+                    </div>
+                    <div class="flex items-start gap-3">
+                        <span class="text-2xl">🌐</span>
+                        <div>
+                            <p class="font-semibold text-gray-800">Errores de Red (HTTP)</p>
+                            <p class="text-sm text-gray-600">HTTP 400, 500 - interceptados cuando una petición AJAX/fetch falla</p>
+                        </div>
+                    </div>
+                    <div class="flex items-start gap-3">
+                        <span class="text-2xl">🐍</span>
+                        <div>
+                            <p class="font-semibold text-gray-800">Excepciones Python/Django</p>
+                            <p class="text-sm text-gray-600">IntegrityError, DoesNotExist, ValidationError - errores del backend</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sección 3: Niveles de severidad -->
+            <div>
+                <h4 class="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
+                    <span class="text-2xl">📊</span>
+                    Niveles de Severidad
+                </h4>
+                <div class="grid grid-cols-2 gap-3">
+                    <div class="flex items-center gap-3 bg-gray-50 p-3 rounded-lg">
+                        <span class="px-3 py-1 bg-gray-900 text-white text-xs font-bold rounded-full">CRÍTICO</span>
+                        <span class="text-sm text-gray-600">Sistema inoperativo</span>
+                    </div>
+                    <div class="flex items-center gap-3 bg-red-50 p-3 rounded-lg">
+                        <span class="px-3 py-1 bg-red-600 text-white text-xs font-bold rounded-full">ERROR</span>
+                        <span class="text-sm text-gray-600">Funcionalidad rota</span>
+                    </div>
+                    <div class="flex items-center gap-3 bg-yellow-50 p-3 rounded-lg">
+                        <span class="px-3 py-1 bg-yellow-600 text-white text-xs font-bold rounded-full">ALERTA</span>
+                        <span class="text-sm text-gray-600">Problema menor</span>
+                    </div>
+                    <div class="flex items-center gap-3 bg-blue-50 p-3 rounded-lg">
+                        <span class="px-3 py-1 bg-blue-600 text-white text-xs font-bold rounded-full">INFO</span>
+                        <span class="text-sm text-gray-600">Información</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sección 4: Cómo usar -->
+            <div class="bg-gradient-to-r from-green-50 to-emerald-50 p-6 rounded-xl">
+                <h4 class="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
+                    <span class="text-2xl">🚀</span>
+                    Cómo Usar Este Dashboard
+                </h4>
+                <ol class="space-y-3 list-decimal list-inside text-gray-700">
+                    <li><strong>Revisa las estadísticas</strong> en las tarjetas superiores para ver el estado general</li>
+                    <li><strong>Consulta el gráfico</strong> para detectar tendencias (picos de errores indican problemas nuevos)</li>
+                    <li><strong>Usa los filtros</strong> para enfocarte en errores específicos (sin resolver, críticos, etc.)</li>
+                    <li><strong>Haz clic en "Ver"</strong> en cualquier error para ver detalles completos (stack trace, URL, usuario)</li>
+                    <li><strong>Prioriza errores críticos</strong> y los que tienen muchas ocurrencias</li>
+                </ol>
+            </div>
+
+            <!-- Sección 5: Columnas de la tabla -->
+            <div>
+                <h4 class="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
+                    <span class="text-2xl">📋</span>
+                    Entendiendo la Tabla de Errores
+                </h4>
+                <div class="space-y-2 text-sm">
+                    <div class="flex gap-3"><span class="font-semibold min-w-[100px]">Fecha:</span><span class="text-gray-600">Cuándo ocurrió el error por primera vez</span></div>
+                    <div class="flex gap-3"><span class="font-semibold min-w-[100px]">Severidad:</span><span class="text-gray-600">Qué tan grave es (CRÍTICO es lo más urgente)</span></div>
+                    <div class="flex gap-3"><span class="font-semibold min-w-[100px]">Tipo:</span><span class="text-gray-600">Nombre técnico del error (TypeError, IntegrityError, etc.)</span></div>
+                    <div class="flex gap-3"><span class="font-semibold min-w-[100px]">Mensaje:</span><span class="text-gray-600">Descripción del problema</span></div>
+                    <div class="flex gap-3"><span class="font-semibold min-w-[100px]">Estado:</span><span class="text-gray-600">✓ = Resuelto | ⏱ = Pendiente</span></div>
+                </div>
+            </div>
+
+            <!-- Sección 6: Consejos -->
+            <div class="bg-gradient-to-r from-amber-50 to-orange-50 p-6 rounded-xl border-l-4 border-amber-500">
+                <h4 class="text-xl font-bold text-gray-800 mb-3 flex items-center gap-2">
+                    <span class="text-2xl">💡</span>
+                    Consejos para Resolver Errores
+                </h4>
+                <ul class="space-y-2 text-sm text-gray-700">
+                    <li class="flex items-start gap-2">
+                        <span class="text-green-600 font-bold">✓</span>
+                        <span>Si un error tiene muchas ocurrencias, significa que afecta a varios usuarios - priorízalo</span>
+                    </li>
+                    <li class="flex items-start gap-2">
+                        <span class="text-green-600 font-bold">✓</span>
+                        <span>Revisa el stack trace completo haciendo clic en "Ver" - ahí está el número de línea exacto</span>
+                    </li>
+                    <li class="flex items-start gap-2">
+                        <span class="text-green-600 font-bold">✓</span>
+                        <span>Si hay un pico en el gráfico, probablemente se desplegó un cambio que introdujo un bug</span>
+                    </li>
+                    <li class="flex items-start gap-2">
+                        <span class="text-green-600 font-bold">✓</span>
+                        <span>Los errores JavaScript suelen incluir la URL - identifica qué página tiene problemas</span>
+                    </li>
+                </ul>
+            </div>
+
+            <!-- Sección 7: Información técnica -->
+            <div class="border-t pt-4">
+                <h4 class="text-lg font-bold text-gray-800 mb-3 flex items-center gap-2">
+                    <span class="text-xl">⚙️</span>
+                    Información Técnica
+                </h4>
+                <div class="text-xs text-gray-500 space-y-1 font-mono bg-gray-50 p-4 rounded-lg">
+                    <div>📡 Endpoint de captura: <code class="text-blue-600">/dashboard/audit/api/log-js-error/</code></div>
+                    <div>🗄️ Modelo: <code class="text-blue-600">apps.audit.models.ErrorLog</code></div>
+                    <div>🔧 Vista: <code class="text-blue-600">apps.admin_dashboard.views.error_monitoring</code></div>
+                    <div>📊 Interceptor: <code class="text-blue-600">dashboard/base.html (window.fetch wrapper)</code></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-gray-50 p-4 rounded-b-2xl flex justify-end">
+            <button onclick="document.getElementById('helpModal').classList.add('hidden')" class="px-6 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg hover:from-blue-700 hover:to-indigo-700 transition-all font-medium">
+                Entendido
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Detalles del Error -->
+<div id="errorDetailModal" class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-2xl max-w-5xl w-full max-h-[90vh] overflow-y-auto">
+        <div class="bg-gradient-to-r from-red-600 to-orange-600 p-6 rounded-t-2xl flex justify-between items-center sticky top-0">
+            <div class="flex items-center gap-3">
+                <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                </svg>
+                <h3 class="text-2xl font-bold text-white">🐛 Detalles del Error</h3>
+            </div>
+            <button onclick="document.getElementById('errorDetailModal').classList.add('hidden')" class="text-white hover:bg-white/20 rounded-lg p-2 transition-all">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+            </button>
+        </div>
+        
+        <div class="p-8 space-y-6">
+            <div class="grid grid-cols-2 gap-4">
+                <div class="bg-gradient-to-r from-red-50 to-orange-50 p-4 rounded-xl">
+                    <p class="text-sm text-gray-600 mb-1">ID del Error</p>
+                    <p class="text-2xl font-bold text-gray-800" id="modal-error-id">#0</p>
+                </div>
+                <div class="bg-gradient-to-r from-purple-50 to-indigo-50 p-4 rounded-xl">
+                    <p class="text-sm text-gray-600 mb-1">Ocurrencias</p>
+                    <p class="text-2xl font-bold text-gray-800" id="modal-error-count">0</p>
+                </div>
+            </div>
+            
+            <div>
+                <h4 class="text-lg font-bold text-gray-800 mb-2 flex items-center gap-2">
+                    <span class="text-2xl">🏷️</span>
+                    Tipo de Error
+                </h4>
+                <div class="bg-gray-100 p-4 rounded-lg">
+                    <code class="text-red-600 font-mono text-lg" id="modal-error-type"></code>
+                </div>
+            </div>
+            
+            <div>
+                <h4 class="text-lg font-bold text-gray-800 mb-2 flex items-center gap-2">
+                    <span class="text-2xl">💬</span>
+                    Mensaje
+                </h4>
+                <div class="bg-yellow-50 border-l-4 border-yellow-500 p-4 rounded-lg">
+                    <p class="text-gray-800" id="modal-error-message"></p>
+                </div>
+            </div>
+            
+            <div>
+                <h4 class="text-lg font-bold text-gray-800 mb-2 flex items-center gap-2">
+                    <span class="text-2xl">🌐</span>
+                    URL
+                </h4>
+                <div class="bg-blue-50 p-4 rounded-lg">
+                    <code class="text-blue-700 font-mono text-sm break-all" id="modal-error-url"></code>
+                </div>
+            </div>
+            
+            <div>
+                <h4 class="text-lg font-bold text-gray-800 mb-2 flex items-center gap-2">
+                    <span class="text-2xl">📅</span>
+                    Fecha
+                </h4>
+                <div class="bg-gray-100 p-4 rounded-lg">
+                    <p class="text-gray-800" id="modal-error-timestamp"></p>
+                </div>
+            </div>
+            
+            <div>
+                <h4 class="text-lg font-bold text-gray-800 mb-2 flex items-center gap-2">
+                    <span class="text-2xl">📚</span>
+                    Stack Trace
+                </h4>
+                <div class="bg-gray-900 p-4 rounded-lg max-h-96 overflow-y-auto">
+                    <pre class="text-green-400 font-mono text-xs whitespace-pre-wrap" id="modal-error-stack"></pre>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-gray-50 p-4 rounded-b-2xl flex justify-end">
+            <button onclick="document.getElementById('errorDetailModal').classList.add('hidden')" class="px-6 py-2 bg-gradient-to-r from-red-600 to-orange-600 text-white rounded-lg hover:from-red-700 hover:to-orange-700 transition-all font-medium">
+                Cerrar
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+function showErrorDetails(id, type, message, timestamp, url, count, stack) {
+    document.getElementById('modal-error-id').textContent = '#' + id;
+    document.getElementById('modal-error-type').textContent = type;
+    document.getElementById('modal-error-message').textContent = message;
+    document.getElementById('modal-error-url').textContent = url || 'N/A';
+    document.getElementById('modal-error-timestamp').textContent = timestamp;
+    document.getElementById('modal-error-count').textContent = count + ' veces';
+    document.getElementById('modal-error-stack').textContent = stack || 'Sin stack trace disponible';
+    
+    document.getElementById('errorDetailModal').classList.remove('hidden');
+}
+</script>
+
+{% endblock %}

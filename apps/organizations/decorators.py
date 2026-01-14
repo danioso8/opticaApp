@@ -265,3 +265,112 @@ def api_feature_required(feature_code):
             return view_func(request, *args, **kwargs)
         return wrapper
     return decorator
+
+
+# ============================================================================
+# NUEVOS DECORADORES - SISTEMA DE TRIALS Y MÓDULOS À LA CARTE
+# ============================================================================
+
+def require_active_trial(view_func):
+    """
+    Decorador para requerir un trial activo o suscripción pagada
+    Si el trial expiró, redirige al selector de módulos
+    """
+    from apps.organizations.models import TrialStatus
+    
+    @wraps(view_func)
+    def wrapper(request, *args, **kwargs):
+        # Skip para superusuarios
+        if request.user.is_superuser:
+            return view_func(request, *args, **kwargs)
+        
+        # Verificar si hay organización
+        if not hasattr(request, 'organization') or not request.organization:
+            messages.error(request, "No tienes una organización activa")
+            return redirect('dashboard:home')
+        
+        organization = request.organization
+        
+        # Verificar trial status
+        try:
+            trial = TrialStatus.objects.get(organization=organization)
+            
+            # Si está convertido (pagando), permitir acceso
+            if trial.state == 'converted':
+                return view_func(request, *args, **kwargs)
+            
+            # Si el trial está activo, permitir acceso
+            if trial.state == 'active' and trial.days_remaining > 0:
+                return view_func(request, *args, **kwargs)
+            
+            # Trial expirado - redirigir a selector
+            if trial.state in ['expired_readonly', 'expired_grace']:
+                messages.warning(
+                    request,
+                    f"Tu período de prueba ha terminado. Selecciona tu plan para continuar."
+                )
+                return redirect('dashboard:module_selector')
+            
+            # Datos archivados
+            if trial.state == 'expired_archived':
+                messages.error(
+                    request,
+                    "Tu cuenta ha sido archivada. Contacta soporte para recuperarla."
+                )
+                return redirect('dashboard:home')
+                
+        except TrialStatus.DoesNotExist:
+            # Si no hay trial, crear uno (usuario antiguo)
+            trial = TrialStatus.objects.create(
+                organization=organization,
+                state='active'
+            )
+        
+        return view_func(request, *args, **kwargs)
+    
+    return wrapper
+
+
+def trial_readonly_mode(view_func):
+    """
+    Decorador para vistas que solo permiten lectura en trial expirado
+    Bloquea operaciones POST/PUT/DELETE en trial expirado
+    """
+    from apps.organizations.models import TrialStatus
+    
+    @wraps(view_func)
+    def wrapper(request, *args, **kwargs):
+        # Skip para superusuarios
+        if request.user.is_superuser:
+            return view_func(request, *args, **kwargs)
+        
+        # Solo aplicar en métodos de escritura
+        if request.method not in ['POST', 'PUT', 'PATCH', 'DELETE']:
+            return view_func(request, *args, **kwargs)
+        
+        if not hasattr(request, 'organization') or not request.organization:
+            return JsonResponse({'error': 'No organization'}, status=403)
+        
+        try:
+            trial = TrialStatus.objects.get(organization=request.organization)
+            
+            # Si está en modo readonly, bloquear
+            if trial.state in ['expired_readonly', 'expired_grace', 'expired_archived']:
+                error_msg = "Tu cuenta está en modo solo lectura. Activa un plan para continuar."
+                
+                if request.is_ajax() or request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                    return JsonResponse({
+                        'error': error_msg,
+                        'readonly_mode': True,
+                        'upgrade_url': '/dashboard/modules/select/'
+                    }, status=403)
+                else:
+                    messages.error(request, error_msg)
+                    return redirect('dashboard:module_selector')
+                    
+        except TrialStatus.DoesNotExist:
+            pass
+        
+        return view_func(request, *args, **kwargs)
+    
+    return wrapper

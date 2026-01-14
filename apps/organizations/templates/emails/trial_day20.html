@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Te quedan 10 días de trial</title>
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; }
+        .header { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
+        .content { background: #f9fafb; padding: 30px; }
+        .countdown { background: white; border: 3px solid #f59e0b; padding: 30px; text-align: center; border-radius: 12px; margin: 20px 0; }
+        .countdown h2 { font-size: 48px; color: #f59e0b; margin: 0; }
+        .cta-button { background: #f59e0b; color: white; padding: 15px 30px; text-decoration: none; border-radius: 8px; display: inline-block; margin: 20px 0; font-weight: bold; }
+        .footer { background: #1f2937; color: white; padding: 20px; text-align: center; border-radius: 0 0 10px 10px; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>⏰ ¡10 Días Restantes!</h1>
+    </div>
+    
+    <div class="content">
+        <h2>Hola {{ user.first_name }},</h2>
+        
+        <p>El tiempo vuela cuando te diviertes, ¿verdad? 😊</p>
+        
+        <div class="countdown">
+            <p style="margin: 0; color: #6b7280;">Tu trial expira en</p>
+            <h2>10 DÍAS</h2>
+            <p style="margin: 0; color: #6b7280;">{{ trial.trial_end|date:"d de F, Y" }}</p>
+        </div>
+        
+        <h3>¿Qué sigue después del trial?</h3>
+        <p>Cuando tu trial termine, podrás elegir solo los módulos que realmente necesitas para tu óptica. <strong>¡Paga solo por lo que usas!</strong></p>
+        
+        <p><strong>Precios desde $2 USD/mes por módulo</strong></p>
+        
+        <ul>
+            <li>💰 <strong>Descuento del 10%</strong> si eliges 4-6 módulos</li>
+            <li>💎 <strong>Descuento del 20%</strong> si eliges 7+ módulos</li>
+        </ul>
+        
+        <div style="text-align: center; margin: 30px 0;">
+            <a href="https://www.optikaapp.com/dashboard/modules/marketplace/" class="cta-button">
+                Ver Módulos Disponibles
+            </a>
+        </div>
+        
+        <p>Si tienes preguntas sobre los planes, estamos aquí para ayudarte.</p>
+        
+        <p>Saludos,<br>
+        <strong>El equipo de OpticaApp</strong></p>
+    </div>
+    
+    <div class="footer">
+        <p>OpticaApp<br>
+        📧 soporte@optikaapp.com | 🌐 www.optikaapp.com</p>
+    </div>
+</body>
+</html>

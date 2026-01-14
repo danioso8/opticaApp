@@ -1439,3 +1439,374 @@ class AddonPurchase(models.Model):
             return 0
         delta = self.end_date - timezone.now()
         return delta.days
+
+
+# ============================================================================
+# NUEVOS MODELOS - SISTEMA DE MÓDULOS À LA CARTE
+# ============================================================================
+
+class OrganizationModule(models.Model):
+    """
+    Módulos activos por organización (compras individuales)
+    Permite que una organización compre módulos adicionales fuera de su plan base
+    """
+    organization = models.ForeignKey(
+        Organization,
+        on_delete=models.CASCADE,
+        related_name='active_modules'
+    )
+    module = models.ForeignKey(
+        PlanFeature,
+        on_delete=models.CASCADE,
+        related_name='organization_purchases'
+    )
+    
+    # Información de compra
+    purchased_at = models.DateTimeField(auto_now_add=True)
+    price_paid = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        verbose_name='Precio Pagado',
+        help_text='Precio pagado al momento de la compra'
+    )
+    
+    # Estado
+    is_active = models.BooleanField(default=True)
+    start_date = models.DateTimeField(default=timezone.now)
+    end_date = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text='Null = indefinido, Date = suscripción mensual'
+    )
+    auto_renew = models.BooleanField(default=True)
+    
+    # Metadata
+    notes = models.TextField(blank=True, verbose_name='Notas internas')
+    
+    class Meta:
+        verbose_name = 'Módulo de Organización'
+        verbose_name_plural = 'Módulos de Organizaciones'
+        unique_together = ['organization', 'module']
+        ordering = ['-purchased_at']
+    
+    def __str__(self):
+        return f"{self.organization.name} - {self.module.name}"
+    
+    @property
+    def is_expired(self):
+        """Verifica si el módulo ha expirado"""
+        if not self.end_date:  # Sin fecha de expiración = permanente
+            return False
+        return timezone.now() > self.end_date
+    
+    def save(self, *args, **kwargs):
+        # Si no hay precio pagado, usar el precio del módulo
+        if not self.price_paid:
+            self.price_paid = self.module.price_monthly
+        
+        # Calcular end_date (30 días desde start_date)
+        if not self.end_date and self.module.price_monthly > 0:
+            self.end_date = self.start_date + timedelta(days=30)
+        
+        super().save(*args, **kwargs)
+
+
+class TrialStatus(models.Model):
+    """
+    Estado del período de prueba de una organización
+    """
+    TRIAL_STATES = [
+        ('active', 'Activo - Trial en curso'),
+        ('expired_grace', 'Expirado - Período de gracia'),
+        ('expired_readonly', 'Expirado - Solo lectura'),
+        ('expired_archived', 'Expirado - Datos archivados'),
+        ('converted', 'Convertido - Cliente de pago'),
+        ('cancelled', 'Cancelado por el usuario'),
+    ]
+    
+    organization = models.OneToOneField(
+        Organization,
+        on_delete=models.CASCADE,
+        related_name='trial_status'
+    )
+    
+    # Fechas clave
+    trial_start = models.DateTimeField(default=timezone.now)
+    trial_end = models.DateTimeField(
+        help_text='Fin del trial (normalmente 30 días desde el inicio)'
+    )
+    grace_period_end = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text='Fin del período de gracia (45 días desde inicio)'
+    )
+    archive_date = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text='Fecha de archivo de datos (90 días desde inicio)'
+    )
+    deletion_date = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text='Fecha de eliminación permanente (210 días desde inicio)'
+    )
+    
+    # Estado actual
+    state = models.CharField(
+        max_length=20,
+        choices=TRIAL_STATES,
+        default='active'
+    )
+    
+    # Conversión
+    converted_at = models.DateTimeField(null=True, blank=True)
+    conversion_plan = models.ForeignKey(
+        SubscriptionPlan,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name='trial_conversions'
+    )
+    
+    # Metadata
+    modules_selected = models.ManyToManyField(
+        PlanFeature,
+        blank=True,
+        related_name='trial_selections',
+        help_text='Módulos seleccionados al final del trial'
+    )
+    total_monthly_price = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        default=0,
+        verbose_name='Precio Mensual Total'
+    )
+    
+    # Analytics
+    login_count = models.IntegerField(default=0)
+    last_login = models.DateTimeField(null=True, blank=True)
+    most_used_modules = models.JSONField(
+        default=dict,
+        blank=True,
+        help_text='{"appointments": 250, "whatsapp": 180, ...}'
+    )
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        verbose_name = 'Estado de Trial'
+        verbose_name_plural = 'Estados de Trial'
+    
+    def __str__(self):
+        return f"{self.organization.name} - {self.get_state_display()}"
+    
+    def save(self, *args, **kwargs):
+        # Calcular fechas automáticamente si no existen
+        if not self.trial_end:
+            self.trial_end = self.trial_start + timedelta(days=30)
+        
+        if not self.grace_period_end:
+            self.grace_period_end = self.trial_start + timedelta(days=45)
+        
+        if not self.archive_date:
+            self.archive_date = self.trial_start + timedelta(days=90)
+        
+        if not self.deletion_date:
+            self.deletion_date = self.trial_start + timedelta(days=210)
+        
+        super().save(*args, **kwargs)
+    
+    @property
+    def days_remaining(self):
+        """Días restantes del trial"""
+        if self.state == 'converted':
+            return 0
+        
+        now = timezone.now()
+        if now > self.trial_end:
+            return 0
+        
+        delta = self.trial_end - now
+        return delta.days
+    
+    @property
+    def is_in_grace_period(self):
+        """¿Está en período de gracia?"""
+        now = timezone.now()
+        return self.trial_end < now <= self.grace_period_end
+    
+    @property
+    def should_archive(self):
+        """¿Debería archivarse?"""
+        return timezone.now() > self.archive_date and self.state not in ['converted', 'cancelled']
+    
+    @property
+    def should_delete(self):
+        """¿Debería eliminarse?"""
+        return timezone.now() > self.deletion_date and self.state == 'expired_archived'
+
+
+class SubscriptionNotification(models.Model):
+    """
+    Log de notificaciones enviadas a organizaciones sobre su trial/suscripción
+    """
+    NOTIFICATION_TYPES = [
+        ('trial_welcome', 'Bienvenida - Inicio de Trial'),
+        ('trial_day20', 'Trial - Día 20 (10 días restantes)'),
+        ('trial_day25', 'Trial - Día 25 (5 días restantes)'),
+        ('trial_day28', 'Trial - Día 28 (2 días restantes)'),
+        ('trial_expired', 'Trial Expirado - Día 30'),
+        ('grace_reminder', 'Período de Gracia - Día 37'),
+        ('archive_warning', 'Advertencia de Archivo - Día 45'),
+        ('archive_notice', 'Datos Archivados - Día 90'),
+        ('deletion_warning', 'Advertencia de Eliminación - Día 180'),
+        ('deletion_final', 'Cuenta Eliminada - Día 210'),
+        ('payment_success', 'Pago Exitoso'),
+        ('payment_failed', 'Pago Fallido'),
+        ('module_added', 'Módulo Agregado'),
+        ('module_removed', 'Módulo Removido'),
+    ]
+    
+    CHANNELS = [
+        ('email', 'Email'),
+        ('whatsapp', 'WhatsApp'),
+        ('in_app', 'In-App Notification'),
+        ('sms', 'SMS'),
+    ]
+    
+    organization = models.ForeignKey(
+        Organization,
+        on_delete=models.CASCADE,
+        related_name='notifications_log'
+    )
+    
+    notification_type = models.CharField(max_length=30, choices=NOTIFICATION_TYPES)
+    channel = models.CharField(max_length=20, choices=CHANNELS)
+    
+    # Destinatario
+    recipient_email = models.EmailField(blank=True)
+    recipient_phone = models.CharField(max_length=20, blank=True)
+    
+    # Contenido
+    subject = models.CharField(max_length=200, blank=True)
+    message = models.TextField()
+    
+    # Estado
+    sent_at = models.DateTimeField(auto_now_add=True)
+    delivered = models.BooleanField(default=False)
+    delivery_status = models.CharField(max_length=50, blank=True)
+    error_message = models.TextField(blank=True)
+    
+    # Interacción
+    opened = models.BooleanField(default=False)
+    opened_at = models.DateTimeField(null=True, blank=True)
+    clicked = models.BooleanField(default=False)
+    clicked_at = models.DateTimeField(null=True, blank=True)
+    
+    class Meta:
+        verbose_name = 'Notificación de Suscripción'
+        verbose_name_plural = 'Notificaciones de Suscripción'
+        ordering = ['-sent_at']
+    
+    def __str__(self):
+        return f"{self.organization.name} - {self.get_notification_type_display()} via {self.channel}"
+
+
+class ModulePricing(models.Model):
+    """
+    Configuración de precios dinámicos para módulos
+    Permite ajustar precios sin modificar el modelo PlanFeature
+    """
+    module = models.OneToOneField(
+        PlanFeature,
+        on_delete=models.CASCADE,
+        related_name='pricing_config'
+    )
+    
+    # Precios
+    base_price_monthly = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        verbose_name='Precio Base Mensual'
+    )
+    
+    # Descuentos por volumen
+    discount_4_modules = models.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+        default=10.00,
+        verbose_name='Descuento 4-6 módulos (%)'
+    )
+    discount_7_modules = models.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+        default=20.00,
+        verbose_name='Descuento 7+ módulos (%)'
+    )
+    
+    # Promociones temporales
+    promo_price = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name='Precio Promocional'
+    )
+    promo_start = models.DateTimeField(null=True, blank=True)
+    promo_end = models.DateTimeField(null=True, blank=True)
+    
+    # Configuración
+    is_available = models.BooleanField(default=True)
+    min_plan_required = models.ForeignKey(
+        SubscriptionPlan,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        help_text='Plan mínimo requerido para comprar este módulo'
+    )
+    
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        verbose_name = 'Configuración de Precio de Módulo'
+        verbose_name_plural = 'Configuraciones de Precios de Módulos'
+    
+    def __str__(self):
+        return f"Pricing: {self.module.name} - ${self.current_price}/mes"
+    
+    @property
+    def current_price(self):
+        """Obtiene el precio actual (considerando promociones)"""
+        now = timezone.now()
+        
+        # Verificar si hay promoción activa
+        if (self.promo_price and 
+            self.promo_start and self.promo_end and
+            self.promo_start <= now <= self.promo_end):
+            return self.promo_price
+        
+        return self.base_price_monthly
+    
+    def get_discounted_price(self, num_modules):
+        """Calcula precio con descuento por volumen"""
+        price = self.current_price
+        
+        if num_modules >= 7:
+            discount = self.discount_7_modules
+        elif num_modules >= 4:
+            discount = self.discount_4_modules
+        else:
+            discount = 0
+        
+        return price * (1 - discount / 100)
+
+
+# Importar modelo de configuración de sidebar
+from .models_sidebar_config import SidebarConfiguration
+
+__all__ = [
+    'PlanFeature', 'SubscriptionPlan', 'Organization', 'OrganizationMembership',
+    'OrganizationInvitation', 'OrganizationFeature', 'ModulePurchase',
+    'TrialProgress', 'ModuleUsageTracking', 'PlanPricingConfig', 'SidebarConfiguration'
+]

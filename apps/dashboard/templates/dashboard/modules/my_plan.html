@@ -1,0 +1,312 @@
+{% extends "dashboard/base.html" %}
+{% load static %}
+
+{% block title %}Mi Plan - OpticaApp{% endblock %}
+
+{% block extra_css %}
+<style>
+    .plan-header {
+        background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+        color: white;
+        padding: 40px;
+        border-radius: 12px;
+        margin-bottom: 30px;
+    }
+    
+    .plan-stat {
+        text-align: center;
+        padding: 20px;
+    }
+    
+    .plan-stat h3 {
+        font-size: 36px;
+        font-weight: 700;
+        margin: 0;
+    }
+    
+    .plan-stat p {
+        margin: 5px 0 0 0;
+        opacity: 0.9;
+    }
+    
+    .module-list-item {
+        background: white;
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        padding: 20px;
+        margin-bottom: 15px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        transition: all 0.3s ease;
+    }
+    
+    .module-list-item:hover {
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        transform: translateX(5px);
+    }
+    
+    .module-info h4 {
+        margin: 0 0 5px 0;
+        color: #1f2937;
+    }
+    
+    .module-info p {
+        margin: 0;
+        color: #6b7280;
+        font-size: 14px;
+    }
+    
+    .module-price {
+        font-size: 24px;
+        font-weight: 700;
+        color: #3b82f6;
+    }
+    
+    .module-actions {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+    }
+    
+    .usage-badge {
+        background: #fef3c7;
+        color: #92400e;
+        padding: 4px 12px;
+        border-radius: 12px;
+        font-size: 12px;
+        font-weight: 600;
+    }
+    
+    .trial-warning {
+        background: #fef2f2;
+        border-left: 4px solid #ef4444;
+        padding: 20px;
+        border-radius: 8px;
+        margin-bottom: 30px;
+    }
+    
+    .billing-info {
+        background: #f9fafb;
+        border: 2px dashed #d1d5db;
+        border-radius: 12px;
+        padding: 25px;
+        margin-top: 30px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <!-- Header del Plan -->
+            <div class="plan-header">
+                <h1 class="mb-4">
+                    <i class="fas fa-star"></i> Mi Plan
+                </h1>
+                
+                <div class="row">
+                    <div class="col-md-3">
+                        <div class="plan-stat">
+                            <h3>{{ module_count }}</h3>
+                            <p>Módulo{{ module_count|pluralize }} Activo{{ module_count|pluralize }}</p>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-3">
+                        <div class="plan-stat">
+                            <h3>${{ monthly_cost|floatformat:2 }}</h3>
+                            <p>Costo Mensual</p>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-3">
+                        <div class="plan-stat">
+                            {% if is_trial %}
+                                <h3>{{ days_remaining }}</h3>
+                                <p>Días de Trial</p>
+                            {% else %}
+                                <h3>{{ next_billing_date|date:"d M" }}</h3>
+                                <p>Próxima Factura</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-3">
+                        <div class="plan-stat">
+                            {% if is_trial %}
+                                <h3>TRIAL</h3>
+                                <p>Estado</p>
+                            {% else %}
+                                <h3>ACTIVO</h3>
+                                <p>Estado</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Advertencia de Trial Expirado -->
+            {% if trial and trial.state == 'expired_readonly' %}
+                <div class="trial-warning">
+                    <h4><i class="fas fa-exclamation-triangle"></i> Modo Solo Lectura</h4>
+                    <p class="mb-3">
+                        Tu período de prueba ha expirado. Estás en modo solo lectura. 
+                        Selecciona los módulos que necesitas para reactivar todas las funciones.
+                    </p>
+                    <a href="{% url 'dashboard:module_selector' %}" class="btn btn-danger">
+                        <i class="fas fa-shopping-cart"></i> Seleccionar Módulos Ahora
+                    </a>
+                </div>
+            {% elif trial and trial.state == 'expired_grace' %}
+                <div class="trial-warning">
+                    <h4><i class="fas fa-clock"></i> Período de Gracia</h4>
+                    <p class="mb-3">
+                        Tu trial expiró hace {{ trial.days_since_expiration }} días. 
+                        Tienes hasta el {{ trial.grace_period_end|date:"d/m/Y" }} para elegir módulos antes de que tu cuenta sea archivada.
+                    </p>
+                    <a href="{% url 'dashboard:module_selector' %}" class="btn btn-warning">
+                        <i class="fas fa-shopping-cart"></i> Elegir Módulos
+                    </a>
+                </div>
+            {% endif %}
+            
+            <!-- Lista de Módulos Activos -->
+            <div class="mt-4">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h3>
+                        <i class="fas fa-cubes"></i> Módulos Activos
+                    </h3>
+                    <a href="{% url 'dashboard:module_marketplace' %}" class="btn btn-primary">
+                        <i class="fas fa-plus"></i> Agregar Más Módulos
+                    </a>
+                </div>
+                
+                {% if active_modules %}
+                    {% for org_module in active_modules %}
+                        <div class="module-list-item">
+                            <div class="module-info">
+                                <h4>{{ org_module.module.name }}</h4>
+                                <p>{{ org_module.module.description|truncatewords:15 }}</p>
+                                
+                                {% if module_usage %}
+                                    {% for module_name, count in module_usage.items %}
+                                        {% if module_name == org_module.module.name %}
+                                            <span class="usage-badge">
+                                                <i class="fas fa-chart-line"></i> Usado {{ count }} veces
+                                            </span>
+                                        {% endif %}
+                                    {% endfor %}
+                                {% endif %}
+                            </div>
+                            
+                            <div class="module-actions">
+                                <div class="module-price">
+                                    ${{ org_module.price_paid|floatformat:2 }}
+                                    <small style="font-size: 14px; color: #6b7280;">/mes</small>
+                                </div>
+                                
+                                {% if not is_trial %}
+                                    <button class="btn btn-outline-danger btn-sm remove-module-btn" 
+                                            data-module-id="{{ org_module.module.id }}"
+                                            data-module-name="{{ org_module.module.name }}">
+                                        <i class="fas fa-times"></i> Desactivar
+                                    </button>
+                                {% endif %}
+                            </div>
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="text-center py-5">
+                        <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+                        <h4 class="text-muted">No tienes módulos activos</h4>
+                        <p class="text-muted">Visita el marketplace para comenzar a agregar módulos.</p>
+                        <a href="{% url 'dashboard:module_marketplace' %}" class="btn btn-primary mt-3">
+                            <i class="fas fa-store"></i> Ir al Marketplace
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+            
+            <!-- Información de Facturación -->
+            {% if not is_trial and module_count > 0 %}
+                <div class="billing-info">
+                    <h4 class="mb-3">
+                        <i class="fas fa-file-invoice-dollar"></i> Información de Facturación
+                    </h4>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p><strong>Próxima fecha de facturación:</strong> {{ next_billing_date|date:"d/m/Y" }}</p>
+                            <p><strong>Método de pago:</strong> Tarjeta terminada en •••• 4242</p>
+                            <p><strong>Total a cobrar:</strong> <span class="text-primary font-weight-bold">${{ monthly_cost|floatformat:2 }}</span></p>
+                        </div>
+                        <div class="col-md-6 text-right">
+                            <a href="#" class="btn btn-outline-primary">
+                                <i class="fas fa-credit-card"></i> Actualizar Método de Pago
+                            </a>
+                            <a href="#" class="btn btn-outline-secondary">
+                                <i class="fas fa-file-invoice"></i> Ver Facturas
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Botones de remover módulo
+    document.querySelectorAll('.remove-module-btn').forEach(button => {
+        button.addEventListener('click', function() {
+            const moduleId = this.dataset.moduleId;
+            const moduleName = this.dataset.moduleName;
+            
+            Swal.fire({
+                title: '¿Desactivar módulo?',
+                text: `El módulo "${moduleName}" será desactivado y no se cobrará en el próximo ciclo.`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#ef4444',
+                cancelButtonColor: '#6b7280',
+                confirmButtonText: 'Sí, desactivar',
+                cancelButtonText: 'Cancelar'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    // Enviar petición para desactivar
+                    fetch(`/dashboard/modules/${moduleId}/remove/`, {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRFToken': '{{ csrf_token }}',
+                            'Content-Type': 'application/json'
+                        }
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            Swal.fire(
+                                'Desactivado',
+                                'El módulo ha sido desactivado exitosamente.',
+                                'success'
+                            ).then(() => {
+                                location.reload();
+                            });
+                        } else {
+                            Swal.fire('Error', data.error || 'No se pudo desactivar el módulo', 'error');
+                        }
+                    })
+                    .catch(error => {
+                        Swal.fire('Error', 'Error de conexión', 'error');
+                    });
+                }
+            });
+        });
+    });
+});
+</script>
+{% endblock %}

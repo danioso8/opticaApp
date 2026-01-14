@@ -3,6 +3,10 @@
 
 {% block title %}Detalle de Cita #{{ appointment.id }} - Dashboard{% endblock %}
 
+{% block extra_css %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+{% endblock %}
+
 {% block content %}
 <div class="mb-6">
     <a href="{% url 'dashboard:appointments_list' %}" class="text-blue-600 hover:text-blue-800 text-sm">
@@ -237,6 +241,10 @@
                 <i class="fas fa-bolt mr-2"></i>Acciones Rápidas
             </h2>
             <div class="space-y-3">
+                <button id="resendBtn" onclick="resendNotification({{ appointment.id }})" class="block w-full text-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                    <i id="resendIcon" class="fas fa-sync-alt mr-2"></i>
+                    <span id="resendText">Reenviar Notificación</span>
+                </button>
                 <a href="tel:{{ appointment.phone_number }}" class="block w-full text-center px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors">
                     <i class="fas fa-phone mr-2"></i>Llamar al Paciente
                 </a>
@@ -980,5 +988,80 @@ document.addEventListener('click', function(event) {
         closePatientModal();
     }
 });
+
+// Función para reenviar notificación
+async function resendNotification(appointmentId) {
+    const btn = document.getElementById('resendBtn');
+    const icon = document.getElementById('resendIcon');
+    const text = document.getElementById('resendText');
+    
+    // Deshabilitar botón y mostrar animación
+    btn.disabled = true;
+    icon.className = 'fas fa-spinner fa-spin mr-2';
+    text.textContent = 'Enviando...';
+    
+    try {
+        const response = await fetch(`/dashboard/appointments/${appointmentId}/resend-notification/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token }}'
+            }
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            // Mostrar estado de éxito en el botón
+            icon.className = 'fas fa-check mr-2';
+            text.textContent = '¡Enviado!';
+            
+            Swal.fire({
+                icon: 'success',
+                title: '¡Notificación Enviada!',
+                text: data.message,
+                confirmButtonText: 'Aceptar',
+                confirmButtonColor: '#10b981'
+            });
+            
+            // Restaurar botón después de 2 segundos
+            setTimeout(() => {
+                icon.className = 'fas fa-sync-alt mr-2';
+                text.textContent = 'Reenviar Notificación';
+                btn.disabled = false;
+            }, 2000);
+        } else {
+            // Restaurar botón
+            icon.className = 'fas fa-sync-alt mr-2';
+            text.textContent = 'Reenviar Notificación';
+            btn.disabled = false;
+            
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: data.message,
+                confirmButtonText: 'Aceptar',
+                confirmButtonColor: '#ef4444'
+            });
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        
+        // Restaurar botón
+        icon.className = 'fas fa-sync-alt mr-2';
+        text.textContent = 'Reenviar Notificación';
+        btn.disabled = false;
+        
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: 'No se pudo reenviar la notificación',
+            confirmButtonText: 'Aceptar',
+            confirmButtonColor: '#ef4444'
+        });
+    }
+}
 </script>
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 {% endblock %}

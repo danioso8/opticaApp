@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tu trial ha terminado</title>
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; }
+        .header { background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
+        .content { background: #f9fafb; padding: 30px; }
+        .info-box { background: #fef3c7; border-left: 4px solid #f59e0b; padding: 20px; margin: 20px 0; }
+        .cta-button { background: #3b82f6; color: white; padding: 18px 40px; text-decoration: none; border-radius: 8px; display: inline-block; margin: 20px 0; font-weight: bold; font-size: 18px; }
+        .footer { background: #1f2937; color: white; padding: 20px; text-align: center; border-radius: 0 0 10px 10px; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Tu período de prueba ha terminado</h1>
+    </div>
+    
+    <div class="content">
+        <h2>Hola {{ user.first_name }},</h2>
+        
+        <p>Tu trial de 30 días en OpticaApp ha finalizado hoy.</p>
+        
+        <div class="info-box">
+            <h3 style="margin-top: 0;">📌 Tu cuenta ahora está en <strong>Modo Solo Lectura</strong></h3>
+            <p><strong>Lo que puedes hacer:</strong></p>
+            <ul>
+                <li>✅ Ver todos tus datos y registros</li>
+                <li>✅ Exportar información</li>
+                <li>✅ Acceder a reportes</li>
+            </ul>
+            <p><strong>Lo que NO puedes hacer:</strong></p>
+            <ul>
+                <li>❌ Crear nuevos registros</li>
+                <li>❌ Editar información existente</li>
+                <li>❌ Agendar nuevas citas</li>
+            </ul>
+        </div>
+        
+        <h3>🎯 Reactiva tu cuenta en 3 pasos:</h3>
+        <ol>
+            <li><strong>Elige tus módulos</strong> - Solo los que necesitas</li>
+            <li><strong>Configura tu pago</strong> - Seguro y fácil</li>
+            <li><strong>¡Vuelve a trabajar!</strong> - Inmediatamente</li>
+        </ol>
+        
+        <p><strong>💰 Precios flexibles desde $2/mes</strong></p>
+        <ul>
+            <li>Elige solo los módulos que usas</li>
+            <li>10% descuento con 4-6 módulos</li>
+            <li>20% descuento con 7+ módulos</li>
+        </ul>
+        
+        <div style="text-align: center; margin: 30px 0;">
+            <a href="https://www.optikaapp.com/dashboard/modules/selector/" class="cta-button">
+                Seleccionar Mis Módulos
+            </a>
+        </div>
+        
+        <p><strong>⏰ Tienes 45 días para reactivar</strong> antes de que tus datos sean archivados.</p>
+        
+        <p>¿Necesitas ayuda? Contáctanos, estamos aquí para ti.</p>
+        
+        <p>Saludos,<br>
+        <strong>El equipo de OpticaApp</strong></p>
+    </div>
+    
+    <div class="footer">
+        <p>OpticaApp<br>
+        📧 soporte@optikaapp.com | 📱 WhatsApp: +57 312 345 6789</p>
+    </div>
+</body>
+</html>

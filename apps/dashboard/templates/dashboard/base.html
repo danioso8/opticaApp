@@ -191,6 +191,17 @@
                             <i class="fas fa-lock w-5 mr-3 text-gray-600"></i>
                             Seguridad
                         </a>
+                        {% if is_owner_or_admin %}
+                        <div class="border-t border-gray-200 my-1"></div>
+                        <a href="{% url 'dashboard:my_plan' %}" class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                            <i class="fas fa-puzzle-piece w-5 mr-3 text-indigo-600"></i>
+                            Mis Módulos
+                        </a>
+                        <a href="{% url 'dashboard:module_marketplace' %}" class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                            <i class="fas fa-store w-5 mr-3 text-indigo-600"></i>
+                            Catálogo
+                        </a>
+                        {% endif %}
                         <div class="border-t border-gray-200 my-1"></div>
                         <a href="{% url 'dashboard:logout' %}" class="flex items-center px-4 py-2 text-sm text-red-600 hover:bg-red-50">
                             <i class="fas fa-sign-out-alt w-5 mr-3"></i>
@@ -232,11 +243,20 @@
             <nav class="mt-6">
                 <!-- Mis Empresas - Solo Owner/Admin -->
                 {% if is_owner_or_admin %}
-                <a href="{% url 'organizations:list' %}" class="flex items-center px-4 py-3 hover:bg-indigo-800 {% if 'organizations' in request.path %}bg-indigo-800{% endif %} relative">
+                <a href="{% url 'organizations:list' %}" class="flex items-center px-4 py-3 hover:bg-indigo-800 {% if 'organizations' in request.path and 'list' in request.path %}bg-indigo-800{% endif %} relative">
                     <i class="fas fa-building mr-3"></i>
                     <span class="sidebar-text">Mis Empresas</span>
                     <span class="sidebar-tooltip">Mis Empresas</span>
                 </a>
+                
+                <!-- Mis Módulos - Acceso rápido -->
+                {% if request.organization %}
+                <a href="{% url 'dashboard:my_plan' %}" class="flex items-center px-4 py-3 hover:bg-indigo-800 {% if 'my_plan' in request.path or 'my-plan' in request.path %}bg-indigo-800{% endif %} relative">
+                    <i class="fas fa-puzzle-piece mr-3"></i>
+                    <span class="sidebar-text">Mis Módulos</span>
+                    <span class="sidebar-tooltip">Mis Módulos</span>
+                </a>
+                {% endif %}
                 {% endif %}
                 
                 {% if request.organization %}
@@ -652,6 +672,51 @@
                     </div>
                 </div>
                 
+                <!-- Módulos & Suscripción (Menú Desplegable) - Solo Owner/Admin -->
+                {% if is_owner_or_admin %}
+                <div class="modules-menu">
+                    <button type="button" onclick="toggleSubmenu('modules-submenu')" class="flex items-center justify-between w-full px-4 py-3 hover:bg-indigo-800 {% if 'modules' in request.path %}bg-indigo-800{% endif %} relative">
+                        <div class="flex items-center">
+                            <i class="fas fa-puzzle-piece mr-3"></i>
+                            <span class="sidebar-text">Módulos</span>
+                        </div>
+                        <i class="fas fa-chevron-down text-sm transition-transform duration-200 submenu-icon" id="modules-submenu-icon"></i>
+                        <span class="sidebar-tooltip">Módulos</span>
+                    </button>
+                    <div id="modules-submenu" class="bg-indigo-950 hidden sidebar-submenu">
+                        <!-- Mi Plan Actual -->
+                        <a href="{% url 'dashboard:my_plan' %}" class="flex items-center px-8 py-2 hover:bg-indigo-800 text-sm {% if request.resolver_match.url_name == 'my_plan' %}bg-indigo-800{% endif %} relative">
+                            <i class="fas fa-clipboard-list mr-3"></i>
+                            <span class="sidebar-text">Mi Plan</span>
+                            <span class="sidebar-tooltip">Mi Plan Actual</span>
+                        </a>
+                        
+                        <!-- Marketplace de Módulos -->
+                        <a href="{% url 'dashboard:module_marketplace' %}" class="flex items-center px-8 py-2 hover:bg-indigo-800 text-sm {% if request.resolver_match.url_name == 'module_marketplace' %}bg-indigo-800{% endif %} relative">
+                            <i class="fas fa-store mr-3"></i>
+                            <span class="sidebar-text">Catálogo de Módulos</span>
+                            <span class="sidebar-tooltip">Comprar Módulos</span>
+                        </a>
+                        
+                        <div class="border-t border-indigo-800 my-1"></div>
+                        
+                        <!-- Historial de Pagos -->
+                        <a href="{% url 'payments:transaction_history' %}" class="flex items-center px-8 py-2 hover:bg-indigo-800 text-sm {% if 'transaction' in request.path %}bg-indigo-800{% endif %} relative">
+                            <i class="fas fa-receipt mr-3"></i>
+                            <span class="sidebar-text">Historial de Pagos</span>
+                            <span class="sidebar-tooltip">Ver Transacciones</span>
+                        </a>
+                        
+                        <!-- Facturas -->
+                        <a href="{% url 'payments:invoice_list' %}" class="flex items-center px-8 py-2 hover:bg-indigo-800 text-sm {% if 'invoice' in request.path %}bg-indigo-800{% endif %} relative">
+                            <i class="fas fa-file-invoice mr-3"></i>
+                            <span class="sidebar-text">Mis Facturas</span>
+                            <span class="sidebar-tooltip">Facturas Generadas</span>
+                        </a>
+                    </div>
+                </div>
+                {% endif %}
+                
                 <!-- Auditoría (Solo Owner/Admin) -->
                 {% if is_owner_or_admin %}
                 <a href="{% url 'audit:dashboard' %}" class="flex items-center px-4 py-3 hover:bg-indigo-800 {% if 'audit' in request.path %}bg-indigo-800{% endif %} relative">
@@ -833,6 +898,17 @@
                                         <i class="fas fa-lock w-5 mr-3 text-gray-600"></i>
                                         Seguridad
                                     </a>
+                                    {% if is_owner_or_admin %}
+                                    <div class="border-t border-gray-200 my-1"></div>
+                                    <a href="{% url 'dashboard:my_plan' %}" class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                        <i class="fas fa-puzzle-piece w-5 mr-3 text-indigo-600"></i>
+                                        Mis Módulos
+                                    </a>
+                                    <a href="{% url 'dashboard:module_marketplace' %}" class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                        <i class="fas fa-store w-5 mr-3 text-indigo-600"></i>
+                                        Catálogo de Módulos
+                                    </a>
+                                    {% endif %}
                                     <div class="border-t border-gray-200 my-1"></div>
                                     <a href="{% url 'dashboard:logout' %}" class="flex items-center px-4 py-2 text-sm text-red-600 hover:bg-red-50">
                                         <i class="fas fa-sign-out-alt w-5 mr-3"></i>
@@ -1032,6 +1108,18 @@
                         const reportsIcon = document.getElementById('reports-submenu-icon');
                         if (reportsIcon) {
                             reportsIcon.classList.add('rotate-180');
+                        }
+                    }
+                }
+                
+                // Submenu de Módulos
+                if (currentPath.includes('modules') || currentPath.includes('payment') || currentPath.includes('invoice')) {
+                    const modulesSubmenu = document.getElementById('modules-submenu');
+                    if (modulesSubmenu) {
+                        modulesSubmenu.classList.remove('hidden');
+                        const modulesIcon = document.getElementById('modules-submenu-icon');
+                        if (modulesIcon) {
+                            modulesIcon.classList.add('rotate-180');
                         }
                     }
                 }

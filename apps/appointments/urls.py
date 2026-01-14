@@ -16,6 +16,7 @@ urlpatterns = [
     
     # APIs administrativas
     path('book-patient/', views.book_patient_appointment, name='book-patient-appointment'),
+    path('<int:appointment_id>/resend-notification/', views.resend_appointment_notification, name='resend-notification'),
     path('configuration/', views.configuration, name='configuration'),
     path('toggle-system/', views.toggle_system, name='toggle-system'),
     path('block-date/', views.block_date, name='block-date'),
