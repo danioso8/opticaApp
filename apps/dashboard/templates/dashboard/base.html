@@ -191,8 +191,8 @@
                             <i class="fas fa-lock w-5 mr-3 text-gray-600"></i>
                             Seguridad
                         </a>
-                        <a href="{% url 'dashboard:sidebar_customizer' %}" class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                            <i class="fas fa-sliders-h w-5 mr-3 text-blue-600"></i>
+                        <a href="{% url 'dashboard:customize_menu' %}" class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                            <i class="fas fa-sliders-h w-5 mr-3 text-gray-600"></i>
                             Personalizar Menú
                         </a>
                         {% if is_owner_or_admin %}
@@ -1066,6 +1066,10 @@
                                     <a href="{% url 'dashboard:user_security' %}" class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
                                         <i class="fas fa-lock w-5 mr-3 text-gray-600"></i>
                                         Seguridad
+                                    </a>
+                                    <a href="{% url 'dashboard:customize_menu' %}" class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                        <i class="fas fa-sliders-h w-5 mr-3 text-gray-600"></i>
+                                        Personalizar Menú
                                     </a>
                                     {% if is_owner_or_admin %}
                                     <div class="border-t border-gray-200 my-1"></div>

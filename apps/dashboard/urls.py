@@ -208,7 +208,7 @@ urlpatterns = [
     path('notifications-demo/', views.notifications_demo, name='notifications_demo'),
     
     # Sidebar Customizer
-    path('sidebar/customize/', views.sidebar_customizer, name='sidebar_customizer'),
+    path('menu/customize/', views.sidebar_customizer, name='customize_menu'),
     
     # Módulos y Suscripciones
     path('modules/marketplace/', views_modules.module_marketplace, name='module_marketplace'),
