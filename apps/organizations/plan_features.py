@@ -139,6 +139,98 @@ MODULES = {
         'icon': 'fas fa-code',
         'category': 'integration',
     },
+    
+    # Módulos adicionales Empresariales
+    'invoices': {
+        'name': 'Facturación General',
+        'description': 'Sistema completo de facturación',
+        'icon': 'fas fa-file-invoice',
+        'category': 'billing',
+    },
+    'billing': {
+        'name': 'Billing Completo',
+        'description': 'Módulo de facturación completo',
+        'icon': 'fas fa-receipt',
+        'category': 'billing',
+    },
+    'payroll': {
+        'name': 'Nómina',
+        'description': 'Sistema de nómina general',
+        'icon': 'fas fa-money-check-alt',
+        'category': 'hr',
+    },
+    'payroll_dian': {
+        'name': 'Nómina Electrónica DIAN',
+        'description': 'Nómina electrónica según DIAN',
+        'icon': 'fas fa-file-invoice-dollar',
+        'category': 'hr',
+    },
+    'payroll_config': {
+        'name': 'Configuración Nómina',
+        'description': 'Configuración del sistema de nómina',
+        'icon': 'fas fa-cog',
+        'category': 'hr',
+    },
+    'workflows': {
+        'name': 'Workflows',
+        'description': 'Flujos de trabajo automatizados',
+        'icon': 'fas fa-project-diagram',
+        'category': 'automation',
+    },
+    'promotions': {
+        'name': 'Promociones',
+        'description': 'Campañas y promociones',
+        'icon': 'fas fa-tags',
+        'category': 'marketing',
+    },
+    'marketing': {
+        'name': 'Marketing',
+        'description': 'Herramientas de marketing',
+        'icon': 'fas fa-bullhorn',
+        'category': 'marketing',
+    },
+    'email_marketing': {
+        'name': 'Email Marketing',
+        'description': 'Campañas de email marketing',
+        'icon': 'fas fa-envelope',
+        'category': 'marketing',
+    },
+    'audit': {
+        'name': 'Auditoría',
+        'description': 'Registro de auditoría del sistema',
+        'icon': 'fas fa-clipboard-list',
+        'category': 'security',
+    },
+    'permissions_advanced': {
+        'name': 'Permisos Avanzados',
+        'description': 'Control avanzado de permisos',
+        'icon': 'fas fa-user-shield',
+        'category': 'security',
+    },
+    'configuration_advanced': {
+        'name': 'Configuración Avanzada',
+        'description': 'Configuraciones avanzadas del sistema',
+        'icon': 'fas fa-sliders-h',
+        'category': 'configuration',
+    },
+    'cash_register': {
+        'name': 'Caja Registradora',
+        'description': 'Gestión de caja y tesorería',
+        'icon': 'fas fa-cash-register',
+        'category': 'sales',
+    },
+    'sales': {
+        'name': 'Ventas',
+        'description': 'Módulo de ventas',
+        'icon': 'fas fa-shopping-cart',
+        'category': 'sales',
+    },
+    'employees': {
+        'name': 'Empleados',
+        'description': 'Gestión de empleados',
+        'icon': 'fas fa-user-tie',
+        'category': 'hr',
+    },
 }
 
 # Matriz de acceso: Módulos permitidos por cada plan
