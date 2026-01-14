@@ -343,7 +343,6 @@ async function createWhatsAppConnection(organizationId) {
                         }
                         session.streamErrors = null;
                     }
-                    }
                     
                     // Obtener información del usuario conectado
                     try {
