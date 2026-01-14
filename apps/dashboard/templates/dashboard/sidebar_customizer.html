@@ -127,33 +127,93 @@
 {% block extra_js %}
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
-// Configuración por defecto del sidebar
+// Configuración por defecto del sidebar con TODOS los items
 const DEFAULT_CONFIG = {
     items: [
+        // Items raíz principales
         {id: 'my-companies', name: 'Mis Empresas', icon: 'fa-building', visible: true, order: 0, parent: null},
         {id: 'my-modules', name: 'Mis Módulos', icon: 'fa-puzzle-piece', visible: true, order: 1, parent: null},
         {id: 'divider-1', name: '--- Separador ---', icon: 'fa-minus', visible: true, order: 2, parent: null, isDivider: true},
         {id: 'dashboard', name: 'Dashboard', icon: 'fa-home', visible: true, order: 3, parent: null},
         {id: 'sales-dashboard', name: 'Panel de Ventas', icon: 'fa-chart-line', visible: true, order: 4, parent: null},
+        
+        // Facturación y Finanzas (Menú)
         {id: 'billing-menu', name: 'Facturación y Finanzas', icon: 'fa-file-invoice-dollar', visible: true, order: 5, parent: null, isSubmenu: true},
         {id: 'billing-basic', name: 'Facturación Básica', icon: 'fa-file-invoice', visible: true, order: 0, parent: 'billing-menu'},
         {id: 'billing-electronic', name: 'Facturas Electrónicas', icon: 'fa-file-invoice-dollar', visible: true, order: 1, parent: 'billing-menu'},
-        {id: 'cash-register-menu', name: 'Caja y Tesorería', icon: 'fa-cash-register', visible: true, order: 2, parent: 'billing-menu', isSubmenu: true},
+        {id: 'billing-divider', name: '---', icon: 'fa-minus', visible: true, order: 2, parent: 'billing-menu', isDivider: true},
+        
+        // Caja y Tesorería (Submenú anidado)
+        {id: 'cash-register-menu', name: 'Caja y Tesorería', icon: 'fa-cash-register', visible: true, order: 3, parent: 'billing-menu', isSubmenu: true},
         {id: 'cash-dashboard', name: 'Dashboard', icon: 'fa-tachometer-alt', visible: true, order: 0, parent: 'cash-register-menu'},
         {id: 'cash-registers', name: 'Cajas', icon: 'fa-cash-register', visible: true, order: 1, parent: 'cash-register-menu'},
         {id: 'cash-movements', name: 'Movimientos', icon: 'fa-exchange-alt', visible: true, order: 2, parent: 'cash-register-menu'},
         {id: 'cash-closures', name: 'Cierres', icon: 'fa-clipboard-check', visible: true, order: 3, parent: 'cash-register-menu'},
         {id: 'cash-reports', name: 'Reportes', icon: 'fa-chart-bar', visible: true, order: 4, parent: 'cash-register-menu'},
+        
+        // Doctores
         {id: 'doctors', name: 'Doctores / Optómetras', icon: 'fa-user-md', visible: true, order: 6, parent: null},
+        
+        // Nómina y Empleados (Menú)
         {id: 'payroll-menu', name: 'Nómina y Empleados', icon: 'fa-users-cog', visible: true, order: 7, parent: null, isSubmenu: true},
         {id: 'employees', name: 'Empleados', icon: 'fa-users', visible: true, order: 0, parent: 'payroll-menu'},
         {id: 'payroll-electronic', name: 'Nómina Electrónica', icon: 'fa-money-check-alt', visible: true, order: 1, parent: 'payroll-menu'},
-        {id: 'patients', name: 'Pacientes', icon: 'fa-user-injured', visible: true, order: 8, parent: null},
-        {id: 'appointments', name: 'Citas', icon: 'fa-calendar-alt', visible: true, order: 9, parent: null},
-        {id: 'inventory', name: 'Inventario', icon: 'fa-boxes', visible: true, order: 10, parent: null},
-        {id: 'products', name: 'Productos', icon: 'fa-shopping-bag', visible: true, order: 11, parent: null},
-        {id: 'reports', name: 'Reportes', icon: 'fa-chart-pie', visible: true, order: 12, parent: null},
-        {id: 'settings', name: 'Configuración', icon: 'fa-cog', visible: true, order: 13, parent: null},
+        {id: 'payroll-employees', name: 'Empleados Nómina', icon: 'fa-file-invoice-dollar', visible: true, order: 2, parent: 'payroll-menu'},
+        {id: 'payroll-workflow', name: 'Workflow Nómina', icon: 'fa-tasks', visible: true, order: 3, parent: 'payroll-menu'},
+        {id: 'payroll-divider', name: '---', icon: 'fa-minus', visible: true, order: 4, parent: 'payroll-menu', isDivider: true},
+        {id: 'contracts', name: 'Contratos Laborales', icon: 'fa-file-contract', visible: true, order: 5, parent: 'payroll-menu'},
+        {id: 'vacations', name: 'Vacaciones', icon: 'fa-umbrella-beach', visible: true, order: 6, parent: 'payroll-menu'},
+        {id: 'loans', name: 'Préstamos', icon: 'fa-hand-holding-usd', visible: true, order: 7, parent: 'payroll-menu'},
+        {id: 'social-benefits', name: 'Prestaciones Sociales', icon: 'fa-piggy-bank', visible: true, order: 8, parent: 'payroll-menu'},
+        {id: 'provisions', name: 'Provisiones', icon: 'fa-calculator', visible: true, order: 9, parent: 'payroll-menu'},
+        {id: 'pila', name: 'PILA', icon: 'fa-file-medical-alt', visible: true, order: 10, parent: 'payroll-menu'},
+        {id: 'incapacities', name: 'Incapacidades', icon: 'fa-notes-medical', visible: true, order: 11, parent: 'payroll-menu'},
+        {id: 'payroll-concepts', name: 'Conceptos Nómina', icon: 'fa-tags', visible: true, order: 12, parent: 'payroll-menu'},
+        
+        // Inventario y Productos (Menú)
+        {id: 'inventory-menu', name: 'Inventario y Productos', icon: 'fa-warehouse', visible: true, order: 8, parent: null, isSubmenu: true},
+        {id: 'inventory', name: 'Inventario', icon: 'fa-boxes', visible: true, order: 0, parent: 'inventory-menu'},
+        {id: 'inventory-divider', name: '---', icon: 'fa-minus', visible: true, order: 1, parent: 'inventory-menu', isDivider: true},
+        {id: 'products', name: 'Productos', icon: 'fa-box', visible: true, order: 2, parent: 'inventory-menu'},
+        {id: 'suppliers', name: 'Proveedores', icon: 'fa-truck', visible: true, order: 3, parent: 'inventory-menu'},
+        
+        // Pacientes y Citas (Menú)
+        {id: 'appointments-menu', name: 'Pacientes y Citas', icon: 'fa-calendar-check', visible: true, order: 9, parent: null, isSubmenu: true},
+        {id: 'patients', name: 'Pacientes', icon: 'fa-users', visible: true, order: 0, parent: 'appointments-menu'},
+        {id: 'exams', name: 'Exámenes Especiales', icon: 'fa-microscope', visible: true, order: 1, parent: 'appointments-menu'},
+        {id: 'appointments-divider', name: '---', icon: 'fa-minus', visible: true, order: 2, parent: 'appointments-menu', isDivider: true},
+        {id: 'appointments-list', name: 'Lista de Citas', icon: 'fa-list', visible: true, order: 3, parent: 'appointments-menu'},
+        {id: 'appointments-schedule', name: 'Agendamiento de Citas', icon: 'fa-calendar-plus', visible: true, order: 4, parent: 'appointments-menu'},
+        
+        // Marketing (Menú)
+        {id: 'marketing-menu', name: 'Marketing', icon: 'fa-bullhorn', visible: true, order: 10, parent: null, isSubmenu: true},
+        {id: 'landing-page', name: 'Landing Page', icon: 'fa-paint-brush', visible: true, order: 0, parent: 'marketing-menu'},
+        {id: 'promotions', name: 'Promociones', icon: 'fa-tags', visible: true, order: 1, parent: 'marketing-menu'},
+        {id: 'marketing-divider', name: '---', icon: 'fa-minus', visible: true, order: 2, parent: 'marketing-menu', isDivider: true},
+        {id: 'whatsapp', name: 'WhatsApp', icon: 'fab fa-whatsapp', visible: true, order: 3, parent: 'marketing-menu'},
+        {id: 'email-marketing', name: 'Email Marketing', icon: 'fa-envelope', visible: false, order: 4, parent: 'marketing-menu'},
+        {id: 'campaigns', name: 'Campañas', icon: 'fa-megaphone', visible: false, order: 5, parent: 'marketing-menu'},
+        
+        // Automatización (Menú)
+        {id: 'automation-menu', name: 'Automatización', icon: 'fa-robot', visible: true, order: 11, parent: null, isSubmenu: true},
+        {id: 'workflows', name: 'Workflows', icon: 'fa-project-diagram', visible: true, order: 0, parent: 'automation-menu'},
+        {id: 'approvals', name: 'Mis Aprobaciones', icon: 'fa-clipboard-check', visible: true, order: 1, parent: 'automation-menu'},
+        {id: 'automation-divider', name: '---', icon: 'fa-minus', visible: true, order: 2, parent: 'automation-menu', isDivider: true},
+        {id: 'tasks-kanban', name: 'Tareas (Kanban)', icon: 'fa-tasks', visible: true, order: 3, parent: 'automation-menu'},
+        {id: 'my-tasks', name: 'Mis Tareas', icon: 'fa-user-check', visible: true, order: 4, parent: 'automation-menu'},
+        {id: 'tasks-calendar', name: 'Calendario de Tareas', icon: 'fa-calendar-alt', visible: true, order: 5, parent: 'automation-menu'},
+        
+        // Reportes (Menú)
+        {id: 'reports-menu', name: 'Reportes', icon: 'fa-chart-bar', visible: true, order: 12, parent: null, isSubmenu: true},
+        {id: 'reports-dashboard', name: 'Dashboard', icon: 'fa-tachometer-alt', visible: true, order: 0, parent: 'reports-menu'},
+        {id: 'reports-templates', name: 'Plantillas', icon: 'fa-file-alt', visible: true, order: 1, parent: 'reports-menu'},
+        {id: 'reports-list', name: 'Mis Reportes', icon: 'fa-list', visible: true, order: 2, parent: 'reports-menu'},
+        {id: 'reports-scheduled', name: 'Programados', icon: 'fa-calendar-check', visible: true, order: 3, parent: 'reports-menu'},
+        
+        // Módulos (Menú)
+        {id: 'modules-menu', name: 'Módulos', icon: 'fa-puzzle-piece', visible: true, order: 13, parent: null, isSubmenu: true},
+        {id: 'my-plan', name: 'Mi Plan', icon: 'fa-clipboard-list', visible: true, order: 0, parent: 'modules-menu'},
+        {id: 'marketplace', name: 'Catálogo de Módulos', icon: 'fa-store', visible: true, order: 1, parent: 'modules-menu'},
     ]
 };
 
