@@ -19,8 +19,12 @@ app.use(express.json());
 const logger = pino({ level: 'info' });
 
 // Almacenamiento de sesiones y sockets por organización
-const sessions = new Map(); // organizationId -> { sock, qr, status, retryCount }
+const sessions = new Map(); // organizationId -> { sock, qr, status, retryCount, badMacErrors }
 const AUTH_DIR = path.join(__dirname, 'auth_sessions');
+
+// Límite de errores Bad MAC antes de limpiar sesión
+const BAD_MAC_ERROR_LIMIT = 5;
+const BAD_MAC_RESET_TIME = 60000; // 1 minuto
 
 // Crear directorio de sesiones si no existe
 if (!fs.existsSync(AUTH_DIR)) {
@@ -34,6 +38,114 @@ function authenticateAPI(req, res, next) {
         return res.status(401).json({ error: 'No autorizado' });
     }
     next();
+}
+
+// Función para manejar errores Bad MAC recurrentes
+function handleBadMacError(organizationId) {
+    const session = sessions.get(organizationId);
+    if (!session) return;
+
+    // Incrementar contador de errores Bad MAC
+    if (!session.badMacErrors) {
+        session.badMacErrors = {
+            count: 0,
+            lastError: Date.now(),
+            resetTimeout: null
+        };
+    }
+
+    const now = Date.now();
+    const timeSinceLastError = now - session.badMacErrors.lastError;
+
+    // Si han pasado más de 1 minuto desde el último error, resetear contador
+    if (timeSinceLastError > BAD_MAC_RESET_TIME) {
+        session.badMacErrors.count = 1;
+    } else {
+        session.badMacErrors.count++;
+    }
+
+    session.badMacErrors.lastError = now;
+
+    logger.warn(`⚠️  Bad MAC Error #${session.badMacErrors.count} para ${organizationId}`);
+
+    // Si alcanzamos el límite, limpiar sesión corrupta
+    if (session.badMacErrors.count >= BAD_MAC_ERROR_LIMIT) {
+        logger.error(`🔴 Límite de errores Bad MAC alcanzado para ${organizationId}. Limpiando sesión corrupta...`);
+        clearCorruptedSession(organizationId);
+    }
+
+    // Programar reset del contador después de 1 minuto sin errores
+    if (session.badMacErrors.resetTimeout) {
+        clearTimeout(session.badMacErrors.resetTimeout);
+    }
+    
+    session.badMacErrors.resetTimeout = setTimeout(() => {
+        if (session.badMacErrors) {
+            logger.info(`🔄 Reseteando contador de Bad MAC para ${organizationId}`);
+            session.badMacErrors.count = 0;
+        }
+    }, BAD_MAC_RESET_TIME);
+}
+
+// Función para limpiar sesión corrupta
+async function clearCorruptedSession(organizationId) {
+    try {
+        const session = sessions.get(organizationId);
+        
+        // Cerrar socket existente
+        if (session?.sock) {
+            logger.info(`Cerrando socket corrupto de ${organizationId}`);
+            try {
+                await session.sock.end();
+            } catch (e) {
+                logger.warn(`Error cerrando socket: ${e.message}`);
+            }
+        }
+
+        const authPath = path.join(AUTH_DIR, organizationId);
+        
+        // Hacer backup de la sesión corrupta
+        if (fs.existsSync(authPath)) {
+            const backupPath = path.join(AUTH_DIR, `${organizationId}_corrupted_${Date.now()}`);
+            logger.info(`💾 Respaldando sesión corrupta en ${backupPath}`);
+            
+            fs.renameSync(authPath, backupPath);
+            
+            // Eliminar backups antiguos (mantener solo los últimos 3)
+            const backups = fs.readdirSync(AUTH_DIR)
+                .filter(f => f.startsWith(`${organizationId}_corrupted_`))
+                .sort()
+                .reverse();
+            
+            if (backups.length > 3) {
+                backups.slice(3).forEach(backup => {
+                    const backupFullPath = path.join(AUTH_DIR, backup);
+                    logger.info(`🗑️  Eliminando backup antiguo: ${backup}`);
+                    fs.rmSync(backupFullPath, { recursive: true, force: true });
+                });
+            }
+        }
+
+        // Resetear sesión en memoria
+        sessions.set(organizationId, {
+            sock: null,
+            qr: null,
+            status: 'qr_required',
+            retryCount: 0,
+            badMacErrors: null
+        });
+
+        logger.info(`✨ Sesión limpiada para ${organizationId}. Se requiere escanear QR nuevamente.`);
+        
+        // Crear nueva conexión (generará nuevo QR)
+        setTimeout(() => {
+            logger.info(`🔄 Creando nueva conexión para ${organizationId}...`);
+            createWhatsAppConnection(organizationId);
+        }, 2000);
+
+    } catch (error) {
+        logger.error(`❌ Error limpiando sesión corrupta de ${organizationId}: ${error.message}`);
+    }
 }
 
 // Crear conexión de WhatsApp para una organización
@@ -59,6 +171,32 @@ async function createWhatsAppConnection(organizationId) {
         // Guardar credenciales cuando cambien
         sock.ev.on('creds.update', saveCreds);
 
+        // Manejar errores de sesión (Bad MAC, etc.)
+        sock.ev.on('messages.upsert', async ({ messages, type }) => {
+            // Este evento se dispara incluso si hay errores de descifrado
+            // Interceptar aquí para detectar patrones de errores
+        });
+
+        // Capturar errores no manejados del socket
+        const originalEmit = sock.ev.emit;
+        sock.ev.emit = function(event, ...args) {
+            if (event === 'connection.update') {
+                // Interceptar y procesar actualizaciones de conexión
+                const update = args[0];
+                if (update.lastDisconnect?.error) {
+                    const error = update.lastDisconnect.error;
+                    const errorMsg = error.message || '';
+                    
+                    // Detectar errores Bad MAC
+                    if (errorMsg.includes('Bad MAC') || errorMsg.includes('decrypt')) {
+                        handleBadMacError(organizationId);
+                    }
+                }
+            }
+            return originalEmit.apply(this, [event, ...args]);
+        };
+
+
         // Manejar actualizaciones de conexión
         sock.ev.on('connection.update', async (update) => {
             const { connection, lastDisconnect, qr } = update;
@@ -79,7 +217,16 @@ async function createWhatsAppConnection(organizationId) {
                 const shouldReconnect = statusCode !== DisconnectReason.loggedOut;
                 
                 logger.warn(`Conexión cerrada para ${organizationId}. Status: ${statusCode}, Reconectar: ${shouldReconnect}`);
-                logger.warn(`Razón de desconexión: ${lastDisconnect?.error?.message || 'Desconocida'}`);
+                
+                // Detectar errores de descifrado
+                const errorMsg = lastDisconnect?.error?.message || '';
+                if (errorMsg.includes('Bad MAC') || errorMsg.includes('decrypt')) {
+                    logger.error(`🔴 Error de descifrado detectado: ${errorMsg}`);
+                    handleBadMacError(organizationId);
+                    return; // No intentar reconectar con sesión corrupta
+                }
+                
+                logger.warn(`Razón de desconexión: ${errorMsg || 'Desconocida'}`);
 
                 const session = sessions.get(organizationId);
                 if (session) {
@@ -118,6 +265,14 @@ async function createWhatsAppConnection(organizationId) {
                     session.status = 'connected';
                     session.qr = null;
                     session.retryCount = 0;
+                    
+                    // Resetear contador de errores Bad MAC al conectar exitosamente
+                    if (session.badMacErrors) {
+                        if (session.badMacErrors.resetTimeout) {
+                            clearTimeout(session.badMacErrors.resetTimeout);
+                        }
+                        session.badMacErrors = null;
+                    }
                     
                     // Obtener información del usuario conectado
                     try {
@@ -189,7 +344,8 @@ app.post('/api/start-session', authenticateAPI, async (req, res) => {
             sock: null,
             qr: null,
             status: 'connecting',
-            retryCount: 0
+            retryCount: 0,
+            badMacErrors: null
         });
 
         const sock = await createWhatsAppConnection(organization_id);
@@ -360,6 +516,29 @@ app.post('/api/logout', authenticateAPI, async (req, res) => {
     }
 });
 
+// Limpiar sesión corrupta manualmente
+app.post('/api/clear-corrupted-session', authenticateAPI, async (req, res) => {
+    try {
+        const { organization_id } = req.body;
+
+        if (!organization_id) {
+            return res.status(400).json({ error: 'organization_id es requerido' });
+        }
+
+        logger.info(`🔧 Solicitud manual de limpieza de sesión para ${organization_id}`);
+        
+        await clearCorruptedSession(organization_id);
+
+        res.json({
+            success: true,
+            message: 'Sesión limpiada exitosamente. Se requiere escanear QR nuevamente.'
+        });
+    } catch (error) {
+        logger.error(`Error limpiando sesión: ${error.message}`);
+        res.status(500).json({ error: error.message });
+    }
+});
+
 // Listar todas las sesiones activas
 app.get('/api/sessions', authenticateAPI, (req, res) => {
     try {
@@ -403,7 +582,8 @@ async function restoreExistingSessions() {
                     sock: null,
                     qr: null,
                     status: 'restoring',
-                    retryCount: 0
+                    retryCount: 0,
+                    badMacErrors: null
                 });
 
                 const sock = await createWhatsAppConnection(orgId);

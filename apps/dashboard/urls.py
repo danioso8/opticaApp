@@ -7,6 +7,7 @@ from . import views_employee
 from . import views_whatsapp_baileys
 from . import views_certificates
 from . import views_modules
+from . import views_sidebar_api
 from .views_analytics import (
     analytics_dashboard,
     api_realtime_metrics,
@@ -209,6 +210,11 @@ urlpatterns = [
     
     # Sidebar Customizer
     path('menu/customize/', views.sidebar_customizer, name='customize_menu'),
+    
+    # API Sidebar Customization
+    path('api/sidebar/config/', views_sidebar_api.get_sidebar_config, name='api_get_sidebar_config'),
+    path('api/sidebar/save/', views_sidebar_api.save_sidebar_config, name='api_save_sidebar_config'),
+    path('api/sidebar/reset/', views_sidebar_api.reset_sidebar_config, name='api_reset_sidebar_config'),
     
     # Módulos y Suscripciones
     path('modules/marketplace/', views_modules.module_marketplace, name='module_marketplace'),

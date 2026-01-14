@@ -121,6 +121,136 @@
         #sidebar:not(.mini) i.fab {
             margin-right: 0.75rem;
         }
+        
+        /* ========================================
+           MODO EDICIÓN DEL SIDEBAR
+           ======================================== */
+        
+        /* Modo edición activo */
+        #sidebar.edit-mode .sidebar-nav-item {
+            cursor: grab;
+            position: relative;
+            border: 2px solid transparent;
+            transition: all 0.2s ease;
+            margin: 2px 8px;
+            border-radius: 6px;
+        }
+        
+        #sidebar.edit-mode .sidebar-nav-item:hover {
+            border-color: #60a5fa;
+            background: rgba(96, 165, 250, 0.1) !important;
+        }
+        
+        /* Drag handle visible en modo edición */
+        #sidebar.edit-mode .drag-handle {
+            opacity: 1 !important;
+        }
+        
+        .drag-handle {
+            opacity: 0;
+            transition: opacity 0.2s;
+            margin-right: 8px;
+            cursor: grab;
+            color: rgba(255, 255, 255, 0.5);
+        }
+        
+        /* Item siendo arrastrado */
+        .sidebar-nav-item.dragging {
+            opacity: 0.5;
+            cursor: grabbing !important;
+            transform: rotate(3deg);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+        }
+        
+        /* Zona de drop activa */
+        .sidebar-nav-item.drop-target {
+            border-color: #10b981 !important;
+            background: rgba(16, 185, 129, 0.15) !important;
+            animation: pulse-border 1s infinite;
+        }
+        
+        @keyframes pulse-border {
+            0%, 100% { border-color: #10b981; }
+            50% { border-color: #34d399; }
+        }
+        
+        /* Indicador de modo edición */
+        #edit-mode-btn.active {
+            background-color: #3b82f6 !important;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
+        }
+        
+        #edit-mode-btn.active #edit-mode-icon {
+            animation: rotate-icon 0.5s ease;
+        }
+        
+        @keyframes rotate-icon {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        /* Grupo de items */
+        .sidebar-group {
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.15) 0%, rgba(118, 75, 162, 0.15) 100%);
+            border-left: 3px solid #818cf8;
+            border-radius: 8px;
+            margin: 4px 8px;
+            padding: 4px;
+        }
+        
+        .sidebar-group-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 12px;
+            cursor: pointer;
+            border-radius: 6px;
+            transition: background 0.2s;
+        }
+        
+        .sidebar-group-header:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+        
+        .sidebar-group-items {
+            padding: 4px 8px;
+        }
+        
+        .sidebar-group-name {
+            font-weight: 600;
+            color: #c7d2fe;
+        }
+        
+        /* Drop zone para crear grupo */
+        .create-group-zone {
+            background: rgba(16, 185, 129, 0.1);
+            border: 2px dashed #10b981;
+            border-radius: 6px;
+            margin: 8px;
+            padding: 16px;
+            text-align: center;
+            display: none;
+            animation: fade-in 0.3s;
+        }
+        
+        #sidebar.edit-mode .create-group-zone.show {
+            display: block;
+        }
+        
+        @keyframes fade-in {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        /* Botón eliminar grupo */
+        .delete-group-btn {
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+        
+        .sidebar-group:hover .delete-group-btn {
+            opacity: 1;
+        }
     </style>
     
     {% block extra_css %}{% endblock %}
@@ -238,16 +368,22 @@
                     <p class="text-indigo-300 text-sm sidebar-brand-text">Panel Administrativo</p>
                     {% endif %}
                 </div>
-                <!-- Botón toggle mini-sidebar (solo visible en desktop) -->
-                <button onclick="toggleMiniSidebar()" class="hidden md:block text-white hover:bg-indigo-800 rounded p-2 focus:outline-none flex-shrink-0">
-                    <i id="toggle-mini-icon" class="fas fa-bars"></i>
-                </button>
+                <div class="flex items-center gap-2 flex-shrink-0">
+                    <!-- Botón Editar Menú -->
+                    <button onclick="toggleEditMode()" id="edit-mode-btn" class="hidden md:block text-white hover:bg-indigo-800 rounded p-2 focus:outline-none transition-colors" title="Personalizar menú">
+                        <i id="edit-mode-icon" class="fas fa-sliders-h"></i>
+                    </button>
+                    <!-- Botón toggle mini-sidebar (solo visible en desktop) -->
+                    <button onclick="toggleMiniSidebar()" class="hidden md:block text-white hover:bg-indigo-800 rounded p-2 focus:outline-none">
+                        <i id="toggle-mini-icon" class="fas fa-bars"></i>
+                    </button>
+                </div>
             </div>
             
-            <nav class="mt-6">
+            <nav class="mt-6" id="sidebar-nav">
                 <!-- Mis Empresas - Solo Owner/Admin -->
                 {% if is_owner_or_admin %}
-                <a href="{% url 'organizations:list' %}" class="flex items-center px-4 py-3 hover:bg-indigo-800 {% if 'organizations' in request.path and 'list' in request.path %}bg-indigo-800{% endif %} relative">
+                <a href="{% url 'organizations:list' %}" class="flex items-center px-4 py-3 hover:bg-indigo-800 {% if 'organizations' in request.path and 'list' in request.path %}bg-indigo-800{% endif %} relative sidebar-nav-item" data-item-id="organizations">
                     <i class="fas fa-building mr-3"></i>
                     <span class="sidebar-text">Mis Empresas</span>
                     <span class="sidebar-tooltip">Mis Empresas</span>
@@ -1516,6 +1652,355 @@
     
     <!-- Modal de Upgrade -->
     {% include 'dashboard/modals/upgrade_modal.html' %}
+    
+    <!-- Sidebar Edit Mode Script -->
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
+    <script>
+    // ===================================
+    // SIDEBAR EDITOR - Modo de Edición
+    // ===================================
+    
+    const SidebarEditor = {
+        isEditMode: false,
+        draggedItem: null,
+        dropTarget: null,
+        sidebarConfig: {
+            groups: [],
+            hiddenItems: [],
+            itemOrder: [],
+            customNames: {},
+            version: 1
+        },
+        sortableInstance: null,
+        
+        init() {
+            this.loadConfig();
+            this.attachEventListeners();
+        },
+        
+        async loadConfig() {
+            try {
+                const response = await fetch('/dashboard/api/sidebar/config/');
+                const data = await response.json();
+                if (data.success && data.config) {
+                    this.sidebarConfig = data.config;
+                    this.applyConfig();
+                }
+            } catch (error) {
+                console.error('Error loading sidebar config:', error);
+            }
+        },
+        
+        async saveConfig() {
+            try {
+                const response = await fetch('/dashboard/api/sidebar/save/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': this.getCSRFToken()
+                    },
+                    body: JSON.stringify({
+                        config: this.sidebarConfig
+                    })
+                });
+                
+                const data = await response.json();
+                if (data.success) {
+                    this.showToast('✅ Configuración guardada', 'success');
+                } else {
+                    this.showToast('❌ Error al guardar: ' + data.error, 'error');
+                }
+            } catch (error) {
+                console.error('Error saving sidebar config:', error);
+                this.showToast('❌ Error de conexión', 'error');
+            }
+        },
+        
+        applyConfig() {
+            // Aplicar ocultamiento de items
+            this.sidebarConfig.hiddenItems?.forEach(itemId => {
+                const item = document.querySelector(`[data-item-id="${itemId}"]`);
+                if (item) item.style.display = 'none';
+            });
+            
+            // Aplicar nombres personalizados
+            Object.entries(this.sidebarConfig.customNames || {}).forEach(([itemId, name]) => {
+                const item = document.querySelector(`[data-item-id="${itemId}"] .sidebar-text`);
+                if (item) item.textContent = name;
+            });
+            
+            // Aplicar grupos
+            this.renderGroups();
+        },
+        
+        renderGroups() {
+            const nav = document.getElementById('sidebar-nav');
+            if (!nav || !this.sidebarConfig.groups) return;
+            
+            this.sidebarConfig.groups.forEach(group => {
+                const groupEl = this.createGroupElement(group);
+                // Insertar grupo en posición correcta
+                const firstItem = document.querySelector(`[data-item-id="${group.items[0]}"]`);
+                if (firstItem) {
+                    nav.insertBefore(groupEl, firstItem);
+                    // Mover items al grupo
+                    group.items.forEach(itemId => {
+                        const item = document.querySelector(`[data-item-id="${itemId}"]`);
+                        if (item) {
+                            groupEl.querySelector('.sidebar-group-items').appendChild(item);
+                        }
+                    });
+                }
+            });
+        },
+        
+        createGroupElement(group) {
+            const div = document.createElement('div');
+            div.className = 'sidebar-group';
+            div.dataset.groupId = group.id;
+            div.innerHTML = `
+                <div class="sidebar-group-header" onclick="toggleGroup('${group.id}')">
+                    <div class="flex items-center gap-2">
+                        <i class="fas ${group.icon || 'fa-folder'}"></i>
+                        <span class="sidebar-group-name">${group.name}</span>
+                        <span class="text-xs bg-indigo-700 px-2 py-0.5 rounded">${group.items.length}</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <button class="delete-group-btn hover:bg-red-500 rounded p-1 text-xs" onclick="event.stopPropagation(); deleteGroup('${group.id}')">
+                            <i class="fas fa-times"></i>
+                        </button>
+                        <i class="fas fa-chevron-down text-xs transition-transform" id="group-icon-${group.id}"></i>
+                    </div>
+                </div>
+                <div class="sidebar-group-items" id="group-items-${group.id}">
+                    <!-- Items se insertan aquí -->
+                </div>
+            `;
+            return div;
+        },
+        
+        attachEventListeners() {
+            // Listener para items del sidebar
+            const items = document.querySelectorAll('.sidebar-nav-item');
+            items.forEach(item => {
+                // Agregar drag handle si no existe
+                if (!item.querySelector('.drag-handle')) {
+                    const handle = document.createElement('span');
+                    handle.className = 'drag-handle';
+                    handle.innerHTML = '<i class="fas fa-grip-vertical text-xs"></i>';
+                    item.insertBefore(handle, item.firstChild);
+                }
+                
+                item.addEventListener('dragstart', (e) => this.onDragStart(e));
+                item.addEventListener('dragend', (e) => this.onDragEnd(e));
+                item.addEventListener('dragover', (e) => this.onDragOver(e));
+                item.addEventListener('drop', (e) => this.onDrop(e));
+            });
+        },
+        
+        onDragStart(e) {
+            if (!this.isEditMode) {
+                e.preventDefault();
+                return;
+            }
+            this.draggedItem = e.target.closest('.sidebar-nav-item');
+            this.draggedItem.classList.add('dragging');
+            e.dataTransfer.effectAllowed = 'move';
+        },
+        
+        onDragEnd(e) {
+            if (this.draggedItem) {
+                this.draggedItem.classList.remove('dragging');
+                this.draggedItem = null;
+            }
+            // Limpiar drop targets
+            document.querySelectorAll('.drop-target').forEach(el => {
+                el.classList.remove('drop-target');
+            });
+        },
+        
+        onDragOver(e) {
+            if (!this.isEditMode || !this.draggedItem) return;
+            e.preventDefault();
+            const target = e.target.closest('.sidebar-nav-item');
+            if (target && target !== this.draggedItem) {
+                this.dropTarget = target;
+                target.classList.add('drop-target');
+            }
+        },
+        
+        async onDrop(e) {
+            e.preventDefault();
+            if (!this.isEditMode || !this.draggedItem || !this.dropTarget) return;
+            
+            const draggedId = this.draggedItem.dataset.itemId;
+            const targetId = this.dropTarget.dataset.itemId;
+            
+            // Preguntar si quiere crear grupo
+            const createGroup = await this.confirmCreateGroup(draggedId, targetId);
+            
+            this.dropTarget.classList.remove('drop-target');
+            
+            if (createGroup) {
+                this.showGroupNameModal(draggedId, targetId);
+            }
+        },
+        
+        async confirmCreateGroup(draggedId, targetId) {
+            return confirm('¿Deseas crear un grupo con estos elementos?');
+        },
+        
+        showGroupNameModal(item1Id, item2Id) {
+            const modal = document.createElement('div');
+            modal.className = 'fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center';
+            modal.innerHTML = `
+                <div class="bg-white rounded-lg p-6 max-w-md w-full mx-4 shadow-xl">
+                    <h3 class="text-xl font-bold text-gray-800 mb-4">
+                        <i class="fas fa-folder text-blue-600"></i>
+                        Crear Grupo
+                    </h3>
+                    <p class="text-gray-600 mb-4">Dale un nombre a este grupo de elementos del menú:</p>
+                    <input type="text" id="group-name-input" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="Ej: Gestión, Reportes, etc." autofocus>
+                    <div class="mt-4">
+                        <label class="block text-sm text-gray-600 mb-2">Icono (opcional):</label>
+                        <select id="group-icon-select" class="w-full px-4 py-2 border border-gray-300 rounded-lg">
+                            <option value="fa-folder">📁 Carpeta</option>
+                            <option value="fa-chart-line">📊 Gráfico</option>
+                            <option value="fa-cog">⚙️ Configuración</option>
+                            <option value="fa-users">👥 Usuarios</option>
+                            <option value="fa-briefcase">💼 Negocios</option>
+                            <option value="fa-box">📦 Inventario</option>
+                        </select>
+                    </div>
+                    <div class="flex gap-3 mt-6">
+                        <button onclick="SidebarEditor.cancelGroupCreation()" class="flex-1 bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg font-semibold">
+                            Cancelar
+                        </button>
+                        <button onclick="SidebarEditor.createGroupFromModal('${item1Id}', '${item2Id}')" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-semibold">
+                            <i class="fas fa-check mr-2"></i>Crear
+                        </button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+            
+            // Focus en input
+            setTimeout(() => {
+                document.getElementById('group-name-input').focus();
+            }, 100);
+            
+            // Enter para crear
+            document.getElementById('group-name-input').addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    this.createGroupFromModal(item1Id, item2Id);
+                }
+            });
+        },
+        
+        createGroupFromModal(item1Id, item2Id) {
+            const name = document.getElementById('group-name-input').value.trim();
+            const icon = document.getElementById('group-icon-select').value;
+            
+            if (!name) {
+                alert('Por favor ingresa un nombre para el grupo');
+                return;
+            }
+            
+            const group = {
+                id: `group-${Date.now()}`,
+                name: name,
+                icon: icon,
+                items: [item1Id, item2Id],
+                order: 0
+            };
+            
+            this.sidebarConfig.groups.push(group);
+            this.saveConfig();
+            this.cancelGroupCreation();
+            
+            // Recargar para aplicar cambios
+            setTimeout(() => location.reload(), 500);
+        },
+        
+        cancelGroupCreation() {
+            const modal = document.querySelector('.fixed.inset-0.bg-black');
+            if (modal) modal.remove();
+        },
+        
+        getCSRFToken() {
+            return document.querySelector('[name=csrfmiddlewaretoken]')?.value || 
+                   document.cookie.match(/csrftoken=([^;]+)/)?.[1] || '';
+        },
+        
+        showToast(message, type = 'info') {
+            // Usar el sistema de toast existente
+            if (window.showToast) {
+                window.showToast(message, type);
+            } else {
+                alert(message);
+            }
+        }
+    };
+    
+    // Función global para toggle de modo edición
+    function toggleEditMode() {
+        SidebarEditor.isEditMode = !SidebarEditor.isEditMode;
+        const sidebar = document.getElementById('sidebar');
+        const btn = document.getElementById('edit-mode-btn');
+        const icon = document.getElementById('edit-mode-icon');
+        
+        if (SidebarEditor.isEditMode) {
+            sidebar.classList.add('edit-mode');
+            btn.classList.add('active');
+            icon.className = 'fas fa-times';
+            
+            // Hacer items draggables
+            document.querySelectorAll('.sidebar-nav-item').forEach(item => {
+                item.setAttribute('draggable', 'true');
+            });
+            
+            SidebarEditor.showToast('🎨 Modo edición activado - Arrastra items para reorganizar', 'info');
+        } else {
+            sidebar.classList.remove('edit-mode');
+            btn.classList.remove('active');
+            icon.className = 'fas fa-sliders-h';
+            
+            // Quitar draggable
+            document.querySelectorAll('.sidebar-nav-item').forEach(item => {
+                item.setAttribute('draggable', 'false');
+            });
+            
+            SidebarEditor.showToast('✅ Modo edición desactivado', 'success');
+        }
+    }
+    
+    function toggleGroup(groupId) {
+        const items = document.getElementById(`group-items-${groupId}`);
+        const icon = document.getElementById(`group-icon-${groupId}`);
+        if (items && icon) {
+            items.classList.toggle('hidden');
+            icon.classList.toggle('rotate-180');
+        }
+    }
+    
+    function deleteGroup(groupId) {
+        if (!confirm('¿Eliminar este grupo? Los items volverán al menú principal.')) return;
+        
+        // Remover grupo de config
+        SidebarEditor.sidebarConfig.groups = SidebarEditor.sidebarConfig.groups.filter(g => g.id !== groupId);
+        SidebarEditor.saveConfig();
+        
+        // Recargar
+        setTimeout(() => location.reload(), 500);
+    }
+    
+    // Inicializar cuando el DOM esté listo
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', () => SidebarEditor.init());
+    } else {
+        SidebarEditor.init();
+    }
+    </script>
     
     {% block extra_js %}{% endblock %}
 </body>

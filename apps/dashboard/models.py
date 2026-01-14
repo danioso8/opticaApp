@@ -23,3 +23,6 @@ from .models_ar_tryon import (
 
 # Importar modelos de empleados
 from .models_employee import Employee
+
+# Importar modelos de sidebar
+from .models_sidebar import SidebarCustomization
