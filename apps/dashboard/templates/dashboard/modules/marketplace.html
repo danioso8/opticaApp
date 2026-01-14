@@ -25,12 +25,16 @@
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     }
     
-    .category-icon-core { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); }
-    .category-icon-medical { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); }
-    .category-icon-commercial { background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); }
-    .category-icon-communication { background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); }
-    .category-icon-analytics { background: linear-gradient(135deg, #30cfd0 0%, #330867 100%); }
-    .category-icon-default { background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%); }
+    .category-icon-core { background: linear-gradient(135deg, #a78bfa 0%, #8b5cf6 100%); }
+    .category-icon-medical { background: linear-gradient(135deg, #60a5fa 0%, #3b82f6 100%); }
+    .category-icon-commercial { background: linear-gradient(135deg, #34d399 0%, #10b981 100%); }
+    .category-icon-communication { background: linear-gradient(135deg, #f472b6 0%, #ec4899 100%); }
+    .category-icon-analytics { background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%); }
+    .category-icon-payroll { background: linear-gradient(135deg, #818cf8 0%, #6366f1 100%); }
+    .category-icon-products { background: linear-gradient(135deg, #fb923c 0%, #f97316 100%); }
+    .category-icon-doctors { background: linear-gradient(135deg, #22d3ee 0%, #06b6d4 100%); }
+    .category-icon-cash { background: linear-gradient(135deg, #4ade80 0%, #22c55e 100%); }
+    .category-icon-default { background: linear-gradient(135deg, #cbd5e1 0%, #94a3b8 100%); }
     
     .module-checkbox:checked + label .module-card-inner {
         border-color: #3b82f6 !important;
@@ -351,33 +355,46 @@ document.addEventListener('DOMContentLoaded', () => {
     {% for category, data in categories.items %}
         <div class="mb-12 animate-fadeInUp">
             <!-- Category Header con Selector -->
-            <div class="bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl p-6 mb-6 shadow-lg">
+            <div class="bg-white border-2 border-gray-200 rounded-2xl p-6 mb-6 shadow-sm hover:shadow-md transition-shadow">
                 <div class="flex flex-col gap-4">
                     <div class="flex items-center justify-between">
-                        <h3 class="text-2xl font-bold flex items-center gap-3">
-                        <h3 class="text-2xl font-bold flex items-center gap-3">
-                        <div class="w-12 h-12 rounded-full 
+                        <h3 class="text-2xl font-bold text-gray-800 flex items-center gap-3">
+                        <div class="w-14 h-14 rounded-2xl 
+                        <div class="w-14 h-14 rounded-2xl 
                             {% if 'CORE' in category or 'Otros' in category %}category-icon-core
                             {% elif 'MÉDICO' in category or 'Clínic' in category or 'Medical' in category or 'Médico' in category %}category-icon-medical
-                            {% elif 'COMERCIAL' in category or 'Sales' in category or 'Ventas' in category or 'Inventory' in category or 'Inventario' in category %}category-icon-commercial
+                            {% elif 'COMERCIAL' in category or 'Sales' in category or 'Ventas' in category %}category-icon-commercial
+                            {% elif 'Inventory' in category or 'Inventario' in category %}category-icon-commercial
                             {% elif 'COMUNICACIÓN' in category or 'Communication' in category or 'Comunicación' in category %}category-icon-communication
                             {% elif 'ANÁLISIS' in category or 'Analytics' in category or 'Análisis' in category %}category-icon-analytics
+                            {% elif 'Nómina' in category or 'Payroll' in category or 'NÓMINA' in category %}category-icon-payroll
+                            {% elif 'Producto' in category or 'Products' in category %}category-icon-products
+                            {% elif 'Doctor' in category or 'Doctors' in category %}category-icon-doctors
+                            {% elif 'Caja' in category or 'Tesorería' in category or 'Cash' in category %}category-icon-cash
                             {% else %}category-icon-default{% endif %}
-                            flex items-center justify-center shadow-md">
+                            flex items-center justify-center shadow-sm">
                             {% if 'CORE' in category or 'Otros' in category %}
-                                <i class="fas fa-cog text-2xl"></i>
+                                <i class="fas fa-cog text-2xl text-white"></i>
                             {% elif 'MÉDICO' in category or 'Clínic' in category or 'Medical' in category or 'Médico' in category %}
-                                <i class="fas fa-stethoscope text-2xl"></i>
+                                <i class="fas fa-stethoscope text-2xl text-white"></i>
                             {% elif 'COMERCIAL' in category or 'Sales' in category or 'Ventas' in category %}
-                                <i class="fas fa-shopping-cart text-2xl"></i>
+                                <i class="fas fa-shopping-cart text-2xl text-white"></i>
                             {% elif 'Inventory' in category or 'Inventario' in category %}
-                                <i class="fas fa-boxes text-2xl"></i>
+                                <i class="fas fa-boxes text-2xl text-white"></i>
                             {% elif 'COMUNICACIÓN' in category or 'Communication' in category or 'Comunicación' in category %}
-                                <i class="fas fa-comments text-2xl"></i>
+                                <i class="fas fa-comments text-2xl text-white"></i>
                             {% elif 'ANÁLISIS' in category or 'Analytics' in category or 'Análisis' in category %}
-                                <i class="fas fa-chart-bar text-2xl"></i>
+                                <i class="fas fa-chart-bar text-2xl text-white"></i>
+                            {% elif 'Nómina' in category or 'Payroll' in category or 'NÓMINA' in category %}
+                                <i class="fas fa-money-check-alt text-2xl text-white"></i>
+                            {% elif 'Producto' in category or 'Products' in category %}
+                                <i class="fas fa-box text-2xl text-white"></i>
+                            {% elif 'Doctor' in category or 'Doctors' in category %}
+                                <i class="fas fa-user-md text-2xl text-white"></i>
+                            {% elif 'Caja' in category or 'Tesorería' in category or 'Cash' in category %}
+                                <i class="fas fa-cash-register text-2xl text-white"></i>
                             {% else %}
-                                <i class="fas fa-cube text-2xl"></i>
+                                <i class="fas fa-cube text-2xl text-white"></i>
                             {% endif %}
                         </div>
                         <span>
@@ -388,17 +405,21 @@ document.addEventListener('DOMContentLoaded', () => {
                             {% elif 'Analytics' in category or 'Análisis' in category %}Análisis y Reportes Inteligentes
                             {% elif 'Integration' in category or 'Integración' in category %}Integraciones Externas
                             {% elif 'Customization' in category or 'Personalización' in category %}Personalización Avanzada
+                            {% elif 'Nómina' in category or 'Payroll' in category or 'NÓMINA' in category %}Nómina y Recursos Humanos
+                            {% elif 'Producto' in category or 'Products' in category %}Gestión de Productos
+                            {% elif 'Doctor' in category or 'Doctors' in category %}Doctores y Profesionales
+                            {% elif 'Caja' in category or 'Tesorería' in category or 'Cash' in category %}Caja y Tesorería
                             {% elif 'Other' in category %}Otros Módulos
                             {% else %}{{ category }}{% endif %}
                         </span>
                     </h3>
                     <div class="flex items-center gap-4">
-                        <div class="bg-white/20 backdrop-blur-sm px-6 py-3 rounded-full font-bold text-lg">
+                        <div class="bg-gradient-to-r from-gray-100 to-gray-50 border border-gray-200 px-6 py-3 rounded-xl font-bold text-lg text-gray-800 shadow-sm">
                             ${{ data.total|floatformat:2 }}/mes
                         </div>
                         <button 
                             onclick="toggleCategorySelection('{{ category }}')"
-                            class="bg-white text-blue-600 hover:bg-blue-50 px-6 py-3 rounded-lg font-semibold transition shadow-md hover:shadow-lg flex items-center gap-2">
+                            class="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-6 py-3 rounded-xl font-semibold transition shadow-md hover:shadow-lg flex items-center gap-2">
                             <i class="fas fa-check-double"></i>
                             Seleccionar Todo
                         </button>
@@ -406,23 +427,31 @@ document.addEventListener('DOMContentLoaded', () => {
                 </div>
                 
                 <!-- Descripción de la categoría -->
-                <div class="mt-4 text-blue-50 text-sm leading-relaxed">
+                <div class="mt-4 bg-gray-50 border border-gray-200 rounded-xl p-4 text-gray-700 text-sm leading-relaxed">
                     {% if 'Medical' in category or 'Médico' in category %}
-                        <p><i class="fas fa-info-circle mr-2"></i>Herramientas especializadas para la atención clínica: gestión de historias clínicas, exámenes visuales, prescripciones, y seguimiento médico profesional.</p>
+                        <p><i class="fas fa-info-circle mr-2 text-blue-600"></i>Herramientas especializadas para la atención clínica: gestión de historias clínicas, exámenes visuales, prescripciones, y seguimiento médico profesional.</p>
                     {% elif 'Sales' in category or 'Ventas' in category %}
-                        <p><i class="fas fa-info-circle mr-2"></i>Todo lo necesario para gestionar tus ventas: punto de venta completo, catálogo de productos, gestión de precios y control de transacciones.</p>
+                        <p><i class="fas fa-info-circle mr-2 text-green-600"></i>Todo lo necesario para gestionar tus ventas: punto de venta completo, catálogo de productos, gestión de precios y control de transacciones.</p>
                     {% elif 'Inventory' in category or 'Inventario' in category %}
-                        <p><i class="fas fa-info-circle mr-2"></i>Controla tu inventario de manera eficiente: seguimiento de stock, alertas de reorden, gestión de proveedores y trazabilidad completa.</p>
+                        <p><i class="fas fa-info-circle mr-2 text-green-600"></i>Controla tu inventario de manera eficiente: seguimiento de stock, alertas de reorden, gestión de proveedores y trazabilidad completa.</p>
                     {% elif 'Communication' in category or 'Comunicación' in category %}
-                        <p><i class="fas fa-info-circle mr-2"></i>Mantén contacto cercano con tus pacientes: recordatorios automáticos, campañas de marketing, notificaciones personalizadas y atención multicanal.</p>
+                        <p><i class="fas fa-info-circle mr-2 text-pink-600"></i>Mantén contacto cercano con tus pacientes: recordatorios automáticos, campañas de marketing, notificaciones personalizadas y atención multicanal.</p>
                     {% elif 'Analytics' in category or 'Análisis' in category %}
-                        <p><i class="fas fa-info-circle mr-2"></i>Toma decisiones basadas en datos: reportes detallados de ventas, análisis de rendimiento, métricas de pacientes, visualización de KPIs y exportación de datos.</p>
+                        <p><i class="fas fa-info-circle mr-2 text-yellow-600"></i>Toma decisiones basadas en datos: reportes detallados de ventas, análisis de rendimiento, métricas de pacientes, visualización de KPIs y exportación de datos.</p>
                     {% elif 'Integration' in category or 'Integración' in category %}
-                        <p><i class="fas fa-info-circle mr-2"></i>Conecta OpticaApp con otras plataformas: facturación electrónica DIAN, nómina electrónica, APIs personalizadas y sincronización con sistemas externos.</p>
+                        <p><i class="fas fa-info-circle mr-2 text-purple-600"></i>Conecta OpticaApp con otras plataformas: facturación electrónica DIAN, nómina electrónica, APIs personalizadas y sincronización con sistemas externos.</p>
                     {% elif 'Customization' in category or 'Personalización' in category %}
-                        <p><i class="fas fa-info-circle mr-2"></i>Adapta el sistema a tu marca: campos personalizados, workflows automatizados, plantillas de documentos y configuraciones avanzadas.</p>
+                        <p><i class="fas fa-info-circle mr-2 text-indigo-600"></i>Adapta el sistema a tu marca: campos personalizados, workflows automatizados, plantillas de documentos y configuraciones avanzadas.</p>
+                    {% elif 'Nómina' in category or 'Payroll' in category or 'NÓMINA' in category %}
+                        <p><i class="fas fa-info-circle mr-2 text-indigo-600"></i>Gestión completa de nómina y RRHH: contratos laborales, vacaciones, préstamos, prestaciones sociales, provisiones, PILA, incapacidades y conceptos de nómina.</p>
+                    {% elif 'Producto' in category or 'Products' in category %}
+                        <p><i class="fas fa-info-circle mr-2 text-orange-600"></i>Administra tu catálogo de productos: monturas, lentes, accesorios, códigos de barras, precios, imágenes y categorización avanzada.</p>
+                    {% elif 'Doctor' in category or 'Doctors' in category %}
+                        <p><i class="fas fa-info-circle mr-2 text-cyan-600"></i>Gestiona tu equipo médico: perfiles de doctores, especialidades, horarios, comisiones y estadísticas de atención.</p>
+                    {% elif 'Caja' in category or 'Tesorería' in category or 'Cash' in category %}
+                        <p><i class="fas fa-info-circle mr-2 text-green-600"></i>Control total de efectivo: apertura y cierre de caja, movimientos, conciliaciones, reportes de tesorería y arqueos.</p>
                     {% else %}
-                        <p><i class="fas fa-info-circle mr-2"></i>Funcionalidades adicionales para potenciar tu gestión: múltiples sedes, gestión de equipos, tareas y más.</p>
+                        <p><i class="fas fa-info-circle mr-2 text-gray-600"></i>Funcionalidades adicionales para potenciar tu gestión: múltiples sedes, gestión de equipos, tareas y más.</p>
                     {% endif %}
                 </div>
             </div>
@@ -491,7 +520,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                 <!-- Card Content -->
                                 <div class="p-6">
                                     <!-- Icon -->
-                                    <div class="w-16 h-16 rounded-2xl module-icon-bg flex items-center justify-center mb-4 shadow-lg">
+                                    <div class="w-16 h-16 rounded-2xl {% if 'whatsapp' in module.name.lower %}bg-gradient-to-br from-green-500 to-green-600{% else %}module-icon-bg{% endif %} flex items-center justify-center mb-4 shadow-lg">
                                         {% if 'agenda' in module.name.lower or 'citas' in module.name.lower or 'appointments' in module.name.lower %}
                                             <i class="fas fa-calendar-alt text-3xl text-white"></i>
                                         {% elif 'paciente' in module.name.lower or 'patients' in module.name.lower %}
@@ -540,6 +569,24 @@ document.addEventListener('DOMContentLoaded', () => {
                                             <i class="fas fa-tasks text-3xl text-white"></i>
                                         {% elif 'dashboard' in module.name.lower %}
                                             <i class="fas fa-chart-line text-3xl text-white"></i>
+                                        {% elif 'doctor' in module.name.lower or 'optómetra' in module.name.lower %}
+                                            <i class="fas fa-user-md text-3xl text-white"></i>
+                                        {% elif 'caja' in module.name.lower or 'cash' in module.name.lower or 'tesorería' in module.name.lower %}
+                                            <i class="fas fa-cash-register text-3xl text-white"></i>
+                                        {% elif 'contrato' in module.name.lower or 'contract' in module.name.lower %}
+                                            <i class="fas fa-file-contract text-3xl text-white"></i>
+                                        {% elif 'vacacion' in module.name.lower or 'vacation' in module.name.lower %}
+                                            <i class="fas fa-umbrella-beach text-3xl text-white"></i>
+                                        {% elif 'préstamo' in module.name.lower or 'loan' in module.name.lower %}
+                                            <i class="fas fa-hand-holding-usd text-3xl text-white"></i>
+                                        {% elif 'prestacion' in module.name.lower or 'benefit' in module.name.lower %}
+                                            <i class="fas fa-piggy-bank text-3xl text-white"></i>
+                                        {% elif 'provision' in module.name.lower or 'provisión' in module.name.lower %}
+                                            <i class="fas fa-calculator text-3xl text-white"></i>
+                                        {% elif 'pila' in module.name.lower or 'seguridad social' in module.name.lower %}
+                                            <i class="fas fa-file-medical-alt text-3xl text-white"></i>
+                                        {% elif 'incapacidad' in module.name.lower or 'disability' in module.name.lower %}
+                                            <i class="fas fa-notes-medical text-3xl text-white"></i>
                                         {% else %}
                                             <i class="fas fa-puzzle-piece text-3xl text-white"></i>
                                         {% endif %}
