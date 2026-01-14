@@ -1403,7 +1403,7 @@
         const originalFetch = window.fetch;
         window.fetch = function(...args) {
             return originalFetch.apply(this, args)
-                .then(response => {
+                .then(async response => {
                     // Capturar errores HTTP 400, 500, etc.
                     if (!response.ok && response.status >= 400) {
                         const errorData = {
@@ -1417,7 +1417,7 @@
                         
                         console.error('❌ Network Error captured:', errorData);
                         
-                        // Enviar al backend
+                        // Enviar al backend (sin esperar respuesta para evitar loops)
                         originalFetch('/dashboard/audit/api/log-js-error/', {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
@@ -1439,6 +1439,7 @@
                     
                     console.error('❌ Network Error captured:', errorData);
                     
+                    // Enviar al backend (sin esperar respuesta)
                     originalFetch('/dashboard/audit/api/log-js-error/', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
@@ -1467,19 +1468,14 @@
             
             console.error('❌ JS Error captured:', errorData);
             
-            // Enviar error al backend
+            // Enviar error al backend (sin bloquear)
             fetch('/dashboard/audit/api/log-js-error/', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify(errorData)
-            })
-            .then(response => response.json())
-            .then(data => {
-                console.log('✅ Error logged to server:', data);
-            })
-            .catch(err => {
+            }).catch(err => {
                 console.error('❌ Failed to log error to server:', err);
             });
         });
@@ -1495,18 +1491,14 @@
             
             console.error('❌ Promise rejection captured:', errorData);
             
+            // Enviar al backend (sin bloquear)
             fetch('/dashboard/audit/api/log-js-error/', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify(errorData)
-            })
-            .then(response => response.json())
-            .then(data => {
-                console.log('✅ Error logged to server:', data);
-            })
-            .catch(err => {
+            }).catch(err => {
                 console.error('❌ Failed to log error to server:', err);
             });
         });
