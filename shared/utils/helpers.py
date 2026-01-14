@@ -2,7 +2,10 @@
 Funciones helper reutilizables
 """
 import requests
+import logging
 from django.conf import settings
+
+logger = logging.getLogger(__name__)
 
 
 def get_client_ip(request):
@@ -25,45 +28,50 @@ def get_client_ip(request):
 
 def send_whatsapp_message(phone, message, organization_id=None):
     """
-    Envía un mensaje de WhatsApp usando Baileys
+    Envía un mensaje de WhatsApp usando Baileys con auto-recuperación
     
     Args:
         phone: Número de teléfono (con código país)
         message: Mensaje a enviar
-        organization_id: ID de la organización (opcional)
+        organization_id: ID de la organización (requerido para auto-recuperación)
     
     Returns:
         dict: Respuesta del servidor WhatsApp
     """
     try:
-        whatsapp_url = getattr(settings, 'WHATSAPP_SERVER_URL', 'http://localhost:3000')
+        # Usar el cliente de Baileys con auto-recuperación
+        from apps.appointments.whatsapp_baileys_client import whatsapp_baileys_client
         
-        # Limpiar el número
+        if not organization_id:
+            logger.warning("send_whatsapp_message llamado sin organization_id - no se puede auto-recuperar")
+            organization_id = '1'  # Fallback
+        
+        # Limpiar el número de teléfono
         clean_phone = phone.replace('+', '').replace(' ', '').replace('-', '')
         
-        # Agregar @s.whatsapp.net si no lo tiene
-        if '@' not in clean_phone:
-            clean_phone = f"{clean_phone}@s.whatsapp.net"
-        
-        payload = {
-            'session_id': str(organization_id) if organization_id else '1',
-            'phone': clean_phone,
-            'message': message
-        }
-        
-        response = requests.post(
-            f"{whatsapp_url}/send-message",
-            json=payload,
-            timeout=10
+        # Enviar mensaje CON auto-recuperación
+        result = whatsapp_baileys_client.send_message(
+            organization_id=str(organization_id),
+            phone=clean_phone,
+            message=message,
+            auto_recover=True  # Habilitar auto-recuperación
         )
         
-        return {
-            'success': response.status_code == 200,
-            'data': response.json() if response.status_code == 200 else None,
-            'error': None if response.status_code == 200 else response.text
-        }
+        if result and result.get('success'):
+            return {
+                'success': True,
+                'data': result,
+                'error': None
+            }
+        else:
+            return {
+                'success': False,
+                'data': None,
+                'error': result.get('error', 'Error desconocido') if result else 'No response'
+            }
         
     except Exception as e:
+        logger.error(f"Error en send_whatsapp_message: {str(e)}")
         return {
             'success': False,
             'data': None,

@@ -27,7 +27,7 @@ class WhatsAppBaileysNotifier:
     
     def send_appointment_confirmation(self, appointment):
         """
-        Envía confirmación de nueva cita por WhatsApp
+        Envía confirmación de nueva cita por WhatsApp con auto-recuperación
         """
         try:
             logger.info(f"=== BAILEYS: Iniciando envío de confirmación para cita #{appointment.id} ===")
@@ -41,12 +41,6 @@ class WhatsAppBaileysNotifier:
             org_id = appointment.organization.id if appointment.organization else None
             if not org_id:
                 logger.error("BAILEYS: No hay organización para enviar WhatsApp")
-                return False
-            
-            # Verificar que WhatsApp esté conectado
-            status = self.client.get_status(org_id)
-            if not status or status.get('status') != 'connected':
-                logger.warning(f"WhatsApp no conectado para org {org_id}. Estado: {status.get('status') if status else 'unknown'}")
                 return False
             
             # Obtener configuración de notificaciones para plantillas personalizadas
@@ -104,8 +98,8 @@ Si necesitas cancelar o reagendar, contáctanos con anticipación.
             
             logger.info(f"BAILEYS: Enviando mensaje a {appointment.phone_number}")
             
-            # Enviar mensaje
-            result = self.client.send_message(org_id, appointment.phone_number, message)
+            # Enviar mensaje CON auto-recuperación
+            result = self.client.send_message(org_id, appointment.phone_number, message, auto_recover=True)
             
             logger.info(f"BAILEYS: Resultado del envío: {result}")
             
@@ -126,7 +120,7 @@ Si necesitas cancelar o reagendar, contáctanos con anticipación.
     
     def send_appointment_reminder(self, appointment):
         """
-        Envía recordatorio de cita (1 día antes)
+        Envía recordatorio de cita (1 día antes) con auto-recuperación
         """
         try:
             if not hasattr(appointment, 'phone_number') or not appointment.phone_number:
@@ -134,12 +128,6 @@ Si necesitas cancelar o reagendar, contáctanos con anticipación.
             
             org_id = appointment.organization.id if appointment.organization else None
             if not org_id:
-                return False
-            
-            # Verificar conexión
-            status = self.client.get_status(org_id)
-            if not status or status.get('status') != 'connected':
-                logger.warning(f"WhatsApp no conectado para recordatorio")
                 return False
             
             org_name = appointment.organization.name if appointment.organization else 'OCEANO OPTICO'
@@ -162,7 +150,8 @@ Por favor, confirma tu asistencia.
 ¡Te esperamos! 👓
             """.strip()
             
-            result = self.client.send_message(org_id, appointment.phone_number, message)
+            # Enviar CON auto-recuperación
+            result = self.client.send_message(org_id, appointment.phone_number, message, auto_recover=True)
             
             if result and result.get('success'):
                 self._increment_whatsapp_usage()
@@ -175,7 +164,7 @@ Por favor, confirma tu asistencia.
     
     def send_appointment_cancelled(self, appointment):
         """
-        Notifica cancelación de cita
+        Notifica cancelación de cita con auto-recuperación
         """
         try:
             if not hasattr(appointment, 'phone_number') or not appointment.phone_number:
@@ -183,10 +172,6 @@ Por favor, confirma tu asistencia.
             
             org_id = appointment.organization.id if appointment.organization else None
             if not org_id:
-                return False
-            
-            status = self.client.get_status(org_id)
-            if not status or status.get('status') != 'connected':
                 return False
             
             # Obtener configuración
@@ -221,7 +206,8 @@ Si deseas reagendar, contáctanos.
 Gracias por tu comprensión. 👓
                 """.strip()
             
-            result = self.client.send_message(org_id, appointment.phone_number, message)
+            # Enviar CON auto-recuperación
+            result = self.client.send_message(org_id, appointment.phone_number, message, auto_recover=True)
             
             if result and result.get('success'):
                 self._increment_whatsapp_usage()
@@ -234,7 +220,7 @@ Gracias por tu comprensión. 👓
     
     def send_appointment_rescheduled(self, appointment, old_date, old_time):
         """
-        Notifica reagendamiento de cita
+        Notifica reagendamiento de cita con auto-recuperación
         """
         try:
             if not hasattr(appointment, 'phone_number') or not appointment.phone_number:
@@ -242,10 +228,6 @@ Gracias por tu comprensión. 👓
             
             org_id = appointment.organization.id if appointment.organization else None
             if not org_id:
-                return False
-            
-            status = self.client.get_status(org_id)
-            if not status or status.get('status') != 'connected':
                 return False
             
             # Obtener configuración
@@ -289,7 +271,8 @@ Llega {arrival_minutes} minutos antes de tu cita.
 ¡Te esperamos! 👓
                 """.strip()
             
-            result = self.client.send_message(org_id, appointment.phone_number, message)
+            # Enviar CON auto-recuperación
+            result = self.client.send_message(org_id, appointment.phone_number, message, auto_recover=True)
             
             if result and result.get('success'):
                 self._increment_whatsapp_usage()
