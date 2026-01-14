@@ -6,6 +6,7 @@ from . import views_team
 from . import views_employee
 from . import views_whatsapp_baileys
 from . import views_certificates
+from . import views_modules
 from .views_analytics import (
     analytics_dashboard,
     api_realtime_metrics,
@@ -208,6 +209,12 @@ urlpatterns = [
     
     # Sidebar Customizer
     path('sidebar/customize/', views.sidebar_customizer, name='sidebar_customizer'),
+    
+    # Módulos y Suscripciones
+    path('modules/marketplace/', views_modules.module_marketplace, name='module_marketplace'),
+    path('modules/selector/', views_modules.module_selector, name='module_selector'),
+    path('modules/checkout/', views_modules.module_checkout, name='module_checkout'),
+    path('modules/my-plan/', views_modules.my_plan, name='my_plan'),
     
     # Promociones y Campañas de Marketing
     path('promociones/', include('apps.promotions.urls')),

@@ -22,6 +22,7 @@ urlpatterns = [
     path('webhooks/wompi/', views.wompi_webhook, name='wompi_webhook'),
     
     # Historial
+    path('history/', views.transaction_history, name='payment_history'),  # Alias
     path('transactions/', views.transaction_history, name='transaction_history'),
     path('invoices/', views.invoice_list, name='invoice_list'),
     path('invoices/<uuid:invoice_id>/', views.invoice_detail, name='invoice_detail'),

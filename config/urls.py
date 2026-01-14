@@ -60,6 +60,9 @@ urlpatterns = [
     # Audit URLs
     path('dashboard/audit/', include('apps.audit.urls')),
     
+    # Payments URLs (Pasarela de Pagos)
+    path('payments/', include('apps.payments.urls')),
+    
     # API URLs
     path('api/', include('apps.appointments.urls')),
     
