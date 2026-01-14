@@ -352,40 +352,42 @@ document.addEventListener('DOMContentLoaded', () => {
         <div class="mb-12 animate-fadeInUp">
             <!-- Category Header con Selector -->
             <div class="bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl p-6 mb-6 shadow-lg">
-                <div class="flex items-center justify-between">
-                    <h3 class="text-2xl font-bold flex items-center gap-3">
+                <div class="flex flex-col gap-4">
+                    <div class="flex items-center justify-between">
+                        <h3 class="text-2xl font-bold flex items-center gap-3">
+                        <h3 class="text-2xl font-bold flex items-center gap-3">
                         <div class="w-12 h-12 rounded-full 
                             {% if 'CORE' in category or 'Otros' in category %}category-icon-core
-                            {% elif 'MÉDICO' in category or 'Clínic' in category or 'Medical' in category %}category-icon-medical
+                            {% elif 'MÉDICO' in category or 'Clínic' in category or 'Medical' in category or 'Médico' in category %}category-icon-medical
                             {% elif 'COMERCIAL' in category or 'Sales' in category or 'Ventas' in category or 'Inventory' in category or 'Inventario' in category %}category-icon-commercial
-                            {% elif 'COMUNICACIÓN' in category or 'Communication' in category %}category-icon-communication
-                            {% elif 'ANÁLISIS' in category or 'Analytics' in category %}category-icon-analytics
+                            {% elif 'COMUNICACIÓN' in category or 'Communication' in category or 'Comunicación' in category %}category-icon-communication
+                            {% elif 'ANÁLISIS' in category or 'Analytics' in category or 'Análisis' in category %}category-icon-analytics
                             {% else %}category-icon-default{% endif %}
                             flex items-center justify-center shadow-md">
                             {% if 'CORE' in category or 'Otros' in category %}
                                 <i class="fas fa-cog text-2xl"></i>
-                            {% elif 'MÉDICO' in category or 'Clínic' in category or 'Medical' in category %}
+                            {% elif 'MÉDICO' in category or 'Clínic' in category or 'Medical' in category or 'Médico' in category %}
                                 <i class="fas fa-stethoscope text-2xl"></i>
                             {% elif 'COMERCIAL' in category or 'Sales' in category or 'Ventas' in category %}
                                 <i class="fas fa-shopping-cart text-2xl"></i>
                             {% elif 'Inventory' in category or 'Inventario' in category %}
                                 <i class="fas fa-boxes text-2xl"></i>
-                            {% elif 'COMUNICACIÓN' in category or 'Communication' in category %}
+                            {% elif 'COMUNICACIÓN' in category or 'Communication' in category or 'Comunicación' in category %}
                                 <i class="fas fa-comments text-2xl"></i>
-                            {% elif 'ANÁLISIS' in category or 'Analytics' in category %}
+                            {% elif 'ANÁLISIS' in category or 'Analytics' in category or 'Análisis' in category %}
                                 <i class="fas fa-chart-bar text-2xl"></i>
                             {% else %}
                                 <i class="fas fa-cube text-2xl"></i>
                             {% endif %}
                         </div>
                         <span>
-                            {% if 'Medical' in category %}Módulos Médicos
+                            {% if 'Medical' in category or 'Médico' in category %}Módulos Médicos y Clínicos
                             {% elif 'Sales' in category %}Módulos Comerciales
                             {% elif 'Inventory' in category %}Gestión de Inventario
-                            {% elif 'Communication' in category %}Comunicación
-                            {% elif 'Analytics' in category %}Análisis y Reportes
-                            {% elif 'Integration' in category %}Integraciones
-                            {% elif 'Customization' in category %}Personalización
+                            {% elif 'Communication' in category or 'Comunicación' in category %}Comunicación con Pacientes
+                            {% elif 'Analytics' in category or 'Análisis' in category %}Análisis y Reportes Inteligentes
+                            {% elif 'Integration' in category or 'Integración' in category %}Integraciones Externas
+                            {% elif 'Customization' in category or 'Personalización' in category %}Personalización Avanzada
                             {% elif 'Other' in category %}Otros Módulos
                             {% else %}{{ category }}{% endif %}
                         </span>
@@ -401,6 +403,27 @@ document.addEventListener('DOMContentLoaded', () => {
                             Seleccionar Todo
                         </button>
                     </div>
+                </div>
+                
+                <!-- Descripción de la categoría -->
+                <div class="mt-4 text-blue-50 text-sm leading-relaxed">
+                    {% if 'Medical' in category or 'Médico' in category %}
+                        <p><i class="fas fa-info-circle mr-2"></i>Herramientas especializadas para la atención clínica: gestión de historias clínicas, exámenes visuales, prescripciones, y seguimiento médico profesional.</p>
+                    {% elif 'Sales' in category or 'Ventas' in category %}
+                        <p><i class="fas fa-info-circle mr-2"></i>Todo lo necesario para gestionar tus ventas: punto de venta completo, catálogo de productos, gestión de precios y control de transacciones.</p>
+                    {% elif 'Inventory' in category or 'Inventario' in category %}
+                        <p><i class="fas fa-info-circle mr-2"></i>Controla tu inventario de manera eficiente: seguimiento de stock, alertas de reorden, gestión de proveedores y trazabilidad completa.</p>
+                    {% elif 'Communication' in category or 'Comunicación' in category %}
+                        <p><i class="fas fa-info-circle mr-2"></i>Mantén contacto cercano con tus pacientes: recordatorios automáticos, campañas de marketing, notificaciones personalizadas y atención multicanal.</p>
+                    {% elif 'Analytics' in category or 'Análisis' in category %}
+                        <p><i class="fas fa-info-circle mr-2"></i>Toma decisiones basadas en datos: reportes detallados de ventas, análisis de rendimiento, métricas de pacientes, visualización de KPIs y exportación de datos.</p>
+                    {% elif 'Integration' in category or 'Integración' in category %}
+                        <p><i class="fas fa-info-circle mr-2"></i>Conecta OpticaApp con otras plataformas: facturación electrónica DIAN, nómina electrónica, APIs personalizadas y sincronización con sistemas externos.</p>
+                    {% elif 'Customization' in category or 'Personalización' in category %}
+                        <p><i class="fas fa-info-circle mr-2"></i>Adapta el sistema a tu marca: campos personalizados, workflows automatizados, plantillas de documentos y configuraciones avanzadas.</p>
+                    {% else %}
+                        <p><i class="fas fa-info-circle mr-2"></i>Funcionalidades adicionales para potenciar tu gestión: múltiples sedes, gestión de equipos, tareas y más.</p>
+                    {% endif %}
                 </div>
             </div>
             
@@ -422,6 +445,37 @@ document.addEventListener('DOMContentLoaded', () => {
                             <div class="module-card-inner bg-white rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 border-2 
                                 {% if module.is_purchased %}border-emerald-400 bg-emerald-50{% else %}border-gray-200 peer-checked:border-blue-500 peer-checked:bg-blue-50{% endif %}
                                 overflow-hidden group relative">
+                                
+                                <!-- Badge de Importancia (NUEVO) -->
+                                {% if 'agenda' in module.name.lower or 'citas' in module.name.lower or 'appointments' in module.name.lower %}
+                                    <div class="absolute top-4 left-4 bg-gradient-to-r from-purple-600 to-purple-700 text-white px-3 py-1 rounded-full text-xs font-bold shadow-lg z-10 flex items-center gap-1">
+                                        <i class="fas fa-star"></i> ESENCIAL
+                                    </div>
+                                {% elif 'paciente' in module.name.lower or 'patients' in module.name.lower %}
+                                    <div class="absolute top-4 left-4 bg-gradient-to-r from-purple-600 to-purple-700 text-white px-3 py-1 rounded-full text-xs font-bold shadow-lg z-10 flex items-center gap-1">
+                                        <i class="fas fa-star"></i> ESENCIAL
+                                    </div>
+                                {% elif 'historia' in module.name.lower or 'clínica' in module.name.lower or 'clinical' in module.name.lower or 'examen' in module.name.lower %}
+                                    <div class="absolute top-4 left-4 bg-gradient-to-r from-orange-500 to-orange-600 text-white px-3 py-1 rounded-full text-xs font-bold shadow-lg z-10 flex items-center gap-1">
+                                        <i class="fas fa-heart"></i> RECOMENDADO
+                                    </div>
+                                {% elif 'venta' in module.name.lower or 'pos' in module.name.lower %}
+                                    <div class="absolute top-4 left-4 bg-gradient-to-r from-purple-600 to-purple-700 text-white px-3 py-1 rounded-full text-xs font-bold shadow-lg z-10 flex items-center gap-1">
+                                        <i class="fas fa-star"></i> ESENCIAL
+                                    </div>
+                                {% elif 'inventario' in module.name.lower or 'inventory' in module.name.lower %}
+                                    <div class="absolute top-4 left-4 bg-gradient-to-r from-orange-500 to-orange-600 text-white px-3 py-1 rounded-full text-xs font-bold shadow-lg z-10 flex items-center gap-1">
+                                        <i class="fas fa-heart"></i> RECOMENDADO
+                                    </div>
+                                {% elif 'whatsapp' in module.name.lower %}
+                                    <div class="absolute top-4 left-4 bg-gradient-to-r from-green-600 to-green-700 text-white px-3 py-1 rounded-full text-xs font-bold shadow-lg z-10 flex items-center gap-1">
+                                        <i class="fas fa-fire"></i> POPULAR
+                                    </div>
+                                {% elif 'reporte' in module.name.lower or 'analytics' in module.name.lower or 'análisis' in module.name.lower %}
+                                    <div class="absolute top-4 left-4 bg-gradient-to-r from-orange-500 to-orange-600 text-white px-3 py-1 rounded-full text-xs font-bold shadow-lg z-10 flex items-center gap-1">
+                                        <i class="fas fa-heart"></i> RECOMENDADO
+                                    </div>
+                                {% endif %}
                                 
                                 <!-- Purchased/Selected Badge -->
                                 {% if module.is_purchased %}
@@ -496,9 +550,61 @@ document.addEventListener('DOMContentLoaded', () => {
                                         {{ module.name }}
                                     </h4>
                                     
-                                    <!-- Description -->
-                                    <p class="text-gray-600 text-sm mb-4 line-clamp-3">
-                                        {{ module.description|truncatewords:15 }}
+                                    <!-- Description Mejorada -->
+                                    <p class="text-gray-600 text-sm mb-4 min-h-[60px]">
+                                        {% if 'agenda' in module.name.lower or 'citas' in module.name.lower or 'appointments' in module.name.lower %}
+                                            <span class="font-medium text-gray-700">Gestiona citas y agenda médica:</span> Calendario interactivo, recordatorios automáticos, gestión de disponibilidad y confirmaciones de pacientes.
+                                        {% elif 'paciente' in module.name.lower or 'patients' in module.name.lower %}
+                                            <span class="font-medium text-gray-700">Base de datos de pacientes:</span> Expedientes completos, historial de atención, datos de contacto, fotos y documentación adjunta.
+                                        {% elif 'historia' in module.name.lower and 'clínica' in module.name.lower %}
+                                            <span class="font-medium text-gray-700">Historias clínicas digitales:</span> Registro completo de consultas, diagnósticos, tratamientos y evolución del paciente en formato digital seguro.
+                                        {% elif 'examen' in module.name.lower and 'visual' in module.name.lower %}
+                                            <span class="font-medium text-gray-700">Exámenes visuales completos:</span> Agudeza visual, refracción, biomicroscopía, tonometría y otros exámenes especializados con plantillas predefinidas.
+                                        {% elif 'prescripcion' in module.name.lower or 'prescription' in module.name.lower or 'receta' in module.name.lower %}
+                                            <span class="font-medium text-gray-700">Recetas y prescripciones:</span> Genera fórmulas médicas, prescripciones de lentes y tratamientos con firma digital y trazabilidad completa.
+                                        {% elif 'venta' in module.name.lower or 'pos' in module.name.lower %}
+                                            <span class="font-medium text-gray-700">Punto de venta profesional:</span> Facturación rápida, múltiples métodos de pago, descuentos, devoluciones y control de caja completo.
+                                        {% elif 'producto' in module.name.lower and not 'inventario' in module.name.lower %}
+                                            <span class="font-medium text-gray-700">Catálogo de productos:</span> Monturas, lentes, soluciones, accesorios con precios, imágenes, códigos de barras y categorización avanzada.
+                                        {% elif 'inventario' in module.name.lower or 'inventory' in module.name.lower %}
+                                            <span class="font-medium text-gray-700">Control de inventario:</span> Seguimiento de stock en tiempo real, alertas de mínimos, entradas/salidas, trazabilidad y valoración de inventario.
+                                        {% elif 'whatsapp' in module.name.lower %}
+                                            <span class="font-medium text-gray-700">WhatsApp Business integrado:</span> Envía recordatorios, confirmaciones, promociones y atiende consultas directamente desde la plataforma.
+                                        {% elif 'email' in module.name.lower or 'correo' in module.name.lower %}
+                                            <span class="font-medium text-gray-700">Email marketing:</span> Campañas personalizadas, plantillas profesionales, recordatorios automáticos y seguimiento de apertura.
+                                        {% elif 'sms' in module.name.lower %}
+                                            <span class="font-medium text-gray-700">Mensajería SMS:</span> Notificaciones instantáneas, recordatorios de citas y alertas importantes vía mensaje de texto.
+                                        {% elif 'reporte' in module.name.lower and 'ventas' in module.name.lower %}
+                                            <span class="font-medium text-gray-700">Reportes de ventas:</span> Análisis detallado de ingresos, productos más vendidos, tickets promedio y tendencias de venta con gráficos.
+                                        {% elif 'reporte' in module.name.lower and 'paciente' in module.name.lower %}
+                                            <span class="font-medium text-gray-700">Reportes clínicos:</span> Estadísticas de atención, diagnósticos frecuentes, seguimiento de tratamientos y análisis epidemiológico.
+                                        {% elif 'análisis' in module.name.lower or 'analytics' in module.name.lower %}
+                                            <span class="font-medium text-gray-700">Analytics avanzado:</span> KPIs del negocio, dashboards interactivos, métricas de desempeño y visualización de datos en tiempo real.
+                                        {% elif 'factura' in module.name.lower and 'dian' in module.name.lower %}
+                                            <span class="font-medium text-gray-700">Facturación electrónica DIAN:</span> Emisión legal de facturas electrónicas, integración directa con la DIAN, firma digital y trazabilidad fiscal.
+                                        {% elif 'nómina' in module.name.lower or 'payroll' in module.name.lower %}
+                                            <span class="font-medium text-gray-700">Nómina electrónica:</span> Cálculo de salarios, deducciones, seguridad social, generación de documentos y transmisión a la DIAN.
+                                        {% elif 'workflows' in module.name.lower or 'automatización' in module.name.lower %}
+                                            <span class="font-medium text-gray-700">Automatización de procesos:</span> Crea flujos de trabajo personalizados, triggers automáticos y reduce tareas manuales repetitivas.
+                                        {% elif 'marketing' in module.name.lower or 'campaign' in module.name.lower %}
+                                            <span class="font-medium text-gray-700">Campañas de marketing:</span> Diseña y ejecuta campañas multicanal, segmenta audiencias y mide el retorno de inversión.
+                                        {% elif 'crm' in module.name.lower %}
+                                            <span class="font-medium text-gray-700">CRM completo:</span> Gestión de relaciones con clientes, seguimiento de oportunidades, pipeline de ventas y fidelización.
+                                        {% elif 'api' in module.name.lower %}
+                                            <span class="font-medium text-gray-700">Acceso API REST:</span> Integra OpticaApp con tus sistemas existentes, crea aplicaciones personalizadas y automatiza procesos externos.
+                                        {% elif 'multi' in module.name.lower or 'sede' in module.name.lower %}
+                                            <span class="font-medium text-gray-700">Múltiples sedes:</span> Gestiona varias sucursales, consolida reportes, transfiere inventario y controla operaciones centralizadas.
+                                        {% elif 'equipo' in module.name.lower or 'team' in module.name.lower %}
+                                            <span class="font-medium text-gray-700">Gestión de equipos:</span> Roles y permisos, horarios de trabajo, métricas de desempeño y colaboración entre miembros del equipo.
+                                        {% elif 'ar' in module.name.lower or 'probador' in module.name.lower %}
+                                            <span class="font-medium text-gray-700">Probador virtual AR:</span> Tecnología de realidad aumentada para que los clientes prueben monturas desde su celular antes de comprar.
+                                        {% elif 'tarea' in module.name.lower or 'task' in module.name.lower %}
+                                            <span class="font-medium text-gray-700">Gestión de tareas:</span> Asigna pendientes, establece prioridades, da seguimiento y mejora la productividad del equipo.
+                                        {% elif 'dashboard' in module.name.lower %}
+                                            <span class="font-medium text-gray-700">Dashboard ejecutivo:</span> Panel de control con KPIs principales, métricas en tiempo real y visualizaciones interactivas.
+                                        {% else %}
+                                            {{ module.description|truncatewords:15 }}
+                                        {% endif %}
                                     </p>
                                     
                                     <!-- Price & Checkbox Indicator -->
