@@ -19,12 +19,14 @@ app.use(express.json());
 const logger = pino({ level: 'info' });
 
 // Almacenamiento de sesiones y sockets por organización
-const sessions = new Map(); // organizationId -> { sock, qr, status, retryCount, badMacErrors }
+const sessions = new Map(); // organizationId -> { sock, qr, status, retryCount, badMacErrors, streamErrors }
 const AUTH_DIR = path.join(__dirname, 'auth_sessions');
 
 // Límite de errores Bad MAC antes de limpiar sesión
-const BAD_MAC_ERROR_LIMIT = 5;
-const BAD_MAC_RESET_TIME = 60000; // 1 minuto
+const BAD_MAC_ERROR_LIMIT = 3; // Reducido de 5 a 3 para ser más agresivo
+const BAD_MAC_RESET_TIME = 30000; // Reducido a 30 segundos
+const STREAM_ERROR_LIMIT = 2; // Límite de errores de stream antes de limpiar
+const STREAM_ERROR_RESET_TIME = 60000; // 1 minuto
 
 // Crear directorio de sesiones si no existe
 if (!fs.existsSync(AUTH_DIR)) {
@@ -87,6 +89,54 @@ function handleBadMacError(organizationId) {
     }, BAD_MAC_RESET_TIME);
 }
 
+// Función para manejar errores de stream recurrentes
+function handleStreamError(organizationId, reason) {
+    const session = sessions.get(organizationId);
+    if (!session) return;
+
+    // Incrementar contador de errores de stream
+    if (!session.streamErrors) {
+        session.streamErrors = {
+            count: 0,
+            lastError: 0,
+            resetTimeout: null
+        };
+    }
+
+    const now = Date.now();
+    const timeSinceLastError = now - session.streamErrors.lastError;
+
+    // Resetear contador si pasó mucho tiempo desde el último error
+    if (timeSinceLastError > STREAM_ERROR_RESET_TIME) {
+        session.streamErrors.count = 1;
+    } else {
+        session.streamErrors.count++;
+    }
+
+    session.streamErrors.lastError = now;
+
+    logger.warn(`⚠️  Stream Error #${session.streamErrors.count} para ${organizationId}: ${reason}`);
+
+    // Si se superó el límite, limpiar sesión corrupta
+    if (session.streamErrors.count >= STREAM_ERROR_LIMIT) {
+        logger.error(`🔴 Límite de Stream Errors alcanzado (${STREAM_ERROR_LIMIT}). Limpiando sesión de ${organizationId}`);
+        clearCorruptedSession(organizationId);
+        return;
+    }
+
+    // Programar reseteo automático del contador
+    if (session.streamErrors.resetTimeout) {
+        clearTimeout(session.streamErrors.resetTimeout);
+    }
+
+    session.streamErrors.resetTimeout = setTimeout(() => {
+        if (session.streamErrors) {
+            logger.info(`Reseteando contador de Stream Errors para ${organizationId}`);
+            session.streamErrors.count = 0;
+        }
+    }, STREAM_ERROR_RESET_TIME);
+}
+
 // Función para limpiar sesión corrupta
 async function clearCorruptedSession(organizationId) {
     try {
@@ -132,7 +182,8 @@ async function clearCorruptedSession(organizationId) {
             qr: null,
             status: 'qr_required',
             retryCount: 0,
-            badMacErrors: null
+            badMacErrors: null,
+            streamErrors: null
         });
 
         logger.info(`✨ Sesión limpiada para ${organizationId}. Se requiere escanear QR nuevamente.`);
@@ -220,10 +271,21 @@ async function createWhatsAppConnection(organizationId) {
                 
                 // Detectar errores de descifrado
                 const errorMsg = lastDisconnect?.error?.message || '';
+                
+                // Manejar errores Bad MAC
                 if (errorMsg.includes('Bad MAC') || errorMsg.includes('decrypt')) {
                     logger.error(`🔴 Error de descifrado detectado: ${errorMsg}`);
                     handleBadMacError(organizationId);
                     return; // No intentar reconectar con sesión corrupta
+                }
+                
+                // Manejar errores de stream (ACK, Connection, etc.)
+                if (errorMsg.includes('Stream Errored') || 
+                    errorMsg.includes('Connection Closed') || 
+                    errorMsg.includes('ack')) {
+                    logger.error(`🔴 Error de stream detectado: ${errorMsg}`);
+                    handleStreamError(organizationId, errorMsg);
+                    return; // No intentar reconectar si hay problemas de stream recurrentes
                 }
                 
                 logger.warn(`Razón de desconexión: ${errorMsg || 'Desconocida'}`);
@@ -272,6 +334,15 @@ async function createWhatsAppConnection(organizationId) {
                             clearTimeout(session.badMacErrors.resetTimeout);
                         }
                         session.badMacErrors = null;
+                    }
+                    
+                    // Resetear contador de errores de stream al conectar exitosamente
+                    if (session.streamErrors) {
+                        if (session.streamErrors.resetTimeout) {
+                            clearTimeout(session.streamErrors.resetTimeout);
+                        }
+                        session.streamErrors = null;
+                    }
                     }
                     
                     // Obtener información del usuario conectado
@@ -345,7 +416,8 @@ app.post('/api/start-session', authenticateAPI, async (req, res) => {
             qr: null,
             status: 'connecting',
             retryCount: 0,
-            badMacErrors: null
+            badMacErrors: null,
+            streamErrors: null
         });
 
         const sock = await createWhatsAppConnection(organization_id);
@@ -516,6 +588,29 @@ app.post('/api/logout', authenticateAPI, async (req, res) => {
     }
 });
 
+// Endpoint para forzar limpieza de sesión corrupta
+app.post('/api/force-clean-session', authenticateAPI, async (req, res) => {
+    try {
+        const { organization_id } = req.body;
+
+        if (!organization_id) {
+            return res.status(400).json({ error: 'organization_id es requerido' });
+        }
+
+        logger.info(`🔧 Forzando limpieza de sesión para ${organization_id}`);
+        
+        await clearCorruptedSession(organization_id);
+
+        res.json({
+            success: true,
+            message: `Sesión limpiada para ${organization_id}. Se requiere escanear QR nuevamente.`
+        });
+    } catch (error) {
+        logger.error(`Error forzando limpieza: ${error.message}`);
+        res.status(500).json({ error: error.message });
+    }
+});
+
 // Limpiar sesión corrupta manualmente
 app.post('/api/clear-corrupted-session', authenticateAPI, async (req, res) => {
     try {
@@ -583,7 +678,8 @@ async function restoreExistingSessions() {
                     qr: null,
                     status: 'restoring',
                     retryCount: 0,
-                    badMacErrors: null
+                    badMacErrors: null,
+                    streamErrors: null
                 });
 
                 const sock = await createWhatsAppConnection(orgId);
