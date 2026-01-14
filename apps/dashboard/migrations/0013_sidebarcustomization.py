@@ -10,7 +10,7 @@ class Migration(migrations.Migration):
     dependencies = [
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
         ('organizations', '0001_initial'),
-        ('dashboard', '0012_auto_06ene2026'),  # Ajustar según la última migración
+        ('dashboard', '0028_employee_payroll_fields'),
     ]
 
     operations = [
