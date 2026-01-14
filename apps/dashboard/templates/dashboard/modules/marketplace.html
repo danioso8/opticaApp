@@ -500,6 +500,14 @@ document.addEventListener('DOMContentLoaded', () => {
                                     <div class="absolute top-4 left-4 bg-gradient-to-r from-green-600 to-green-700 text-white px-3 py-1 rounded-full text-xs font-bold shadow-lg z-10 flex items-center gap-1">
                                         <i class="fas fa-fire"></i> POPULAR
                                     </div>
+                                {% elif 'email' in module.name.lower or 'correo' in module.name.lower %}
+                                    <div class="absolute top-4 left-4 bg-gradient-to-r from-green-600 to-green-700 text-white px-3 py-1 rounded-full text-xs font-bold shadow-lg z-10 flex items-center gap-1">
+                                        <i class="fas fa-fire"></i> POPULAR
+                                    </div>
+                                {% elif 'promocion' in module.name.lower or 'promotion' in module.name.lower %}
+                                    <div class="absolute top-4 left-4 bg-gradient-to-r from-orange-500 to-orange-600 text-white px-3 py-1 rounded-full text-xs font-bold shadow-lg z-10 flex items-center gap-1">
+                                        <i class="fas fa-heart"></i> RECOMENDADO
+                                    </div>
                                 {% elif 'reporte' in module.name.lower or 'analytics' in module.name.lower or 'análisis' in module.name.lower %}
                                     <div class="absolute top-4 left-4 bg-gradient-to-r from-orange-500 to-orange-600 text-white px-3 py-1 rounded-full text-xs font-bold shadow-lg z-10 flex items-center gap-1">
                                         <i class="fas fa-heart"></i> RECOMENDADO
@@ -520,7 +528,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                 <!-- Card Content -->
                                 <div class="p-6">
                                     <!-- Icon -->
-                                    <div class="w-16 h-16 rounded-2xl {% if 'whatsapp' in module.name.lower %}bg-gradient-to-br from-green-500 to-green-600{% else %}module-icon-bg{% endif %} flex items-center justify-center mb-4 shadow-lg">
+                                    <div class="w-16 h-16 rounded-2xl {% if 'whatsapp' in module.name.lower %}bg-gradient-to-br from-green-500 to-green-600{% elif 'email' in module.name.lower or 'correo' in module.name.lower %}bg-gradient-to-br from-blue-500 to-blue-600{% elif 'promocion' in module.name.lower or 'promotion' in module.name.lower %}bg-gradient-to-br from-pink-500 to-pink-600{% else %}module-icon-bg{% endif %} flex items-center justify-center mb-4 shadow-lg">
                                         {% if 'agenda' in module.name.lower or 'citas' in module.name.lower or 'appointments' in module.name.lower %}
                                             <i class="fas fa-calendar-alt text-3xl text-white"></i>
                                         {% elif 'paciente' in module.name.lower or 'patients' in module.name.lower %}
@@ -537,6 +545,8 @@ document.addEventListener('DOMContentLoaded', () => {
                                             <i class="fab fa-whatsapp text-3xl text-white"></i>
                                         {% elif 'email' in module.name.lower or 'correo' in module.name.lower %}
                                             <i class="fas fa-envelope text-3xl text-white"></i>
+                                        {% elif 'promocion' in module.name.lower or 'promotion' in module.name.lower %}
+                                            <i class="fas fa-tags text-3xl text-white"></i>
                                         {% elif 'sms' in module.name.lower %}
                                             <i class="fas fa-sms text-3xl text-white"></i>
                                         {% elif 'reporte' in module.name.lower or 'reports' in module.name.lower %}
@@ -618,9 +628,11 @@ document.addEventListener('DOMContentLoaded', () => {
                                         {% elif 'whatsapp' in module.name.lower %}
                                             <span class="font-medium text-gray-700">WhatsApp Business integrado:</span> Envía recordatorios, confirmaciones, promociones y atiende consultas directamente desde la plataforma.
                                         {% elif 'email' in module.name.lower or 'correo' in module.name.lower %}
-                                            <span class="font-medium text-gray-700">Email marketing:</span> Campañas personalizadas, plantillas profesionales, recordatorios automáticos y seguimiento de apertura.
+                                            <span class="font-medium text-gray-700">Email corporativo:</span> Envía facturas electrónicas a pacientes, nóminas por correo a empleados, invita miembros al equipo, campañas personalizadas y recordatorios automáticos.
                                         {% elif 'sms' in module.name.lower %}
                                             <span class="font-medium text-gray-700">Mensajería SMS:</span> Notificaciones instantáneas, recordatorios de citas y alertas importantes vía mensaje de texto.
+                                        {% elif 'promocion' in module.name.lower or 'promotion' in module.name.lower %}
+                                            <span class="font-medium text-gray-700">Promociones y Marketing:</span> Crea campañas automáticas, descuentos especiales, cupones, segmenta audiencias y aumenta las ventas con estrategias personalizadas.
                                         {% elif 'reporte' in module.name.lower and 'ventas' in module.name.lower %}
                                             <span class="font-medium text-gray-700">Reportes de ventas:</span> Análisis detallado de ingresos, productos más vendidos, tickets promedio y tendencias de venta con gráficos.
                                         {% elif 'reporte' in module.name.lower and 'paciente' in module.name.lower %}
