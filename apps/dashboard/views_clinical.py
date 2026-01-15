@@ -2391,43 +2391,7 @@ def visual_exam_pdf(request, patient_id, history_id):
         story.append(Paragraph(history.chief_complaint, normal_style))
         story.append(Spacer(1, 0.1*inch))
     
-    # AGUDEZA VISUAL
-    if (include_all or 'agudeza' in selected_sections) and (history.va_od_sc_distance or history.va_os_sc_distance):
-        story.append(Paragraph("<b>AGUDEZA VISUAL</b>", heading_style))
-        
-        va_data = [
-            ['', 'Sin Corrección', '', 'Con Corrección', ''],
-            ['', 'Lejos', 'Cerca', 'Lejos', 'Cerca'],
-            ['OD', 
-             history.va_od_sc_distance or '-', 
-             history.va_od_sc_near or '-',
-             history.va_od_cc_distance or '-',
-             history.va_od_cc_near or '-'],
-            ['OS', 
-             history.va_os_sc_distance or '-', 
-             history.va_os_sc_near or '-',
-             history.va_os_cc_distance or '-',
-             history.va_os_cc_near or '-'],
-        ]
-        
-        va_table = Table(va_data, colWidths=[0.8*inch, 1.5*inch, 1.5*inch, 1.5*inch, 1.5*inch])
-        va_table.setStyle(TableStyle([
-            ('BACKGROUND', (0, 0), (-1, 1), colors.Color(0.3, 0.4, 0.6)),
-            ('TEXTCOLOR', (0, 0), (-1, 1), colors.whitesmoke),
-            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-            ('FONTNAME', (0, 0), (-1, 1), 'Helvetica-Bold'),
-            ('FONTSIZE', (0, 0), (-1, 1), 7),
-            ('FONTSIZE', (0, 2), (-1, -1), 8),
-            ('GRID', (0, 0), (-1, -1), 1, colors.black),
-            ('SPAN', (1, 0), (2, 0)),
-            ('SPAN', (3, 0), (4, 0)),
-            ('TOPPADDING', (0, 0), (-1, -1), 3),
-            ('BOTTOMPADDING', (0, 0), (-1, -1), 3),
-        ]))
-        
-        story.append(va_table)
-        story.append(Spacer(1, 0.1*inch))
+    # AGUDEZA VISUAL - ELIMINADA (Ahora está en las columnas AV VL y AV VP de la tabla RX FINAL)
     
     # RX FINAL - PRESCRIPCIÓN DEFINITIVA
     if (include_all or 'refraccion' in selected_sections) and (history.final_rx_od_sphere or history.final_rx_os_sphere):
@@ -2499,22 +2463,26 @@ def visual_exam_pdf(request, patient_id, history_id):
         # Tabla de fórmula principal con diseño profesional
         formula_data = [
             # Encabezado con fondo azul
-            ['', 'ESFERA', 'CILINDRO', 'EJE', 'ADD'],
+            ['', 'ESFERA', 'CILINDRO', 'EJE', 'ADD', 'AV VL', 'AV VP'],
             # OJO DERECHO
             ['OD', 
              format_sphere(history.final_rx_od_sphere),
              format_cylinder(history.final_rx_od_cylinder),
              format_axis(history.final_rx_od_axis),
-             format_add(history.final_rx_od_add)],
+             format_add(history.final_rx_od_add),
+             history.va_od_cc_distance or '-',
+             history.va_od_cc_near or '-'],
             # OJO IZQUIERDO
             ['OI',
              format_sphere(history.final_rx_os_sphere),
              format_cylinder(history.final_rx_os_cylinder),
              format_axis(history.final_rx_os_axis),
-             format_add(history.final_rx_os_add)],
+             format_add(history.final_rx_os_add),
+             history.va_os_cc_distance or '-',
+             history.va_os_cc_near or '-'],
         ]
         
-        formula_table = Table(formula_data, colWidths=[0.8*inch, 1.4*inch, 1.4*inch, 1.0*inch, 0.8*inch])
+        formula_table = Table(formula_data, colWidths=[0.6*inch, 1.0*inch, 1.0*inch, 0.8*inch, 0.7*inch, 0.9*inch, 0.9*inch])
         
         formula_table.setStyle(TableStyle([
             # Encabezado - fondo azul
@@ -2576,7 +2544,7 @@ def visual_exam_pdf(request, patient_id, history_id):
     if (include_all or 'refraccion' in selected_sections):
         
         # Cuarta fila: Clase de Filtro
-        filter_value = history.lens_coating or "TRANSITIONS IG + ANTIRREFLEJO CRIZAL SAPPHIRE"
+        filter_value = history.lens_coating or ""
         info_row4 = [
             ['CLASE DE FILTRO:', filter_value]
         ]
@@ -2596,7 +2564,7 @@ def visual_exam_pdf(request, patient_id, history_id):
         story.append(Spacer(1, 0.1*inch))
         
         # Quinta fila: Observaciones (más alta para múltiples líneas)
-        observations = history.optical_prescription_notes or "USAR CORRECCIÓN ÓPTICA CON TRANSITIONS IG + ANTIRREFLEJO CRIZAL SAPPHIRE"
+        observations = history.observations or ""
         info_row5 = [
             ['OBSERVACIONES:', observations]
         ]
