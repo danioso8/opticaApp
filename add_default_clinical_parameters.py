@@ -76,6 +76,22 @@ DEFAULT_PARAMETERS = {
         {'name': 'Biomedics', 'code': 'BIOM', 'description': 'CooperVision'},
     ],
     
+    'contact_lens_material': [
+        {'name': 'Hidrogel', 'code': 'HYDR', 'description': 'Material blando estándar'},
+        {'name': 'Silicona Hidrogel', 'code': 'SIHY', 'description': 'Mayor permeabilidad al oxígeno'},
+        {'name': 'RGP (Gas Permeable)', 'code': 'RGPM', 'description': 'Material rígido permeable'},
+        {'name': 'PMMA', 'code': 'PMMA', 'description': 'Material rígido tradicional'},
+    ],
+    
+    'contact_lens_wearing': [
+        {'name': 'Uso Diario (Desechables)', 'code': 'DAIL', 'description': 'Se desechan después de un día'},
+        {'name': 'Reemplazo Quincenal', 'code': 'BIWK', 'description': 'Cambio cada 2 semanas'},
+        {'name': 'Reemplazo Mensual', 'code': 'MNTH', 'description': 'Cambio cada mes'},
+        {'name': 'Reemplazo Trimestral', 'code': 'QUAR', 'description': 'Cambio cada 3 meses'},
+        {'name': 'Uso Continuo (Día y Noche)', 'code': 'CONT', 'description': 'Hasta 30 días sin remover'},
+        {'name': 'Uso Ocasional', 'code': 'OCAS', 'description': 'Solo cuando sea necesario'},
+    ],
+    
     'frame_type': [
         {'name': 'Completo (Full Rim)', 'code': 'FULL', 'description': 'Aro completo alrededor del lente'},
         {'name': 'Semi al Aire (Semi-Rimless)', 'code': 'SEMI', 'description': 'Aro parcial'},
@@ -114,6 +130,24 @@ DEFAULT_PARAMETERS = {
         {'name': 'Higiene Palpebral', 'code': 'HYGI', 'description': 'Limpieza de párpados'},
         {'name': 'Compresas Tibias', 'code': 'COMP', 'description': 'Aplicación de calor húmedo'},
         {'name': 'Control Periódico', 'code': 'CONT', 'description': 'Seguimiento regular'},
+    ],
+    
+    'therapy': [
+        {'name': 'Omega 3', 'code': 'OMG3', 'description': 'Suplemento nutricional'},
+        {'name': 'Lágrimas Artificiales', 'code': 'TEAR', 'description': 'Lubricación ocular'},
+        {'name': 'Masaje de Glándulas Meibomio', 'code': 'MEIB', 'description': 'Estimulación glandular'},
+        {'name': 'Ejercicios de Acomodación', 'code': 'ACCO', 'description': 'Entrenamiento visual'},
+    ],
+    
+    'complementary_exam': [
+        {'name': 'Tomografía de Coherencia Óptica (OCT)', 'code': 'OCT', 'description': 'Imágenes de retina'},
+        {'name': 'Campo Visual Computarizado', 'code': 'CVF', 'description': 'Evaluación de campo visual'},
+        {'name': 'Topografía Corneal', 'code': 'TOPO', 'description': 'Mapeo de córnea'},
+        {'name': 'Paquimetría', 'code': 'PAQU', 'description': 'Medición del espesor corneal'},
+        {'name': 'Biometría Ocular', 'code': 'BIOM', 'description': 'Mediciones para cirugía de catarata'},
+        {'name': 'Angiografía Fluoresceínica', 'code': 'AFG', 'description': 'Estudio vascular retiniano'},
+        {'name': 'Ecografía Ocular', 'code': 'ECO', 'description': 'Ultrasonido ocular'},
+        {'name': 'Retinografía', 'code': 'RETI', 'description': 'Fotografía de retina'},
     ],
 }
 
