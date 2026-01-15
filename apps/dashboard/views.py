@@ -2431,6 +2431,7 @@ def clinical_parameter_create(request):
     """Crear nuevo parámetro clínico"""
     from apps.patients.models_clinical_config import ClinicalParameter
     from apps.patients.forms_clinical_config import ClinicalParameterForm
+    import traceback
     
     org = request.organization if hasattr(request, 'organization') and request.organization else None
     if not org:
@@ -2440,52 +2441,68 @@ def clinical_parameter_create(request):
         return redirect('organizations:list')
     
     if request.method == 'POST':
-        form = ClinicalParameterForm(request.POST)
-        if form.is_valid():
-            try:
-                parameter = form.save(commit=False)
-                parameter.organization = org
-                parameter.created_by = request.user
-                parameter.save()
-                
-                # Si es una petición AJAX, retornar JSON
+        try:
+            form = ClinicalParameterForm(request.POST)
+            if form.is_valid():
+                try:
+                    parameter = form.save(commit=False)
+                    parameter.organization = org
+                    parameter.created_by = request.user
+                    parameter.save()
+                    
+                    # Si es una petición AJAX, retornar JSON
+                    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                        return JsonResponse({
+                            'success': True,
+                            'message': f'Parámetro "{parameter.name}" creado exitosamente',
+                            'parameter': {
+                                'id': parameter.id,
+                                'name': parameter.name,
+                                'description': parameter.description or '',
+                                'dosage': parameter.dosage or '',
+                                'frequency': parameter.frequency or '',
+                                'duration': parameter.duration or '',
+                                'administration_route': parameter.get_administration_route_display() if parameter.administration_route else '',
+                                'category': parameter.category or '',
+                            }
+                        })
+                    
+                    messages.success(request, f'✅ Parámetro "{parameter.name}" creado exitosamente')
+                    return redirect('dashboard:clinical_parameters')
+                except Exception as e:
+                    # Manejar error de duplicado u otros errores de base de datos
+                    error_msg = str(e)
+                    if 'unique constraint' in error_msg.lower() or 'duplicate' in error_msg.lower():
+                        error_msg = f'Ya existe un parámetro con el nombre "{form.cleaned_data.get("name")}" en esta categoría'
+                    
+                    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                        return JsonResponse({
+                            'success': False, 
+                            'message': error_msg,
+                            'errors': {'__all__': error_msg}
+                        }, status=400)
+                    else:
+                        messages.error(request, f'❌ Error: {error_msg}')
+            else:
+                # Si hay errores y es AJAX
                 if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-                    return JsonResponse({
-                        'success': True,
-                        'message': f'Parámetro "{parameter.name}" creado exitosamente',
-                        'parameter': {
-                            'id': parameter.id,
-                            'name': parameter.name,
-                            'description': parameter.description or '',
-                            'dosage': parameter.dosage or '',
-                            'frequency': parameter.frequency or '',
-                            'duration': parameter.duration or '',
-                            'administration_route': parameter.get_administration_route_display() if parameter.administration_route else '',
-                            'category': parameter.category or '',
-                        }
-                    })
-                
-                messages.success(request, f'✅ Parámetro "{parameter.name}" creado exitosamente')
-                return redirect('dashboard:clinical_parameters')
-            except Exception as e:
-                # Manejar error de duplicado u otros errores de base de datos
-                error_msg = str(e)
-                if 'unique constraint' in error_msg.lower() or 'duplicate' in error_msg.lower():
-                    error_msg = f'Ya existe un parámetro con el nombre "{form.cleaned_data.get("name")}" en esta categoría'
-                
-                if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-                    return JsonResponse({
-                        'success': False, 
-                        'message': error_msg,
-                        'errors': {'__all__': error_msg}
-                    }, status=400)
-                else:
-                    messages.error(request, f'❌ Error: {error_msg}')
-        else:
-            # Si hay errores y es AJAX
+                    errors = {field: str(error[0]) for field, error in form.errors.items()}
+                    return JsonResponse({'success': False, 'message': 'Errores en el formulario', 'errors': errors}, status=400)
+        except Exception as e:
+            # Capturar cualquier error no manejado
+            error_msg = str(e)
+            traceback_str = traceback.format_exc()
+            print(f"Error en clinical_parameter_create: {error_msg}")
+            print(traceback_str)
+            
             if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-                errors = {field: str(error[0]) for field, error in form.errors.items()}
-                return JsonResponse({'success': False, 'message': 'Errores en el formulario', 'errors': errors}, status=400)
+                return JsonResponse({
+                    'success': False, 
+                    'message': f'Error interno: {error_msg}',
+                    'traceback': traceback_str if request.user.is_superuser else None
+                }, status=500)
+            else:
+                messages.error(request, f'❌ Error interno: {error_msg}')
     else:
         form = ClinicalParameterForm()
     
