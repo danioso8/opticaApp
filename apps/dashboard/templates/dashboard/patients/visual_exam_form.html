@@ -4355,12 +4355,20 @@ function submitLensType(event) {
             // Mostrar mensaje de éxito
             showSuccessMessage('Tipo de lente creado exitosamente');
         } else {
-            alert('Error al crear tipo de lente: ' + (data.error || 'Error desconocido'));
+            alert('Error al crear tipo de lente: ' + (data.message || data.error || 'Error desconocido'));
         }
     })
     .catch(error => {
-        console.error('Error:', error);
-        alert('Error al crear tipo de lente. Por favor intente nuevamente.');
+        console.error('Error capturado:', error);
+        let errorMsg = 'Error al crear tipo de lente.';
+        
+        if (error.message) {
+            errorMsg += ' ' + error.message;
+        } else if (error.errors) {
+            errorMsg += ' ' + JSON.stringify(error.errors);
+        }
+        
+        alert(errorMsg + ' Por favor intente nuevamente.');
     });
 }
 
