@@ -29,10 +29,6 @@
                     <p class="text-emerald-50">Conecta tu número de WhatsApp para enviar notificaciones automáticas</p>
                 </div>
                 <div class="text-left md:text-right">
-                    <span class="inline-block bg-white text-emerald-600 font-bold px-4 py-2 rounded-lg mb-2">
-                        <i class="fas fa-gift mr-2"></i> 100% GRATIS
-                    </span>
-                    <br>
                     <span id="server-status-badge">
                         {% if server_active %}
                             <span class="inline-block bg-white text-emerald-600 px-4 py-1 rounded-full text-sm">
@@ -236,13 +232,6 @@ Tu sistema de notificaciones está funcionando correctamente. ✅</textarea>
                         <li class="flex items-start">
                             <i class="fas fa-check-circle text-emerald-500 mr-3 mt-1 text-lg"></i>
                             <div>
-                                <p class="font-semibold text-gray-800">100% Gratis</p>
-                                <p class="text-sm text-gray-600">Sin costos mensuales ni por mensaje</p>
-                            </div>
-                        </li>
-                        <li class="flex items-start">
-                            <i class="fas fa-check-circle text-emerald-500 mr-3 mt-1 text-lg"></i>
-                            <div>
                                 <p class="font-semibold text-gray-800">Tu Propio Número</p>
                                 <p class="text-sm text-gray-600">Usa tu número de WhatsApp Business</p>
                             </div>
@@ -250,8 +239,8 @@ Tu sistema de notificaciones está funcionando correctamente. ✅</textarea>
                         <li class="flex items-start">
                             <i class="fas fa-check-circle text-emerald-500 mr-3 mt-1 text-lg"></i>
                             <div>
-                                <p class="font-semibold text-gray-800">Mensajes Ilimitados</p>
-                                <p class="text-sm text-gray-600">Envía todas las notificaciones que necesites</p>
+                                <p class="font-semibold text-gray-800">Mensajes según Plan</p>
+                                <p class="text-sm text-gray-600">Se cobra por mensaje consumido después del límite del plan</p>
                             </div>
                         </li>
                         <li class="flex items-start">
@@ -306,6 +295,26 @@ Tu sistema de notificaciones está funcionando correctamente. ✅</textarea>
 let statusInterval = null;
 
 function startWhatsAppSession() {
+    // Mostrar estado de Conectando inmediatamente
+    const statusContainer = document.getElementById('connection-status');
+    statusContainer.innerHTML = `
+        <div class="w-16 h-16 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
+            <div class="relative">
+                <i class="fas fa-spinner fa-spin text-white text-3xl"></i>
+            </div>
+        </div>
+        <h3 class="text-2xl font-bold text-blue-600 mb-2">Conectando...</h3>
+        <p class="text-gray-600">Estableciendo conexión con WhatsApp</p>
+    `;
+    
+    // Deshabilitar botón
+    const buttonsContainer = document.getElementById('status-buttons');
+    buttonsContainer.innerHTML = `
+        <button type="button" class="px-8 py-4 bg-gray-400 text-white font-bold rounded-xl shadow-xl cursor-not-allowed" disabled>
+            <i class="fas fa-spinner fa-spin mr-2"></i> Conectando...
+        </button>
+    `;
+    
     fetch("{% url 'dashboard:whatsapp_start_session' %}", {
         method: 'POST',
         headers: {
@@ -425,13 +434,25 @@ function updateStatus(statusData) {
             <h3 class="text-2xl font-bold text-amber-600 mb-2">Escanea el QR</h3>
             <p class="text-gray-600">Usa tu WhatsApp para escanear el código</p>
         `;
-    } else if (statusData.status === 'connecting') {
+    } else if (statusData.status === 'connecting' || statusData.status === 'initiating') {
         html = `
             <div class="w-16 h-16 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                <i class="fas fa-spinner fa-spin text-white text-3xl"></i>
+                <div class="relative">
+                    <i class="fas fa-spinner fa-spin text-white text-3xl"></i>
+                </div>
             </div>
             <h3 class="text-2xl font-bold text-blue-600 mb-2">Conectando...</h3>
             <p class="text-gray-600">Estableciendo conexión con WhatsApp</p>
+        `;
+    } else if (statusData.status === 'qr_pending' || statusData.status === 'syncing') {
+        html = `
+            <div class="w-16 h-16 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                <div class="relative">
+                    <i class="fas fa-sync fa-spin text-white text-3xl"></i>
+                </div>
+            </div>
+            <h3 class="text-2xl font-bold text-indigo-600 mb-2">Sincronizando...</h3>
+            <p class="text-gray-600">Finalizando configuración de WhatsApp</p>
         `;
     } else {
         html = `
