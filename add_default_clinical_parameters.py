@@ -149,6 +149,27 @@ DEFAULT_PARAMETERS = {
         {'name': 'Ecografía Ocular', 'code': 'ECO', 'description': 'Ultrasonido ocular'},
         {'name': 'Retinografía', 'code': 'RETI', 'description': 'Fotografía de retina'},
     ],
+    
+    'follow_up_reason': [
+        {'name': 'Control de Presión Intraocular', 'code': 'PIO', 'description': 'Seguimiento de glaucoma'},
+        {'name': 'Adaptación de Lentes', 'code': 'ADAP', 'description': 'Verificar adaptación a nueva corrección'},
+        {'name': 'Evolución de Tratamiento', 'code': 'EVOL', 'description': 'Evaluar respuesta al tratamiento'},
+        {'name': 'Control Postoperatorio', 'code': 'POST', 'description': 'Seguimiento después de cirugía'},
+        {'name': 'Control de Refracción', 'code': 'REFR', 'description': 'Verificar cambios en graduación'},
+        {'name': 'Valoración de Síntomas', 'code': 'SINT', 'description': 'Evaluar persistencia de síntomas'},
+    ],
+    
+    'referral_specialty': [
+        {'name': 'Oftalmología', 'code': 'OFTA', 'description': 'Médico oftalmólogo'},
+        {'name': 'Retina', 'code': 'RETI', 'description': 'Especialista en retina'},
+        {'name': 'Glaucoma', 'code': 'GLAU', 'description': 'Especialista en glaucoma'},
+        {'name': 'Córnea', 'code': 'CORN', 'description': 'Especialista en córnea'},
+        {'name': 'Estrabismo', 'code': 'ESTRA', 'description': 'Especialista en estrabismo'},
+        {'name': 'Pediatría Oftálmica', 'code': 'PEDI', 'description': 'Oftalmología pediátrica'},
+        {'name': 'Neuro-Oftalmología', 'code': 'NEUR', 'description': 'Especialista en neuro-oftalmología'},
+        {'name': 'Cirugía Refractiva', 'code': 'CIRR', 'description': 'Especialista en cirugía láser'},
+        {'name': 'Oculoplastia', 'code': 'OCUL', 'description': 'Cirugía plástica ocular'},
+    ],
 }
 
 
