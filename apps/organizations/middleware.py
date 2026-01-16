@@ -1,6 +1,7 @@
 from django.utils.deprecation import MiddlewareMixin
 from django.shortcuts import redirect
 from django.urls import reverse
+from django.contrib import messages
 from .models import Organization, OrganizationMember
 
 
@@ -263,6 +264,10 @@ class PlanFeatureMiddleware(MiddlewareMixin):
     
     def process_request(self, request):
         """Verifica si el usuario tiene acceso a la característica"""
+        
+        # Saltar verificación para URLs de API (no tienen MessageMiddleware)
+        if request.path.startswith('/api/'):
+            return None
         
         # Saltar verificación para URLs exentas
         if any(request.path.startswith(url) for url in self.EXEMPT_URLS):

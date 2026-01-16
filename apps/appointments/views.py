@@ -1,5 +1,5 @@
 from rest_framework import viewsets, status
-from rest_framework.decorators import action, api_view, permission_classes, throttle_classes
+from rest_framework.decorators import action, api_view, permission_classes, throttle_classes, authentication_classes
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from django.views.decorators.csrf import csrf_exempt
@@ -101,8 +101,10 @@ class AppointmentViewSet(viewsets.ModelViewSet):
 
 
 @api_view(['GET'])
+@authentication_classes([])  # Sin autenticación requerida
 @permission_classes([AllowAny])
 @throttle_classes([])  # Desactivar throttling para endpoint público
+@csrf_exempt
 def available_dates(request):
     """
     API pública para obtener fechas disponibles
@@ -183,8 +185,10 @@ def available_dates(request):
 
 
 @api_view(['GET'])
+@authentication_classes([])  # Sin autenticación requerida
 @permission_classes([AllowAny])
 @throttle_classes([])  # Desactivar throttling para endpoint público
+@csrf_exempt
 def available_slots(request):
     """
     API pública para obtener horarios disponibles de una fecha
@@ -236,6 +240,7 @@ def available_slots(request):
 
 
 @api_view(['POST'])
+@authentication_classes([])  # Sin autenticación requerida
 @permission_classes([AllowAny])
 @throttle_classes([])  # Desactivar throttling para endpoint público
 @csrf_exempt  # Permitir requests desde landing page sin token CSRF
@@ -482,7 +487,37 @@ def book_patient_appointment(request):
     }
     """
     import logging
+    import re
+    from datetime import datetime
     logger = logging.getLogger(__name__)
+    
+    def convert_12h_to_24h(time_str):
+        """
+        Convierte formato 12h (10:30 AM) a 24h (10:30:00)
+        Si ya está en formato 24h, lo retorna sin cambios
+        """
+        if not time_str:
+            return time_str
+        
+        # Si ya está en formato 24h (HH:MM o HH:MM:SS)
+        if not re.search(r'AM|PM', time_str, re.IGNORECASE):
+            # Asegurar formato HH:MM:SS
+            parts = time_str.split(':')
+            if len(parts) == 2:
+                return f"{time_str}:00"
+            return time_str
+        
+        # Convertir 12h a 24h
+        try:
+            time_obj = datetime.strptime(time_str, '%I:%M %p')
+            return time_obj.strftime('%H:%M:%S')
+        except ValueError:
+            # Si falla, intentar sin segundos
+            try:
+                time_obj = datetime.strptime(time_str, '%I:%M:%S %p')
+                return time_obj.strftime('%H:%M:%S')
+            except ValueError:
+                return time_str
     
     try:
         if not hasattr(request, 'organization') or not request.organization:
@@ -499,8 +534,12 @@ def book_patient_appointment(request):
         notes = request.data.get('notes', '')
         doctor_id = request.data.get('doctor_id', None)
         
+        # Convertir hora de 12h a 24h si es necesario
+        appointment_time = convert_12h_to_24h(appointment_time)
+        
         # Debug logs
         logger.info(f"book_patient_appointment called with doctor_id: {doctor_id}")
+        logger.info(f"Converted appointment_time: {appointment_time}")
         logger.info(f"Full request data: {request.data}")
         
         # Validar campos requeridos
