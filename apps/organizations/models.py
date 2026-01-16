@@ -1,6 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import User
 from django.utils import timezone
+from apps.core.storage_utils import OrganizationUploadPath
 from datetime import timedelta
 
 
@@ -304,7 +305,7 @@ class Organization(models.Model):
     website = models.URLField(blank=True, verbose_name='Sitio Web')
     
     # Configuración de marca
-    logo = models.ImageField(upload_to='organizations/logos/', blank=True, null=True)
+    logo = models.ImageField(upload_to=OrganizationUploadPath('logos'), blank=True, null=True)
     primary_color = models.CharField(max_length=7, default='#007bff', help_text='Color primario en hexadecimal')
     
     # Estado
@@ -719,7 +720,7 @@ class LandingPageConfig(models.Model):
     
     # Logo de la organización
     logo = models.ImageField(
-        upload_to='landing/logos/', 
+        upload_to=OrganizationUploadPath('landing/logos'), 
         blank=True, 
         null=True,
         verbose_name='Logo',
@@ -879,35 +880,35 @@ class LandingPageConfig(models.Model):
     
     # Imágenes de la landing page
     hero_image = models.ImageField(
-        upload_to='landing/hero/', 
+        upload_to=OrganizationUploadPath('landing/hero'), 
         blank=True, 
         null=True,
         verbose_name='Imagen Principal (Hero)',
         help_text='Recomendado: 1920x1080px'
     )
     service_image_1 = models.ImageField(
-        upload_to='landing/services/', 
+        upload_to=OrganizationUploadPath('landing/services'), 
         blank=True, 
         null=True,
         verbose_name='Imagen Servicio 1 (Examen Visual)',
         help_text='Recomendado: 612x612px'
     )
     service_image_2 = models.ImageField(
-        upload_to='landing/services/', 
+        upload_to=OrganizationUploadPath('landing/services'), 
         blank=True, 
         null=True,
         verbose_name='Imagen Servicio 2 (Monturas)',
         help_text='Recomendado: 612x612px'
     )
     service_image_3 = models.ImageField(
-        upload_to='landing/services/', 
+        upload_to=OrganizationUploadPath('landing/services'), 
         blank=True, 
         null=True,
         verbose_name='Imagen Servicio 3 (Lentes de Contacto)',
         help_text='Recomendado: 612x612px'
     )
     service_image_4 = models.ImageField(
-        upload_to='landing/services/', 
+        upload_to=OrganizationUploadPath('landing/services'), 
         blank=True, 
         null=True,
         verbose_name='Imagen Servicio 4 (Lentes de Sol)',

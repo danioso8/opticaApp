@@ -1,5 +1,6 @@
 from django.db import models
 from apps.organizations.base_models import TenantModel
+from apps.core.storage_utils import OrganizationUploadPath
 
 
 class Doctor(TenantModel):
@@ -56,8 +57,8 @@ class Doctor(TenantModel):
     sunday_schedule = models.CharField(max_length=100, verbose_name='Domingo', blank=True)
     
     # Información Adicional
-    signature = models.ImageField(upload_to='doctors/signatures/', verbose_name='Firma Digital', blank=True, null=True)
-    photo = models.ImageField(upload_to='doctors/photos/', verbose_name='Foto', blank=True, null=True)
+    signature = models.ImageField(upload_to=OrganizationUploadPath('doctors/signatures'), verbose_name='Firma Digital', blank=True, null=True)
+    photo = models.ImageField(upload_to=OrganizationUploadPath('doctors/photos'), verbose_name='Foto', blank=True, null=True)
     bio = models.TextField(verbose_name='Biografía', blank=True, help_text='Breve descripción profesional')
     notes = models.TextField(verbose_name='Notas', blank=True)
     

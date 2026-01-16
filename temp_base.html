@@ -1,0 +1,2009 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Dashboard{% endblock %} - Óptica</title>
+    
+    <!-- Tailwind CSS Compiled -->
+    {% load static %}
+    {% load plan_features %}
+    {% load plan_permissions %}
+    <link rel="stylesheet" href="{% static 'dashboard/css/output.css' %}">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <link rel="stylesheet" href="{% static 'dashboard/css/custom.css' %}">
+    
+    <style>
+        /* Animación suave para el sidebar móvil */
+        .sidebar-mobile {
+            transition: transform 0.3s ease-in-out;
+        }
+        @media (max-width: 768px) {
+            .sidebar-hidden {
+                transform: translateX(-100%);
+            }
+        }
+        /* Rotación del icono del submenu */
+        .rotate-180 {
+            transform: rotate(180deg);
+        }
+        
+        /* Estilos para mini-sidebar */
+        #sidebar {
+            transition: width 0.3s ease-in-out;
+        }
+        
+        #sidebar.mini {
+            width: 4rem;
+        }
+        
+        #sidebar.mini .sidebar-text,
+        #sidebar.mini .sidebar-brand-text,
+        #sidebar.mini .user-info {
+            opacity: 0;
+            display: none;
+        }
+        
+        #sidebar.mini .submenu-icon {
+            display: none;
+        }
+        
+        #sidebar.mini .sidebar-submenu {
+            display: none !important;
+        }
+        
+        #sidebar.mini .sidebar-brand {
+            justify-content: center;
+        }
+        
+        #sidebar.mini nav a,
+        #sidebar.mini nav button {
+            justify-content: center;
+            padding-left: 1rem;
+            padding-right: 1rem;
+        }
+        
+        #sidebar.mini .user-section {
+            padding-left: 1rem;
+            padding-right: 1rem;
+            width: 4rem;
+        }
+        
+        #sidebar.mini .user-avatar {
+            margin-left: 0;
+        }
+        
+        /* Ocultar el mensaje cuando no hay organización en mini sidebar */
+        #sidebar.mini nav > div:not(.appointments-menu):not(.configuration-menu) {
+            display: block;
+        }
+        
+        /* Tooltip para mini sidebar */
+        .sidebar-tooltip {
+            position: absolute;
+            left: 100%;
+            top: 50%;
+            transform: translateY(-50%);
+            background-color: #1e1b4b;
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 0.375rem;
+            margin-left: 0.5rem;
+            white-space: nowrap;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s;
+            z-index: 50;
+            font-size: 0.875rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        #sidebar.mini nav a:hover .sidebar-tooltip,
+        #sidebar.mini nav button:hover .sidebar-tooltip {
+            opacity: 1;
+        }
+        
+        /* Ocultar tooltips en sidebar normal */
+        #sidebar:not(.mini) .sidebar-tooltip {
+            display: none;
+        }
+        
+        /* Ajustar iconos en mini sidebar */
+        #sidebar.mini i.fas,
+        #sidebar.mini i.fab {
+            margin-right: 0;
+        }
+        
+        #sidebar:not(.mini) i.fas,
+        #sidebar:not(.mini) i.fab {
+            margin-right: 0.75rem;
+        }
+        
+        /* ========================================
+           MODO EDICIÓN DEL SIDEBAR
+           ======================================== */
+        
+        /* Modo edición activo */
+        #sidebar.edit-mode .sidebar-nav-item {
+            cursor: grab;
+            position: relative;
+            border: 2px solid transparent;
+            transition: all 0.2s ease;
+            margin: 2px 8px;
+            border-radius: 6px;
+        }
+        
+        #sidebar.edit-mode .sidebar-nav-item:hover {
+            border-color: #60a5fa;
+            background: rgba(96, 165, 250, 0.1) !important;
+        }
+        
+        /* Drag handle visible en modo edición */
+        #sidebar.edit-mode .drag-handle {
+            opacity: 1 !important;
+        }
+        
+        .drag-handle {
+            opacity: 0;
+            transition: opacity 0.2s;
+            margin-right: 8px;
+            cursor: grab;
+            color: rgba(255, 255, 255, 0.5);
+        }
+        
+        /* Item siendo arrastrado */
+        .sidebar-nav-item.dragging {
+            opacity: 0.5;
+            cursor: grabbing !important;
+            transform: rotate(3deg);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+        }
+        
+        /* Zona de drop activa */
+        .sidebar-nav-item.drop-target {
+            border-color: #10b981 !important;
+            background: rgba(16, 185, 129, 0.15) !important;
+            animation: pulse-border 1s infinite;
+        }
+        
+        @keyframes pulse-border {
+            0%, 100% { border-color: #10b981; }
+            50% { border-color: #34d399; }
+        }
+        
+        /* Indicador de modo edición */
+        #edit-mode-btn.active {
+            background-color: #3b82f6 !important;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
+        }
+        
+        #edit-mode-btn.active #edit-mode-icon {
+            animation: rotate-icon 0.5s ease;
+        }
+        
+        @keyframes rotate-icon {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        /* Grupo de items */
+        .sidebar-group {
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.15) 0%, rgba(118, 75, 162, 0.15) 100%);
+            border-left: 3px solid #818cf8;
+            border-radius: 8px;
+            margin: 4px 8px;
+            padding: 4px;
+        }
+        
+        .sidebar-group-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 12px;
+            cursor: pointer;
+            border-radius: 6px;
+            transition: background 0.2s;
+        }
+        
+        .sidebar-group-header:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+        
+        .sidebar-group-items {
+            padding: 4px 8px;
+        }
+        
+        .sidebar-group-name {
+            font-weight: 600;
+            color: #c7d2fe;
+        }
+        
+        /* Drop zone para crear grupo */
+        .create-group-zone {
+            background: rgba(16, 185, 129, 0.1);
+            border: 2px dashed #10b981;
+            border-radius: 6px;
+            margin: 8px;
+            padding: 16px;
+            text-align: center;
+            display: none;
+            animation: fade-in 0.3s;
+        }
+        
+        #sidebar.edit-mode .create-group-zone.show {
+            display: block;
+        }
+        
+        @keyframes fade-in {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        /* Botón eliminar grupo */
+        .delete-group-btn {
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+        
+        .sidebar-group:hover .delete-group-btn {
+            opacity: 1;
+        }
+    </style>
+    
+    {% block extra_css %}{% endblock %}
+</head>
+<body class="bg-gray-100">
+    
+    {% if user.is_authenticated %}
+    <!-- Mobile Header -->
+    <div class="md:hidden fixed top-0 left-0 right-0 bg-indigo-900 text-white z-50 shadow-lg">
+        <div class="flex items-center justify-between p-4">
+            <button onclick="toggleSidebar()" class="text-white focus:outline-none">
+                <i class="fas fa-bars text-2xl"></i>
+            </button>
+            <div class="flex-1 text-center mx-2">
+                <h1 class="text-lg font-bold">
+                    <i class="fas fa-glasses mr-2"></i>OCEANO OPTICO
+                </h1>
+                {% if request.organization %}
+                <p class="text-xs text-indigo-200 truncate">
+                    <i class="fas fa-building text-xs"></i> {{ request.organization.name }}
+                </p>
+                {% endif %}
+            </div>
+            <!-- User Menu Mobile -->
+            <div class="relative">
+                <button onclick="toggleMobileUserMenu()" class="text-white focus:outline-none">
+                    <div class="w-8 h-8 bg-indigo-700 rounded-full flex items-center justify-center">
+                        <i class="fas fa-user"></i>
+                    </div>
+                </button>
+                <!-- Dropdown Mobile -->
+                <div id="mobile-user-dropdown" class="hidden absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-lg border border-gray-200 py-2">
+                    <div class="px-4 py-3 border-b border-gray-200">
+                        <p class="text-sm font-semibold text-gray-800">{{ user.get_full_name|default:user.username }}</p>
+                        <p class="text-xs text-gray-500 mt-1">{{ user.email }}</p>
+                    </div>
+                    
+                    <!-- Organization Selector Mobile -->
+                    {% load organizations_extras %}
+                    {% get_user_organizations user as user_organizations %}
+                    {% if user_organizations|length > 1 %}
+                    <div class="px-4 py-3 border-b border-gray-200">
+                        <p class="text-xs font-semibold text-gray-600 mb-2 uppercase">
+                            <i class="fas fa-building mr-1"></i>Organización
+                        </p>
+                        <div class="space-y-1">
+                            {% for org_membership in user_organizations %}
+                            <a href="{% url 'organizations:switch' org_membership.organization.id %}?next={{ request.path }}" 
+                               class="block px-3 py-2 rounded-lg text-xs transition-colors {% if request.organization.id == org_membership.organization.id %}bg-indigo-100 text-indigo-800 font-semibold{% else %}text-gray-700 hover:bg-gray-100{% endif %}">
+                                {% if request.organization.id == org_membership.organization.id %}
+                                <i class="fas fa-check-circle text-indigo-600 mr-1"></i>
+                                {% else %}
+                                <i class="far fa-circle text-gray-400 mr-1"></i>
+                                {% endif %}
+                                {{ org_membership.organization.name }}
+                            </a>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    <div class="py-1">
+                        <a href="{% url 'dashboard:user_profile' %}" class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                            <i class="fas fa-user-circle w-5 mr-3 text-gray-600"></i>
+                            Mi Perfil
+                        </a>
+                        <a href="{% url 'dashboard:user_security' %}" class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                            <i class="fas fa-lock w-5 mr-3 text-gray-600"></i>
+                            Seguridad
+                        </a>
+                        <a href="{% url 'dashboard:customize_menu' %}" class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                            <i class="fas fa-sliders-h w-5 mr-3 text-gray-600"></i>
+                            Personalizar Menú
+                        </a>
+                        {% if is_owner_or_admin %}
+                        <div class="border-t border-gray-200 my-1"></div>
+                        <a href="{% url 'dashboard:my_plan' %}" class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                            <i class="fas fa-puzzle-piece w-5 mr-3 text-indigo-600"></i>
+                            Mis Módulos
+                        </a>
+                        <a href="{% url 'dashboard:module_marketplace' %}" class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                            <i class="fas fa-store w-5 mr-3 text-indigo-600"></i>
+                            Catálogo
+                        </a>
+                        {% endif %}
+                        <div class="border-t border-gray-200 my-1"></div>
+                        <a href="{% url 'dashboard:logout' %}" class="flex items-center px-4 py-2 text-sm text-red-600 hover:bg-red-50">
+                            <i class="fas fa-sign-out-alt w-5 mr-3"></i>
+                            Cerrar Sesión
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Overlay para móvil -->
+    <div id="sidebar-overlay" class="fixed inset-0 bg-black bg-opacity-50 z-40 hidden md:hidden" onclick="toggleSidebar()"></div>
+    
+    <!-- Sidebar -->
+    <div class="flex h-screen pt-16 md:pt-0">
+        <!-- Sidebar -->
+        <aside id="sidebar" class="sidebar-mobile sidebar-hidden md:sidebar-mobile md:translate-x-0 fixed md:relative w-64 bg-indigo-900 text-white flex-shrink-0 h-full z-40 overflow-y-auto">
+            <div class="p-4 sidebar-brand flex items-center justify-between border-b border-indigo-800">
+                <div class="flex-1">
+                    {% if request.organization %}
+                    <h1 class="text-xl font-bold sidebar-brand-text truncate" title="{{ request.organization.name }}">
+                        {{ request.organization.name }}
+                    </h1>
+                    <p class="text-indigo-300 text-xs sidebar-brand-text">Panel Administrativo</p>
+                    {% else %}
+                    <h1 class="text-2xl font-bold">
+                        <i class="fas fa-glasses mr-2"></i><span class="sidebar-brand-text">OpticaApp</span>
+                    </h1>
+                    <p class="text-indigo-300 text-sm sidebar-brand-text">Panel Administrativo</p>
+                    {% endif %}
+                </div>
+                <div class="flex items-center gap-2 flex-shrink-0">
+                    <!-- Botón Editar Menú -->
+                    <button onclick="toggleEditMode()" id="edit-mode-btn" class="hidden md:block text-white hover:bg-indigo-800 rounded p-2 focus:outline-none transition-colors" title="Personalizar menú">
+                        <i id="edit-mode-icon" class="fas fa-sliders-h"></i>
+                    </button>
+                    <!-- Botón toggle mini-sidebar (solo visible en desktop) -->
+                    <button onclick="toggleMiniSidebar()" class="hidden md:block text-white hover:bg-indigo-800 rounded p-2 focus:outline-none">
+                        <i id="toggle-mini-icon" class="fas fa-bars"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <nav class="mt-6" id="sidebar-nav">
+                <!-- Mis Empresas - Solo Owner/Admin -->
+                {% if is_owner_or_admin %}
+                <a href="{% url 'organizations:list' %}" class="flex items-center px-4 py-3 hover:bg-indigo-800 {% if 'organizations' in request.path and 'list' in request.path %}bg-indigo-800{% endif %} relative sidebar-nav-item" data-item-id="organizations">
+                    <i class="fas fa-building mr-3"></i>
+                    <span class="sidebar-text">Mis Empresas</span>
+                    <span class="sidebar-tooltip">Mis Empresas</span>
+                </a>
+                
+                <!-- Mis Módulos - Acceso rápido -->
+                {% if request.organization %}
+                <a href="{% url 'dashboard:my_plan' %}" class="flex items-center px-4 py-3 hover:bg-indigo-800 {% if 'my_plan' in request.path or 'my-plan' in request.path %}bg-indigo-800{% endif %} relative">
+                    <i class="fas fa-puzzle-piece mr-3"></i>
+                    <span class="sidebar-text">Mis Módulos</span>
+                    <span class="sidebar-tooltip">Mis Módulos</span>
+                </a>
+                {% endif %}
+                {% endif %}
+                
+                {% if request.organization %}
+                <!-- Solo visible si hay organización seleccionada -->
+                <div class="border-t border-indigo-800 my-2"></div>
+                
+                <a href="{% url 'dashboard:home' %}" class="flex items-center px-4 py-3 hover:bg-indigo-800 {% if request.resolver_match.url_name == 'home' %}bg-indigo-800{% endif %} relative">
+                    <i class="fas fa-home mr-3"></i>
+                    <span class="sidebar-text">Dashboard</span>
+                    <span class="sidebar-tooltip">Dashboard</span>
+                </a>
+                
+                <a href="{% url 'sales:dashboard' %}" class="flex items-center px-4 py-3 hover:bg-indigo-800 {% if 'sales' in request.path %}bg-indigo-800{% endif %} relative">
+                    <i class="fas fa-chart-line mr-3"></i>
+                    <span class="sidebar-text">Panel de Ventas</span>
+                    <span class="sidebar-tooltip">Panel de Ventas</span>
+                </a>
+                
+                <!-- Facturación y Finanzas -->
+                <div class="sales-menu">
+                    <button type="button" onclick="toggleSubmenu('sales-submenu')" class="flex items-center justify-between w-full px-4 py-3 hover:bg-indigo-800 {% if 'billing' in request.path or 'invoices' in request.path or 'cash' in request.path %}bg-indigo-800{% endif %} relative">
+                        <div class="flex items-center">
+                            <i class="fas fa-file-invoice-dollar mr-3"></i>
+                            <span class="sidebar-text">Facturación y Finanzas</span>
+                        </div>
+                        <i class="fas fa-chevron-down text-sm transition-transform duration-200 submenu-icon" id="sales-submenu-icon"></i>
+                        <span class="sidebar-tooltip">Facturación y Finanzas</span>
+                    </button>
+                    <div id="sales-submenu" class="bg-indigo-950 hidden sidebar-submenu">
+                        <!-- Facturación Básica (sin DIAN) -->
+                        <a href="{% url 'billing:invoice_list' %}" class="flex items-center px-8 py-2 hover:bg-indigo-800 text-sm relative">
+                            <i class="fas fa-file-invoice mr-3"></i>
+                            <span class="sidebar-text">Facturación Básica</span>
+                            <span class="sidebar-tooltip">Facturas normales (sin DIAN)</span>
+                        </a>
+                        
+                        <!-- Facturas Electrónicas DIAN -->
+                        {% if user_perms.all_access or user_perms.invoices_basic.can_view %}
+                        <a href="{% url 'billing:invoice_list' %}" class="flex items-center px-8 py-2 hover:bg-indigo-800 text-sm relative">
+                            <i class="fas fa-file-invoice-dollar mr-3 text-purple-300"></i>
+                            <span class="sidebar-text">Facturas Electrónicas</span>
+                            {% show_feature_lock 'electronic_invoicing' 'Facturas Electrónicas' %}
+                        </a>
+                        {% endif %}
+                        
+                        <!-- Finanzas / Caja (submenú anidado) -->
+                        {% if is_owner_or_admin %}
+                        <div class="border-t border-indigo-800 my-1"></div>
+                        <button type="button" onclick="toggleSubmenu('finance-nested-submenu')" class="flex items-center justify-between w-full px-8 py-2 hover:bg-indigo-800 text-sm relative">
+                            <div class="flex items-center">
+                                <i class="fas fa-cash-register mr-3 text-emerald-300"></i>
+                                <span class="sidebar-text">Caja y Tesorería</span>
+                            </div>
+                            <i class="fas fa-chevron-down text-xs transition-transform duration-200" id="finance-nested-submenu-icon"></i>
+                        </button>
+                        <div id="finance-nested-submenu" class="bg-indigo-900 hidden">
+                            <a href="{% url 'cash_register:dashboard' %}" class="flex items-center px-12 py-2 hover:bg-indigo-800 text-sm relative">
+                                <i class="fas fa-tachometer-alt mr-2 text-xs"></i>
+                                <span class="sidebar-text">Dashboard</span>
+                            </a>
+                            <a href="{% url 'cash_register:register_list' %}" class="flex items-center px-12 py-2 hover:bg-indigo-800 text-sm relative">
+                                <i class="fas fa-cash-register mr-2 text-xs"></i>
+                                <span class="sidebar-text">Cajas</span>
+                            </a>
+                            <a href="{% url 'cash_register:movement_list' %}" class="flex items-center px-12 py-2 hover:bg-indigo-800 text-sm relative">
+                                <i class="fas fa-exchange-alt mr-2 text-xs"></i>
+                                <span class="sidebar-text">Movimientos</span>
+                            </a>
+                            <a href="{% url 'cash_register:closure_list' %}" class="flex items-center px-12 py-2 hover:bg-indigo-800 text-sm relative">
+                                <i class="fas fa-clipboard-check mr-2 text-xs"></i>
+                                <span class="sidebar-text">Cierres</span>
+                            </a>
+                            <a href="{% url 'cash_register:reports' %}" class="flex items-center px-12 py-2 hover:bg-indigo-800 text-sm relative">
+                                <i class="fas fa-chart-bar mr-2 text-xs"></i>
+                                <span class="sidebar-text">Reportes</span>
+                            </a>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                {% if user_perms.all_access or user_perms.doctors.can_view %}
+                <a href="{% url 'dashboard:doctors_list' %}" class="flex items-center px-4 py-3 hover:bg-indigo-800 {% if 'doctors' in request.path %}bg-indigo-800{% endif %} relative">
+                    <i class="fas fa-user-md mr-3"></i>
+                    <span class="sidebar-text">Doctores / Optómetras</span>
+                    <span class="sidebar-tooltip">Doctores / Optómetras</span>
+                </a>
+                {% endif %}
+                
+                <!-- Gestión de Nómina y Empleados (Menú Desplegable) -->
+                {% if is_owner_or_admin %}
+                <div class="payroll-menu">
+                    <button type="button" onclick="toggleSubmenu('payroll-submenu')" class="flex items-center justify-between w-full px-4 py-3 hover:bg-indigo-800 {% if 'payroll' in request.path or 'employees' in request.path %}bg-indigo-800{% endif %} relative">
+                        <div class="flex items-center">
+                            <i class="fas fa-users-cog mr-3"></i>
+                            <span class="sidebar-text">Nómina y Empleados</span>
+                        </div>
+                        <i class="fas fa-chevron-down text-sm transition-transform duration-200 submenu-icon" id="payroll-submenu-icon"></i>
+                        <span class="sidebar-tooltip">Nómina y Empleados</span>
+                    </button>
+                    <div id="payroll-submenu" class="bg-indigo-950 hidden sidebar-submenu">
+                        <!-- Empleados -->
+                        <a href="{% url 'dashboard:employee_list' %}" class="flex items-center px-8 py-2 hover:bg-indigo-800 text-sm {% if 'employees' in request.path and 'payroll' not in request.path %}bg-indigo-800{% endif %} relative">
+                            <i class="fas fa-users mr-3"></i>
+                            <span class="sidebar-text">Empleados</span>
+                            <span class="sidebar-tooltip">Empleados</span>
+                        </a>
+                        
+                        <!-- Nómina -->
+                        <a href="{% url 'payroll:payroll_dashboard' %}" class="flex items-center px-8 py-2 hover:bg-indigo-800 text-sm {% if 'payroll/payroll_dashboard' in request.path %}bg-indigo-800{% endif %} relative">
+                            <i class="fas fa-money-check-alt mr-3"></i>
+                            <span class="sidebar-text">Nómina Electrónica</span>
+                            <span class="sidebar-tooltip">Nómina Electrónica</span>
+                            {% show_feature_lock 'payroll_dian' 'Nómina Electrónica DIAN' %}
+                        </a>
+                        
+                        <a href="{% url 'payroll:employee_list' %}" class="flex items-center px-8 py-2 hover:bg-indigo-800 text-sm {% if 'payroll/empleados' in request.path %}bg-indigo-800{% endif %} relative">
+                            <i class="fas fa-file-invoice-dollar mr-3"></i>
+                            <span class="sidebar-text">Empleados Nómina</span>
+                            <span class="sidebar-tooltip">Empleados Nómina</span>
+                        </a>
+                        
+                        <!-- Workflow -->
+                        <a href="{% url 'payroll:workflow_dashboard' %}" class="flex items-center px-8 py-2 hover:bg-indigo-800 text-sm {% if 'workflow' in request.path %}bg-indigo-800{% endif %} relative">
+                            <i class="fas fa-tasks mr-3"></i>
+                            <span class="sidebar-text">Workflow Nómina</span>
+                            <span class="sidebar-tooltip">Workflow Nómina</span>
+                        </a>
+                        
+                        <!-- NUEVOS: Prestaciones Sociales -->
+                        <div class="border-t border-indigo-800 my-1"></div>
+                        
+                        <a href="{% url 'payroll:contract_list' %}" class="flex items-center px-8 py-2 hover:bg-indigo-800 text-sm {% if 'contratos' in request.path %}bg-indigo-800{% endif %} relative">
+                            <i class="fas fa-file-contract mr-3"></i>
+                            <span class="sidebar-text">Contratos Laborales</span>
+                            <span class="sidebar-tooltip">Contratos Laborales</span>
+                        </a>
+                        
+                        <a href="{% url 'payroll:vacation_list' %}" class="flex items-center px-8 py-2 hover:bg-indigo-800 text-sm {% if 'vacaciones' in request.path %}bg-indigo-800{% endif %} relative">
+                            <i class="fas fa-umbrella-beach mr-3"></i>
+                            <span class="sidebar-text">Vacaciones</span>
+                            <span class="sidebar-tooltip">Vacaciones</span>
+                        </a>
+                        
+                        <a href="{% url 'payroll:loan_list' %}" class="flex items-center px-8 py-2 hover:bg-indigo-800 text-sm {% if 'prestamos' in request.path %}bg-indigo-800{% endif %} relative">
+                            <i class="fas fa-hand-holding-usd mr-3"></i>
+                            <span class="sidebar-text">Préstamos</span>
+                            <span class="sidebar-tooltip">Préstamos Empleados</span>
+                        </a>
+                        
+                        <a href="{% url 'payroll:social_benefits_dashboard' %}" class="flex items-center px-8 py-2 hover:bg-indigo-800 text-sm {% if 'prestaciones' in request.path %}bg-indigo-800{% endif %} relative">
+                            <i class="fas fa-piggy-bank mr-3"></i>
+                            <span class="sidebar-text">Prestaciones Sociales</span>
+                            <span class="sidebar-tooltip">Prestaciones Sociales</span>
+                        </a>
+                        
+                        <a href="{% url 'payroll:provision_list' %}" class="flex items-center px-8 py-2 hover:bg-indigo-800 text-sm {% if 'provisiones' in request.path %}bg-indigo-800{% endif %} relative">
+                            <i class="fas fa-calculator mr-3"></i>
+                            <span class="sidebar-text">Provisiones</span>
+                            <span class="sidebar-tooltip">Provisiones Mensuales</span>
+                        </a>
+                        
+                        <a href="{% url 'payroll:pila_list' %}" class="flex items-center px-8 py-2 hover:bg-indigo-800 text-sm {% if 'pila' in request.path %}bg-indigo-800{% endif %} relative">
+                            <i class="fas fa-file-medical-alt mr-3"></i>
+                            <span class="sidebar-text">PILA</span>
+                            <span class="sidebar-tooltip">Planillas PILA</span>
+                        </a>
+                        
+                        <!-- NUEVO: Incapacidades -->
+                        <a href="{% url 'payroll:incapacity_list' %}" class="flex items-center px-8 py-2 hover:bg-indigo-800 text-sm {% if 'incapacidades' in request.path %}bg-indigo-800{% endif %} relative">
+                            <i class="fas fa-notes-medical mr-3"></i>
+                            <span class="sidebar-text">Incapacidades</span>
+                            <span class="sidebar-tooltip">Incapacidades Médicas</span>
+                        </a>
+                        
+                        <a href="{% url 'payroll:concept_list' %}" class="flex items-center px-8 py-2 hover:bg-indigo-800 text-sm {% if 'conceptos' in request.path %}bg-indigo-800{% endif %} relative">
+                            <i class="fas fa-tags mr-3"></i>
+                            <span class="sidebar-text">Conceptos Nómina</span>
+                            <span class="sidebar-tooltip">Conceptos Devengados y Deducciones</span>
+                        </a>
+                    </div>
+                </div>
+                {% endif %}
+                
+                <!-- Inventario y Productos (Menú Desplegable) -->
+                {% if is_owner_or_admin %}
+                <div class="inventory-menu">
+                    <button type="button" onclick="toggleSubmenu('inventory-submenu')" class="flex items-center justify-between w-full px-4 py-3 hover:bg-indigo-800 {% if 'inventory' in request.path or 'product' in request.path or 'supplier' in request.path %}bg-indigo-800{% endif %} relative">
+                        <div class="flex items-center">
+                            <i class="fas fa-warehouse mr-3"></i>
+                            <span class="sidebar-text">Inventario y Productos</span>
+                        </div>
+                        <i class="fas fa-chevron-down text-sm transition-transform duration-200 submenu-icon" id="inventory-submenu-icon"></i>
+                        <span class="sidebar-tooltip">Inventario y Productos</span>
+                    </button>
+                    <div id="inventory-submenu" class="bg-indigo-950 hidden sidebar-submenu">
+                        <!-- Inventario -->
+                        <a href="{% url 'inventory:dashboard' %}" class="flex items-center px-8 py-2 hover:bg-indigo-800 text-sm {% if 'inventory' in request.path %}bg-indigo-800{% endif %} relative">
+                            <i class="fas fa-boxes mr-3"></i>
+                            <span class="sidebar-text">Inventario</span>
+                            <span class="sidebar-tooltip">Inventario</span>
+                        </a>
+                        
+                        <div class="border-t border-indigo-800 my-1"></div>
+                        
+                        <!-- Productos (Plan Básico o superior) -->
+                        {% has_module 'products' as can_access_products %}
+                        <a href="{% if can_access_products %}{% url 'billing:product_list' %}{% else %}{% url 'organizations:subscription_plans' %}{% endif %}" 
+                           class="flex items-center px-8 py-2 hover:bg-indigo-800 text-sm {% if 'product' in request.path %}bg-indigo-800{% endif %} relative">
+                            <i class="fas fa-box mr-3"></i>
+                            <span class="sidebar-text">Productos</span>
+                            <span class="sidebar-tooltip">Productos</span>
+                            {% module_badge 'products' %}
+                        </a>
+                        
+                        <!-- Proveedores (Plan Básico o superior) -->
+                        {% has_module 'suppliers' as can_access_suppliers %}
+                        <a href="{% if can_access_suppliers %}{% url 'billing:supplier_list' %}{% else %}{% url 'organizations:subscription_plans' %}{% endif %}" 
+                           class="flex items-center px-8 py-2 hover:bg-indigo-800 text-sm {% if 'supplier' in request.path %}bg-indigo-800{% endif %} relative">
+                            <i class="fas fa-truck mr-3"></i>
+                            <span class="sidebar-text">Proveedores</span>
+                            <span class="sidebar-tooltip">Proveedores</span>
+                            {% module_badge 'suppliers' %}
+                        </a>
+                    </div>
+                </div>
+                {% endif %}
+                
+                <!-- Pacientes y Citas (Menú Desplegable) -->
+                {% if user_perms.all_access or user_perms.appointments.can_view or user_perms.patients.can_view %}
+                <div class="appointments-menu">
+                    <button type="button" onclick="toggleSubmenu('appointments-submenu')" class="flex items-center justify-between w-full px-4 py-3 hover:bg-indigo-800 {% if 'appointments' in request.path or 'patients' in request.path or 'configuration' in request.path or 'exam' in request.path %}bg-indigo-800{% endif %} relative">
+                        <div class="flex items-center">
+                            <i class="fas fa-calendar-check mr-3"></i>
+                            <span class="sidebar-text">Pacientes y Citas</span>
+                        </div>
+                        <i class="fas fa-chevron-down text-sm transition-transform duration-200 submenu-icon" id="appointments-submenu-icon"></i>
+                        <span class="sidebar-tooltip">Pacientes y Citas</span>
+                    </button>
+                    <div id="appointments-submenu" class="bg-indigo-950 hidden sidebar-submenu">
+                        {% if user_perms.all_access or user_perms.patients.can_view %}
+                        <a href="{% url 'dashboard:patients_list' %}" class="flex items-center px-8 py-2 hover:bg-indigo-800 text-sm {% if 'patients' in request.path %}bg-indigo-800{% endif %} relative">
+                            <i class="fas fa-users mr-3"></i>
+                            <span class="sidebar-text">Pacientes</span>
+                            <span class="sidebar-tooltip">Pacientes</span>
+                        </a>
+                        {% endif %}
+                        
+                        {% if user_perms.all_access or user_perms.exam_orders.can_view %}
+                        <a href="{% url 'dashboard:exam_order_list' %}" class="flex items-center px-8 py-2 hover:bg-indigo-800 text-sm {% if 'exam' in request.path %}bg-indigo-800{% endif %} relative">
+                            <i class="fas fa-microscope mr-3"></i>
+                            <span class="sidebar-text">Exámenes Especiales</span>
+                            <span class="sidebar-tooltip">Exámenes Especiales</span>
+                        </a>
+                        {% endif %}
+                        
+                        {% if user_perms.all_access or user_perms.appointments.can_view %}
+                        <div class="border-t border-indigo-800 my-1"></div>
+                        
+                        <a href="{% url 'dashboard:appointments_list' %}" class="flex items-center px-8 py-2 hover:bg-indigo-800 text-sm {% if 'appointments' in request.path %}bg-indigo-800{% endif %} relative">
+                            <i class="fas fa-list mr-3"></i>
+                            <span class="sidebar-text">Lista de Citas</span>
+                            <span class="sidebar-tooltip">Lista de Citas</span>
+                        </a>
+                        <a href="{% url 'dashboard:configuration' %}" class="flex items-center px-8 py-2 hover:bg-indigo-800 text-sm {% if 'configuration' in request.path and 'notifications' not in request.path %}bg-indigo-800{% endif %} relative">
+                            <i class="fas fa-calendar-plus mr-3"></i>
+                            <span class="sidebar-text">Agendamiento de Citas</span>
+                            <span class="sidebar-tooltip">Agendamiento de Citas</span>
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endif %}
+                
+                <!-- Marketing y Comunicación (Menú Desplegable) - Plan Profesional o superior -->
+                {% if is_owner_or_admin %}
+                <div class="marketing-menu">
+                    <button type="button" onclick="toggleSubmenu('marketing-submenu')" class="flex items-center justify-between w-full px-4 py-3 hover:bg-indigo-800 {% if 'landing-page' in request.path or 'notifications' in request.path or 'promociones' in request.path %}bg-indigo-800{% endif %} relative">
+                        <div class="flex items-center">
+                            <i class="fas fa-bullhorn mr-3"></i>
+                            <span class="sidebar-text">Marketing</span>
+                        </div>
+                        <i class="fas fa-chevron-down text-sm transition-transform duration-200 submenu-icon" id="marketing-submenu-icon"></i>
+                        <span class="sidebar-tooltip">Marketing</span>
+                    </button>
+                    <div id="marketing-submenu" class="bg-indigo-950 hidden sidebar-submenu">
+                        <!-- Landing Page -->
+                        <a href="{% url 'dashboard:landing_page_config' %}" class="flex items-center px-8 py-2 hover:bg-indigo-800 text-sm {% if 'landing-page' in request.path %}bg-indigo-800{% endif %} relative">
+                            <i class="fas fa-paint-brush mr-3"></i>
+                            <span class="sidebar-text">Landing Page</span>
+                            <span class="sidebar-tooltip">Landing Page</span>
+                        </a>
+                        
+                        <!-- Promociones (PRO) -->
+                        <a href="/dashboard/promociones/" class="flex items-center px-8 py-2 hover:bg-indigo-800 text-sm {% if 'promociones' in request.path %}bg-indigo-800{% endif %} relative">
+                            <i class="fas fa-tags mr-3"></i>
+                            <span class="sidebar-text">Promociones</span>
+                            <span class="sidebar-tooltip">Promociones</span>
+                            {% show_feature_lock 'promotions' 'Promociones Automáticas' %}
+                        </a>
+                        
+                        <div class="border-t border-indigo-800 my-1"></div>
+                        
+                        <!-- WhatsApp (Plan Profesional o superior) -->
+                        {% has_module 'whatsapp' as can_access_whatsapp %}
+                        <a href="{% if can_access_whatsapp %}{% url 'dashboard:notification_settings' %}{% else %}{% url 'organizations:subscription_plans' %}{% endif %}" 
+                           class="flex items-center px-8 py-2 hover:bg-indigo-800 text-sm {% if 'notifications' in request.path %}bg-indigo-800{% endif %} relative">
+                            <i class="fab fa-whatsapp mr-3"></i>
+                            <span class="sidebar-text">WhatsApp</span>
+                            <span class="sidebar-tooltip">WhatsApp</span>
+                            {% module_badge 'whatsapp' %}
+                        </a>
+                        
+                        <!-- Email Marketing (Placeholder para futuro módulo) -->
+                        <div class="flex items-center px-8 py-2 text-sm opacity-50 cursor-not-allowed relative" title="Próximamente">
+                            <i class="fas fa-envelope mr-3"></i>
+                            <span class="sidebar-text">Email Marketing</span>
+                            <span class="sidebar-tooltip">Próximamente</span>
+                            <span class="ml-auto text-xs bg-yellow-600 text-white px-2 py-0.5 rounded">Pronto</span>
+                        </div>
+                        
+                        <!-- Campañas (Placeholder para futuro módulo) -->
+                        <div class="flex items-center px-8 py-2 text-sm opacity-50 cursor-not-allowed relative" title="Próximamente">
+                            <i class="fas fa-megaphone mr-3"></i>
+                            <span class="sidebar-text">Campañas</span>
+                            <span class="sidebar-tooltip">Próximamente</span>
+                            <span class="ml-auto text-xs bg-yellow-600 text-white px-2 py-0.5 rounded">Pronto</span>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+                
+                <!-- Automatización (Workflows + Tasks) - Solo Owner/Admin -->
+                {% if is_owner_or_admin %}
+                <div class="automation-menu">
+                    <button type="button" onclick="toggleSubmenu('automation-submenu')" class="flex items-center justify-between w-full px-4 py-3 hover:bg-indigo-800 {% if 'workflows' in request.path or 'tasks' in request.path %}bg-indigo-800{% endif %} relative">
+                        <div class="flex items-center">
+                            <i class="fas fa-robot mr-3"></i>
+                            <span class="sidebar-text">Automatización</span>
+                        </div>
+                        <i class="fas fa-chevron-down text-sm transition-transform duration-200 submenu-icon" id="automation-submenu-icon"></i>
+                        <span class="sidebar-tooltip">Automatización</span>
+                    </button>
+                    <div id="automation-submenu" class="bg-indigo-950 hidden sidebar-submenu">
+                        <!-- Workflows (PRO) -->
+                        <a href="{% url 'workflows:list' %}" class="flex items-center px-8 py-2 hover:bg-indigo-800 text-sm {% if 'workflows' in request.path and 'approvals' not in request.path %}bg-indigo-800{% endif %} relative">
+                            <i class="fas fa-project-diagram mr-3"></i>
+                            <span class="sidebar-text">Workflows</span>
+                            <span class="sidebar-tooltip">Workflows</span>
+                            {% show_feature_lock 'workflows' 'Workflows Automatizados' %}
+                        </a>
+                        <a href="{% url 'workflows:my_approvals' %}" class="flex items-center px-8 py-2 hover:bg-indigo-800 text-sm {% if 'approvals' in request.path %}bg-indigo-800{% endif %} relative">
+                            <i class="fas fa-clipboard-check mr-3"></i>
+                            <span class="sidebar-text">Mis Aprobaciones</span>
+                            <span class="sidebar-tooltip">Mis Aprobaciones</span>
+                            <span id="approvals-badge" class="ml-auto bg-red-500 text-white text-xs px-2 py-1 rounded-full hidden"></span>
+                        </a>
+                        
+                        <div class="border-t border-indigo-800 my-1"></div>
+                        
+                        <!-- Tasks -->
+                        <a href="{% url 'tasks:kanban' %}" class="flex items-center px-8 py-2 hover:bg-indigo-800 text-sm {% if 'tasks' in request.path and 'my-tasks' not in request.path and 'calendar' not in request.path %}bg-indigo-800{% endif %} relative">
+                            <i class="fas fa-tasks mr-3"></i>
+                            <span class="sidebar-text">Tareas (Kanban)</span>
+                            <span class="sidebar-tooltip">Tareas (Kanban)</span>
+                        </a>
+                        <a href="{% url 'tasks:my_tasks' %}" class="flex items-center px-8 py-2 hover:bg-indigo-800 text-sm {% if 'my-tasks' in request.path %}bg-indigo-800{% endif %} relative">
+                            <i class="fas fa-user-check mr-3"></i>
+                            <span class="sidebar-text">Mis Tareas</span>
+                            <span class="sidebar-tooltip">Mis Tareas</span>
+                        </a>
+                        <a href="{% url 'tasks:calendar' %}" class="flex items-center px-8 py-2 hover:bg-indigo-800 text-sm {% if 'tasks' in request.path and 'calendar' in request.path %}bg-indigo-800{% endif %} relative">
+                            <i class="fas fa-calendar-alt mr-3"></i>
+                            <span class="sidebar-text">Calendario de Tareas</span>
+                            <span class="sidebar-tooltip">Calendario de Tareas</span>
+                        </a>
+                    </div>
+                </div>
+                {% endif %}
+                
+                <!-- Reportes (Menú Desplegable) -->
+                <div class="reports-menu">
+                    <button type="button" onclick="toggleSubmenu('reports-submenu')" class="flex items-center justify-between w-full px-4 py-3 hover:bg-indigo-800 {% if 'reports' in request.path %}bg-indigo-800{% endif %} relative">
+                        <div class="flex items-center">
+                            <i class="fas fa-chart-bar mr-3"></i>
+                            <span class="sidebar-text">Reportes</span>
+                        </div>
+                        <i class="fas fa-chevron-down text-sm transition-transform duration-200 submenu-icon" id="reports-submenu-icon"></i>
+                        <span class="sidebar-tooltip">Reportes</span>
+                    </button>
+                    <div id="reports-submenu" class="submenu hidden bg-indigo-800">
+                        <a href="{% url 'reports:dashboard' %}" class="flex items-center px-8 py-2 hover:bg-indigo-900 text-sm {% if 'reports' in request.path and request.path == '/dashboard/reports/' %}bg-indigo-900{% endif %} relative">
+                            <i class="fas fa-tachometer-alt mr-3"></i>
+                            <span class="sidebar-text">Dashboard</span>
+                            <span class="sidebar-tooltip">Dashboard de Reportes</span>
+                            {% show_feature_lock 'analytics_advanced' 'Analítica Avanzada' %}
+                        </a>
+                        <a href="{% url 'reports:templates' %}" class="flex items-center px-8 py-2 hover:bg-indigo-900 text-sm {% if 'templates' in request.path %}bg-indigo-900{% endif %} relative">
+                            <i class="fas fa-file-alt mr-3"></i>
+                            <span class="sidebar-text">Plantillas</span>
+                            <span class="sidebar-tooltip">Plantillas de Reportes</span>
+                        </a>
+                        <a href="{% url 'reports:reports' %}" class="flex items-center px-8 py-2 hover:bg-indigo-900 text-sm {% if 'reports/reports' in request.path %}bg-indigo-900{% endif %} relative">
+                            <i class="fas fa-list mr-3"></i>
+                            <span class="sidebar-text">Mis Reportes</span>
+                            <span class="sidebar-tooltip">Reportes Generados</span>
+                        </a>
+                        <a href="{% url 'reports:scheduled' %}" class="flex items-center px-8 py-2 hover:bg-indigo-900 text-sm {% if 'scheduled' in request.path %}bg-indigo-900{% endif %} relative">
+                            <i class="fas fa-calendar-check mr-3"></i>
+                            <span class="sidebar-text">Programados</span>
+                            <span class="sidebar-tooltip">Reportes Programados</span>
+                        </a>
+                    </div>
+                </div>
+                
+                <!-- Módulos & Suscripción (Menú Desplegable) - Solo Owner/Admin -->
+                {% if is_owner_or_admin %}
+                <div class="modules-menu">
+                    <button type="button" onclick="toggleSubmenu('modules-submenu')" class="flex items-center justify-between w-full px-4 py-3 hover:bg-indigo-800 {% if 'modules' in request.path %}bg-indigo-800{% endif %} relative">
+                        <div class="flex items-center">
+                            <i class="fas fa-puzzle-piece mr-3"></i>
+                            <span class="sidebar-text">Módulos</span>
+                        </div>
+                        <i class="fas fa-chevron-down text-sm transition-transform duration-200 submenu-icon" id="modules-submenu-icon"></i>
+                        <span class="sidebar-tooltip">Módulos</span>
+                    </button>
+                    <div id="modules-submenu" class="bg-indigo-950 hidden sidebar-submenu">
+                        <!-- Mi Plan Actual -->
+                        <a href="{% url 'dashboard:my_plan' %}" class="flex items-center px-8 py-2 hover:bg-indigo-800 text-sm {% if request.resolver_match.url_name == 'my_plan' %}bg-indigo-800{% endif %} relative">
+                            <i class="fas fa-clipboard-list mr-3"></i>
+                            <span class="sidebar-text">Mi Plan</span>
+                            <span class="sidebar-tooltip">Mi Plan Actual</span>
+                        </a>
+                        
+                        <!-- Marketplace de Módulos -->
+                        <a href="{% url 'dashboard:module_marketplace' %}" class="flex items-center px-8 py-2 hover:bg-indigo-800 text-sm {% if request.resolver_match.url_name == 'module_marketplace' %}bg-indigo-800{% endif %} relative">
+                            <i class="fas fa-store mr-3"></i>
+                            <span class="sidebar-text">Catálogo de Módulos</span>
+                            <span class="sidebar-tooltip">Comprar Módulos</span>
+                        </a>
+                        
+                        <div class="border-t border-indigo-800 my-1"></div>
+                        
+                        {% comment %}
+                        <!-- Historial de Pagos - Deshabilitado (Sistema modular a la carta) -->
+                        <a href="#" class="flex items-center px-8 py-2 hover:bg-indigo-800 text-sm relative">
+                            <i class="fas fa-receipt mr-3"></i>
+                            <span class="sidebar-text">Historial de Pagos</span>
+                            <span class="sidebar-tooltip">Ver Transacciones</span>
+                        </a>
+                        
+                        <!-- Facturas - Deshabilitado (Sistema modular a la carta) -->
+                        <a href="#" class="flex items-center px-8 py-2 hover:bg-indigo-800 text-sm relative">
+                            <i class="fas fa-file-invoice mr-3"></i>
+                            <span class="sidebar-text">Mis Facturas</span>
+                            <span class="sidebar-tooltip">Facturas Generadas</span>
+                        </a>
+                        {% endcomment %}
+                    </div>
+                </div>
+                {% endif %}
+                
+                <!-- Auditoría (Solo Owner/Admin) -->
+                {% if is_owner_or_admin %}
+                <a href="{% url 'audit:dashboard' %}" class="flex items-center px-4 py-3 hover:bg-indigo-800 {% if 'audit' in request.path %}bg-indigo-800{% endif %} relative">
+                    <i class="fas fa-shield-alt mr-3"></i>
+                    <span class="sidebar-text">Auditoría</span>
+                    <span class="sidebar-tooltip">Auditoría</span>
+                </a>
+                {% endif %}
+                
+                <!-- Configuración (Menú Desplegable) - Solo Owner/Admin -->
+                {% if is_owner_or_admin %}
+                <div class="configuration-menu">
+                    <button type="button" onclick="toggleSubmenu('configuration-submenu')" class="flex items-center justify-between w-full px-4 py-3 hover:bg-indigo-800 {% if 'clinical-parameters' in request.path or '/team/' in request.path or 'invoice_config' in request.path or 'dian' in request.path %}bg-indigo-800{% endif %} relative">
+                        <div class="flex items-center">
+                            <i class="fas fa-cog mr-3"></i>
+                            <span class="sidebar-text">Configuración</span>
+                        </div>
+                        <i class="fas fa-chevron-down text-sm transition-transform duration-200 submenu-icon" id="configuration-submenu-icon"></i>
+                        <span class="sidebar-tooltip">Configuración</span>
+                    </button>
+                    <div id="configuration-submenu" class="bg-indigo-950 hidden sidebar-submenu">
+                        <!-- Configuración de Factura -->
+                        <a href="{% url 'billing:invoice_config' %}" class="flex items-center px-8 py-2 hover:bg-indigo-800 text-sm {% if request.resolver_match.url_name == 'invoice_config' %}bg-indigo-800{% endif %} relative">
+                            <i class="fas fa-file-invoice mr-3"></i>
+                            <span class="sidebar-text">Config. Factura</span>
+                            <span class="sidebar-tooltip">Configuración Factura</span>
+                        </a>
+                        
+                        <!-- Configuración DIAN -->
+                        <a href="{% url 'billing:dian_config' %}" class="flex items-center px-8 py-2 hover:bg-indigo-800 text-sm {% if request.resolver_match.url_name == 'dian_config' %}bg-indigo-800{% endif %} relative">
+                            <i class="fas fa-building-columns mr-3"></i>
+                            <span class="sidebar-text">Config. DIAN</span>
+                            <span class="sidebar-tooltip">Configuración DIAN</span>
+                        </a>
+                        
+                        <a href="{% url 'dashboard:clinical_parameters' %}" class="flex items-center px-8 py-2 hover:bg-indigo-800 text-sm {% if 'clinical-parameters' in request.path %}bg-indigo-800{% endif %} relative">
+                            <i class="fas fa-pills mr-3"></i>
+                            <span class="sidebar-text">Parámetros Clínicos</span>
+                            <span class="sidebar-tooltip">Parámetros Clínicos</span>
+                        </a>
+                        
+                        <!-- Configuración DIAN (Plan Profesional o superior) - DUPLICADO LEGACY -->
+                        {% has_module 'dian_config' as can_access_dian %}
+                        <a href="{% if can_access_dian %}{% url 'billing:dian_configuration' %}{% else %}{% url 'organizations:subscription_plans' %}{% endif %}" 
+                           class="flex items-center px-8 py-2 hover:bg-indigo-800 text-sm {% if 'dian-configuration' in request.path %}bg-indigo-800{% endif %} relative">
+                            <i class="fas fa-file-invoice-dollar mr-3"></i>
+                            <span class="sidebar-text">Configuración DIAN</span>
+                            <span class="sidebar-tooltip">Configuración DIAN</span>
+                            {% module_badge 'dian_config' %}
+                        </a>
+                        
+                        <!-- Separador -->
+                        <div class="border-t border-indigo-800 my-1"></div>
+                        
+                        <!-- Gestión de Equipo (Plan Premium o superior) -->
+                        {% has_module 'team_management' as can_access_team %}
+                        <a href="{% if can_access_team %}{% url 'dashboard:team_list' %}{% else %}{% url 'organizations:subscription_plans' %}{% endif %}" 
+                           class="flex items-center px-8 py-2 hover:bg-indigo-800 text-sm {% if '/team/' in request.path %}bg-indigo-800{% endif %} relative">
+                            <i class="fas fa-users-cog mr-3"></i>
+                            <span class="sidebar-text">Gestión de Equipo</span>
+                            <span class="sidebar-tooltip">Gestión de Equipo</span>
+                            {% module_badge 'team_management' %}
+                        </a>
+                    </div>
+                </div>
+                {% endif %}
+                
+                {% else %}
+                <!-- Mensaje cuando no hay organización seleccionada -->
+                <div class="px-4 py-6 text-center">
+                    <i class="fas fa-info-circle text-indigo-400 text-3xl mb-3"></i>
+                    <p class="text-indigo-300 text-sm">
+                        Selecciona una empresa para acceder al menú completo
+                    </p>
+                </div>
+                {% endif %}
+            </nav>
+            
+            <!-- Script para sidebar dinámico -->
+            <script>
+            (function() {
+                // Verificar si hay configuración guardada en localStorage
+                const savedConfig = localStorage.getItem('sidebarConfig');
+                if (!savedConfig) {
+                    // No hay configuración personalizada, usar sidebar por defecto
+                    return;
+                }
+                
+                try {
+                    const config = JSON.parse(savedConfig);
+                    const nav = document.querySelector('#sidebar nav');
+                    
+                    if (!nav || !config.items) {
+                        return;
+                    }
+                    
+                    // Limpiar el nav actual (mantener solo la estructura base)
+                    const originalNav = nav.cloneNode(true);
+                    nav.innerHTML = '';
+                    
+                    // Función para crear elemento de menú
+                    function createMenuItem(item, config) {
+                        if (item.isDivider) {
+                            const div = document.createElement('div');
+                            div.className = 'border-t border-indigo-800 my-2';
+                            return div;
+                        }
+                        
+                        if (item.isSubmenu) {
+                            // Crear menú desplegable
+                            const container = document.createElement('div');
+                            container.className = 'submenu-container';
+                            
+                            const button = document.createElement('button');
+                            button.type = 'button';
+                            button.onclick = function() { toggleSubmenu(item.id + '-submenu'); };
+                            button.className = 'flex items-center justify-between w-full px-4 py-3 hover:bg-indigo-800 relative';
+                            
+                            button.innerHTML = `
+                                <div class="flex items-center">
+                                    <i class="fas ${item.icon} mr-3"></i>
+                                    <span class="sidebar-text">${item.name}</span>
+                                </div>
+                                <i class="fas fa-chevron-down text-sm transition-transform duration-200 submenu-icon" id="${item.id}-submenu-icon"></i>
+                                <span class="sidebar-tooltip">${item.name}</span>
+                            `;
+                            
+                            container.appendChild(button);
+                            
+                            // Crear contenedor de hijos
+                            const childrenContainer = document.createElement('div');
+                            childrenContainer.id = item.id + '-submenu';
+                            childrenContainer.className = 'bg-indigo-950 hidden sidebar-submenu';
+                            
+                            // Agregar items hijos
+                            const children = config.items
+                                .filter(child => child.parent === item.id && child.visible)
+                                .sort((a, b) => a.order - b.order);
+                            
+                            children.forEach(child => {
+                                const childElement = createMenuItem(child, config);
+                                if (childElement) {
+                                    // Ajustar padding para items de submenú
+                                    if (childElement.tagName === 'A') {
+                                        childElement.className = childElement.className.replace('px-4', 'px-8');
+                                        childElement.classList.add('text-sm');
+                                    }
+                                    childrenContainer.appendChild(childElement);
+                                }
+                            });
+                            
+                            container.appendChild(childrenContainer);
+                            return container;
+                        }
+                        
+                        // Crear link normal
+                        const link = document.createElement('a');
+                        link.href = getUrlForItem(item.id);
+                        link.className = 'flex items-center px-4 py-3 hover:bg-indigo-800 relative';
+                        
+                        link.innerHTML = `
+                            <i class="fas ${item.icon} mr-3"></i>
+                            <span class="sidebar-text">${item.name}</span>
+                            <span class="sidebar-tooltip">${item.name}</span>
+                        `;
+                        
+                        return link;
+                    }
+                    
+                    // Mapeo de IDs a URLs (usando Django template tags cuando sea posible)
+                    function getUrlForItem(id) {
+                        const urlMap = {
+                            'my-companies': '{% url "organizations:list" %}',
+                            'my-modules': '{% url "dashboard:my_plan" %}',
+                            'dashboard': '{% url "dashboard:home" %}',
+                            'sales-dashboard': '{% url "sales:dashboard" %}',
+                            'billing-basic': '{% url "billing:invoice_list" %}',
+                            'billing-electronic': '{% url "billing:invoice_list" %}',
+                            'cash-dashboard': '{% url "cash_register:dashboard" %}',
+                            'cash-registers': '{% url "cash_register:register_list" %}',
+                            'cash-movements': '{% url "cash_register:movement_list" %}',
+                            'cash-closures': '{% url "cash_register:closure_list" %}',
+                            'cash-reports': '{% url "cash_register:reports" %}',
+                            'doctors': '{% url "dashboard:doctors_list" %}',
+                            'employees': '{% url "dashboard:employee_list" %}',
+                            'payroll-electronic': '{% url "payroll:payroll_dashboard" %}',
+                            'payroll-employees': '{% url "payroll:employee_list" %}',
+                            'payroll-workflow': '{% url "payroll:workflow_dashboard" %}',
+                            'contracts': '{% url "payroll:contract_list" %}',
+                            'vacations': '{% url "payroll:vacation_list" %}',
+                            'loans': '{% url "payroll:loan_list" %}',
+                            'social-benefits': '{% url "payroll:social_benefits_dashboard" %}',
+                            'provisions': '{% url "payroll:provision_list" %}',
+                            'pila': '{% url "payroll:pila_list" %}',
+                            'incapacities': '{% url "payroll:incapacity_list" %}',
+                            'payroll-concepts': '{% url "payroll:concept_list" %}',
+                            'inventory': '{% url "inventory:dashboard" %}',
+                            'products': '{% url "billing:product_list" %}',
+                            'suppliers': '{% url "billing:supplier_list" %}',
+                            'patients': '{% url "dashboard:patients_list" %}',
+                            'exams': '{% url "dashboard:exam_order_list" %}',
+                            'appointments-list': '{% url "dashboard:appointments_list" %}',
+                            'appointments-schedule': '{% url "dashboard:configuration" %}',
+                            'landing-page': '{% url "dashboard:landing_page_config" %}',
+                            'promotions': '/dashboard/promociones/',
+                            'whatsapp': '{% url "dashboard:notification_settings" %}',
+                            'workflows': '{% url "workflows:list" %}',
+                            'approvals': '{% url "workflows:my_approvals" %}',
+                            'tasks-kanban': '{% url "tasks:kanban" %}',
+                            'my-tasks': '{% url "tasks:my_tasks" %}',
+                            'tasks-calendar': '{% url "tasks:calendar" %}',
+                            'reports-dashboard': '{% url "reports:dashboard" %}',
+                            'reports-templates': '{% url "reports:templates" %}',
+                            'reports-list': '{% url "reports:reports" %}',
+                            'reports-scheduled': '{% url "reports:scheduled" %}',
+                            'my-plan': '{% url "dashboard:my_plan" %}',
+                            'marketplace': '{% url "dashboard:module_marketplace" %}'
+                        };
+                        
+                        return urlMap[id] || '#';
+                    }
+                    
+                    // Renderizar items de nivel raíz
+                    const rootItems = config.items
+                        .filter(item => !item.parent && item.visible)
+                        .sort((a, b) => a.order - b.order);
+                    
+                    rootItems.forEach(item => {
+                        const element = createMenuItem(item, config);
+                        if (element) {
+                            nav.appendChild(element);
+                        }
+                    });
+                    
+                    console.log('✅ Sidebar renderizado dinámicamente según configuración personalizada');
+                    
+                } catch (error) {
+                    console.error('Error al renderizar sidebar dinámico:', error);
+                    // En caso de error, mantener el sidebar original
+                }
+            })();
+            </script>
+        </aside>
+        
+        <!-- Main Content -->
+        <div class="flex-1 flex flex-col overflow-hidden">
+            <!-- Top Bar -->
+            <header class="bg-white shadow-sm hidden md:block">
+                <div class="flex flex-col md:flex-row items-start md:items-center justify-between px-4 md:px-6 py-4 gap-3">
+                    <div>
+                        <h2 class="text-xl md:text-2xl font-bold text-gray-800">
+                            {% block page_title %}Dashboard{% endblock %}
+                            {% if request.organization %}
+                            <span class="text-base font-normal text-indigo-600 ml-2">
+                                <i class="fas fa-building text-sm"></i> {{ request.organization.name }}
+                            </span>
+                            {% endif %}
+                        </h2>
+                        <p class="text-xs md:text-sm text-gray-600">
+                            {% block page_subtitle %}Resumen general del sistema{% endblock %}
+                        </p>
+                    </div>
+                    
+                    <div class="flex flex-wrap items-center gap-3">
+                        <!-- Toggle Sistema -->
+                        <div class="flex items-center">
+                            <span class="mr-2 text-xs md:text-sm font-medium text-gray-700 hidden sm:inline">Sistema:</span>
+                            <button onclick="toggleSystem()" id="system-toggle" class="relative inline-flex items-center h-6 rounded-full w-11 focus:outline-none">
+                                <span class="sr-only">Toggle Sistema</span>
+                                <span id="toggle-bg" class="inline-block w-11 h-6 bg-gray-300 rounded-full transition"></span>
+                                <span id="toggle-dot" class="absolute left-0 inline-block w-6 h-6 bg-white rounded-full shadow transform transition"></span>
+                            </button>
+                            <span id="system-status" class="ml-2 text-xs md:text-sm font-medium"></span>
+                        </div>
+                        
+                        <!-- Fecha actual -->
+                        <div class="text-xs md:text-sm text-gray-600 hidden sm:block">
+                            <i class="fas fa-calendar mr-1"></i>
+                            {{ today|date:"d/m/Y" }}
+                        </div>
+
+                        <!-- Menú de Usuario -->
+                        <div class="relative">
+                            <button onclick="toggleUserMenu()" id="user-menu-button" class="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-gray-100 transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                                <div class="w-10 h-10 bg-indigo-600 rounded-full flex items-center justify-center text-white">
+                                    <i class="fas fa-user"></i>
+                                </div>
+                                <div class="text-left hidden lg:block">
+                                    <p class="text-sm font-semibold text-gray-800">{{ user.get_full_name|default:user.username }}</p>
+                                    <p class="text-xs text-gray-500">{{ user.email|truncatewords:2 }}</p>
+                                </div>
+                                <i class="fas fa-chevron-down text-gray-600 text-sm"></i>
+                            </button>
+
+                            <!-- Dropdown Menu -->
+                            <div id="user-dropdown" class="hidden absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50">
+                                <!-- User Info -->
+                                <div class="px-4 py-3 border-b border-gray-200">
+                                    <p class="text-sm font-semibold text-gray-800">{{ user.get_full_name|default:user.username }}</p>
+                                    <p class="text-xs text-gray-500 mt-1">{{ user.email }}</p>
+                                    {% if user.is_staff %}
+                                    <span class="inline-block mt-2 px-2 py-1 bg-indigo-100 text-indigo-800 text-xs rounded-full">
+                                        <i class="fas fa-shield-alt mr-1"></i>Administrador
+                                    </span>
+                                    {% endif %}
+                                </div>
+
+                                <!-- Organization Selector -->
+                                {% load organizations_extras %}
+                                {% get_user_organizations user as user_organizations %}
+                                {% if user_organizations|length > 1 %}
+                                <div class="px-4 py-3 border-b border-gray-200">
+                                    <p class="text-xs font-semibold text-gray-600 mb-2 uppercase">
+                                        <i class="fas fa-building mr-1"></i>Organización Activa
+                                    </p>
+                                    <div class="space-y-1">
+                                        {% for org_membership in user_organizations %}
+                                        <a href="{% url 'organizations:switch' org_membership.organization.id %}?next={{ request.path }}" 
+                                           class="flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-colors {% if request.organization.id == org_membership.organization.id %}bg-indigo-100 text-indigo-800 font-semibold{% else %}text-gray-700 hover:bg-gray-100{% endif %}">
+                                            <span class="flex items-center gap-2">
+                                                {% if request.organization.id == org_membership.organization.id %}
+                                                <i class="fas fa-check-circle text-indigo-600"></i>
+                                                {% else %}
+                                                <i class="far fa-circle text-gray-400"></i>
+                                                {% endif %}
+                                                {{ org_membership.organization.name }}
+                                            </span>
+                                            <span class="text-xs {% if request.organization.id == org_membership.organization.id %}text-indigo-600{% else %}text-gray-500{% endif %}">
+                                                {{ org_membership.get_role_display }}
+                                            </span>
+                                        </a>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                                {% endif %}
+
+                                <!-- Menu Items -->
+                                <div class="py-1">
+                                    <a href="{% url 'dashboard:user_profile' %}" class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                        <i class="fas fa-user-circle w-5 mr-3 text-gray-600"></i>
+                                        Mi Perfil
+                                    </a>
+                                    <a href="{% url 'dashboard:user_security' %}" class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                        <i class="fas fa-lock w-5 mr-3 text-gray-600"></i>
+                                        Seguridad
+                                    </a>
+                                    <a href="{% url 'dashboard:customize_menu' %}" class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                        <i class="fas fa-sliders-h w-5 mr-3 text-gray-600"></i>
+                                        Personalizar Menú
+                                    </a>
+                                    {% if is_owner_or_admin %}
+                                    <div class="border-t border-gray-200 my-1"></div>
+                                    <a href="{% url 'dashboard:my_plan' %}" class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                        <i class="fas fa-puzzle-piece w-5 mr-3 text-indigo-600"></i>
+                                        Mis Módulos
+                                    </a>
+                                    <a href="{% url 'dashboard:module_marketplace' %}" class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                        <i class="fas fa-store w-5 mr-3 text-indigo-600"></i>
+                                        Catálogo de Módulos
+                                    </a>
+                                    {% endif %}
+                                    <div class="border-t border-gray-200 my-1"></div>
+                                    <a href="{% url 'dashboard:logout' %}" class="flex items-center px-4 py-2 text-sm text-red-600 hover:bg-red-50">
+                                        <i class="fas fa-sign-out-alt w-5 mr-3"></i>
+                                        Cerrar Sesión
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </header>
+            
+            <!-- Messages -->
+            {% if messages %}
+            <div class="px-6 py-3">
+                {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} p-4 rounded-lg mb-2 {% if message.tags == 'error' %}bg-red-100 text-red-700{% elif message.tags == 'success' %}bg-green-100 text-green-700{% else %}bg-blue-100 text-blue-700{% endif %}">
+                    {{ message }}
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+            
+            <!-- Page Content -->
+            <main class="flex-1 overflow-x-hidden overflow-y-auto bg-gray-100 p-3 md:p-6">
+                {% block content %}
+                {% endblock %}
+            </main>
+        </div>
+    </div>
+    
+    {% else %}
+    <!-- Login Page (sin sidebar) -->
+    {% block login_content %}
+    {% endblock %}
+    {% endif %}
+    
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    
+    {% load static %}
+    <script src="{% static 'dashboard/js/main.js' %}"></script>
+    
+    <script>
+        // Toggle sidebar en móvil
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('sidebar-overlay');
+            
+            sidebar.classList.toggle('sidebar-hidden');
+            overlay.classList.toggle('hidden');
+        }
+        
+        // Toggle mini sidebar (desktop)
+        function toggleMiniSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const toggleIcon = document.getElementById('toggle-mini-icon');
+            const isMini = sidebar.classList.toggle('mini');
+            
+            // Cambiar icono
+            if (isMini) {
+                toggleIcon.classList.remove('fa-bars');
+                toggleIcon.classList.add('fa-chevron-right');
+                // Cerrar todos los submenús cuando se minimiza
+                document.querySelectorAll('.sidebar-submenu').forEach(submenu => {
+                    submenu.classList.add('hidden');
+                });
+                document.querySelectorAll('.submenu-icon').forEach(icon => {
+                    icon.classList.remove('rotate-180');
+                });
+                // Guardar preferencia
+                localStorage.setItem('miniSidebar', 'true');
+            } else {
+                toggleIcon.classList.remove('fa-chevron-right');
+                toggleIcon.classList.add('fa-bars');
+                // Guardar preferencia
+                localStorage.setItem('miniSidebar', 'false');
+            }
+        }
+        
+        // Toggle submenu
+        function toggleSubmenu(submenuId) {
+            const sidebar = document.getElementById('sidebar');
+            
+            // Si el sidebar está minimizado, no hacer nada
+            if (sidebar.classList.contains('mini')) {
+                return;
+            }
+            
+            const submenu = document.getElementById(submenuId);
+            const icon = document.getElementById(submenuId + '-icon');
+            
+            submenu.classList.toggle('hidden');
+            icon.classList.toggle('rotate-180');
+        }
+        
+        // Abrir submenu automáticamente si estamos en una página del submenu
+        document.addEventListener('DOMContentLoaded', function() {
+            const currentPath = window.location.pathname;
+            const sidebar = document.getElementById('sidebar');
+            
+            // Solo ejecutar si el sidebar existe (no en páginas de login)
+            if (!sidebar) {
+                console.log('Dashboard loaded');
+                return;
+            }
+            
+            // Restaurar preferencia de mini sidebar
+            const isMiniSaved = localStorage.getItem('miniSidebar') === 'true';
+            if (isMiniSaved && window.innerWidth >= 768) {
+                sidebar.classList.add('mini');
+                const toggleIcon = document.getElementById('toggle-mini-icon');
+                if (toggleIcon) {
+                    toggleIcon.classList.remove('fa-bars');
+                    toggleIcon.classList.add('fa-chevron-right');
+                }
+            }
+            
+            // Submenu de Pacientes y Citas (solo si no está minimizado)
+            if (!sidebar.classList.contains('mini')) {
+                if (currentPath.includes('appointments') || currentPath.includes('calendar') || currentPath.includes('configuration') || currentPath.includes('patients') || currentPath.includes('exam')) {
+                    const appointmentsSubmenu = document.getElementById('appointments-submenu');
+                    if (appointmentsSubmenu) {
+                        appointmentsSubmenu.classList.remove('hidden');
+                        const appointmentsIcon = document.getElementById('appointments-submenu-icon');
+                        if (appointmentsIcon) {
+                            appointmentsIcon.classList.add('rotate-180');
+                        }
+                    }
+                }
+                
+                // Submenu de Facturación y Finanzas (incluyendo Caja)
+                if (currentPath.includes('billing') || currentPath.includes('invoices') || currentPath.includes('cash')) {
+                    const salesSubmenu = document.getElementById('sales-submenu');
+                    if (salesSubmenu) {
+                        salesSubmenu.classList.remove('hidden');
+                        const salesIcon = document.getElementById('sales-submenu-icon');
+                        if (salesIcon) {
+                            salesIcon.classList.add('rotate-180');
+                        }
+                    }
+                    
+                    // Si estamos en /cash/, también expandir el submenú anidado de Caja
+                    if (currentPath.includes('cash')) {
+                        const financeNestedSubmenu = document.getElementById('finance-nested-submenu');
+                        if (financeNestedSubmenu) {
+                            financeNestedSubmenu.classList.remove('hidden');
+                            const financeNestedIcon = document.getElementById('finance-nested-submenu-icon');
+                            if (financeNestedIcon) {
+                                financeNestedIcon.classList.add('rotate-180');
+                            }
+                        }
+                    }
+                }
+                
+                // Submenu de Marketing
+                if (currentPath.includes('landing-page') || currentPath.includes('notifications') || currentPath.includes('promociones')) {
+                    const marketingSubmenu = document.getElementById('marketing-submenu');
+                    if (marketingSubmenu) {
+                        marketingSubmenu.classList.remove('hidden');
+                        const marketingIcon = document.getElementById('marketing-submenu-icon');
+                        if (marketingIcon) {
+                            marketingIcon.classList.add('rotate-180');
+                        }
+                    }
+                }
+                
+                // Submenu de Inventario y Productos
+                if (currentPath.includes('inventory') || currentPath.includes('product') || currentPath.includes('supplier')) {
+                    const inventorySubmenu = document.getElementById('inventory-submenu');
+                    if (inventorySubmenu) {
+                        inventorySubmenu.classList.remove('hidden');
+                        const inventoryIcon = document.getElementById('inventory-submenu-icon');
+                        if (inventoryIcon) {
+                            inventoryIcon.classList.add('rotate-180');
+                        }
+                    }
+                }
+                
+                // Submenu de Automatización (Workflows + Tasks)
+                if (currentPath.includes('workflows') || currentPath.includes('tasks')) {
+                    const automationSubmenu = document.getElementById('automation-submenu');
+                    if (automationSubmenu) {
+                        automationSubmenu.classList.remove('hidden');
+                        const automationIcon = document.getElementById('automation-submenu-icon');
+                        if (automationIcon) {
+                            automationIcon.classList.add('rotate-180');
+                        }
+                    }
+                }
+                
+                // Submenu de Reportes
+                if (currentPath.includes('reports')) {
+                    const reportsSubmenu = document.getElementById('reports-submenu');
+                    if (reportsSubmenu) {
+                        reportsSubmenu.classList.remove('hidden');
+                        const reportsIcon = document.getElementById('reports-submenu-icon');
+                        if (reportsIcon) {
+                            reportsIcon.classList.add('rotate-180');
+                        }
+                    }
+                }
+                
+                // Submenu de Módulos
+                if (currentPath.includes('modules') || currentPath.includes('payment') || currentPath.includes('invoice')) {
+                    const modulesSubmenu = document.getElementById('modules-submenu');
+                    if (modulesSubmenu) {
+                        modulesSubmenu.classList.remove('hidden');
+                        const modulesIcon = document.getElementById('modules-submenu-icon');
+                        if (modulesIcon) {
+                            modulesIcon.classList.add('rotate-180');
+                        }
+                    }
+                }
+                
+                // Submenu de Configuración (incluyendo Gestión de Equipo)
+                if (currentPath.includes('clinical-parameters') || currentPath.includes('/team/') || currentPath.includes('invoice_config') || currentPath.includes('dian')) {
+                    const configurationSubmenu = document.getElementById('configuration-submenu');
+                    if (configurationSubmenu) {
+                        configurationSubmenu.classList.remove('hidden');
+                        const configIcon = document.getElementById('configuration-submenu-icon');
+                        if (configIcon) {
+                            configIcon.classList.add('rotate-180');
+                        }
+                    }
+                }
+            }
+            
+            console.log('Dashboard loaded');
+        });
+        
+        // Cerrar sidebar al hacer click en un enlace (solo en móvil)
+        const sidebarLinks = document.querySelectorAll('#sidebar a');
+        if (sidebarLinks.length > 0) {
+            sidebarLinks.forEach(link => {
+                link.addEventListener('click', function() {
+                    if (window.innerWidth < 768) {
+                        toggleSidebar();
+                    }
+                });
+            });
+        }
+
+        // Toggle User Menu
+        function toggleUserMenu() {
+            const dropdown = document.getElementById('user-dropdown');
+            if (dropdown) {
+                dropdown.classList.toggle('hidden');
+            }
+        }
+
+        function toggleMobileUserMenu() {
+            const dropdown = document.getElementById('mobile-user-dropdown');
+            if (dropdown) {
+                dropdown.classList.toggle('hidden');
+            }
+        }
+
+        // Cerrar los user menus al hacer click fuera
+        document.addEventListener('click', function(event) {
+            // Desktop dropdown
+            const userMenuButton = document.getElementById('user-menu-button');
+            const userDropdown = document.getElementById('user-dropdown');
+            
+            if (userMenuButton && userDropdown && 
+                !userMenuButton.contains(event.target) && 
+                !userDropdown.contains(event.target)) {
+                userDropdown.classList.add('hidden');
+            }
+
+            // Mobile dropdown
+            const mobileUserButton = document.querySelector('[onclick="toggleMobileUserMenu()"]');
+            const mobileUserDropdown = document.getElementById('mobile-user-dropdown');
+            
+            if (mobileUserButton && mobileUserDropdown && 
+                !mobileUserButton.contains(event.target) && 
+                !mobileUserDropdown.contains(event.target)) {
+                mobileUserDropdown.classList.add('hidden');
+            }
+        });
+    </script>
+    
+    <!-- Sistema de Notificaciones Toast -->
+    {% include 'dashboard/components/toast.html' %}
+    
+    <!-- Sistema de Notificaciones Push en Tiempo Real -->
+    {% load static %}
+    <script>
+        // Dashboard notifications functionality
+        // TODO: Implement push notifications
+        
+        // Actualizar badge de aprobaciones pendientes cada 30 segundos
+        function updateApprovalsBadge() {
+            fetch("/dashboard/workflows/api/pending-count/")
+                .then(response => response.json())
+                .then(data => {
+                    const badge = document.getElementById('approvals-badge');
+                    if (badge) {
+                        if (data.count > 0) {
+                            badge.textContent = data.count;
+                            badge.classList.remove('hidden');
+                        } else {
+                            badge.classList.add('hidden');
+                        }
+                    }
+                })
+                .catch(error => console.error('Error updating approvals badge:', error));
+        }
+        
+        // Actualizar al cargar la página
+        if (document.getElementById('approvals-badge')) {
+            updateApprovalsBadge();
+            // Actualizar cada 30 segundos
+            setInterval(updateApprovalsBadge, 30000);
+        }
+    </script>
+    
+    <!-- Captura de errores JavaScript y de Red -->
+    <script>
+        console.log('🔍 Error tracking system initialized');
+        
+        // Interceptar fetch para capturar errores HTTP (500, 404, etc.)
+        const originalFetch = window.fetch;
+        window.fetch = function(...args) {
+            return originalFetch.apply(this, args)
+                .then(async response => {
+                    // Capturar errores HTTP 400, 500, etc.
+                    if (!response.ok && response.status >= 400) {
+                        const errorData = {
+                            message: `HTTP ${response.status}: ${response.statusText} - ${args[0]}`,
+                            type: 'NetworkError',
+                            stack: `Fetch to ${args[0]}\nStatus: ${response.status} ${response.statusText}\nMethod: ${args[1]?.method || 'GET'}`,
+                            url: window.location.href,
+                            lineNumber: new Error().stack.split('\n')[2] || '',
+                            columnNumber: ''
+                        };
+                        
+                        console.error('❌ Network Error captured:', errorData);
+                        
+                        // Enviar al backend (sin esperar respuesta para evitar loops)
+                        originalFetch('/dashboard/audit/api/log-js-error/', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(errorData)
+                        }).catch(err => console.error('Failed to log network error:', err));
+                    }
+                    return response;
+                })
+                .catch(error => {
+                    // Capturar errores de red (sin conexión, timeout, etc.)
+                    const errorData = {
+                        message: `Network request failed: ${error.message} - ${args[0]}`,
+                        type: 'NetworkError',
+                        stack: error.stack || `Fetch to ${args[0]} failed`,
+                        url: window.location.href,
+                        lineNumber: '',
+                        columnNumber: ''
+                    };
+                    
+                    console.error('❌ Network Error captured:', errorData);
+                    
+                    // Enviar al backend (sin esperar respuesta)
+                    originalFetch('/dashboard/audit/api/log-js-error/', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(errorData)
+                    }).catch(err => console.error('Failed to log network error:', err));
+                    
+                    throw error;
+                });
+        };
+        
+        // Capturar errores JavaScript globales
+        window.addEventListener('error', function(event) {
+            // Evitar capturar errores de recursos (imágenes, scripts, etc.)
+            if (event.target !== window) {
+                return;
+            }
+            
+            const errorData = {
+                message: event.message || 'Unknown error',
+                type: event.error ? event.error.name : 'Error',
+                stack: event.error ? event.error.stack : '',
+                url: event.filename || window.location.href,
+                lineNumber: event.lineno || '',
+                columnNumber: event.colno || ''
+            };
+            
+            console.error('❌ JS Error captured:', errorData);
+            
+            // Enviar error al backend (sin bloquear)
+            fetch('/dashboard/audit/api/log-js-error/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(errorData)
+            }).catch(err => {
+                console.error('❌ Failed to log error to server:', err);
+            });
+        });
+        
+        // Capturar promesas rechazadas no manejadas
+        window.addEventListener('unhandledrejection', function(event) {
+            const errorData = {
+                message: event.reason ? event.reason.message || String(event.reason) : 'Unhandled Promise Rejection',
+                type: 'UnhandledPromiseRejection',
+                stack: event.reason ? event.reason.stack : '',
+                url: window.location.href
+            };
+            
+            console.error('❌ Promise rejection captured:', errorData);
+            
+            // Enviar al backend (sin bloquear)
+            fetch('/dashboard/audit/api/log-js-error/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(errorData)
+            }).catch(err => {
+                console.error('❌ Failed to log error to server:', err);
+            });
+        });
+        
+        // Opcional: Trigger manual de test (para debugging)
+        window.testErrorCapture = function() {
+            console.log('🧪 Testing error capture...');
+            throw new Error('Test error from OpticaApp error tracking system');
+        };
+    </script>
+    
+    <!-- Modal de Upgrade -->
+    {% include 'dashboard/modals/upgrade_modal.html' %}
+    
+    <!-- Sidebar Edit Mode Script -->
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
+    <script>
+    // ===================================
+    // SIDEBAR EDITOR - Modo de Edición
+    // ===================================
+    
+    const SidebarEditor = {
+        isEditMode: false,
+        draggedItem: null,
+        dropTarget: null,
+        sidebarConfig: {
+            groups: [],
+            hiddenItems: [],
+            itemOrder: [],
+            customNames: {},
+            version: 1
+        },
+        sortableInstance: null,
+        
+        init() {
+            this.loadConfig();
+            this.attachEventListeners();
+        },
+        
+        async loadConfig() {
+            try {
+                const response = await fetch('/dashboard/api/sidebar/config/');
+                const data = await response.json();
+                if (data.success && data.config) {
+                    this.sidebarConfig = data.config;
+                    this.applyConfig();
+                }
+            } catch (error) {
+                console.error('Error loading sidebar config:', error);
+            }
+        },
+        
+        async saveConfig() {
+            try {
+                const response = await fetch('/dashboard/api/sidebar/save/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': this.getCSRFToken()
+                    },
+                    body: JSON.stringify({
+                        config: this.sidebarConfig
+                    })
+                });
+                
+                const data = await response.json();
+                if (data.success) {
+                    this.showToast('✅ Configuración guardada', 'success');
+                } else {
+                    this.showToast('❌ Error al guardar: ' + data.error, 'error');
+                }
+            } catch (error) {
+                console.error('Error saving sidebar config:', error);
+                this.showToast('❌ Error de conexión', 'error');
+            }
+        },
+        
+        applyConfig() {
+            // Aplicar ocultamiento de items
+            this.sidebarConfig.hiddenItems?.forEach(itemId => {
+                const item = document.querySelector(`[data-item-id="${itemId}"]`);
+                if (item) item.style.display = 'none';
+            });
+            
+            // Aplicar nombres personalizados
+            Object.entries(this.sidebarConfig.customNames || {}).forEach(([itemId, name]) => {
+                const item = document.querySelector(`[data-item-id="${itemId}"] .sidebar-text`);
+                if (item) item.textContent = name;
+            });
+            
+            // Aplicar grupos
+            this.renderGroups();
+        },
+        
+        renderGroups() {
+            const nav = document.getElementById('sidebar-nav');
+            if (!nav || !this.sidebarConfig.groups) return;
+            
+            this.sidebarConfig.groups.forEach(group => {
+                const groupEl = this.createGroupElement(group);
+                // Insertar grupo en posición correcta
+                const firstItem = document.querySelector(`[data-item-id="${group.items[0]}"]`);
+                if (firstItem) {
+                    nav.insertBefore(groupEl, firstItem);
+                    // Mover items al grupo
+                    group.items.forEach(itemId => {
+                        const item = document.querySelector(`[data-item-id="${itemId}"]`);
+                        if (item) {
+                            groupEl.querySelector('.sidebar-group-items').appendChild(item);
+                        }
+                    });
+                }
+            });
+        },
+        
+        createGroupElement(group) {
+            const div = document.createElement('div');
+            div.className = 'sidebar-group';
+            div.dataset.groupId = group.id;
+            div.innerHTML = `
+                <div class="sidebar-group-header" onclick="toggleGroup('${group.id}')">
+                    <div class="flex items-center gap-2">
+                        <i class="fas ${group.icon || 'fa-folder'}"></i>
+                        <span class="sidebar-group-name">${group.name}</span>
+                        <span class="text-xs bg-indigo-700 px-2 py-0.5 rounded">${group.items.length}</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <button class="delete-group-btn hover:bg-red-500 rounded p-1 text-xs" onclick="event.stopPropagation(); deleteGroup('${group.id}')">
+                            <i class="fas fa-times"></i>
+                        </button>
+                        <i class="fas fa-chevron-down text-xs transition-transform" id="group-icon-${group.id}"></i>
+                    </div>
+                </div>
+                <div class="sidebar-group-items" id="group-items-${group.id}">
+                    <!-- Items se insertan aquí -->
+                </div>
+            `;
+            return div;
+        },
+        
+        attachEventListeners() {
+            // Listener para items del sidebar
+            const items = document.querySelectorAll('.sidebar-nav-item');
+            items.forEach(item => {
+                // Agregar drag handle si no existe
+                if (!item.querySelector('.drag-handle')) {
+                    const handle = document.createElement('span');
+                    handle.className = 'drag-handle';
+                    handle.innerHTML = '<i class="fas fa-grip-vertical text-xs"></i>';
+                    item.insertBefore(handle, item.firstChild);
+                }
+                
+                item.addEventListener('dragstart', (e) => this.onDragStart(e));
+                item.addEventListener('dragend', (e) => this.onDragEnd(e));
+                item.addEventListener('dragover', (e) => this.onDragOver(e));
+                item.addEventListener('drop', (e) => this.onDrop(e));
+            });
+        },
+        
+        onDragStart(e) {
+            if (!this.isEditMode) {
+                e.preventDefault();
+                return;
+            }
+            this.draggedItem = e.target.closest('.sidebar-nav-item');
+            this.draggedItem.classList.add('dragging');
+            e.dataTransfer.effectAllowed = 'move';
+        },
+        
+        onDragEnd(e) {
+            if (this.draggedItem) {
+                this.draggedItem.classList.remove('dragging');
+                this.draggedItem = null;
+            }
+            // Limpiar drop targets
+            document.querySelectorAll('.drop-target').forEach(el => {
+                el.classList.remove('drop-target');
+            });
+        },
+        
+        onDragOver(e) {
+            if (!this.isEditMode || !this.draggedItem) return;
+            e.preventDefault();
+            const target = e.target.closest('.sidebar-nav-item');
+            if (target && target !== this.draggedItem) {
+                this.dropTarget = target;
+                target.classList.add('drop-target');
+            }
+        },
+        
+        async onDrop(e) {
+            e.preventDefault();
+            if (!this.isEditMode || !this.draggedItem || !this.dropTarget) return;
+            
+            const draggedId = this.draggedItem.dataset.itemId;
+            const targetId = this.dropTarget.dataset.itemId;
+            
+            // Preguntar si quiere crear grupo
+            const createGroup = await this.confirmCreateGroup(draggedId, targetId);
+            
+            this.dropTarget.classList.remove('drop-target');
+            
+            if (createGroup) {
+                this.showGroupNameModal(draggedId, targetId);
+            }
+        },
+        
+        async confirmCreateGroup(draggedId, targetId) {
+            return confirm('¿Deseas crear un grupo con estos elementos?');
+        },
+        
+        showGroupNameModal(item1Id, item2Id) {
+            const modal = document.createElement('div');
+            modal.className = 'fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center';
+            modal.innerHTML = `
+                <div class="bg-white rounded-lg p-6 max-w-md w-full mx-4 shadow-xl">
+                    <h3 class="text-xl font-bold text-gray-800 mb-4">
+                        <i class="fas fa-folder text-blue-600"></i>
+                        Crear Grupo
+                    </h3>
+                    <p class="text-gray-600 mb-4">Dale un nombre a este grupo de elementos del menú:</p>
+                    <input type="text" id="group-name-input" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="Ej: Gestión, Reportes, etc." autofocus>
+                    <div class="mt-4">
+                        <label class="block text-sm text-gray-600 mb-2">Icono (opcional):</label>
+                        <select id="group-icon-select" class="w-full px-4 py-2 border border-gray-300 rounded-lg">
+                            <option value="fa-folder">📁 Carpeta</option>
+                            <option value="fa-chart-line">📊 Gráfico</option>
+                            <option value="fa-cog">⚙️ Configuración</option>
+                            <option value="fa-users">👥 Usuarios</option>
+                            <option value="fa-briefcase">💼 Negocios</option>
+                            <option value="fa-box">📦 Inventario</option>
+                        </select>
+                    </div>
+                    <div class="flex gap-3 mt-6">
+                        <button onclick="SidebarEditor.cancelGroupCreation()" class="flex-1 bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg font-semibold">
+                            Cancelar
+                        </button>
+                        <button onclick="SidebarEditor.createGroupFromModal('${item1Id}', '${item2Id}')" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-semibold">
+                            <i class="fas fa-check mr-2"></i>Crear
+                        </button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+            
+            // Focus en input
+            setTimeout(() => {
+                document.getElementById('group-name-input').focus();
+            }, 100);
+            
+            // Enter para crear
+            document.getElementById('group-name-input').addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    this.createGroupFromModal(item1Id, item2Id);
+                }
+            });
+        },
+        
+        createGroupFromModal(item1Id, item2Id) {
+            const name = document.getElementById('group-name-input').value.trim();
+            const icon = document.getElementById('group-icon-select').value;
+            
+            if (!name) {
+                alert('Por favor ingresa un nombre para el grupo');
+                return;
+            }
+            
+            const group = {
+                id: `group-${Date.now()}`,
+                name: name,
+                icon: icon,
+                items: [item1Id, item2Id],
+                order: 0
+            };
+            
+            this.sidebarConfig.groups.push(group);
+            this.saveConfig();
+            this.cancelGroupCreation();
+            
+            // Recargar para aplicar cambios
+            setTimeout(() => location.reload(), 500);
+        },
+        
+        cancelGroupCreation() {
+            const modal = document.querySelector('.fixed.inset-0.bg-black');
+            if (modal) modal.remove();
+        },
+        
+        getCSRFToken() {
+            return document.querySelector('[name=csrfmiddlewaretoken]')?.value || 
+                   document.cookie.match(/csrftoken=([^;]+)/)?.[1] || '';
+        },
+        
+        showToast(message, type = 'info') {
+            // Usar el sistema de toast existente
+            if (window.showToast) {
+                window.showToast(message, type);
+            } else {
+                alert(message);
+            }
+        }
+    };
+    
+    // Función global para toggle de modo edición
+    function toggleEditMode() {
+        SidebarEditor.isEditMode = !SidebarEditor.isEditMode;
+        const sidebar = document.getElementById('sidebar');
+        const btn = document.getElementById('edit-mode-btn');
+        const icon = document.getElementById('edit-mode-icon');
+        
+        if (SidebarEditor.isEditMode) {
+            sidebar.classList.add('edit-mode');
+            btn.classList.add('active');
+            icon.className = 'fas fa-times';
+            
+            // Hacer items draggables
+            document.querySelectorAll('.sidebar-nav-item').forEach(item => {
+                item.setAttribute('draggable', 'true');
+            });
+            
+            SidebarEditor.showToast('🎨 Modo edición activado - Arrastra items para reorganizar', 'info');
+        } else {
+            sidebar.classList.remove('edit-mode');
+            btn.classList.remove('active');
+            icon.className = 'fas fa-sliders-h';
+            
+            // Quitar draggable
+            document.querySelectorAll('.sidebar-nav-item').forEach(item => {
+                item.setAttribute('draggable', 'false');
+            });
+            
+            SidebarEditor.showToast('✅ Modo edición desactivado', 'success');
+        }
+    }
+    
+    function toggleGroup(groupId) {
+        const items = document.getElementById(`group-items-${groupId}`);
+        const icon = document.getElementById(`group-icon-${groupId}`);
+        if (items && icon) {
+            items.classList.toggle('hidden');
+            icon.classList.toggle('rotate-180');
+        }
+    }
+    
+    function deleteGroup(groupId) {
+        if (!confirm('¿Eliminar este grupo? Los items volverán al menú principal.')) return;
+        
+        // Remover grupo de config
+        SidebarEditor.sidebarConfig.groups = SidebarEditor.sidebarConfig.groups.filter(g => g.id !== groupId);
+        SidebarEditor.saveConfig();
+        
+        // Recargar
+        setTimeout(() => location.reload(), 500);
+    }
+    
+    // Inicializar cuando el DOM esté listo
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', () => SidebarEditor.init());
+    } else {
+        SidebarEditor.init();
+    }
+    </script>
+    
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

@@ -4,6 +4,7 @@ from django.utils import timezone
 from decimal import Decimal
 from apps.organizations.base_models import TenantModel
 from django.core.exceptions import ValidationError
+from apps.core.storage_utils import OrganizationUploadPath
 
 
 class DianConfiguration(TenantModel):
@@ -1294,7 +1295,7 @@ class InvoiceConfiguration(TenantModel):
     
     # Configuración Visual
     logo_factura = models.ImageField(
-        upload_to='billing/logos/',
+        upload_to=OrganizationUploadPath('billing/logos'),
         blank=True,
         null=True,
         verbose_name="Logo para Factura"
@@ -1729,25 +1730,25 @@ class InvoiceProduct(TenantModel):
     
     # Imágenes
     imagen_principal = models.ImageField(
-        upload_to='products/images/',
+        upload_to=OrganizationUploadPath('products/images'),
         blank=True,
         null=True,
         verbose_name="Imagen Principal"
     )
     imagen_2 = models.ImageField(
-        upload_to='products/images/',
+        upload_to=OrganizationUploadPath('products/images'),
         blank=True,
         null=True,
         verbose_name="Imagen 2"
     )
     imagen_3 = models.ImageField(
-        upload_to='products/images/',
+        upload_to=OrganizationUploadPath('products/images'),
         blank=True,
         null=True,
         verbose_name="Imagen 3"
     )
     imagen_4 = models.ImageField(
-        upload_to='products/images/',
+        upload_to=OrganizationUploadPath('products/images'),
         blank=True,
         null=True,
         verbose_name="Imagen 4"
@@ -1779,6 +1780,11 @@ class InvoiceProduct(TenantModel):
     is_featured = models.BooleanField(
         default=False,
         verbose_name="Producto Destacado"
+    )
+    show_in_store = models.BooleanField(
+        default=False,
+        verbose_name="Mostrar en Tienda Online",
+        help_text="Mostrar este producto en la tienda pública"
     )
     permitir_venta_sin_stock = models.BooleanField(
         default=False,

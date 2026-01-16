@@ -255,9 +255,33 @@ class TimeSlotSerializer(serializers.ModelSerializer):
 
 class AvailableSlotsSerializer(serializers.Serializer):
     """Serializer para mostrar horarios disponibles"""
-    time = serializers.TimeField()
+    time = serializers.SerializerMethodField()
     available = serializers.BooleanField()
     organization = serializers.DictField(required=False, allow_null=True)
+    
+    def get_time(self, obj):
+        """Convertir hora a formato 12 horas con AM/PM para Colombia"""
+        from datetime import time as datetime_time
+        
+        # Obtener el objeto time
+        time_obj = obj.get('time') if isinstance(obj, dict) else obj.time
+        
+        # Convertir a formato 12 horas
+        if isinstance(time_obj, datetime_time):
+            hour = time_obj.hour
+            minute = time_obj.minute
+            
+            # Determinar AM/PM
+            period = 'AM' if hour < 12 else 'PM'
+            
+            # Convertir hora a formato 12 horas
+            display_hour = hour if hour <= 12 else hour - 12
+            if display_hour == 0:  # Medianoche
+                display_hour = 12
+            
+            return f"{display_hour}:{minute:02d} {period}"
+        
+        return str(time_obj)
 
 
 class AvailableDatesSerializer(serializers.Serializer):

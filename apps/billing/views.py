@@ -1066,6 +1066,7 @@ def product_create(request):
                 stock_minimo=int(request.POST.get('stock_minimo', 5)),
                 stock_maximo=int(request.POST.get('stock_maximo', 100)),
                 ubicacion_fisica=request.POST.get('ubicacion_fisica', '').strip(),
+                show_in_store=request.POST.get('show_in_store') == 'on',
             )
             
             # Manejar imágenes
@@ -1144,6 +1145,7 @@ def product_edit(request, product_id):
             product.stock_maximo = int(request.POST.get('stock_maximo', 100))
             product.ubicacion_fisica = request.POST.get('ubicacion_fisica', '').strip()
             product.is_active = request.POST.get('is_active') == 'on'
+            product.show_in_store = request.POST.get('show_in_store') == 'on'
             
             # Manejar imágenes
             if 'imagen_principal' in request.FILES:

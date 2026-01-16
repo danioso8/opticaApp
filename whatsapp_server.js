@@ -22,23 +22,11 @@ const logger = pino({ level: 'info' });
 const sessions = new Map(); // organizationId -> { sock, qr, status, retryCount, badMacErrors, streamErrors }
 const AUTH_DIR = path.join(__dirname, 'auth_sessions');
 
-// ========== PROTECCIONES CONTRA BLOQUEO DE WHATSAPP ==========
 // Límite de errores Bad MAC antes de limpiar sesión
-const BAD_MAC_ERROR_LIMIT = 3;
-const BAD_MAC_RESET_TIME = 30000;
-const STREAM_ERROR_LIMIT = 2;
-const STREAM_ERROR_RESET_TIME = 60000;
-
-// NUEVO: Protecciones contra Error 515 (Bloqueo de WhatsApp)
-const MAX_ATTEMPTS_PER_DAY = 2; // Máximo 2 intentos de conexión por día por organización
-const COOLDOWN_AFTER_FAILURE = 2 * 60 * 60 * 1000; // 2 horas de espera después de fallo
-const MANDATORY_DELAY_BEFORE_CONNECTION = 30 * 1000; // 30 segundos obligatorios antes de conectar
-const ERROR_515_COOLDOWN = 24 * 60 * 60 * 1000; // 24 horas de cooldown si detectamos Error 515
-const MAX_GLOBAL_CONNECTIONS_PER_HOUR = 3; // Máximo 3 conexiones totales por hora en el servidor
-
-// Tracking global de intentos del servidor
-const globalConnectionAttempts = [];
-const organizationAttempts = new Map(); // organizationId -> { attempts: [], lastFailure: timestamp, blocked: boolean }
+const BAD_MAC_ERROR_LIMIT = 10; // Aumentado para evitar limpiezas excesivas
+const BAD_MAC_RESET_TIME = 120000; // 2 minutos
+const STREAM_ERROR_LIMIT = 5; // Límite de errores de stream antes de limpiar
+const STREAM_ERROR_RESET_TIME = 180000; // 3 minutos
 
 // Crear directorio de sesiones si no existe
 if (!fs.existsSync(AUTH_DIR)) {
@@ -94,11 +82,9 @@ function handleBadMacError(organizationId) {
     }
     
     session.badMacErrors.resetTimeout = setTimeout(() => {
-        // Verificar que la sesión todavía existe
-        const currentSession = sessions.get(organizationId);
-        if (currentSession?.badMacErrors) {
+        if (session.badMacErrors) {
             logger.info(`🔄 Reseteando contador de Bad MAC para ${organizationId}`);
-            currentSession.badMacErrors.count = 0;
+            session.badMacErrors.count = 0;
         }
     }, BAD_MAC_RESET_TIME);
 }
@@ -144,105 +130,11 @@ function handleStreamError(organizationId, reason) {
     }
 
     session.streamErrors.resetTimeout = setTimeout(() => {
-        // Verificar que la sesión todavía existe
-        const currentSession = sessions.get(organizationId);
-        if (currentSession?.streamErrors) {
+        if (session.streamErrors) {
             logger.info(`Reseteando contador de Stream Errors para ${organizationId}`);
-            currentSession.streamErrors.count = 0;
+            session.streamErrors.count = 0;
         }
     }, STREAM_ERROR_RESET_TIME);
-}
-
-// ========== FUNCIONES DE PROTECCIÓN CONTRA BLOQUEO ==========
-
-// Función para verificar si podemos intentar una nueva conexión
-function canAttemptConnection(organizationId) {
-    const now = Date.now();
-    
-    // 1. Verificar límite global del servidor (3 por hora)
-    const recentGlobalAttempts = globalConnectionAttempts.filter(ts => now - ts < 60 * 60 * 1000);
-    if (recentGlobalAttempts.length >= MAX_GLOBAL_CONNECTIONS_PER_HOUR) {
-        logger.warn(`🚫 BLOQUEADO: Servidor alcanzó límite global (${MAX_GLOBAL_CONNECTIONS_PER_HOUR} conexiones/hora)`);
-        return { allowed: false, reason: 'server_rate_limit', waitTime: 60 * 60 * 1000 };
-    }
-    
-    // 2. Verificar si la organización está bloqueada por Error 515
-    const orgAttempts = organizationAttempts.get(organizationId);
-    if (orgAttempts?.blocked) {
-        const timeSinceBlock = now - orgAttempts.lastFailure;
-        if (timeSinceBlock < ERROR_515_COOLDOWN) {
-            const remaining = ERROR_515_COOLDOWN - timeSinceBlock;
-            logger.warn(`🚫 BLOQUEADO: Org ${organizationId} detectó Error 515. Esperar ${Math.round(remaining / 1000 / 60)} minutos`);
-            return { allowed: false, reason: 'error_515_block', waitTime: remaining };
-        } else {
-            // Pasó el cooldown, desbloquear
-            orgAttempts.blocked = false;
-            orgAttempts.attempts = [];
-        }
-    }
-    
-    // 3. Verificar intentos por día
-    if (orgAttempts) {
-        const last24h = orgAttempts.attempts.filter(ts => now - ts < 24 * 60 * 60 * 1000);
-        if (last24h.length >= MAX_ATTEMPTS_PER_DAY) {
-            logger.warn(`🚫 BLOQUEADO: Org ${organizationId} alcanzó límite diario (${MAX_ATTEMPTS_PER_DAY} intentos/día)`);
-            return { allowed: false, reason: 'daily_limit', waitTime: 24 * 60 * 60 * 1000 };
-        }
-    }
-    
-    // 4. Verificar cooldown después de fallo
-    if (orgAttempts?.lastFailure) {
-        const timeSinceFailure = now - orgAttempts.lastFailure;
-        if (timeSinceFailure < COOLDOWN_AFTER_FAILURE) {
-            const remaining = COOLDOWN_AFTER_FAILURE - timeSinceFailure;
-            logger.warn(`🚫 BLOQUEADO: Org ${organizationId} debe esperar ${Math.round(remaining / 1000 / 60)} minutos después del último fallo`);
-            return { allowed: false, reason: 'cooldown_after_failure', waitTime: remaining };
-        }
-    }
-    
-    return { allowed: true };
-}
-
-// Función para registrar intento de conexión
-function recordConnectionAttempt(organizationId, success = false) {
-    const now = Date.now();
-    
-    // Registrar en global
-    globalConnectionAttempts.push(now);
-    
-    // Limpiar intentos antiguos (más de 1 hora)
-    while (globalConnectionAttempts.length > 0 && now - globalConnectionAttempts[0] > 60 * 60 * 1000) {
-        globalConnectionAttempts.shift();
-    }
-    
-    // Registrar por organización
-    if (!organizationAttempts.has(organizationId)) {
-        organizationAttempts.set(organizationId, { attempts: [], lastFailure: null, blocked: false });
-    }
-    
-    const orgAttempts = organizationAttempts.get(organizationId);
-    orgAttempts.attempts.push(now);
-    
-    if (!success) {
-        orgAttempts.lastFailure = now;
-    }
-    
-    // Limpiar intentos antiguos (más de 24 horas)
-    orgAttempts.attempts = orgAttempts.attempts.filter(ts => now - ts < 24 * 60 * 60 * 1000);
-    
-    logger.info(`📊 Intentos org ${organizationId}: ${orgAttempts.attempts.length}/día, Global: ${globalConnectionAttempts.length}/hora`);
-}
-
-// Función para marcar organización como bloqueada por Error 515
-function markAsBlocked515(organizationId) {
-    if (!organizationAttempts.has(organizationId)) {
-        organizationAttempts.set(organizationId, { attempts: [], lastFailure: Date.now(), blocked: true });
-    } else {
-        const orgAttempts = organizationAttempts.get(organizationId);
-        orgAttempts.blocked = true;
-        orgAttempts.lastFailure = Date.now();
-    }
-    logger.error(`🚨 CRÍTICO: Org ${organizationId} marcada como BLOQUEADA por Error 515. Cooldown de 24 horas activado.`);
 }
 
 // Función para limpiar sesión corrupta
@@ -284,22 +176,16 @@ async function clearCorruptedSession(organizationId) {
             }
         }
 
-        // Resetear sesión en memoria
-        sessions.set(organizationId, {
-            sock: null,
-            qr: null,
-            status: 'session_corrupted_manual_action_required',
-            retryCount: 0,
-            badMacErrors: null,
-            streamErrors: null
-        });
+        // Eliminar sesión de memoria
+        sessions.delete(organizationId);
 
         logger.info(`✨ Sesión limpiada para ${organizationId}. Se requiere escanear QR nuevamente.`);
-        logger.warn(`⚠️  NO se reconectará automáticamente. Usar POST /api/start-session para reconectar manualmente.`);
         
-        // 🔴 CAMBIO CRÍTICO: NO reconectar automáticamente después de limpiar sesión corrupta
-        // Esto evita loops infinitos de: error → limpiar → reconectar → error → limpiar...
-        // El administrador debe reconectar manualmente vía API
+        // Crear nueva conexión (generará nuevo QR) con delay más largo
+        setTimeout(() => {
+            logger.info(`🔄 Creando nueva conexión limpia para ${organizationId}...`);
+            createWhatsAppConnection(organizationId);
+        }, 5000);
 
     } catch (error) {
         logger.error(`❌ Error limpiando sesión corrupta de ${organizationId}: ${error.message}`);
@@ -309,31 +195,6 @@ async function clearCorruptedSession(organizationId) {
 // Crear conexión de WhatsApp para una organización
 async function createWhatsAppConnection(organizationId) {
     try {
-        // ========== VALIDACIÓN 1: Verificar si podemos intentar conexión ==========
-        const canConnect = canAttemptConnection(organizationId);
-        if (!canConnect.allowed) {
-            const waitMinutes = Math.round(canConnect.waitTime / 1000 / 60);
-            const errorMsg = `No se puede conectar ${organizationId}: ${canConnect.reason}. Esperar ${waitMinutes} minutos.`;
-            logger.error(`🚫 ${errorMsg}`);
-            
-            // Actualizar sesión con el motivo del bloqueo
-            const session = sessions.get(organizationId);
-            if (session) {
-                session.status = 'blocked';
-                session.blockReason = canConnect.reason;
-                session.blockUntil = Date.now() + canConnect.waitTime;
-            }
-            
-            throw new Error(errorMsg);
-        }
-        
-        // ========== VALIDACIÓN 2: Delay obligatorio de 30 segundos ==========
-        logger.info(`⏳ Esperando ${MANDATORY_DELAY_BEFORE_CONNECTION / 1000}s antes de conectar ${organizationId} (protección anti-bloqueo)...`);
-        await new Promise(resolve => setTimeout(resolve, MANDATORY_DELAY_BEFORE_CONNECTION));
-        
-        // Registrar intento de conexión
-        recordConnectionAttempt(organizationId, false);
-        
         const authPath = path.join(AUTH_DIR, organizationId);
         
         if (!fs.existsSync(authPath)) {
@@ -342,118 +203,22 @@ async function createWhatsAppConnection(organizationId) {
 
         const { state, saveCreds } = await useMultiFileAuthState(authPath);
         const { version } = await fetchLatestBaileysVersion();
-        
-        logger.info(`🔐 Usando Baileys versión ${version.join('.')}`);
 
         const sock = makeWASocket({
             version,
             logger: pino({ level: 'silent' }),
             printQRInTerminal: false,
             auth: state,
-            browser: ['Windows', 'Chrome', '120.0.0'], // Identificación más genérica
-            
-            // ========== CONFIGURACIÓN PARA CONEXIÓN PERSISTENTE (como WhatsApp Web) ==========
-            connectTimeoutMs: 60000, // Timeout de 60 segundos para la conexión inicial
-            defaultQueryTimeoutMs: undefined, // Sin timeout en queries (mantener conexión)
-            keepAliveIntervalMs: 25000, // Keep-alive cada 25 segundos (más frecuente)
-            retryRequestDelayMs: 250, // Delay entre reintentos de requests
-            
-            // Configuración de sockets más robusta
-            emitOwnEvents: false, // No emitir eventos propios
-            fireInitQueries: true, // Inicializar queries al conectar
-            syncFullHistory: false, // No sincronizar historial completo (más liviano)
-            markOnlineOnConnect: true, // Marcar como online (comportamiento normal de WhatsApp Web)
-            
-            // Configuración de mensajes
-            shouldIgnoreJid: () => false, // No ignorar ningún JID
-            shouldSyncHistoryMessage: () => false, // No sincronizar historial de mensajes (evita carga pesada)
-            
-            // Retornar undefined para mensajes no encontrados (evita errores)
-            getMessage: async (key) => undefined
+            getMessage: async () => undefined
         });
 
         // Guardar credenciales cuando cambien
         sock.ev.on('creds.update', saveCreds);
-        
-        // ========== MANEJADORES DE WEBSOCKET PARA CONEXIÓN PERSISTENTE ==========
-        // Nota: sock.ws puede no estar disponible inmediatamente, se configurará cuando esté listo
-        
-        // Función para configurar listeners del WebSocket
-        const setupWebSocketListeners = (ws) => {
-            if (!ws) return;
-            
-            // Evento: Websocket abierto
-            ws.on('open', () => {
-                logger.info(`🌐 WebSocket ABIERTO para ${organizationId}`);
-            });
-            
-            // Evento: Mensaje recibido (mantiene conexión activa)
-            ws.on('message', (data) => {
-                // No logear cada mensaje (demasiado verbose), solo actualizar last activity
-                const session = sessions.get(organizationId);
-                if (session) {
-                    session.lastActivity = Date.now();
-                }
-            });
-            
-            // Evento: Ping recibido (responder con pong automáticamente)
-            ws.on('ping', () => {
-                try {
-                    if (ws.readyState === 1) {
-                        ws.pong();
-                        logger.debug(`🏓 Pong enviado para ${organizationId}`);
-                    }
-                } catch (e) {
-                    logger.warn(`Error enviando pong: ${e.message}`);
-                }
-            });
-            
-            // Evento: Error en websocket
-            ws.on('error', (error) => {
-                logger.error(`❌ WebSocket ERROR para ${organizationId}: ${error.message}`);
-                // NO cerrar la conexión aquí - dejar que Baileys maneje
-            });
-            
-            // Evento: Websocket cerrado
-            ws.on('close', (code, reason) => {
-                logger.warn(`🔌 WebSocket CERRADO para ${organizationId} - Código: ${code}, Razón: ${reason || 'Desconocida'}`);
-                // NO reconectar aquí - se maneja en connection.update
-            });
-        };
-        
-        // Configurar listeners si el ws ya está disponible
-        if (sock.ws) {
-            setupWebSocketListeners(sock.ws);
-        }
-        
-        // También escuchar cuando el websocket se cree (en caso de que aún no exista)
-        const originalSocket = sock.ws;
-        Object.defineProperty(sock, 'ws', {
-            get() {
-                return originalSocket;
-            },
-            set(newWs) {
-                Object.defineProperty(sock, 'ws', {
-                    value: newWs,
-                    writable: true,
-                    configurable: true
-                });
-                if (newWs) {
-                    setupWebSocketListeners(newWs);
-                }
-            },
-            configurable: true
-        });
 
         // Manejar errores de sesión (Bad MAC, etc.)
         sock.ev.on('messages.upsert', async ({ messages, type }) => {
             // Este evento se dispara incluso si hay errores de descifrado
             // Interceptar aquí para detectar patrones de errores
-            // Actualizar última actividad
-            const session = sessions.get(organizationId);
-            if (session) {
-                session.lastActivity = Date.now();
-            }
         });
 
         // Capturar errores no manejados del socket
@@ -493,47 +258,14 @@ async function createWhatsAppConnection(organizationId) {
 
             if (connection === 'close') {
                 const statusCode = lastDisconnect?.error?.output?.statusCode;
-                const errorNode = lastDisconnect?.error?.output?.payload?.fullErrorNode;
                 const shouldReconnect = statusCode !== DisconnectReason.loggedOut;
                 
-                logger.warn(`⚠️  Conexión cerrada para ${organizationId}. Status: ${statusCode}, Debe reconectar: ${shouldReconnect}`);
+                logger.warn(`Conexión cerrada para ${organizationId}. Status: ${statusCode}, Reconectar: ${shouldReconnect}`);
                 
-                // ========== ANÁLISIS DETALLADO DEL CIERRE ==========
+                // Detectar errores de descifrado
                 const errorMsg = lastDisconnect?.error?.message || '';
-                const fullErrorNode = lastDisconnect?.error?.output?.payload?.fullErrorNode;
                 
-                // Log detallado para debugging
-                logger.info(`🔍 Detalles de desconexión ${organizationId}:
-                    - Código: ${statusCode}
-                    - Error: ${errorMsg}
-                    - Razón: ${DisconnectReason[statusCode] || 'Desconocida'}
-                    - Tipo: ${shouldReconnect ? 'Temporal' : 'Permanente (logout)'}
-                `);
-                
-                if (fullErrorNode) {
-                    logger.debug(`🔍 Full error node: ${JSON.stringify(fullErrorNode)}`);
-                }
-                
-                // ========== CRÍTICO: Detectar Error 515 (Bloqueo de WhatsApp) ==========
-                if (errorNode?.attrs?.code === '515' || statusCode === 515) {
-                    logger.error(`🚨🚨🚨 ERROR 515 DETECTADO - WHATSAPP BLOQUEANDO ${organizationId} 🚨🚨🚨`);
-                    logger.error(`⚠️  Error 515 detectado - WhatsApp bloqueando temporalmente ${organizationId}. Cooldown de 24 horas activado.`);
-                    markAsBlocked515(organizationId);
-                    
-                    const session = sessions.get(organizationId);
-                    if (session) {
-                        session.status = 'blocked_515';
-                        session.blockUntil = Date.now() + ERROR_515_COOLDOWN;
-                        if (session.keepAliveInterval) {
-                            clearInterval(session.keepAliveInterval);
-                        }
-                    }
-                    
-                    // NO RECONECTAR - Bloqueo crítico
-                    return;
-                }
-                
-                // Manejar errores Bad MAC (sesión corrupta)
+                // Manejar errores Bad MAC
                 if (errorMsg.includes('Bad MAC') || errorMsg.includes('decrypt')) {
                     logger.error(`🔴 Error de descifrado detectado: ${errorMsg}`);
                     handleBadMacError(organizationId);
@@ -549,63 +281,54 @@ async function createWhatsAppConnection(organizationId) {
                     return; // No intentar reconectar si hay problemas de stream recurrentes
                 }
                 
-                // Manejar logout intencional del usuario
-                if (statusCode === DisconnectReason.loggedOut) {
-                    logger.warn(`👋 Usuario cerró sesión en ${organizationId}. Limpiando sesión...`);
-                    const session = sessions.get(organizationId);
-                    if (session) {
-                        session.status = 'logged_out';
-                        if (session.keepAliveInterval) {
-                            clearInterval(session.keepAliveInterval);
-                        }
-                    }
-                    // NO reconectar si el usuario hizo logout
-                    return;
-                }
+                logger.warn(`Razón de desconexión: ${errorMsg || 'Desconocida'}`);
 
                 const session = sessions.get(organizationId);
                 if (session) {
                     session.status = 'disconnected';
                 }
 
-                // ========== SIN AUTO-RECONEXIÓN (Protección anti-bloqueo) ==========
-                // Todas las reconexiones deben ser MANUALES vía API para evitar bloqueos
-                logger.warn(`❌ Conexión perdida para ${organizationId}. Reconexión automática DESACTIVADA.`);
-                logger.warn(`   📱 Para reconectar, usar: POST /api/start-session con organization_id=${organizationId}`);
-                
-                if (session) {
-                    session.status = 'disconnected_manual_reconnect_required';
-                    session.retryCount = 0;
-                    session.disconnectedAt = new Date();
-                    session.disconnectReason = DisconnectReason[statusCode] || errorMsg || 'Desconocida';
+                if (shouldReconnect) {
+                    const retryCount = (session?.retryCount || 0) + 1;
                     
-                    // Limpiar keep-alive interval
-                    if (session.keepAliveInterval) {
-                        clearInterval(session.keepAliveInterval);
+                    // Verificar si hay credenciales guardadas
+                    const authPath = path.join(AUTH_DIR, organizationId);
+                    const credsPath = path.join(authPath, 'creds.json');
+                    const hasStoredCreds = fs.existsSync(credsPath);
+                    
+                    // Si hay credenciales guardadas, intentar reconectar indefinidamente
+                    // Si no hay credenciales, limitar a 3 intentos antes de mostrar QR
+                    const maxRetries = hasStoredCreds ? 999 : 3;
+                    
+                    if (retryCount <= maxRetries) {
+                        // Usar backoff exponencial con máximo de 30 segundos
+                        const delay = Math.min(1000 * Math.pow(2, Math.min(retryCount, 5)), 30000);
+                        
+                        logger.info(`🔄 Reconectando ${organizationId} en ${delay}ms (intento ${retryCount}${hasStoredCreds ? ', sesión guardada' : ', sin credenciales'})`);
+                        
+                        setTimeout(() => {
+                            createWhatsAppConnection(organizationId);
+                        }, delay);
+
+                        if (session) {
+                            session.retryCount = retryCount;
+                        }
+                    } else {
+                        logger.warn(`❌ Máximo de reintentos alcanzado para ${organizationId}. Se requiere escanear QR.`);
+                        if (session) {
+                            session.status = 'qr_required';
+                            session.retryCount = 0;
+                        }
                     }
                 }
-                
-                // Registrar el fallo
-                recordConnectionAttempt(organizationId, false);
-                
             } else if (connection === 'open') {
-                logger.info(`✅✅✅ WhatsApp CONECTADO exitosamente para ${organizationId} ✅✅✅`);
-                logger.info(`🎉 Conexión establecida - Socket activo y listo para enviar mensajes`);
-                
-                // Registrar conexión exitosa
-                recordConnectionAttempt(organizationId, true);
-                
+                logger.info(`✅ WhatsApp conectado exitosamente para ${organizationId}`);
                 const session = sessions.get(organizationId);
                 if (session) {
                     session.status = 'connected';
                     session.qr = null;
                     session.retryCount = 0;
                     session.lastConnected = new Date();
-                    session.blockReason = null;
-                    session.blockUntil = null;
-                    session.disconnectedAt = null;
-                    session.disconnectReason = null;
-                    session.lastActivity = Date.now();
                     
                     // Resetear contador de errores Bad MAC al conectar exitosamente
                     if (session.badMacErrors) {
@@ -634,47 +357,25 @@ async function createWhatsAppConnection(organizationId) {
                         logger.warn(`No se pudo obtener número de teléfono: ${e.message}`);
                     }
                     
-                    // ========== KEEP-ALIVE MEJORADO (Como WhatsApp Web) ==========
-                    // Limpiar keep-alive anterior si existe
+                    // Implementar keep-alive: verificar conexión cada 5 minutos
                     if (session.keepAliveInterval) {
                         clearInterval(session.keepAliveInterval);
                     }
                     
-                    // Keep-alive cada 2 minutos (más frecuente para mantener conexión activa)
                     session.keepAliveInterval = setInterval(async () => {
                         try {
-                            // Verificar estado del websocket
-                            const wsState = sock.ws?.readyState;
-                            const isConnected = wsState === 1; // 1 = OPEN
-                            const hasUser = sock.user != null;
-                            
-                            if (isConnected && hasUser) {
-                                // Conexión activa y saludable
-                                logger.debug(`💚 Keep-alive OK para ${organizationId} (ws: ${wsState})`);
-                                
-                                // Enviar ping para mantener conexión activa
-                                try {
-                                    if (sock.ws && sock.ws.ping) {
-                                        sock.ws.ping();
-                                    }
-                                } catch (pingError) {
-                                    logger.debug(`Ping no disponible: ${pingError.message}`);
-                                }
+                            if (sock.ws?.readyState === 1 && sock.user) {
+                                // Conexión activa, solo log si es necesario
+                                // logger.debug(`💚 Keep-alive OK para ${organizationId}`);
                             } else {
-                                // Conexión perdida - solo actualizar estado, NO reconectar
-                                logger.warn(`⚠️  Keep-alive detectó desconexión para ${organizationId} (ws: ${wsState}, user: ${hasUser})`);
-                                if (session.status === 'connected') {
-                                    session.status = 'disconnected';
-                                }
+                                logger.warn(`⚠️  Keep-alive detectó desconexión para ${organizationId}`);
+                                session.status = 'disconnected';
                                 clearInterval(session.keepAliveInterval);
-                                session.keepAliveInterval = null;
                             }
                         } catch (e) {
                             logger.error(`Error en keep-alive para ${organizationId}: ${e.message}`);
                         }
-                    }, 2 * 60 * 1000); // Cada 2 minutos (más frecuente que antes)
-                    
-                    logger.info(`✅ Keep-alive activado para ${organizationId} (check cada 2 min)`);
+                    }, 5 * 60 * 1000); // Cada 5 minutos
                 }
             } else if (connection === 'connecting') {
                 logger.info(`🔗 Conectando WhatsApp para ${organizationId}...`);
@@ -717,62 +418,6 @@ app.get('/health', (req, res) => {
     });
 });
 
-// Nuevo endpoint: Verificar estado de rate limiting y bloqueos
-app.get('/api/rate-limit-status', authenticateAPI, (req, res) => {
-    try {
-        const now = Date.now();
-        const orgId = req.query.organization_id;
-        
-        // Información global del servidor
-        const globalInfo = {
-            global_attempts_last_hour: globalConnectionAttempts.filter(ts => now - ts < 60 * 60 * 1000).length,
-            global_limit: MAX_GLOBAL_CONNECTIONS_PER_HOUR,
-            global_blocked: globalConnectionAttempts.filter(ts => now - ts < 60 * 60 * 1000).length >= MAX_GLOBAL_CONNECTIONS_PER_HOUR
-        };
-        
-        // Si se especifica organization_id, dar detalles
-        if (orgId) {
-            const canConnect = canAttemptConnection(orgId);
-            const orgAttempts = organizationAttempts.get(orgId);
-            
-            return res.json({
-                ...globalInfo,
-                organization_id: orgId,
-                can_connect: canConnect.allowed,
-                block_reason: canConnect.reason || null,
-                wait_time_minutes: canConnect.waitTime ? Math.round(canConnect.waitTime / 1000 / 60) : 0,
-                attempts_last_24h: orgAttempts ? orgAttempts.attempts.filter(ts => now - ts < 24 * 60 * 60 * 1000).length : 0,
-                daily_limit: MAX_ATTEMPTS_PER_DAY,
-                is_blocked_515: orgAttempts?.blocked || false,
-                last_failure: orgAttempts?.lastFailure ? new Date(orgAttempts.lastFailure).toISOString() : null,
-                block_until: canConnect.waitTime ? new Date(now + canConnect.waitTime).toISOString() : null
-            });
-        }
-        
-        // Si no se especifica org, mostrar todas
-        const organizations = [];
-        for (const [id, attempts] of organizationAttempts.entries()) {
-            const canConnect = canAttemptConnection(id);
-            organizations.push({
-                organization_id: id,
-                can_connect: canConnect.allowed,
-                block_reason: canConnect.reason || null,
-                attempts_last_24h: attempts.attempts.filter(ts => now - ts < 24 * 60 * 60 * 1000).length,
-                is_blocked_515: attempts.blocked || false,
-                last_failure: attempts.lastFailure ? new Date(attempts.lastFailure).toISOString() : null
-            });
-        }
-        
-        res.json({
-            ...globalInfo,
-            organizations
-        });
-    } catch (error) {
-        logger.error(`Error obteniendo estado de rate limiting: ${error.message}`);
-        res.status(500).json({ error: error.message });
-    }
-});
-
 // Iniciar sesión de WhatsApp (genera QR)
 app.post('/api/start-session', authenticateAPI, async (req, res) => {
     try {
@@ -791,7 +436,7 @@ app.post('/api/start-session', authenticateAPI, async (req, res) => {
             if (oldSession.sock) {
                 try {
                     await oldSession.sock.logout();
-                    await oldSession.sock.end();
+                    oldSession.sock.end();
                 } catch (err) {
                     logger.warn(`Error cerrando socket anterior: ${err.message}`);
                 }
@@ -824,14 +469,7 @@ app.post('/api/start-session', authenticateAPI, async (req, res) => {
         });
 
         const sock = await createWhatsAppConnection(organization_id);
-        
-        // Verificar que la sesión todavía existe (puede haber sido eliminada durante createWhatsAppConnection)
-        const currentSession = sessions.get(organization_id);
-        if (currentSession) {
-            currentSession.sock = sock;
-        } else {
-            logger.warn(`Sesión ${organization_id} fue eliminada durante la creación`);
-        }
+        sessions.get(organization_id).sock = sock;
 
         res.json({
             message: 'Sesión iniciada (limpia)',
@@ -933,9 +571,9 @@ app.post('/api/send-message', authenticateAPI, async (req, res) => {
             });
         }
 
-        // Verificar que la socket existe y esté realmente activa
-        if (!session.sock || !session.sock.user || session.sock.ws?.readyState !== 1) {
-            logger.warn(`Socket cerrada o inexistente para ${organization_id}, actualizando estado`);
+        // Verificar que la socket esté realmente activa
+        if (!session.sock.user || session.sock.ws?.readyState !== 1) {
+            logger.warn(`Socket cerrada para ${organization_id}, actualizando estado`);
             session.status = 'disconnected';
             return res.status(400).json({ 
                 error: 'Conexión cerrada. Por favor reconecta escaneando el código QR.',
@@ -994,28 +632,9 @@ app.post('/api/logout', authenticateAPI, async (req, res) => {
             return res.status(404).json({ error: 'Sesión no encontrada' });
         }
 
-        // Limpiar keep-alive interval
-        if (session.keepAliveInterval) {
-            clearInterval(session.keepAliveInterval);
-            logger.info(`✓ Keep-alive detenido para ${organization_id}`);
-        }
-        
-        // Limpiar timeouts de errores
-        if (session.badMacErrors?.resetTimeout) {
-            clearTimeout(session.badMacErrors.resetTimeout);
-        }
-        if (session.streamErrors?.resetTimeout) {
-            clearTimeout(session.streamErrors.resetTimeout);
-        }
-        
         // Cerrar socket
         if (session.sock) {
-            try {
-                await session.sock.logout();
-                logger.info(`✓ Socket cerrado para ${organization_id}`);
-            } catch (err) {
-                logger.warn(`Error en logout: ${err.message}`);
-            }
+            await session.sock.logout();
         }
 
         // Eliminar sesión del mapa
@@ -1112,18 +731,8 @@ app.get('/api/sessions', authenticateAPI, (req, res) => {
 // Restaurar sesiones existentes al iniciar el servidor
 async function restoreExistingSessions() {
     try {
-        // 🔴 DESACTIVADO: No restaurar sesiones automáticamente al iniciar
-        // Esto evita que el servidor intente conectar todas las sesiones al mismo tiempo
-        // causando múltiples intentos simultáneos → Error 515
-        
-        logger.warn(`⚠️  ============================================`);
-        logger.warn(`⚠️  RESTAURACIÓN AUTOMÁTICA DESACTIVADA`);
-        logger.warn(`⚠️  Para conectar WhatsApp, usar API manualmente:`);
-        logger.warn(`⚠️  POST /api/start-session con organization_id`);
-        logger.warn(`⚠️  ============================================`);
-        
         if (!fs.existsSync(AUTH_DIR)) {
-            logger.info('No hay sesiones guardadas');
+            logger.info('No hay sesiones guardadas para restaurar');
             return;
         }
         
@@ -1133,16 +742,9 @@ async function restoreExistingSessions() {
         });
         
         if (organizations.length === 0) {
-            logger.info('No hay sesiones válidas en disco');
+            logger.info('No hay sesiones válidas para restaurar');
             return;
         }
-        
-        logger.info(`📦 Se encontraron ${organizations.length} sesiones en disco:`);
-        organizations.forEach(orgId => {
-            logger.info(`   - Organización ${orgId} (usar API para reconectar)`);
-        });
-        
-        /* CÓDIGO ANTERIOR - DESACTIVADO PARA EVITAR ERROR 515
         
         logger.info(`📦 Restaurando ${organizations.length} sesiones existentes...`);
 
@@ -1166,7 +768,7 @@ async function restoreExistingSessions() {
                         lastConnected: null
                     });
 
-                    // Crear conexión de forma asíncrona
+                    // Crear conexión de forma asíncrona para no bloquear el startup
                     createWhatsAppConnection(orgId).then(sock => {
                         const session = sessions.get(orgId);
                         if (session) {
@@ -1177,7 +779,7 @@ async function restoreExistingSessions() {
                         sessions.delete(orgId);
                     });
                     
-                    // Pequeño delay entre restauraciones
+                    // Pequeño delay entre restauraciones para no saturar
                     await new Promise(resolve => setTimeout(resolve, 500));
                 } catch (err) {
                     logger.error(`Error restaurando sesión ${orgId}: ${err.message}`);
@@ -1186,8 +788,6 @@ async function restoreExistingSessions() {
         }
 
         logger.info('✅ Proceso de restauración iniciado');
-        */
-        
     } catch (error) {
         logger.error(`Error en restoreExistingSessions: ${error.message}`);
     }
@@ -1216,22 +816,10 @@ process.on('SIGINT', async () => {
                 logger.info(`✓ Keep-alive detenido para ${orgId}`);
             }
             
-            // Limpiar timeouts de errores
-            if (session.badMacErrors?.resetTimeout) {
-                clearTimeout(session.badMacErrors.resetTimeout);
-            }
-            if (session.streamErrors?.resetTimeout) {
-                clearTimeout(session.streamErrors.resetTimeout);
-            }
-            
             // Cerrar socket
             if (session.sock) {
                 logger.info(`✓ Cerrando sesión de ${orgId}`);
-                try {
-                    await session.sock.end();
-                } catch (sockErr) {
-                    logger.warn(`Error cerrando socket ${orgId}: ${sockErr.message}`);
-                }
+                await session.sock.end();
             }
         } catch (err) {
             logger.error(`Error cerrando sesión ${orgId}: ${err.message}`);

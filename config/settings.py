@@ -82,6 +82,7 @@ INSTALLED_APPS = [
     'django_filters',
     
     # Local apps
+    'apps.core',  # Utilidades compartidas
     'apps.organizations',
     'apps.permissions',  # Sistema de roles y permisos
     'apps.notifications',  # Sistema de notificaciones multi-canal

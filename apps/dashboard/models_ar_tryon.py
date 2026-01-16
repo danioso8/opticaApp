@@ -4,6 +4,7 @@ Modelos para AR Virtual Try-On (Prueba Virtual de Monturas)
 from django.db import models
 from django.utils import timezone
 from apps.organizations.base_models import TenantModel
+from apps.core.storage_utils import OrganizationUploadPath
 
 
 class FrameCategory(TenantModel):
@@ -80,8 +81,8 @@ class Frame(TenantModel):
     )
     
     # Imágenes para AR
-    front_image = models.ImageField(upload_to='ar_frames/front/', verbose_name='Imagen Frontal')
-    side_image = models.ImageField(upload_to='ar_frames/side/', blank=True, verbose_name='Imagen Lateral')
+    front_image = models.ImageField(upload_to=OrganizationUploadPath('ar_frames/front'), verbose_name='Imagen Frontal')
+    side_image = models.ImageField(upload_to=OrganizationUploadPath('ar_frames/side'), blank=True, verbose_name='Imagen Lateral')
     overlay_image = models.ImageField(
         upload_to='ar_frames/overlay/',
         blank=True,

@@ -81,7 +81,7 @@ class WhatsAppBaileysClient:
                 return False, None
             
             current_status = status.get('status', 'unknown')
-            phone = status.get('phone')
+            phone = status.get('phone_number') or status.get('phone')  # Soportar ambos nombres de campo
             
             # Si está conectado, retornar OK
             if current_status == 'connected' and phone:

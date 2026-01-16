@@ -60,6 +60,9 @@ urlpatterns = [
     # Audit URLs
     path('dashboard/audit/', include('apps.audit.urls')),
     
+    # Testing URLs (Bot de Testing Automatizado)
+    path('saas-admin/testing/', include('apps.testing.urls')),
+    
     # Payments URLs (Pasarela de Pagos)
     path('payments/', include('apps.payments.urls')),
     
