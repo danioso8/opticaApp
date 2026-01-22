@@ -2,8 +2,10 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.http import JsonResponse
-from django.db.models import Q, Count
+from django.db.models import Q, Count, Prefetch
 from django.core.paginator import Paginator
+from django.core.cache import cache
+from django.views.decorators.cache import cache_page
 from datetime import datetime
 
 from .models import Patient
@@ -11,13 +13,29 @@ from apps.appointments.models import Appointment
 
 
 def patient_list(request):
-    """Lista de pacientes con búsqueda y filtros"""
+    """Lista de pacientes con búsqueda y filtros - OPTIMIZADO con cache"""
     org_filter = {'organization': request.organization} if hasattr(request, 'organization') and request.organization else {}
     
-    patients = Patient.objects.filter(is_active=True, **org_filter)
+    # Generar cache key
+    search = request.GET.get('search', '')
+    order_by = request.GET.get('order', '-created_at')
+    page_number = request.GET.get('page', '1')
+    org_id = getattr(request, 'tenant_id', 'no_org')
+    
+    cache_key = f"patients_list:{org_id}:{search}:{order_by}:{page_number}"
+    
+    # Intentar obtener del cache
+    cached_data = cache.get(cache_key)
+    if cached_data and not search:  # No cachear búsquedas para tener datos frescos
+        return render(request, 'patients/patient_list.html', cached_data)
+    
+    # Optimizar query con only (solo campos necesarios)
+    patients = Patient.objects.filter(is_active=True, **org_filter).only(
+        'id', 'full_name', 'phone_number', 'identification', 'email', 
+        'created_at', 'date_of_birth'
+    )
     
     # Búsqueda
-    search = request.GET.get('search', '')
     if search:
         patients = patients.filter(
             Q(full_name__icontains=search) |
@@ -26,32 +44,51 @@ def patient_list(request):
             Q(email__icontains=search)
         )
     
-    # Estadísticas
-    total_patients = patients.count()
-    patients_with_appointments = patients.annotate(
-        appointment_count=Count('appointments')
-    ).filter(appointment_count__gt=0).count()
+    # Estadísticas (cachear separadamente)
+    stats_cache_key = f"patient_stats:{org_id}"
+    stats = cache.get(stats_cache_key)
+    
+    if stats is None:
+        total_patients = Patient.objects.filter(is_active=True, **org_filter).count()
+        patients_with_appointments = Patient.objects.filter(
+            is_active=True, **org_filter
+        ).annotate(
+            appointment_count=Count('appointments')
+        ).filter(appointment_count__gt=0).count()
+        
+        stats = {
+            'total_patients': total_patients,
+            'patients_with_appointments': patients_with_appointments
+        }
+        cache.set(stats_cache_key, stats, 300)  # 5 minutos
     
     # Ordenar
-    order_by = request.GET.get('order', '-created_at')
     patients = patients.order_by(order_by)
     
     # Paginación
     paginator = Paginator(patients, 20)
-    page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
     
-    # Agregar última historia clínica a cada paciente
+    # Prefetch última historia clínica (1 query en lugar de N queries)
     from apps.patients.models_clinical import ClinicalHistory
+    patient_ids = [p.id for p in page_obj]
+    latest_histories = {}
+    
+    if patient_ids:
+        histories = ClinicalHistory.objects.filter(
+            patient_id__in=patient_ids
+        ).order_by('patient_id', '-created_at').distinct('patient_id')
+        
+        for history in histories:
+            latest_histories[history.patient_id] = history
+    
     for patient in page_obj:
-        patient.latest_history = ClinicalHistory.objects.filter(
-            patient=patient
-        ).order_by('-created_at').first()
+        patient.latest_history = latest_histories.get(patient.id)
     
     context = {
         'patients': page_obj,
-        'total_patients': total_patients,
-        'patients_with_appointments': patients_with_appointments,
+        'total_patients': stats['total_patients'],
+        'patients_with_appointments': stats['patients_with_appointments'],
         'search': search,
         'order_by': order_by,
     }
